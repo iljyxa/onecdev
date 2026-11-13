@@ -8,11 +8,11 @@
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/iljyxa/v8vscedit.git"
+    "url": "https://github.com/iljyxa/onecdev.git"
   },
-  "homepage": "https://github.com/iljyxa/v8vscedit#readme",
+  "homepage": "https://github.com/iljyxa/onecdev#readme",
   "bugs": {
-    "url": "https://github.com/iljyxa/v8vscedit/issues"
+    "url": "https://github.com/iljyxa/onecdev/issues"
   },
   "keywords": [
     "1c",

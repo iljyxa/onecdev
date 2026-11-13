@@ -6,7 +6,7 @@ import { RoleRightsEditService } from '../../infra/role/RoleRightsEditService';
 import { ConfigurationScaffoldService, MetadataXmlCreator } from '../../infra/xml';
 
 /**
- * role-edit пересериализует Rights.xml целиком (iljyxa/v8vscedit#30), поэтому сериализатор
+ * role-edit пересериализует Rights.xml целиком (iljyxa/onecdev#30), поэтому сериализатор
  * обязан воспроизводить выгрузку платформы: `xsi:type="Rights"` у корня, без перевода строки
  * после `</Rights>`; BOM и CRLF сохраняет запись. Проверяется на всех ролях example/2.20 и 2.21.
  */

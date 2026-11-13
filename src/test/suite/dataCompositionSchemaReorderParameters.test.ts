@@ -5,7 +5,7 @@ import * as path from 'path';
 import { DataCompositionSchemaService } from '../../infra/xml/DataCompositionSchemaService';
 
 /**
- * reorder-parameters на реальной выгрузке 1С (iljyxa/v8vscedit#29). Отчёт «Запасы» содержит
+ * reorder-parameters на реальной выгрузке 1С (iljyxa/onecdev#29). Отчёт «Запасы» содержит
  * три параметра схемы между dataSetLink и первым settingsVariant (BOM + CRLF). Порядок
  * элементов корня СКД — xs:sequence, поэтому параметры обязаны остаться на своём месте,
  * а перестановка — не оставлять пустых строк на месте прежних блоков.

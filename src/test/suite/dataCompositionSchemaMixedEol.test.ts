@@ -100,7 +100,7 @@ function findIndexOrThrow(haystack: string, needle: string, fromIndex = 0): numb
 /**
  * Байтовый эталон add-parameter: блок совпадает с golden-тестом
  * (dataCompositionSchemaGolden.test.ts, шаг 3 "add-parameter") — CRLF-блок параметра
- * встаёт перед первым `<settingsVariant>` (порядок корня схемы, iljyxa/v8vscedit#31; шаблонов
+ * встаёт перед первым `<settingsVariant>` (порядок корня схемы, iljyxa/onecdev#31; шаблонов
  * в фикстурах нет), ничего больше в документе не трогая. Формат блока генерируется
  * builder'ом (dcs/schemaBuilders.ts) и от фикстуры не зависит.
  */
