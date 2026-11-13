@@ -56,7 +56,7 @@ function clearSelf(xmlPath: string, propertyKey: string, valueKind: 'string' | '
 
 suite('ObjectXmlReader — пустое значение свойства пишется самозакрытым тегом', () => {
   test('очистка строкового свойства даёт <DefaultObjectForm/>, а не парный пустой тег', () => {
-    const xmlPath = writeFixture('v8vscedit-empty-string-');
+    const xmlPath = writeFixture('onecdev-empty-string-');
 
     assert.strictEqual(clearSelf(xmlPath, 'DefaultObjectForm', 'string'), true);
 
@@ -69,7 +69,7 @@ suite('ObjectXmlReader — пустое значение свойства пиш
   });
 
   test('повторная очистка уже пустого свойства — no-op: false и файл байт-в-байт', () => {
-    const xmlPath = writeFixture('v8vscedit-empty-idempotent-');
+    const xmlPath = writeFixture('onecdev-empty-idempotent-');
     assert.strictEqual(clearSelf(xmlPath, 'DefaultObjectForm', 'string'), true);
     const afterFirst = fs.readFileSync(xmlPath);
 
@@ -84,7 +84,7 @@ suite('ObjectXmlReader — пустое значение свойства пиш
   });
 
   test('очистка локализованного свойства схлопывает блок в <Synonym/>, без пустого <v8:content>', () => {
-    const xmlPath = writeFixture('v8vscedit-empty-localized-');
+    const xmlPath = writeFixture('onecdev-empty-localized-');
 
     assert.strictEqual(clearSelf(xmlPath, 'Synonym', 'localizedString'), true);
 
@@ -98,7 +98,7 @@ suite('ObjectXmlReader — пустое значение свойства пиш
   });
 
   test('непустое значение по-прежнему пишется парным тегом', () => {
-    const xmlPath = writeFixture('v8vscedit-nonempty-');
+    const xmlPath = writeFixture('onecdev-nonempty-');
     const reader = new ObjectXmlReader();
 
     assert.strictEqual(
@@ -117,7 +117,7 @@ suite('ObjectXmlReader — пустое значение свойства пиш
   });
 
   test('запись значения в самозакрытый тег разворачивает его обратно в парный', () => {
-    const xmlPath = writeFixture('v8vscedit-expand-');
+    const xmlPath = writeFixture('onecdev-expand-');
     const reader = new ObjectXmlReader();
 
     // `DefaultListForm` в фикстуре изначально самозакрыт — путь selfClosingRe.
@@ -137,7 +137,7 @@ suite('ObjectXmlReader — пустое значение свойства пиш
   });
 
   test('цикл «очистить → заполнить» локализованного свойства сохраняет отступы блока', () => {
-    const xmlPath = writeFixture('v8vscedit-localized-roundtrip-');
+    const xmlPath = writeFixture('onecdev-localized-roundtrip-');
     const reader = new ObjectXmlReader();
 
     assert.strictEqual(clearSelf(xmlPath, 'Synonym', 'localizedString'), true);
@@ -173,7 +173,7 @@ suite('ObjectXmlReader — пустое значение свойства пиш
   });
 
   test('строка из пробелов — значение: пишется парным тегом и повтор даёт no-op', () => {
-    const xmlPath = writeFixture('v8vscedit-space-value-');
+    const xmlPath = writeFixture('onecdev-space-value-');
     const reader = new ObjectXmlReader();
     const write = (value: string): boolean => reader.updatePropertyInObject(xmlPath, {
       targetKind: 'Self',
@@ -193,7 +193,7 @@ suite('ObjectXmlReader — пустое значение свойства пиш
   });
 
   test('очистка сохраняет BOM и CRLF исходного файла (запрет №12)', () => {
-    const xmlPath = writeFixture('v8vscedit-empty-format-');
+    const xmlPath = writeFixture('onecdev-empty-format-');
     assert.strictEqual(clearSelf(xmlPath, 'DefaultObjectForm', 'string'), true);
 
     const raw = fs.readFileSync(xmlPath);
@@ -258,7 +258,7 @@ suite('Пустое значение свойства КОРНЯ конфигу�
   // объектом: делегирование в `updatePropertyInObject` идёт только для дочерних
   // объектов. Именно поэтому дефект пережил починку писателя объекта.
   test('сброс УЖЕ пустого <Vendor/> — no-op, файл не переписывается', () => {
-    const xmlPath = writeConfig('v8vscedit-root-vendor-');
+    const xmlPath = writeConfig('onecdev-root-vendor-');
     const before = fs.readFileSync(xmlPath);
 
     const result = new ConfigurationXmlEditor().modifyConfigurationProperty(xmlPath, 'Vendor', '', 'scalar');
@@ -268,7 +268,7 @@ suite('Пустое значение свойства КОРНЯ конфигу�
   });
 
   test('очистка заполненного скалярного свойства даёт самозакрытый тег', () => {
-    const xmlPath = writeConfig('v8vscedit-root-version-');
+    const xmlPath = writeConfig('onecdev-root-version-');
 
     const result = new ConfigurationXmlEditor().modifyConfigurationProperty(xmlPath, 'Version', '', 'scalar');
 
@@ -279,7 +279,7 @@ suite('Пустое значение свойства КОРНЯ конфигу�
   });
 
   test('очистка локализованного свойства корня не оставляет пустого <v8:content>', () => {
-    const xmlPath = writeConfig('v8vscedit-root-synonym-');
+    const xmlPath = writeConfig('onecdev-root-synonym-');
 
     const result = new ConfigurationXmlEditor().modifyConfigurationProperty(xmlPath, 'Synonym', '', 'localized');
 
@@ -291,7 +291,7 @@ suite('Пустое значение свойства КОРНЯ конфигу�
   });
 
   test('строка из пробелов на корне остаётся значением, а не схлопывается', () => {
-    const xmlPath = writeConfig('v8vscedit-root-space-');
+    const xmlPath = writeConfig('onecdev-root-space-');
     const editor = new ConfigurationXmlEditor();
 
     assert.strictEqual(editor.modifyConfigurationProperty(xmlPath, 'Vendor', ' ', 'scalar').changed, true);

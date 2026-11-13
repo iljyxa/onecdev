@@ -22,10 +22,10 @@ import {
 } from './support/universalPanelHarness';
 import { skipWithoutCorpus } from './support/corpus';
 
-const DUMP_ALL_COMMAND_ID = 'v8vscedit.dumpAllExtensionsToCfe';
-const LOAD_ALL_COMMAND_ID = 'v8vscedit.loadAllExtensionsFromCfe';
-const SINGLE_DUMP_COMMAND_ID = 'v8vscedit.dumpConfigurationToCf';
-const SINGLE_LOAD_COMMAND_ID = 'v8vscedit.loadConfigurationFromCf';
+const DUMP_ALL_COMMAND_ID = 'onecdev.dumpAllExtensionsToCfe';
+const LOAD_ALL_COMMAND_ID = 'onecdev.loadAllExtensionsFromCfe';
+const SINGLE_DUMP_COMMAND_ID = 'onecdev.dumpConfigurationToCf';
+const SINGLE_LOAD_COMMAND_ID = 'onecdev.loadConfigurationFromCf';
 
 function commandsOf(node: TreeNodeDtoLike): string[] {
   return node.actions.map((action) => action.command);

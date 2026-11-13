@@ -26,7 +26,7 @@ import { bumpConfigDumpInfoVersion } from './support/configDumpInfoFixture';
 import { createPartialDumpFixture, KNOWN_FIXTURE_UNITS } from './support/partialDumpFixture';
 
 /**
- * Issue #64 — временные файлы операций хранилища не накапливаются в `.v8vscedit`:
+ * Issue #64 — временные файлы операций хранилища не накапливаются в `.onecdev`:
  * файл `-ObjectsFile` живёт только на время запуска Конфигуратора, хвосты прошлых
  * операций подметаются первым шагом аренды, каталоги выгрузки освобождаются и при
  * исключении, снимки удаляются помещением без сохранения захвата.
@@ -122,7 +122,7 @@ function objectsXmlFiles(harness: Harness): string[] {
 
 function snapshotDir(harness: Harness, fullName: string): string {
   return path.join(
-    harness.workspaceRoot, '.v8vscedit', 'repository', 'snapshots', buildRepositoryScopeKey(harness.target),
+    harness.workspaceRoot, '.onecdev', 'repository', 'snapshots', buildRepositoryScopeKey(harness.target),
     crypto.createHash('sha1').update(fullName).digest('hex')
   );
 }

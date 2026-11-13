@@ -28,7 +28,7 @@ import { assertWellFormedXml } from './support/typedFieldCorpus';
 const tempDirs: string[] = [];
 
 function writeTemp(content: string, name = 'Объект.xml'): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-type-order-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-type-order-'));
   tempDirs.push(dir);
   const target = path.join(dir, name);
   fs.writeFileSync(target, content, 'utf-8');
@@ -295,7 +295,7 @@ suite('ЭТАП 2 — гейт генератора: порядок свойст
   });
 
   function createConfigRoot(version: string): string {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-generator-order-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-generator-order-'));
     tempDirs.push(root);
     fs.writeFileSync(
       path.join(root, 'Configuration.xml'),

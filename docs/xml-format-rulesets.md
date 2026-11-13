@@ -294,8 +294,8 @@ ruleset.
 сам генератор их по-прежнему не пишет.
 
 MCP-инструменты, использующие этот конвейер, отдельной поддержки владельца не содержат — она уже в
-`infra/xml/`: `v8vscedit_set_type` (запись, через `ObjectXmlReader.updateTypeInObject`) и
-`v8vscedit_validate_metadata` (чтение, через `MetadataValidationService`) учитывают вид владельца
+`infra/xml/`: `onecdev_set_type` (запись, через `ObjectXmlReader.updateTypeInObject`) и
+`onecdev_validate_metadata` (чтение, через `MetadataValidationService`) учитывают вид владельца
 автоматически. Канон путей этих инструментов — [mcp-paths.md](./mcp-paths.md).
 
 ## Сохранение BOM и переводов строк при записи существующего файла
@@ -503,7 +503,7 @@ Attribute/Column/Command») не требует ревизии при появл
 `ValidationReport.error()` (`infra/xml/form/FormValidateService.ts`) после исправления сам отсекает
 ошибки, как только их число достигает `maxErrors`, а не только между секциями проверки, как раньше.
 Раньше guard стоял лишь на границах секций 3–12, и внутри одной секции (например, при массовом дубле
-`id` в большой форме) число `errors` в ответе `v8vscedit_validate_form` могло превышать заявленный
+`id` в большой форме) число `errors` в ответе `onecdev_validate_form` могло превышать заявленный
 `maxErrors`. Теперь `errors` в выдаче инструмента — гарантированный верхний предел, а не ориентир;
 любой код, читающий это поле, должен считать, что за пределом лимита могут остаться необнаруженные
 ошибки той же секции.
@@ -511,7 +511,7 @@ Attribute/Column/Command») не требует ревизии при появл
 ### `ALL_ELEMENT_TAGS` (`FormInfoService.ts`) на проверку дублей `id` не влияет
 
 Список видов полей `ALL_ELEMENT_TAGS`/`SKIP_ELEMENT_TAGS` в `infra/xml/form/FormInfoService.ts` — это
-отдельный от `FormIdSpaces` реестр: он задаёт состав ответа `v8vscedit_form_info` и данные для секций
+отдельный от `FormIdSpaces` реестр: он задаёт состав ответа `onecdev_form_info` и данные для секций
 4–6 валидатора (companion-элементы, `DataPath`, `CommandName`), но с переездом секции 3 на
 `collectIdSpaces` больше НЕ участвует в проверке уникальности `id`. Асимметрия сохранена осознанно:
 `ColumnGroup` остаётся в `SKIP_ELEMENT_TAGS`, то есть в `form_info` он по-прежнему не показывается как

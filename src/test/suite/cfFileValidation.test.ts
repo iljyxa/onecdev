@@ -43,7 +43,7 @@ suite('CfFileValidation — guard-функции CF/CFE (реальные вре
   });
 
   setup(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cffile-validation-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cffile-validation-'));
   });
 
   teardown(() => {
@@ -220,7 +220,7 @@ suite('CfFileValidation — guard-функции CF/CFE (реальные вре
       // именно на нём предикат «по форме суффикса» уничтожал бы чужие данные.
       '.backup.2024-01-15.part', '.2024-01-15.part',
       '.hidden.part', '.Ext01.cfe.part', '.Ext01.cfe.123-456.part',
-      '.Ext01.cfe.1-2-3.v8vscedit.part.bak', 'Ext01.cfe.1-2-3.v8vscedit.part', '.v8vscedit.part',
+      '.Ext01.cfe.1-2-3.onecdev.part.bak', 'Ext01.cfe.1-2-3.onecdev.part', '.onecdev.part',
     ]) {
       assert.strictEqual(m().isDumpStagingFileName(name), false, name);
     }

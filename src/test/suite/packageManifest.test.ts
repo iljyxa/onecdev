@@ -59,15 +59,15 @@ suite('Package manifest', () => {
     const declaredCommands = new Set((contributes?.commands ?? []).map((item) => item.command));
     const declaredSubmenus = new Set((contributes?.submenus ?? []).map((item) => item.id));
 
-    assert.ok(declaredSubmenus.has('v8vscedit.bslSurroundMenu'), 'Не объявлено подменю Окружить');
+    assert.ok(declaredSubmenus.has('onecdev.bslSurroundMenu'), 'Не объявлено подменю Окружить');
 
     const editorMenu = contributes?.menus?.['editor/context'] ?? [];
     assert.ok(
-      editorMenu.some((item) => item.submenu === 'v8vscedit.bslSurroundMenu' && item.when?.includes('editorLangId == bsl')),
+      editorMenu.some((item) => item.submenu === 'onecdev.bslSurroundMenu' && item.when?.includes('editorLangId == bsl')),
       'Подменю Окружить не добавлено в контекстное меню BSL-редактора'
     );
 
-    const surroundItems = contributes?.menus?.['v8vscedit.bslSurroundMenu'] ?? [];
+    const surroundItems = contributes?.menus?.['onecdev.bslSurroundMenu'] ?? [];
     assert.ok(surroundItems.length > 0, 'Подменю Окружить пустое');
     for (const item of surroundItems) {
       assert.ok(item.command, 'Пункт подменю Окружить должен быть командой');
@@ -81,7 +81,11 @@ suite('Package manifest', () => {
    * node_modules роняет активацию. Поэтому собранный node-бандл обязан требовать только
    * то, что даёт среда выполнения.
    */
-  test('node-бандл dist/ не требует пакетов из node_modules', () => {
+  test('node-бандл dist/ не требует пакетов из node_modules', function () {
+    // Полный разбор AST многомегабайтного dist/extension.js: под c8 при параллельных
+    // порциях гейта покрытия он идёт дольше дефолтных 2 с. Проверка детерминирована —
+    // расширяется только бюджет времени, а не ослабляется сама проверка.
+    this.timeout(30_000);
     const bundleFiles = listFiles(path.join(ROOT, 'dist')).filter(
       (file) => file.endsWith('.js') && !file.startsWith(path.join(ROOT, 'dist', 'ui') + path.sep)
     );

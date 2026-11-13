@@ -42,7 +42,7 @@ function tagsOf(kind: MetaKind): readonly (typeof A2_TAGS)[number][] {
 }
 
 function newConfigRoot(): string {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-childtags-tree-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-childtags-tree-'));
   fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), [
     '<?xml version="1.0" encoding="utf-8"?>',
     '<MetaDataObject version="2.21">',

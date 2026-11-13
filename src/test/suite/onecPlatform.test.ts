@@ -29,7 +29,7 @@ suite('OnecPlatform', () => {
   });
 
   test('Берёт бинарник из macOS app, а не ресурс иконки', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-onec-platform-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-onec-platform-'));
     try {
       const binaryPath = path.join(root, '1cv8.app', 'Contents', 'MacOS', '1cv8');
       const iconPath = path.join(root, '1cv8s.app', 'Contents', 'Resources', '1cv8s.icns');
@@ -47,7 +47,7 @@ suite('OnecPlatform', () => {
   });
 
   test('Предпочитает 1cv8 перед 1cv8c внутри каталога версии', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-onec-priority-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-onec-priority-'));
     try {
       const thickClient = path.join(root, '1cv8');
       const binClient = path.join(root, 'bin', '1cv8');
@@ -102,7 +102,7 @@ suite('OnecPlatform', () => {
     }
 
     setup(() => {
-      root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-onec-linux-'));
+      root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-onec-linux-'));
       makeExecutable('common', '1cestart');
       fs.mkdirSync(path.join(root, 'conf'), { recursive: true });
     });

@@ -53,56 +53,56 @@ function mapCommand(commandId: CommandId, node: MetadataNode): vscode.Command {
   switch (commandId) {
     case 'openObjectModule':
       return {
-        command: 'v8vscedit.openObjectModule',
+        command: 'onecdev.openObjectModule',
         title: 'Открыть модуль объекта',
         arguments: [node],
       };
     case 'openManagerModule':
       return {
-        command: 'v8vscedit.openManagerModule',
+        command: 'onecdev.openManagerModule',
         title: 'Открыть модуль менеджера',
         arguments: [node],
       };
     case 'openConstantModule':
       return {
-        command: 'v8vscedit.openConstantModule',
+        command: 'onecdev.openConstantModule',
         title: 'Открыть модуль константы',
         arguments: [node],
       };
     case 'openFormModule':
       return {
-        command: 'v8vscedit.openFormModule',
+        command: 'onecdev.openFormModule',
         title: 'Открыть модуль формы',
         arguments: [node],
       };
     case 'openCommandModule':
       return {
-        command: 'v8vscedit.openCommandModule',
+        command: 'onecdev.openCommandModule',
         title: 'Открыть модуль команды',
         arguments: [node],
       };
     case 'openServiceModule':
       return {
-        command: 'v8vscedit.openServiceModule',
+        command: 'onecdev.openServiceModule',
         title: 'Открыть модуль сервиса',
         arguments: [node],
       };
     case 'openCommonModuleCode':
       return {
-        command: 'v8vscedit.openCommonModuleCode',
+        command: 'onecdev.openCommonModuleCode',
         title: 'Открыть модуль общего модуля',
         arguments: [node],
       };
     case 'openTemplateContent':
       return {
-        command: 'v8vscedit.openTemplateContent',
+        command: 'onecdev.openTemplateContent',
         title: 'Открыть макет',
         arguments: [node],
       };
     default: {
       // Защита от несовпадений перечисления и реализации
       return {
-        command: 'v8vscedit.openXmlFile',
+        command: 'onecdev.openXmlFile',
         title: 'Открыть XML',
         arguments: [node],
       };

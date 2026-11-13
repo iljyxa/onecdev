@@ -4,7 +4,7 @@ export interface WebviewBootstrapState<T> {
 }
 
 export function loadInitialState<T>(expectedViewKind: string): T | null {
-  const script = document.getElementById('v8vscedit-initial-state');
+  const script = document.getElementById('onecdev-initial-state');
   if (!script?.textContent) {
     return null;
   }

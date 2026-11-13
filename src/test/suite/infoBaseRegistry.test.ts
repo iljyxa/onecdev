@@ -77,7 +77,7 @@ OrderInList=10
       const envKey = process.platform === 'win32' ? 'APPDATA' : 'HOME';
       const listSubPath = process.platform === 'win32' ? ['1C', '1CEStart'] : ['.1C', '1cestart'];
       const previousValue = process.env[envKey];
-      const fakeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-ibase-home-'));
+      const fakeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-ibase-home-'));
       const listDir = path.join(fakeRoot, ...listSubPath);
       fs.mkdirSync(listDir, { recursive: true });
       fs.writeFileSync(path.join(listDir, 'ibases.v8i'), dev + dev);

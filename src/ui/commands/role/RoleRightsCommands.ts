@@ -7,10 +7,10 @@ export function registerRoleRightsCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.role.info', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.role.info', async (node: MetadataNode | undefined) => {
       await showRoleInfo(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.role.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.role.validate', async (node: MetadataNode | undefined) => {
       await validateRole(node, services);
     })
   );

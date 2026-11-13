@@ -70,7 +70,7 @@ export function registerExtensionCommands(
   deps: ExtensionCommandsDeps = DEFAULT_EXTENSION_COMMANDS_DEPS
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.importConfigurations', async (): Promise<ConfigurationCommandOutcome> => {
+    vscode.commands.registerCommand('onecdev.importConfigurations', async (): Promise<ConfigurationCommandOutcome> => {
       // Ранняя проверка — чтобы не показывать выбор конфигураций, когда импорт
       // всё равно не стартует; окончательный захват — после выбора.
       const heldBy = services.configurationOperationGuard.heldBy;
@@ -168,7 +168,7 @@ export function registerExtensionCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.updateChangedConfigurations', async (): Promise<ConfigurationCommandOutcome> => {
+    vscode.commands.registerCommand('onecdev.updateChangedConfigurations', async (): Promise<ConfigurationCommandOutcome> => {
       const acquired = services.configurationOperationGuard.tryAcquireOrHeldBy('Обновление конфигураций');
       if (!acquired.acquired) {
         notifyConfigurationOperationBusy();
@@ -257,7 +257,7 @@ export function registerExtensionCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.connectExtension', async () => {
+    vscode.commands.registerCommand('onecdev.connectExtension', async () => {
       // Запрос списка расширений — отдельный запуск Конфигуратора и выбор
       // пользователя; при занятом guard'е подключение всё равно не стартует.
       if (services.configurationOperationGuard.isBusy) {
@@ -310,7 +310,7 @@ export function registerExtensionCommands(
       );
     }),
 
-    vscode.commands.registerCommand('v8vscedit.showConfigActions', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.showConfigActions', async (node: NodeArg) => {
       const target = extractRootConfigurationTarget(node);
       if (!target) {
         return;
@@ -333,15 +333,15 @@ export function registerExtensionCommands(
       }
 
       if (picked.actionId === 'import') {
-        await vscode.commands.executeCommand('v8vscedit.importConfigurationFromDb', node);
+        await vscode.commands.executeCommand('onecdev.importConfigurationFromDb', node);
       } else if (picked.actionId === 'update') {
-        await vscode.commands.executeCommand('v8vscedit.updateConfigurationInDb', node);
+        await vscode.commands.executeCommand('onecdev.updateConfigurationInDb', node);
       } else {
-        await vscode.commands.executeCommand('v8vscedit.compileAndUpdateExtensionInDb', node);
+        await vscode.commands.executeCommand('onecdev.compileAndUpdateExtensionInDb', node);
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.importConfigurationFromDb', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.importConfigurationFromDb', async (node: NodeArg) => {
       const target = extractRootConfigurationTarget(node);
       if (!target) {
         vscode.window.showWarningMessage('Команда доступна только для корневого узла конфигурации или расширения.');
@@ -377,7 +377,7 @@ export function registerExtensionCommands(
       );
     }),
 
-    vscode.commands.registerCommand('v8vscedit.updateConfigurationInDb', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.updateConfigurationInDb', async (node: NodeArg) => {
       const target = extractRootConfigurationTarget(node);
       if (!target) {
         vscode.window.showWarningMessage('Команда доступна только для корневого узла конфигурации или расширения.');
@@ -414,7 +414,7 @@ export function registerExtensionCommands(
       );
     }),
 
-    vscode.commands.registerCommand('v8vscedit.decompileExtensionSources', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.decompileExtensionSources', async (node: NodeArg) => {
       const target = extractExtensionTarget(node);
       if (!target) {
         vscode.window.showWarningMessage('Команда доступна только для корневого узла расширения.');
@@ -439,7 +439,7 @@ export function registerExtensionCommands(
       );
     }),
 
-    vscode.commands.registerCommand('v8vscedit.updateExtensionInDb', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.updateExtensionInDb', async (node: NodeArg) => {
       const target = extractExtensionTarget(node);
       if (!target) {
         vscode.window.showWarningMessage('Команда доступна только для корневого узла расширения.');
@@ -463,7 +463,7 @@ export function registerExtensionCommands(
       );
     }),
 
-    vscode.commands.registerCommand('v8vscedit.compileAndUpdateExtensionInDb', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.compileAndUpdateExtensionInDb', async (node: NodeArg) => {
       const target = extractExtensionTarget(node);
       if (!target) {
         vscode.window.showWarningMessage('Команда доступна только для корневого узла расширения.');

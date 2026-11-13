@@ -21,7 +21,7 @@ suite('CfeBorrowService — список изменённых файлов за�
   let service: CfeBorrowService;
 
   setup(() => {
-    extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-borrow-files-'));
+    extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-borrow-files-'));
     fs.cpSync(EVOLC_DIR, extDir, { recursive: true });
     service = new CfeBorrowService();
   });

@@ -26,7 +26,7 @@ import { skipWithoutCorpus } from './support/corpus';
  */
 suite('DataCompositionSchemaService — байт-golden характеризация (предусловие дробления на infra/xml/dcs/*)', () => {
   test('compile: полный байтовый эталон XML схемы из репрезентативного SkdDefinition (dataSource/dataSet+calc+total/parameters c @autoDates/variant c selection+filter+order+structure)', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-skd-compile-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-skd-compile-'));
     const templatePath = path.join(root, 'Схема', 'Ext', 'Template.xml');
     const service = new DataCompositionSchemaService();
 
@@ -221,7 +221,7 @@ suite('DataCompositionSchemaService — байт-golden характеризац
   });
 
   test('info: полный эталон buildInfoLines (mode=full) на том же сгенерированном определении', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-skd-info-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-skd-info-'));
     const templatePath = path.join(root, 'Схема', 'Ext', 'Template.xml');
     const service = new DataCompositionSchemaService();
 
@@ -328,7 +328,7 @@ suite('DataCompositionSchemaService — байт-golden характеризац
       __dirname,
       '../../../example/2.21/src/cf/Reports/ПраваДоступа/Templates/МакетПараметров/Ext/Template.xml'
     );
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-skd-edit-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-skd-edit-'));
     const destDir = path.join(root, 'МакетПараметров', 'Ext');
     fs.mkdirSync(destDir, { recursive: true });
     const templatePath = path.join(destDir, 'Template.xml');

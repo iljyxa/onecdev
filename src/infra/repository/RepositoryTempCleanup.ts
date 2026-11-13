@@ -3,7 +3,7 @@ import * as path from 'path';
 import { removePathWithRetries } from '../fs/PathRemoval';
 
 /**
- * Временные артефакты операций хранилища в `.v8vscedit/repository`: файлы `Objects.xml`
+ * Временные артефакты операций хранилища в `.onecdev/repository`: файлы `Objects.xml`
  * для `-ObjectsFile` и каталоги резервных копий слияния. Единственное место, знающее их
  * раскладку, — и запись, и очистка опираются на функции этого модуля.
  */
@@ -27,7 +27,7 @@ export const DEFAULT_MERGE_BACKUP_RETENTION: MergeBackupRetention = {
 const MERGE_BACKUP_NAME = /^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z-.+$/;
 
 function getRepositoryTempRoot(workspaceRoot: string): string {
-  return path.join(workspaceRoot, '.v8vscedit', 'repository');
+  return path.join(workspaceRoot, '.onecdev', 'repository');
 }
 
 export function getRepositoryObjectsDir(workspaceRoot: string): string {

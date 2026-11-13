@@ -104,7 +104,7 @@ export function registerRepositoryLockStatusCommands(
   notifier: RepositoryLockStatusNotifier = WINDOW_NOTIFIER
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.repository.refreshLocks', (node?: RepositoryNodeRef) =>
+    vscode.commands.registerCommand('onecdev.repository.refreshLocks', (node?: RepositoryNodeRef) =>
       refreshRepositoryLockStatuses(node, services, notifier))
   );
 }

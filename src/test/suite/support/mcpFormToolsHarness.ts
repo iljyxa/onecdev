@@ -75,7 +75,7 @@ export interface FormMcpHarness {
 }
 
 export function createFormMcpHarnessOverEntry(entry: ConfigEntry, options: FormMcpHarnessOptions = {}): FormMcpHarness {
-  const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-form-cache-')));
+  const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-form-cache-')));
   const treeProvider = new MetadataTreeProvider([entry], vscode.Uri.file(REPO_ROOT), cacheRoot);
   const paths = new McpMetadataPathService(treeProvider);
 
@@ -186,7 +186,7 @@ function requireOk(label: string, result: { readonly success: boolean; readonly 
  * формой, подсистему и общую форму. Формы получают заголовки (см. `*_FORM_TITLE`).
  */
 export function createFormFixtureExport(): FormFixtureExport {
-  const configRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-form-')));
+  const configRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-form-')));
   const configName = 'Тест';
   const catalogName = 'Товары';
   const catalogFormName = 'ФормаЭлемента';
@@ -264,7 +264,7 @@ export function isToolError(result: CallToolResult): boolean {
 }
 
 /**
- * Команды навигатора (`v8vscedit.form.*`) поверх ТЕХ ЖЕ сервисов, что и MCP-инструменты стенда.
+ * Команды навигатора (`onecdev.form.*`) поверх ТЕХ ЖЕ сервисов, что и MCP-инструменты стенда.
  *
  * `vscode.commands.registerCommand` подменяется на время регистрации: настоящая регистрация
  * упала бы на конфликте идентификаторов с уже активированным расширением, а проверять надо

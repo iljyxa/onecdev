@@ -30,7 +30,7 @@ suite('ProcessDesignerAgentTransport', () => {
   });
 
   test('читает приватный ключ из файла настроек', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-agent-key-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-agent-key-'));
     const keyPath = path.join(dir, 'id_rsa');
     fs.writeFileSync(keyPath, 'test-key', 'utf-8');
 

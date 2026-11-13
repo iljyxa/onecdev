@@ -58,7 +58,7 @@ suite('infra/xml — вынос чтения источников EventSubscript
   });
 
   test('resolveConfigurationXml возвращает null при отсутствии Configuration.xml на всём пути вверх', () => {
-    const orphanDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-a1-orphan-'));
+    const orphanDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-a1-orphan-'));
     const orphanXmlPath = path.join(orphanDir, 'Orphan.xml');
     fs.writeFileSync(orphanXmlPath, '<Orphan/>', 'utf-8');
 
@@ -88,7 +88,7 @@ suite('infra/xml — вынос чтения источников EventSubscript
     // использует Set<string> seenDefinedTypes), но infra-функция чтения обязана хотя бы
     // не падать и возвращать данные по одному прочтению — рекурсивное раскрытие
     // канонических типов остаётся на стороне UI-слоя (parseMetadataType).
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-a1-cycle-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-a1-cycle-'));
     const definedTypesDir = path.join(configRoot, 'DefinedTypes');
     fs.mkdirSync(definedTypesDir, { recursive: true });
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), '<MetaDataObject/>', 'utf-8');
@@ -120,7 +120,7 @@ suite('infra/xml — вынос чтения источников EventSubscript
     // existsSync видит путь (это директория с расширением .xml — вырожденный, но
     // реальный случай повреждённой/самодельной выгрузки), а readFileSync бросает
     // EISDIR — покрывает catch-ветку без мока fs, на настоящей файловой системе.
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-a1-eisdir-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-a1-eisdir-'));
     const definedTypesDir = path.join(configRoot, 'DefinedTypes');
     fs.mkdirSync(definedTypesDir, { recursive: true });
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), '<MetaDataObject/>', 'utf-8');
@@ -155,7 +155,7 @@ suite('infra/xml — вынос чтения источников EventSubscript
     // и тот же Set<string> seenDefinedTypes по рекурсии, поэтому повторное появление
     // "Циклический" во втором проходе обязано вернуть null (ветка seenDefinedTypes.has),
     // а не уйти в бесконечную рекурсию.
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-a1-cycle-guard-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-a1-cycle-guard-'));
     fs.mkdirSync(path.join(root, 'DefinedTypes'), { recursive: true });
     fs.writeFileSync(
       path.join(root, 'Configuration.xml'),
@@ -193,7 +193,7 @@ suite('infra/xml — вынос чтения источников EventSubscript
     // resolveConfigurationXml успешно резолвит корень, а readDefinedTypeInnerXml
     // возвращает null (нет файла DefinedTypes/НесуществующийИсточник.xml) — ветка
     // `inner === null` внутри readDefinedTypeSourceValue.
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-a1-missing-definedtype-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-a1-missing-definedtype-'));
     fs.mkdirSync(path.join(root, 'DefinedTypes'), { recursive: true });
     fs.writeFileSync(
       path.join(root, 'Configuration.xml'),

@@ -23,7 +23,7 @@ function webviewManifestPlugin(): Plugin {
   let cssAssets: string[] = [];
 
   return {
-    name: 'v8vscedit-webview-manifest',
+    name: 'onecdev-webview-manifest',
     generateBundle(_options, bundle: OutputBundle) {
       manifest = {};
       cssAssets = Object.values(bundle)

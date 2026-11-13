@@ -263,7 +263,7 @@ suite('RepositoryLockSync — runRepositoryLockFlow: guard/busy семантик
   // Настоящий TOCTOU-сценарий (guard свободен на предпроверке
   // ensureRepositoryGuardFree, но занят чужой арендой к моменту показа
   // askRecursiveMode/pickBoolean и последующего runExclusive) относится к
-  // ОБВЯЗКЕ команды `v8vscedit.repository.lock` в `RepositoryCommands.ts` —
+  // ОБВЯЗКЕ команды `onecdev.repository.lock` в `RepositoryCommands.ts` —
   // сам `runRepositoryLockFlow` получает уже разрешённый `recursive: boolean`
   // и делает единственную атомарную проверку через `guard.runExclusive`
   // (эквивалентно первому тесту этого suite). Гонка целиком между
@@ -1764,7 +1764,7 @@ suite('RepositoryLockSync — частичный отказ захвата (issu
     removeFormFromProject(harness);
     const fixture = createPartialDumpFixture(EXAMPLE_CF, 'ТорговыйУчет');
     const dumpDirs: string[] = [];
-    const stateFile = path.join(harness.workspaceRoot, '.v8vscedit', 'repository', 'state.json');
+    const stateFile = path.join(harness.workspaceRoot, '.onecdev', 'repository', 'state.json');
     const notes = notifications();
     try {
       const deps = baseDeps({

@@ -35,7 +35,7 @@ export interface AddToolsHarness {
 }
 
 export function createAddToolsHarness(version = '2.21'): AddToolsHarness {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-add-harness-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-add-harness-'));
   fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), [
     '<?xml version="1.0" encoding="utf-8"?>',
     `<MetaDataObject version="${version}">`,

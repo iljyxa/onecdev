@@ -31,11 +31,11 @@ import {
  */
 
 const TOOL = {
-  info: 'v8vscedit_form_info',
-  validate: 'v8vscedit_validate_form',
-  compile: 'v8vscedit_compile_form',
-  edit: 'v8vscedit_edit_form',
-  remove: 'v8vscedit_remove_form',
+  info: 'onecdev_form_info',
+  validate: 'onecdev_validate_form',
+  compile: 'onecdev_compile_form',
+  edit: 'onecdev_edit_form',
+  remove: 'onecdev_remove_form',
 } as const;
 
 interface FormKindCase {

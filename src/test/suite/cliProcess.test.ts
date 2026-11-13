@@ -36,8 +36,8 @@ suite('CLI и запуск процессов', () => {
   });
 
   test('формирует пути проекта и параметры подключения 1С', () => {
-    const projectRoot = path.join(os.tmpdir(), 'v8vscedit-project');
-    const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-v8path-'));
+    const projectRoot = path.join(os.tmpdir(), 'onecdev-project');
+    const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-v8path-'));
     const v8Path = path.join(binDir, process.platform === 'win32' ? '1cv8.exe' : '1cv8');
     fs.writeFileSync(v8Path, '', 'utf-8');
     fs.chmodSync(v8Path, 0o755);
@@ -79,7 +79,7 @@ suite('CLI и запуск процессов', () => {
   });
 
   test('работает с реальными временными файлами CLI', () => {
-    const dir = createTempDir('v8vscedit-cli-');
+    const dir = createTempDir('onecdev-cli-');
     const listPath = path.join(dir, 'list.txt');
     writeUtf8BomLines(listPath, ['Первая', 'Вторая']);
 

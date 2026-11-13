@@ -20,7 +20,7 @@ suite('setEditorReadonly — issue #4 (реальная причина): не о
   let tmpFile: string;
 
   setup(() => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-set-editor-readonly-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-set-editor-readonly-'));
     tmpFile = path.join(dir, 'Module.bsl');
     fs.writeFileSync(tmpFile, 'Процедура Тест()\nКонецПроцедуры\n', 'utf-8');
   });

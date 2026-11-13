@@ -30,7 +30,7 @@ export class WebviewHtmlFactory {
 </head>
 <body>
   <div id="app"></div>
-  <script nonce="${nonce}" type="application/json" id="v8vscedit-initial-state">${initialState}</script>
+  <script nonce="${nonce}" type="application/json" id="onecdev-initial-state">${initialState}</script>
   <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
 </body>
 </html>`;

@@ -17,7 +17,7 @@ suite('findObjectXmlInFolder', () => {
   let tempRoot: string;
 
   setup(() => {
-    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-object-location-'));
+    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-object-location-'));
   });
 
   teardown(() => {

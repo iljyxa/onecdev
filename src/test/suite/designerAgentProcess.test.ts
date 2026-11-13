@@ -23,7 +23,7 @@ suite('DesignerAgentProcess', () => {
       connection,
       agentPort: 1543,
       agentListenAddress: '127.0.0.1',
-      agentBaseDir: '/tmp/project/.v8vscedit/agent/base',
+      agentBaseDir: '/tmp/project/.onecdev/agent/base',
     });
 
     assert.deepStrictEqual(args, [
@@ -37,7 +37,7 @@ suite('DesignerAgentProcess', () => {
       '127.0.0.1',
       '/AgentSSHHostKeyAuto',
       '/AgentBaseDir',
-      '/tmp/project/.v8vscedit/agent/base',
+      '/tmp/project/.onecdev/agent/base',
     ]);
   });
 
@@ -148,7 +148,7 @@ suite('DesignerAgentProcess', () => {
   // на выполнение) в понятную причину — самостоятельная ветка switch, не
   // покрытая ENOEXEC-сценарием выше (там файл именно исполняемый, но "битый").
   test('spawn-ошибка EACCES (файл без права на выполнение) отражается в getExitDescription', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-eacces-v8-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-eacces-v8-'));
     const executableName = process.platform === 'win32' ? '1cv8.exe' : '1cv8';
     const noExecPath = path.join(dir, executableName);
     fs.writeFileSync(noExecPath, '#!/bin/sh\nexit 0\n');
@@ -207,7 +207,7 @@ suite('DesignerAgentProcess', () => {
   // без этого теста ветка нормального onExit (без предшествующей spawn-ошибки)
   // осталась бы непокрытой.
   test('штатный запуск и нормальное завершение процесса: код/сигнал попадают в getExitDescription', async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-real-v8-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-real-v8-'));
     const executableName = process.platform === 'win32' ? '1cv8.exe' : '1cv8';
     const scriptPath = path.join(dir, executableName);
     fs.writeFileSync(scriptPath, '#!/bin/sh\necho stdout-строка\necho stderr-строка 1>&2\nexit 7\n');
@@ -256,12 +256,12 @@ suite('DesignerAgentProcess', () => {
  * os.tmpdir(): строка shebang длиннее буфера ядра (~255 байт) тоже даёт ENOEXEC.
  */
 function createBrokenExecutable(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-broken-v8-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-broken-v8-'));
   const executableName = process.platform === 'win32' ? '1cv8.exe' : '1cv8';
   const brokenPath = path.join(dir, executableName);
   const content = process.platform === 'win32'
     ? '\x00\x00not-a-real-executable\x00\x00'
-    : '#!/nonexistent-v8vscedit/interpreter\n';
+    : '#!/nonexistent-onecdev/interpreter\n';
   fs.writeFileSync(brokenPath, content);
   fs.chmodSync(brokenPath, 0o755);
   return brokenPath;

@@ -42,7 +42,7 @@ suite('CfeBorrowService — доимствование в XML объекта р�
   const objectFile = (name: string): string => path.join(extDir, 'Catalogs', `${name}.xml`);
 
   setup(() => {
-    extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-borrow-eol-'));
+    extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-borrow-eol-'));
     fs.cpSync(EVOLC_DIR, extDir, { recursive: true });
     service = new CfeBorrowService();
   });

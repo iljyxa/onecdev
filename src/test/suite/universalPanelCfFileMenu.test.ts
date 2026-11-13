@@ -47,8 +47,8 @@ const EXTENSION_ROOT = path.resolve(__dirname, '../../../');
 const CF_ROOT = path.resolve(__dirname, '../../../example/2.20/src/cf');
 const CFE_EVOLC_ROOT = path.resolve(__dirname, '../../../example/2.21/src/cfe/EVOLC');
 
-const DUMP_COMMAND_ID = 'v8vscedit.dumpConfigurationToCf';
-const LOAD_COMMAND_ID = 'v8vscedit.loadConfigurationFromCf';
+const DUMP_COMMAND_ID = 'onecdev.dumpConfigurationToCf';
+const LOAD_COMMAND_ID = 'onecdev.loadConfigurationFromCf';
 
 interface ActionDto {
   readonly id: string;
@@ -120,7 +120,7 @@ function createFakeWebview(): {
 }
 
 function extractInitialState(html: string): InitialStateLike {
-  const match = /<script[^>]*id="v8vscedit-initial-state"[^>]*>([\s\S]*?)<\/script>/.exec(html);
+  const match = /<script[^>]*id="onecdev-initial-state"[^>]*>([\s\S]*?)<\/script>/.exec(html);
   assert.ok(match, `в HTML не найден блок начального состояния: ${html.slice(0, 200)}...`);
   return JSON.parse(match[1]) as InitialStateLike;
 }
@@ -153,7 +153,7 @@ suite('UniversalPanelViewProvider — пункты меню CF-файла в к�
 
   suiteSetup(function () {
     this.timeout(30_000);
-    cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-universal-cf-menu-')));
+    cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-universal-cf-menu-')));
     const entries: ConfigEntry[] = [
       { kind: 'cf', rootPath: CF_ROOT },
       { kind: 'cfe', rootPath: CFE_EVOLC_ROOT },

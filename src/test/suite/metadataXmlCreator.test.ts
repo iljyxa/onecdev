@@ -13,7 +13,7 @@ import {
 
 suite('metadataXmlCreator', () => {
   test('создаёт корневой объект и сохраняет изменённость после пересборки meta-кэша', () => {
-    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-project-'));
+    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-project-'));
     const configRoot = path.join(projectRoot, 'src', 'cf');
     fs.mkdirSync(configRoot, { recursive: true });
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
@@ -28,7 +28,7 @@ suite('metadataXmlCreator', () => {
     assert.ok(fs.existsSync(path.join(configRoot, 'Catalogs', 'Товары.xml')));
     assert.ok(fs.existsSync(path.join(configRoot, 'Catalogs', 'Товары', 'Ext', 'ObjectModule.bsl')));
 
-    fs.rmSync(path.join(projectRoot, '.v8vscedit', 'meta'), { recursive: true, force: true });
+    fs.rmSync(path.join(projectRoot, '.onecdev', 'meta'), { recursive: true, force: true });
     detector.ensureCaches([entry]);
     const changed = detector.detect([entry]);
     assert.strictEqual(changed.length, 1);
@@ -36,7 +36,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('Catalog получает полный набор обязательных свойств, чтобы Designer не висел на partial load', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-catalog-defaults-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-catalog-defaults-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -64,7 +64,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('наследует версию формата XML из текущей выгрузки', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-format-version-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-format-version-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
     fs.writeFileSync(path.join(configRoot, 'ConfigDumpInfo.xml'), buildDumpInfoXml('2.21'), 'utf-8');
 
@@ -97,7 +97,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('создаёт дочерний макет с выбранным типом и правильным файлом содержимого', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-template-types-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-template-types-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -151,7 +151,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('добавляет макет в корневый ChildObjects объекта после табличных частей', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-template-after-ts-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-template-after-ts-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -179,7 +179,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('повторная регистрация макета чинит вложенную запись и не перетирает содержимое', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-template-repair-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-template-repair-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -213,7 +213,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('создаёт общий макет с выбранным типом', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-common-template-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-common-template-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -232,7 +232,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('создаёт файл текстового макета при ленивом открытии', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-open-text-template-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-open-text-template-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -257,7 +257,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('заполняет основной макет СКД отчёта при создании схемы компоновки', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-report-dcs-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-report-dcs-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -281,7 +281,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('объявляет namespace xs для стандартных типов XDTO', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-xs-namespace-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-xs-namespace-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -295,7 +295,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('не добавляет <ChildObjects/> для объектов без дочерних элементов (SessionParameter, Constant, Style, и т.п.)', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-no-children-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-no-children-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
     const creator = new MetadataXmlCreator();
 
@@ -312,7 +312,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('создаёт InternalInfo для объектов и табличных частей по правилам meta-compile', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-internal-info-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-internal-info-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml('2.21'), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -330,7 +330,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('добавляет реквизит и колонку табличной части без внешних скриптов', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     const root = creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' });
@@ -365,7 +365,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('при смене типа реквизита перестраивает типозависимые свойства и сохраняет общие значения', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     const root = creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' });
@@ -542,7 +542,7 @@ suite('metadataXmlCreator', () => {
   });
 
   test('при смене типа константы перестраивает типозависимые свойства и сохраняет поля константы', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-constant-type-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-constant-type-'));
     const xmlPath = path.join(configRoot, 'Аудитор.xml');
     fs.writeFileSync(xmlPath, [
       '<MetaDataObject>',

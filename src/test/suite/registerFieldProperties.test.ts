@@ -165,7 +165,7 @@ suite('registerFieldProperties — состав свойств полей рег
     // Так выглядят измерения, у которых тип ещё не задан: платформа пишет
     // самозакрытый тег, а вручную созданный XML может не содержать его вовсе.
     for (const typeTag of ['\t\t\t\t\t<Type/>', '']) {
-      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-empty-type-'));
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-empty-type-'));
       fs.mkdirSync(path.join(root, 'InformationRegisters'), { recursive: true });
       const xmlPath = path.join(root, 'InformationRegisters', 'ее_БезТипа.xml');
       fs.writeFileSync(xmlPath, [
@@ -206,7 +206,7 @@ suite('registerFieldProperties — состав свойств полей рег
   test('смена Source/CommandParameterType состав свойств не перестраивает', () => {
     // Нормализация свойств применима только к <Type>: у подписки на событие и
     // общей команды меняется другое свойство, и вид владельца на него не влияет.
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-non-type-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-non-type-'));
     fs.mkdirSync(path.join(root, 'EventSubscriptions'), { recursive: true });
     const subscriptionPath = path.join(root, 'EventSubscriptions', 'ПриЗаписи.xml');
     fs.writeFileSync(subscriptionPath, [
@@ -547,7 +547,7 @@ suite('registerFieldProperties — проверка принадлежности
   });
 
   test('объект без <ChildObjects> и ТЧ без колонок проверку не ломают', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-validate-empty-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-validate-empty-'));
     fs.mkdirSync(path.join(root, 'Constants'), { recursive: true });
     const constantPath = path.join(root, 'Constants', 'Аудитор.xml');
     fs.writeFileSync(constantPath, [
@@ -680,7 +680,7 @@ function writeRegisterXml(
   name: string,
   extras: { dimensionExtra?: string; resourceExtra?: string } = {}
 ): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-register-field-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-register-field-'));
   const dir = path.join(root, `${kind}s`);
   fs.mkdirSync(dir, { recursive: true });
   const xmlPath = path.join(dir, `${name}.xml`);

@@ -58,7 +58,7 @@ suite('ProjectEnvironmentService — секреты (S1)', () => {
   let workspaceRoot: string;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-project-env-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-project-env-'));
   });
 
   teardown(() => {

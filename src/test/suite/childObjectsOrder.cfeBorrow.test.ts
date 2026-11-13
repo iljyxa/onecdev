@@ -14,7 +14,7 @@ import { directChildObjectsTagSequence } from './support/childObjectsCorpus';
  */
 
 function newDirs(): { cfDir: string; extDir: string } {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfeborrow-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfeborrow-'));
   const cfDir = path.join(root, 'cf');
   const extDir = path.join(root, 'ext');
   fs.mkdirSync(cfDir, { recursive: true });

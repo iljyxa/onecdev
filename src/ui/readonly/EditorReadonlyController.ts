@@ -136,7 +136,7 @@ export class EditorReadonlyController {
   }
 
   private planTransitions(event: RepositoryLocksChangedNotice): { tabs: OpenTab[]; applyNow: ReadonlyTransition[] } {
-    // Служебный `.v8vscedit/` попадает внутрь configRoot, когда тот совпадает с корнем
+    // Служебный `.onecdev/` попадает внутрь configRoot, когда тот совпадает с корнем
     // рабочей области; его файлы (бэкапы слияния в сравнениях) иначе сошли бы за
     // файлы корня и переключались бы вместе с ним.
     const tabs = collectOpenTabs().filter((tab) => !isInsideWorkspaceServiceDir(event.target.configRoot, tab.path));

@@ -34,7 +34,7 @@ function readXml(filePath: string): string {
 }
 
 function newConfigRoot(version = '2.21'): string {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-child-order-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-child-order-'));
   const configXml = [
     '<?xml version="1.0" encoding="utf-8"?>',
     `<MetaDataObject version="${version}">`,
@@ -79,7 +79,7 @@ suite('ChildObjects/декларация: T-3 — все генераторы XM
   });
 
   test('ensureTemplateContentFiles(TextDocument): без XML-декларации (обычный текстовый файл) — не применимо, пропускаем декларацию, но файл создаётся', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-tpl-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-tpl-'));
     const created = ensureTemplateContentFiles(dir, 'TextDocument', '2.21');
     assert.strictEqual(created.length, 1);
   });
@@ -94,7 +94,7 @@ suite('ChildObjects/декларация: T-3 — все генераторы XM
 
   for (const { type, label } of templateTypesWithXmlDeclaration) {
     test(`ensureTemplateContentFiles(${type}): ${label} — первая строка "<?xml ... encoding=\\"UTF-8\\"?>"`, () => {
-      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-tpl-'));
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-tpl-'));
       const created = ensureTemplateContentFiles(dir, type, '2.21');
       const xmlFile = created.find((f) => f.endsWith('.xml'));
       assert.ok(xmlFile, `${type}: не создан описательный .xml`);

@@ -66,7 +66,7 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
     await manager?.stop();
     manager = undefined;
     await vscode.workspace
-      .getConfiguration('v8vscedit.bslAnalyzer')
+      .getConfiguration('onecdev.bslAnalyzer')
       .update('path', undefined, vscode.ConfigurationTarget.Global);
     if (tempRoot) {
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -86,7 +86,7 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
       { mode: 0o755 }
     );
     await vscode.workspace
-      .getConfiguration('v8vscedit.bslAnalyzer')
+      .getConfiguration('onecdev.bslAnalyzer')
       .update('path', launcher, vscode.ConfigurationTarget.Global);
 
     const lines: string[] = [];

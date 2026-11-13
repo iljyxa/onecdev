@@ -94,8 +94,8 @@ for (const version of ['2.20', '2.21']) {
       let objFile: string;
 
       setup(() => {
-        cfDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-borrow-dollar-cf-'));
-        extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-borrow-dollar-ext-'));
+        cfDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-borrow-dollar-cf-'));
+        extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-borrow-dollar-ext-'));
         fs.mkdirSync(path.join(cfDir, 'Documents'));
         fs.writeFileSync(path.join(cfDir, 'Documents', `${OBJECT_NAME}.xml`), dollarXml, 'utf-8');
         // Расширение берётся реальное (EVOLC): Document в нём ещё не заимствован, оболочку создаёт сервис.

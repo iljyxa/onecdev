@@ -158,7 +158,7 @@ suite('ConfigParser — объекты метаданных', () => {
   });
 
   test('Добавляет стандартные реквизиты, если у корневого объекта нет Properties', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-object-reader-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-object-reader-'));
     const xmlPath = path.join(dir, 'Catalog.xml');
     fs.writeFileSync(
       xmlPath,

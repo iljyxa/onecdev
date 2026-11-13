@@ -2,7 +2,7 @@
 .cursor/
 .vscode/
 .codex
-.v8vscedit/
+.onecdev/
 .kilo
 env.json
 

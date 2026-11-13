@@ -32,7 +32,7 @@ suite('ProjectEnvironmentService — выбор базы после переза
   let workspaceRoot: string;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-env-base-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-env-base-'));
   });
 
   teardown(() => {

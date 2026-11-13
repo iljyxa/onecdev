@@ -131,7 +131,7 @@ suite('RepositoryCommands — подключение и создание хра�
   const lockState = (fullName: string): string => ws.service.lockState.getLockInfo(ws.target, fullName).state;
 
   test('connect: привязка под арендой, команда ждёт пост-синхронизацию и определение своих захватов', async () => {
-    await vscode.commands.executeCommand('v8vscedit.repository.connect', node());
+    await vscode.commands.executeCommand('onecdev.repository.connect', node());
     assert.deepStrictEqual(cliRequests.map((item) => [item.request.command, item.heldBy]),
       [['repository-bind', 'Подключение к хранилищу: ТорговыйУчет']]);
     assert.deepStrictEqual(postSyncCalls, [ws.target]);
@@ -143,7 +143,7 @@ suite('RepositoryCommands — подключение и создание хра�
 
   test('connect: отказ «Конфигурация не пустая!» — подсказка про -ForceReplaceCfg, пост-синхронизации нет', async () => {
     cliResult = { status: 'failed', message: 'Ошибка при подключении к хранилищу: Ошибка подключения', output: readFixture('bind-not-empty.out.txt') };
-    await vscode.commands.executeCommand('v8vscedit.repository.connect', node());
+    await vscode.commands.executeCommand('onecdev.repository.connect', node());
     assert.strictEqual(errors.length, 1);
     assert.ok(errors[0].includes('(-ForceReplaceCfg)'), errors[0]);
     assert.deepStrictEqual(postSyncCalls, []);
@@ -153,7 +153,7 @@ suite('RepositoryCommands — подключение и создание хра�
   for (const noBind of [true, false]) {
     test(`create, noBind=${String(noBind)}: пост-синхронизация и определение захватов ${noBind ? 'не выполняются' : 'получают вывод'}`, async () => {
       formData = { ...formData, noBind };
-      await vscode.commands.executeCommand('v8vscedit.repository.create', node());
+      await vscode.commands.executeCommand('onecdev.repository.create', node());
       assert.deepStrictEqual(cliRequests.map((item) => item.request.command), ['repository-create']);
       assert.strictEqual(postSyncCalls.length, noBind ? 0 : 1);
       assert.strictEqual(lockState(FORM_ITEM), noBind ? 'free' : 'own-elsewhere');

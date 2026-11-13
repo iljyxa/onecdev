@@ -91,7 +91,7 @@ export class BslAnalyzerService implements vscode.Disposable {
    * В `package.json` default для `path` — `""`; пустое значение означает встроенный кэш, не «запуск без команды».
    */
   private getConfiguredExecutablePath(): string | undefined {
-    const raw = vscode.workspace.getConfiguration('v8vscedit.bslAnalyzer').get<string | undefined>('path');
+    const raw = vscode.workspace.getConfiguration('onecdev.bslAnalyzer').get<string | undefined>('path');
     if (typeof raw !== 'string') {
       return undefined;
     }
@@ -235,7 +235,7 @@ export class BslAnalyzerService implements vscode.Disposable {
           return;
         }
         const mod = isHttps ? https : http;
-        const req = mod.get(targetUrl, { headers: { 'User-Agent': 'v8vscedit' } }, (res) => {
+        const req = mod.get(targetUrl, { headers: { 'User-Agent': 'onecdev' } }, (res) => {
           if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
             if (redirects >= BslAnalyzerService.MAX_REDIRECTS) {
               clearTimeout(timer);
@@ -285,7 +285,7 @@ export class BslAnalyzerService implements vscode.Disposable {
           return;
         }
         const mod = isHttps ? https : http;
-        const req = mod.get(targetUrl, { headers: { 'User-Agent': 'v8vscedit' } }, (res) => {
+        const req = mod.get(targetUrl, { headers: { 'User-Agent': 'onecdev' } }, (res) => {
           if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
             if (redirects >= BslAnalyzerService.MAX_REDIRECTS) {
               clearTimeout(timer);
@@ -350,7 +350,7 @@ export class BslAnalyzerService implements vscode.Disposable {
       const fail = (err: Error) => { if (!settled) { settled = true; reject(err); } };
       const succeed = (value: Record<string, unknown>) => { if (!settled) { settled = true; resolve(value); } };
 
-      const req = https.get(url, { headers: { 'User-Agent': 'v8vscedit', Accept: 'application/json' } }, (res) => {
+      const req = https.get(url, { headers: { 'User-Agent': 'onecdev', Accept: 'application/json' } }, (res) => {
         let body = '';
         res.on('data', (c: Buffer) => { body += c.toString(); });
         res.on('end', () => {

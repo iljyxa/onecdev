@@ -4,9 +4,9 @@ import * as path from 'path';
 import { ConfigurationCleanWindow } from '../../infra/fs/ConfigurationCleanWindow';
 
 suite('ConfigurationCleanWindow', () => {
-  const root = path.join(os.tmpdir(), 'v8vscedit-clean-window', 'src', 'cf');
+  const root = path.join(os.tmpdir(), 'onecdev-clean-window', 'src', 'cf');
   const insideFile = path.join(root, 'Catalogs', 'Товары.xml');
-  const otherRoot = path.join(os.tmpdir(), 'v8vscedit-clean-window', 'src', 'cfe', 'EVOLC');
+  const otherRoot = path.join(os.tmpdir(), 'onecdev-clean-window', 'src', 'cfe', 'EVOLC');
 
   test('без открытого окна события файлов обрабатываются как обычно', () => {
     const window = new ConfigurationCleanWindow();

@@ -1,13 +1,13 @@
 /**
  * Регистрация MCP-инструментов добавления метаданных.
  *
- * Декомпозиция бывшего `v8vscedit_add_metadata_by_path` на отдельные tools:
- *  - один tool на каждый корневой `MetaKind` (`v8vscedit_add_catalog`,
- *    `v8vscedit_add_document`, …);
- *  - один tool на каждый дочерний `ChildTag` (`v8vscedit_add_attribute`,
- *    `v8vscedit_add_dimension`, `v8vscedit_add_column`, …).
+ * Декомпозиция бывшего `onecdev_add_metadata_by_path` на отдельные tools:
+ *  - один tool на каждый корневой `MetaKind` (`onecdev_add_catalog`,
+ *    `onecdev_add_document`, …);
+ *  - один tool на каждый дочерний `ChildTag` (`onecdev_add_attribute`,
+ *    `onecdev_add_dimension`, `onecdev_add_column`, …).
  *
- * Цель: агент видит в каталоге tools «v8vscedit_add_catalog» и сразу понимает,
+ * Цель: агент видит в каталоге tools «onecdev_add_catalog» и сразу понимает,
  * что и куда он добавляет, не размышляя про `childTag`/`templateType`/`path`.
  *
  * Регистрация устроена фабриками `registerAddRootTool`/`registerAddChildTool` —
@@ -25,7 +25,7 @@ import type { MetadataMutationService } from '../commands/metadata/MetadataMutat
 import type { McpMetadataPathService } from './McpMetadataPathService';
 
 /**
- * Поддерживаемые типы макетов для `v8vscedit_add_template`/`v8vscedit_add_common_template`.
+ * Поддерживаемые типы макетов для `onecdev_add_template`/`onecdev_add_common_template`.
  * Совпадает с `TemplateType` в `infra/xml/MetadataXmlCreator.ts`.
  */
 const TEMPLATE_TYPES = [
@@ -129,7 +129,7 @@ export const ROOT_ADD_KINDS: readonly MetaKind[] = [
  * сообщений из недр XML-конвертера.
  */
 export interface ChildAddToolDescriptor {
-  /** Имя MCP-инструмента, например `v8vscedit_add_attribute`. */
+  /** Имя MCP-инструмента, например `onecdev_add_attribute`. */
   readonly toolName: string;
   /**
    * `ChildTag` для XML-конвертера. Для колонок табличной части — литерал
@@ -146,18 +146,18 @@ export interface ChildAddToolDescriptor {
   readonly allowedOwnerKinds: readonly MetaKind[];
   /**
    * Указатель на то, что tool работает внутри табличной части. Поле задаётся
-   * только для `v8vscedit_add_column` — отличает её от прочих дочерних tools.
+   * только для `onecdev_add_column` — отличает её от прочих дочерних tools.
    */
   readonly inTabularSection?: true;
   /**
    * Указатель на то, что tool работает внутри URL-шаблона HTTP-сервиса. Поле
-   * задаётся только для `v8vscedit_add_method` — аналог `inTabularSection`
-   * у `v8vscedit_add_column` (контейнер-владелец — узел `URLTemplate`).
+   * задаётся только для `onecdev_add_method` — аналог `inTabularSection`
+   * у `onecdev_add_column` (контейнер-владелец — узел `URLTemplate`).
    */
   readonly inUrlTemplate?: true;
 }
 
-// Форма добавляется через отдельный v8vscedit_add_form (см. V8McpServer) —
+// Форма добавляется через отдельный onecdev_add_form (см. V8McpServer) —
 // в этом списке tools для добавления формы как тонкой обёртки нет.
 
 /**
@@ -176,13 +176,13 @@ function ownersWithChildTag(tag: ChildTag): readonly MetaKind[] {
 /**
  * Дескрипторы tools для добавления дочерних элементов.
  *
- * `v8vscedit_add_form` НЕ входит в этот список — для добавления формы есть
+ * `onecdev_add_form` НЕ входит в этот список — для добавления формы есть
  * отдельный, более богатый, инструмент с аргументами `purpose`/`autoFill`/…
  * (см. `V8McpServer.registerTools()`).
  */
 export const CHILD_ADD_TOOLS: readonly ChildAddToolDescriptor[] = [
   {
-    toolName: 'v8vscedit_add_attribute',
+    toolName: 'onecdev_add_attribute',
     childTag: 'Attribute',
     russianLabel: 'реквизит',
     // Исключение из вывода: общий реквизит сам по себе объект-реквизит, у него
@@ -190,49 +190,49 @@ export const CHILD_ADD_TOOLS: readonly ChildAddToolDescriptor[] = [
     allowedOwnerKinds: [...ownersWithChildTag('Attribute'), 'CommonAttribute'],
   },
   {
-    toolName: 'v8vscedit_add_addressing_attribute',
+    toolName: 'onecdev_add_addressing_attribute',
     childTag: 'AddressingAttribute',
     russianLabel: 'реквизит адресации',
     allowedOwnerKinds: ownersWithChildTag('AddressingAttribute'),
   },
   {
-    toolName: 'v8vscedit_add_tabular_section',
+    toolName: 'onecdev_add_tabular_section',
     childTag: 'TabularSection',
     russianLabel: 'табличную часть',
     allowedOwnerKinds: ownersWithChildTag('TabularSection'),
   },
   {
-    toolName: 'v8vscedit_add_command',
+    toolName: 'onecdev_add_command',
     childTag: 'Command',
     russianLabel: 'команду',
     allowedOwnerKinds: ownersWithChildTag('Command'),
   },
   {
-    toolName: 'v8vscedit_add_template',
+    toolName: 'onecdev_add_template',
     childTag: 'Template',
     russianLabel: 'макет',
     allowedOwnerKinds: ownersWithChildTag('Template'),
   },
   {
-    toolName: 'v8vscedit_add_dimension',
+    toolName: 'onecdev_add_dimension',
     childTag: 'Dimension',
     russianLabel: 'измерение',
     allowedOwnerKinds: ownersWithChildTag('Dimension'),
   },
   {
-    toolName: 'v8vscedit_add_resource',
+    toolName: 'onecdev_add_resource',
     childTag: 'Resource',
     russianLabel: 'ресурс',
     allowedOwnerKinds: ownersWithChildTag('Resource'),
   },
   {
-    toolName: 'v8vscedit_add_enum_value',
+    toolName: 'onecdev_add_enum_value',
     childTag: 'EnumValue',
     russianLabel: 'значение перечисления',
     allowedOwnerKinds: ownersWithChildTag('EnumValue'),
   },
   {
-    toolName: 'v8vscedit_add_column',
+    toolName: 'onecdev_add_column',
     childTag: 'Column',
     russianLabel: 'колонку табличной части',
     // Исключение из вывода: `Column` не входит в `ChildTag` (колонка ТЧ
@@ -242,13 +242,13 @@ export const CHILD_ADD_TOOLS: readonly ChildAddToolDescriptor[] = [
     inTabularSection: true,
   },
   {
-    toolName: 'v8vscedit_add_url_template',
+    toolName: 'onecdev_add_url_template',
     childTag: 'URLTemplate',
     russianLabel: 'URL-шаблон',
     allowedOwnerKinds: ownersWithChildTag('URLTemplate'),
   },
   {
-    toolName: 'v8vscedit_add_method',
+    toolName: 'onecdev_add_method',
     childTag: 'Method',
     russianLabel: 'метод',
     allowedOwnerKinds: ownersWithChildTag('Method'),
@@ -286,11 +286,11 @@ export function registerAllAddTools(server: McpServer, ctx: RegistrationContext)
  * Регистрирует tool добавления корневого объекта `kind`.
  *
  * Имя tool строится через `englishKind` в snake_case
- * (`Catalog` → `v8vscedit_add_catalog`, `CommonModule` → `v8vscedit_add_common_module`).
+ * (`Catalog` → `onecdev_add_catalog`, `CommonModule` → `onecdev_add_common_module`).
  */
 export function registerAddRootTool(server: McpServer, kind: MetaKind, ctx: RegistrationContext): void {
   const def = META_TYPES[kind];
-  const toolName = `v8vscedit_add_${toSnakeCase(def.englishKind ?? def.kind)}`;
+  const toolName = `onecdev_add_${toSnakeCase(def.englishKind ?? def.kind)}`;
   const inputShape: Record<string, z.ZodType> = {
     name: z.string(),
     configuration: z.string().optional(),
@@ -536,10 +536,10 @@ function buildRootDescription(kind: MetaKind): string {
   const def = META_TYPES[kind];
   const segment = def.pathSegment ?? def.pluralLabel;
   if (kind === 'Subsystem') {
-    // Подсистемы первого уровня — здесь, вложенные — через v8vscedit_compile_subsystem.
+    // Подсистемы первого уровня — здесь, вложенные — через onecdev_compile_subsystem.
     return [
       'Добавляет подсистему первого уровня в конфигурацию или расширение.',
-      'Для вложенных подсистем (Подсистема.А.Б) используй v8vscedit_compile_subsystem с parentPath.',
+      'Для вложенных подсистем (Подсистема.А.Б) используй onecdev_compile_subsystem с parentPath.',
       `Пример: name="${exampleName(kind)}".`,
     ].join(' ');
   }

@@ -125,12 +125,12 @@ function propertyKeys(
 }
 
 function createTempConfigRoot(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-panel-owner-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-panel-owner-'));
 }
 
 /** Проект с основной конфигурацией и расширением рядом — иначе родитель не резолвится. */
 function buildBorrowedProject(): { cfRoot: string; cfeRoot: string } {
-  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-borrowed-'));
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-borrowed-'));
   const cfRoot = path.join(projectRoot, 'src', 'cf');
   fs.mkdirSync(cfRoot, { recursive: true });
   fs.writeFileSync(

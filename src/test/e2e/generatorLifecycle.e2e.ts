@@ -152,7 +152,7 @@ function objectXmlPath(kind: MetaKind, name: string): string {
 
 async function loadIntoBase(): Promise<boolean> {
   return isConfigurationCommandSucceeded(
-    await vscode.commands.executeCommand<ConfigurationCommandOutcome>('v8vscedit.updateChangedConfigurations')
+    await vscode.commands.executeCommand<ConfigurationCommandOutcome>('onecdev.updateChangedConfigurations')
   );
 }
 
@@ -325,7 +325,7 @@ suite('E2E: матрица генерации по видам метаданны
   this.timeout(60 * 60 * 1000);
 
   suiteSetup(async () => {
-    const ext = vscode.extensions.all.find((e) => (e.packageJSON as { name?: string }).name === 'v8vscedit');
+    const ext = vscode.extensions.all.find((e) => (e.packageJSON as { name?: string }).name === 'onecdev');
     if (!ext) {
       return;
     }

@@ -24,7 +24,7 @@ function buildIdentity(overrides: Partial<McpServerIdentity> = {}): McpServerIde
     product: PRODUCT_ID,
     protocol: IDENTITY_PROTOCOL,
     pid: process.pid,
-    projectRoot: '/tmp/v8vscedit-fixture-project',
+    projectRoot: '/tmp/onecdev-fixture-project',
     version: '0.4.1',
     endpoint: 'http://127.0.0.1:38481/mcp',
     ...overrides,

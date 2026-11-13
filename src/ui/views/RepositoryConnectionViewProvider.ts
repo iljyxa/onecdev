@@ -45,7 +45,7 @@ type RepositoryConnectionMessage =
  * Использует Vue-приложение для рендеринга формы.
  */
 export class RepositoryConnectionViewProvider implements vscode.Disposable {
-  static readonly viewType = 'v8vsceditRepositoryConnectionPanel';
+  static readonly viewType = 'onecdevRepositoryConnectionPanel';
 
   private panel: vscode.WebviewPanel | undefined;
   private currentMode: ConnectionMode = 'connect';

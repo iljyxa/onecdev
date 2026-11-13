@@ -6,7 +6,7 @@ export function registerAiMcpCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.openAiSettings', () => {
+    vscode.commands.registerCommand('onecdev.openAiSettings', () => {
       void services.aiMcpViewProvider?.show();
     })
   );

@@ -33,7 +33,7 @@ suite('RepositoryService — секреты (S1)', () => {
   let target: RepositoryTarget;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-repo-secrets-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-repo-secrets-'));
     const configRoot = path.join(workspaceRoot, 'src', 'cf');
     fs.mkdirSync(configRoot, { recursive: true });
     fs.writeFileSync(

@@ -272,7 +272,7 @@ suite('RepositoryService.createObjectsFileForNode — единицы Form/Templa
 
   for (const { label, node: buildNode, expectedFullName } of matrix) {
     for (const recursive of [false, true]) {
-      test(`${label} × recursive=${String(recursive)}: точная строка Object, fullNames=[единица], без <Subsystem>, файл под .v8vscedit/repository/objects`, () => {
+      test(`${label} × recursive=${String(recursive)}: точная строка Object, fullNames=[единица], без <Subsystem>, файл под .onecdev/repository/objects`, () => {
         const harness = createHarness();
         try {
           const result = harness.service.createObjectsFileForNode(buildNode(harness), recursive);
@@ -280,7 +280,7 @@ suite('RepositoryService.createObjectsFileForNode — единицы Form/Templa
           assert.deepStrictEqual(result.fullNames, [expectedFullName]);
           assert.strictEqual(
             path.dirname(result.filePath),
-            path.join(harness.workspaceRoot, '.v8vscedit', 'repository', 'objects')
+            path.join(harness.workspaceRoot, '.onecdev', 'repository', 'objects')
           );
 
           const content = fs.readFileSync(result.filePath, 'utf-8');

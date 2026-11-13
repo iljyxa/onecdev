@@ -1,6 +1,6 @@
 /**
  * ПИВОТ: представление «Изменения метаданных» переходит с нативного TreeView
- * на webview `v8vsceditChanges`, переиспользующий Vue-дерево универсальной
+ * на webview `onecdevChanges`, переиспользующий Vue-дерево универсальной
  * панели (та же DTO-модель, что строит `changesDtoBuilder`), со SCM-шапкой
  * (сообщение коммита, кнопки commit/refresh/stage-all). Движок ВЕХИ 1
  * (`infra/git/*`, `ui/git/OnecGitContentProvider`) не меняется — провайдер
@@ -140,12 +140,12 @@ function findDescendantByLabel(node: TreeNodeDto, label: string): TreeNodeDto | 
 /**
  * Строит реальный `MetadataTreeProvider` над кэшем метаданных фикстуры —
  * источник навигаторной иерархии, которую обязана повторять панель «Изменения
- * метаданных». Кэш (`.v8vscedit/meta/*.json`) кладётся В ОТДЕЛЬНОМ temp-каталоге
+ * метаданных». Кэш (`.onecdev/meta/*.json`) кладётся В ОТДЕЛЬНОМ temp-каталоге
  * ВНЕ git-репозитория фикстуры: иначе он попал бы в `git status` как untracked
  * файл и ломал бы точные проверки количества «Прочих» изменений в других тестах.
  */
 function createTreeProvider(entries: ConfigEntry[]): { treeProvider: MetadataTreeProvider; dispose: () => void } {
-  const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-changes-treecache-')));
+  const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-changes-treecache-')));
   const treeProvider = new MetadataTreeProvider(entries, vscode.Uri.file(EXTENSION_ROOT), cacheRoot);
   return {
     treeProvider,
@@ -560,7 +560,7 @@ suite('MetadataChangesViewProvider — webview-презентация предс
 
   test('commit mode=sync коммитит, подтягивает чужой коммит из remote (pull) и отправляет свой (push)', async () => {
     const remote = attachBareRemote(fixture.gitRoot);
-    const otherClone = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-changes-clone-')));
+    const otherClone = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-changes-clone-')));
     try {
       // «Чужой» клон добавляет коммит в remote — его обязан подтянуть pull внутри sync.
       git(otherClone, ['clone', '-q', remote, '.']);
@@ -1063,7 +1063,7 @@ suite('MetadataChangesViewProvider — webview-презентация предс
 
   // ─── Редизайн графа истории: панель абсорбирует протокол «История» ─────
   //
-  // Граф истории git (ранее отдельная вкладка `v8vsceditHistory`) переезжает
+  // Граф истории git (ранее отдельная вкладка `onecdevHistory`) переезжает
   // внутрь ЭТОЙ панели. Модель графа читается ЛЕНИВО (как и модель изменений):
   // ни resolveWebviewView, ни общий refresh() без предварительного
   // loadHistory не обязаны запускать git log истории (запрет №11).

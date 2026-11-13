@@ -13,7 +13,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
   const { paths, services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_add_help',
+    'onecdev_add_help',
     {
       title: 'Добавить встроенную справку',
       description: [
@@ -42,7 +42,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
   );
 
   server.registerTool(
-    'v8vscedit_create_epf',
+    'onecdev_create_epf',
     {
       title: 'Создать внешнюю обработку EPF',
       description: 'Создаёт минимальные XML-исходники внешней обработки: корневой XML, каталог Ext и ObjectModule.bsl.',
@@ -64,7 +64,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
   );
 
   server.registerTool(
-    'v8vscedit_create_erf',
+    'onecdev_create_erf',
     {
       title: 'Создать внешний отчёт ERF',
       description: 'Создаёт минимальные XML-исходники внешнего отчёта; опционально добавляет основную СКД и привязку MainDataCompositionSchema.',
@@ -87,7 +87,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
   );
 
   server.registerTool(
-    'v8vscedit_validate_external_object',
+    'onecdev_validate_external_object',
     {
       title: 'Валидировать EPF/ERF XML',
       description: 'Проверяет структуру XML-исходников внешней обработки или отчёта: InternalInfo, Properties, ChildObjects, ссылки и файлы.',
@@ -101,7 +101,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
   );
 
   server.registerTool(
-    'v8vscedit_epf_bsp_init',
+    'onecdev_epf_bsp_init',
     {
       title: 'Добавить регистрацию БСП',
       description: 'Добавляет функцию СведенияОВнешнейОбработке в ObjectModule.bsl внешней обработки/отчёта и базовый обработчик команды.',
@@ -123,7 +123,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
   );
 
   server.registerTool(
-    'v8vscedit_epf_bsp_add_command',
+    'onecdev_epf_bsp_add_command',
     {
       title: 'Добавить команду БСП',
       description: 'Добавляет команду в СведенияОВнешнейОбработке и создаёт/дополняет серверный, клиентский или печатный обработчик.',

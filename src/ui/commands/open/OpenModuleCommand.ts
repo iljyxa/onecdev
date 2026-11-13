@@ -32,7 +32,7 @@ export function registerOpenModuleCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.openCommonModuleCode', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openCommonModuleCode', async (node: NodeArg, options?: OpenModuleOptions) => {
       const modulePath = await resolveModuleForOpen(
         services,
         node,
@@ -47,7 +47,7 @@ export function registerOpenModuleCommands(
       await openModule(services, modulePath, node, options);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.openObjectModule', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openObjectModule', async (node: NodeArg, options?: OpenModuleOptions) => {
       const modulePath = await resolveModuleForOpen(
         services,
         node,
@@ -62,7 +62,7 @@ export function registerOpenModuleCommands(
       await openModule(services, modulePath, node, options);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.openManagerModule', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openManagerModule', async (node: NodeArg, options?: OpenModuleOptions) => {
       const modulePath = await resolveModuleForOpen(
         services,
         node,
@@ -77,7 +77,7 @@ export function registerOpenModuleCommands(
       await openModule(services, modulePath, node, options);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.openRecordSetModule', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openRecordSetModule', async (node: NodeArg, options?: OpenModuleOptions) => {
       const modulePath = await resolveModuleForOpen(
         services,
         node,
@@ -92,7 +92,7 @@ export function registerOpenModuleCommands(
       await openModule(services, modulePath, node, options);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.openConstantModule', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openConstantModule', async (node: NodeArg, options?: OpenModuleOptions) => {
       const modulePath = await resolveModuleForOpen(
         services,
         node,
@@ -107,7 +107,7 @@ export function registerOpenModuleCommands(
       await openModule(services, modulePath, node, options);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.openServiceModule', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openServiceModule', async (node: NodeArg, options?: OpenModuleOptions) => {
       const modulePath = await resolveModuleForOpen(
         services,
         node,
@@ -122,7 +122,7 @@ export function registerOpenModuleCommands(
       await openModule(services, modulePath, node, options);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.openFormModule', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openFormModule', async (node: NodeArg, options?: OpenModuleOptions) => {
       const isCommonForm = node.nodeKind === 'CommonForm';
       const modulePath = isCommonForm
         ? await resolveModuleForOpen(
@@ -146,7 +146,7 @@ export function registerOpenModuleCommands(
       await openModule(services, modulePath, node, options);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.openCommandModule', async (node: NodeArg, options?: OpenModuleOptions) => {
+    vscode.commands.registerCommand('onecdev.openCommandModule', async (node: NodeArg, options?: OpenModuleOptions) => {
       const isCommonCommand = node.nodeKind === 'CommonCommand';
       const modulePath = isCommonCommand
         ? await resolveModuleForOpen(

@@ -6,7 +6,7 @@ import { CfePatchMethodService } from '../../infra/cfe/CfePatchMethodService';
 
 suite('cfePatchMethodService', () => {
   test('создаёт перехватчик метода объекта с префиксом расширения', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-patch-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-patch-'));
     writeExtensionConfig(root, 'Расш_');
 
     const service = new CfePatchMethodService();
@@ -32,7 +32,7 @@ suite('cfePatchMethodService', () => {
   });
 
   test('добавляет функциональный перехватчик формы в существующий модуль', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-patch-form-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-patch-form-'));
     writeExtensionConfig(root, 'Ext_');
     const formModule = path.join(root, 'Documents', 'Заказ', 'Forms', 'ФормаДокумента', 'Ext', 'Form', 'Module.bsl');
     fs.mkdirSync(path.dirname(formModule), { recursive: true });

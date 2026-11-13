@@ -15,7 +15,7 @@ const EXAMPLE_ROOT = path.resolve(__dirname, '../../../example');
 const ROLES = ['Администратор', 'Кладовщик', 'Продавец'] as const;
 
 function copyRights(version: '2.20' | '2.21', role: string): { readonly rightsPath: string; readonly original: string } {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-role-roundtrip-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-role-roundtrip-'));
   const rightsPath = path.join(root, 'Roles', role, 'Ext', 'Rights.xml');
   fs.mkdirSync(path.dirname(rightsPath), { recursive: true });
   fs.copyFileSync(path.join(EXAMPLE_ROOT, version, 'src', 'cf', 'Roles', role, 'Ext', 'Rights.xml'), rightsPath);
@@ -83,7 +83,7 @@ suite('RoleRightsEditService.edit — Rights.xml реальной выгрузк
     }
   }
   test('роль, созданная расширением (MetadataXmlCreator): правка без изменений не переписывает Rights.xml', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-role-created-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-role-created-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Конфигурация', outputDir: root });
     new MetadataXmlCreator().addRootObject({ configRoot: root, kind: 'Role', name: 'Тест' });
     const rightsPath = path.join(root, 'Roles', 'Тест', 'Ext', 'Rights.xml');

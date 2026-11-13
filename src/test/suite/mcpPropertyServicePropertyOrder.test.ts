@@ -23,7 +23,7 @@ import { EXAMPLE_GENERATIONS, skipWithoutCorpus } from './support/corpus';
 const tempDirs: string[] = [];
 
 function copyReport(name: string): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-prop-order-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-prop-order-'));
   tempDirs.push(dir);
   const target = path.join(dir, `${name}.xml`);
   fs.copyFileSync(path.join(EXAMPLE_GENERATIONS.cf20, 'Reports', `${name}.xml`), target);

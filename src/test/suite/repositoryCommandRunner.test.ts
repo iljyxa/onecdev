@@ -189,7 +189,7 @@ suite('RepositoryCommandRunner — executeRepositoryCli: гарантирова�
   let originalShowErrorMessage: typeof vscode.window.showErrorMessage;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-execcli-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-execcli-'));
     repositoryService = new RepositoryService(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
     target = { configRoot: path.join(workspaceRoot, 'src', 'cf'), configKind: 'cf', displayName: 'Тест' };
     services = {
@@ -339,7 +339,7 @@ suite('RepositoryCommandRunner — executeRepositoryCli: секреты для �
   let workspaceRoot: string;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-execcli-secrets-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-execcli-secrets-'));
   });
 
   teardown(() => {
@@ -398,7 +398,7 @@ suite('RepositoryCommandRunner — runRepositoryCliCommand: обёртка с UI
   let originalShowErrorMessage: typeof vscode.window.showErrorMessage;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-runclicmd-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-runclicmd-'));
     repositoryService = new RepositoryService(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
     target = { configRoot: path.join(workspaceRoot, 'src', 'cf'), configKind: 'cf', displayName: 'Тест' };
     services = {
@@ -477,7 +477,7 @@ suite('RepositoryCommandRunner — runRepositoryCliCommand: внедрение e
   let originalShowErrorMessage: typeof vscode.window.showErrorMessage;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-runclicmd-inject-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-runclicmd-inject-'));
     repositoryService = new RepositoryService(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
     target = { configRoot: path.join(workspaceRoot, 'src', 'cf'), configKind: 'cf', displayName: 'Тест' };
     services = {
@@ -682,7 +682,7 @@ suite('RepositoryCommandRunner — runRepositoryCliCommand: аренда guard\'
   let originalShowErrorMessage: typeof vscode.window.showErrorMessage;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-runclicmd-guard-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-runclicmd-guard-'));
     guard = new ConfigurationOperationGuard();
     logLines = [];
     target = { configRoot: path.join(workspaceRoot, 'src', 'cf'), configKind: 'cf', displayName: 'Тест' };

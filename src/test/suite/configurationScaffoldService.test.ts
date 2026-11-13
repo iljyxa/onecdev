@@ -10,7 +10,7 @@ import {
 
 suite('configurationScaffoldService', () => {
   test('создаёт пустую CF-конфигурацию и она проходит базовую валидацию', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cf-init-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cf-init-'));
     const service = new ConfigurationScaffoldService();
     const result = service.createConfiguration({
       name: 'МояКонфигурация',
@@ -35,8 +35,8 @@ suite('configurationScaffoldService', () => {
   });
 
   test('создаёт CFE-расширение с ролью и наследует режим совместимости из CF', () => {
-    const cfRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cf-base-'));
-    const cfeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-init-'));
+    const cfRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cf-base-'));
+    const cfeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-init-'));
     new ConfigurationScaffoldService().createConfiguration({
       name: 'Основа',
       outputDir: cfRoot,

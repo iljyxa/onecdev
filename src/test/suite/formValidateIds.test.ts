@@ -405,14 +405,14 @@ suite('FormValidateService — T-17: защитные guard-ветки', () => {
   test('путь резолвится, но файл физически отсутствует → "Cannot read file", ранний выход', () => {
     // resolveFormXmlPath не бросает для существующего каталога без Ext/Form.xml
     // внутри — ошибка возникает уже при попытке чтения файла в validate().
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-empty-form-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-empty-form-'));
     const result = service.validate({ formPath: dir, detailed: true });
     assert.strictEqual(result.errors, 1);
     assert.ok(result.lines.some((l) => l.includes('Cannot read file')));
   });
 
   test('файл без <Form> → "Root element is not Form.", id-проверки не выполняются', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-notform-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-notform-'));
     const formPath = path.join(root, 'Form.xml');
     fs.writeFileSync(formPath, '<NotAForm/>', 'utf-8');
     const result = service.validate({ formPath, detailed: true });

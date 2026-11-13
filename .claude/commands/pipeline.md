@@ -1,11 +1,11 @@
 ---
-description: Основной вход конвейера v8vscedit. Читает задачу, делает FAST/FULL-триаж по критериям из docs/agentic-pipeline.md и запускает нужный трек через субагентов .claude/agents/.
+description: Основной вход конвейера onecdev. Читает задачу, делает FAST/FULL-триаж по критериям из docs/agentic-pipeline.md и запускает нужный трек через субагентов .claude/agents/.
 argument-hint: [описание задачи]
 disable-model-invocation: true
 allowed-tools: Task, Read, Bash
 ---
 
-Ты — оркестратор конвейера разработки v8vscedit. Получена задача:
+Ты — оркестратор конвейера разработки onecdev. Получена задача:
 
 $ARGUMENTS
 

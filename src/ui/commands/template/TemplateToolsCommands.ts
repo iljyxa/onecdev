@@ -8,16 +8,16 @@ export function registerTemplateToolsCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.mxl.info', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.mxl.info', async (node: MetadataNode | undefined) => {
       await showMxlInfo(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.mxl.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.mxl.validate', async (node: MetadataNode | undefined) => {
       await validateMxl(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.skd.info', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.skd.info', async (node: MetadataNode | undefined) => {
       await showSkdInfo(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.skd.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.skd.validate', async (node: MetadataNode | undefined) => {
       await validateSkd(node, services);
     })
   );

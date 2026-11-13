@@ -7,22 +7,22 @@ export function registerExternalObjectCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.help.add', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.help.add', async (node: MetadataNode | undefined) => {
       await addHelp(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.epf.create', async () => {
+    vscode.commands.registerCommand('onecdev.epf.create', async () => {
       await createExternalDataProcessor(services);
     }),
-    vscode.commands.registerCommand('v8vscedit.erf.create', async () => {
+    vscode.commands.registerCommand('onecdev.erf.create', async () => {
       await createExternalReport(services);
     }),
-    vscode.commands.registerCommand('v8vscedit.externalObject.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.externalObject.validate', async (node: MetadataNode | undefined) => {
       await validateExternalObject(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.epf.bspInit', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.epf.bspInit', async (node: MetadataNode | undefined) => {
       await initBspRegistration(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.epf.bspAddCommand', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.epf.bspAddCommand', async (node: MetadataNode | undefined) => {
       await addBspCommand(node, services);
     })
   );

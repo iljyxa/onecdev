@@ -23,7 +23,7 @@ VS Code Extension Process (dist/extension.js)
         └── bsl-analyzer lsp
 ```
 
-`LspManager` читает настройку `v8vscedit.lsp.mode`. Клиент подписывается на `.bsl`-документы
+`LspManager` читает настройку `onecdev.lsp.mode`. Клиент подписывается на `.bsl`-документы
 без `synchronize.fileEvents` (`buildBslAnalyzerDocumentOptions`, `lsp/LspManager.ts`): сервер не
 обрабатывает `workspace/didChangeWatchedFiles` и следит за файлами сам, поэтому события клиента —
 лишний трафик на каждую выгрузку во временный каталог операции.
@@ -39,11 +39,11 @@ VS Code Extension Process (dist/extension.js)
 
 | Настройка | Назначение |
 |---|---|
-| `v8vscedit.lsp.mode` | Включает `bsl-analyzer` или отключает LSP |
-| `v8vscedit.bslAnalyzer.autoUpdate` | Проверять обновления при запуске |
-| `v8vscedit.bslAnalyzer.path` | Использовать пользовательский путь к бинарнику |
+| `onecdev.lsp.mode` | Включает `bsl-analyzer` или отключает LSP |
+| `onecdev.bslAnalyzer.autoUpdate` | Проверять обновления при запуске |
+| `onecdev.bslAnalyzer.path` | Использовать пользовательский путь к бинарнику |
 
-Если `v8vscedit.bslAnalyzer.path` пустой, расширение хранит скачанный бинарник
+Если `onecdev.bslAnalyzer.path` пустой, расширение хранит скачанный бинарник
 в `globalStorageUri/bsl-analyzer`.
 
 ## Запуск
@@ -60,16 +60,16 @@ VS Code Extension Process (dist/extension.js)
 
 | Команда | Назначение |
 |---|---|
-| `v8vscedit.bslAnalyzer.showMenu` | Открыть меню управления |
-| `v8vscedit.bslAnalyzer.restart` | Перезапустить LSP |
-| `v8vscedit.bslAnalyzer.update` | Проверить обновления |
-| `v8vscedit.bslAnalyzer.showOutput` | Показать лог |
+| `onecdev.bslAnalyzer.showMenu` | Открыть меню управления |
+| `onecdev.bslAnalyzer.restart` | Перезапустить LSP |
+| `onecdev.bslAnalyzer.update` | Проверить обновления |
+| `onecdev.bslAnalyzer.showOutput` | Показать лог |
 
 ### Перезапуск при появлении основной конфигурации (issue #104)
 
 `bsl-analyzer` выбирает корень конфигурации только один раз при старте: если тогда основной
 выгрузки `src/cf/Configuration.xml` ещё не было, сервер индексирует и отслеживает всю рабочую
-область целиком, включая `.v8vscedit/**` — на Windows его watcher держит дескрипторы этих файлов,
+область целиком, включая `.onecdev/**` — на Windows его watcher держит дескрипторы этих файлов,
 из-за чего удаление временных каталогов операций (хранилище, импорт) падает с `ENOTEMPTY`/`EPERM`.
 
 `Container.reloadEntries()` после перестроения дерева вызывает `restartLspOnRootsChange`, который
@@ -81,7 +81,7 @@ VS Code Extension Process (dist/extension.js)
   корень по `.toml`, а не по составу расширений;
 - исчезновение основной конфигурации — не перезапускает (сервер уже проиндексирован так, как есть,
   откатывать нечего);
-- `v8vscedit.lsp.mode = off` — не перезапускает, при последующем включении сервер стартует заново
+- `onecdev.lsp.mode = off` — не перезапускает, при последующем включении сервер стартует заново
   и сам увидит актуальный состав.
 
 `BslAnalyzerRootTracker.observe()` хранит только факт «есть/нет основной конфигурации» между

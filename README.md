@@ -1,11 +1,11 @@
-# 1С: Редактор конфигураций (v8vscedit)
+# onecdev — разработка на 1С:Предприятие в VS Code
 
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/macegor.v8vscedit?label=Marketplace&color=1e1e1e)](https://marketplace.visualstudio.com/items?itemName=macegor.v8vscedit)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/macegor.v8vscedit)](https://marketplace.visualstudio.com/items?itemName=macegor.v8vscedit)
+`onecdev` — расширение для VS Code и Cursor, которое позволяет полноценно работать с конфигурациями и расширениями 1С:Предприятие прямо в редакторе: просматривать и менять метаданные, писать код, синхронизировать проект с базой, запускать 1С и работать с хранилищем конфигурации.
 
-`v8vscedit` — расширение для VS Code и Cursor, которое позволяет полноценно работать с конфигурациями и расширениями 1С:Предприятие прямо в редакторе: просматривать и менять метаданные, писать код, синхронизировать проект с базой, запускать 1С и работать с хранилищем конфигурации.
-
-Страница в Marketplace: <https://marketplace.visualstudio.com/items?itemName=macegor.v8vscedit>
+> **Происхождение.** onecdev — независимое продолжение (hard fork) проекта
+> [v8vscedit](https://github.com/Macegor/v8vscedit) (автор — Macegor). С 2026-11-13 развивается отдельно,
+> распространяется под той же лицензией GPL-3.0-only (см. [LICENSE](./LICENSE)); авторство и перечень
+> изменений — в [NOTICE](./NOTICE). onecdev не является продуктом фирмы «1С».
 
 В качестве шаблона проекта используется структура `vanessa-bootstrap`: основная конфигурация хранится в `src/cf`, расширения — в `src/cfe/<ИмяРасширения>`, а параметры окружения задаются в `env.json`.
 
@@ -76,33 +76,33 @@
 ### Из Marketplace (рекомендуется)
 
 1. Откройте вкладку **Extensions** (`Ctrl+Shift+X`) в VS Code или Cursor.
-2. Введите в поиске `Редактор конфигураций 1С` или `macegor.v8vscedit` и нажмите **Install**.
+2. Введите в поиске `onecdev` или `iljyxa.onecdev` и нажмите **Install**.
 
 Либо установите одной командой из палитры (`Ctrl+P`):
 
 ```
-ext install macegor.v8vscedit
+ext install iljyxa.onecdev
 ```
 
 Или из терминала:
 
 ```bash
-code --install-extension macegor.v8vscedit
-cursor --install-extension macegor.v8vscedit
+code --install-extension iljyxa.onecdev
+cursor --install-extension iljyxa.onecdev
 ```
 
-Страница расширения: <https://marketplace.visualstudio.com/items?itemName=macegor.v8vscedit>.
+Страница расширения: <https://marketplace.visualstudio.com/items?itemName=iljyxa.onecdev> (после публикации в Marketplace под этим идентификатором; до неё — установка из VSIX).
 
 ### Из VSIX
 
-1. Скачайте `v8vscedit-<версия>.vsix` из [GitHub Releases](https://github.com/Macegor/v8vscedit/releases).
+1. Скачайте `onecdev-<версия>.vsix` из [GitHub Releases](https://github.com/iljyxa/v8vscedit/releases).
 2. В VS Code или Cursor выполните **Extensions → ... → Install from VSIX...**.
 
 Можно установить и из командной строки:
 
 ```bash
-code --install-extension v8vscedit-<версия>.vsix
-cursor --install-extension v8vscedit-<версия>.vsix
+code --install-extension onecdev-<версия>.vsix
+cursor --install-extension onecdev-<версия>.vsix
 ```
 
 ### Из исходников
@@ -120,6 +120,24 @@ npm run watch
 ```
 
 После этого откройте корень репозитория в VS Code или Cursor и нажмите `F5`, чтобы запустить Extension Development Host.
+
+### Переход с v8vscedit
+
+onecdev — переименованное продолжение v8vscedit, поэтому оба расширения в одном окне не нужны: удалите
+`macegor.v8vscedit` перед установкой onecdev. При первой активации в проекте onecdev:
+
+- переносит служебный каталог `.v8vscedit/` в `.onecdev/` целиком — кэши, состояние захватов хранилища и
+  снимки для слияния сохраняются (если `.onecdev/` уже есть, старый каталог не трогается, в журнале
+  «1С Редактор» будет предупреждение);
+- дописывает `.onecdev/` в `.gitignore` проекта, если там игнорировался `.v8vscedit/`.
+
+Вручную после перехода:
+
+- настройки `v8vscedit.*` в `settings.json` переименуйте в `onecdev.*`;
+- пароли, сохранённые в защищённом хранилище VS Code, введите заново;
+- переустановите ИИ-навыки командой расширения, удалите старые навыки `v8vscedit-*` и блок
+  `<!-- v8vscedit:claude-roles:… -->` в `CLAUDE.md` проекта, а в конфигурации MCP-клиента замените сервер
+  `v8vscedit` на `onecdev` — инструменты теперь называются `onecdev_*`.
 
 ## Инициализация проекта 1С
 
@@ -171,7 +189,7 @@ project-root/
 │   └── cfe/
 │       └── МоеРасширение/
 │           └── Configuration.xml
-└── .v8vscedit/
+└── .onecdev/
     └── ...
 ```
 
@@ -179,7 +197,7 @@ project-root/
 
 - `src/cf` — основная конфигурация;
 - `src/cfe/<ИмяРасширения>` — расширение с именем, совпадающим с именем расширения в базе;
-- `.v8vscedit` — служебные кэши расширения, их не нужно хранить в Git;
+- `.onecdev` — служебные кэши расширения, их не нужно хранить в Git;
 - `env.json` — локальные параметры подключения, его обычно не коммитят, потому что там могут быть пути, пользователи и пароли.
 
 ## Основные команды
@@ -213,9 +231,9 @@ http://127.0.0.1:38481/mcp
 
 ### Настройки MCP
 
-- `v8vscedit.mcp.enabled` — запускать MCP-сервер автоматически после загрузки дерева метаданных.
-- `v8vscedit.mcp.host` — локальный адрес сервера. Разрешены только `127.0.0.1`, `localhost` и `::1`.
-- `v8vscedit.mcp.port` — стартовый порт. Если он занят, расширение попробует следующие порты.
+- `onecdev.mcp.enabled` — запускать MCP-сервер автоматически после загрузки дерева метаданных.
+- `onecdev.mcp.host` — локальный адрес сервера. Разрешены только `127.0.0.1`, `localhost` и `::1`.
+- `onecdev.mcp.port` — стартовый порт. Если он занят, расширение попробует следующие порты.
 
 Сервер намеренно слушает только loopback-адрес. Не публикуйте его наружу через прокси или порт-форвардинг без отдельной модели авторизации: инструменты MCP могут менять исходники конфигурации и запускать операции синхронизации с базой.
 
@@ -230,7 +248,7 @@ http://127.0.0.1:38481/mcp
 ```json
 {
   "mcpServers": {
-    "v8vscedit": {
+    "onecdev": {
       "type": "http",
       "url": "http://127.0.0.1:38481/mcp"
     }
@@ -242,19 +260,19 @@ http://127.0.0.1:38481/mcp
 
 ### Доступные инструменты
 
-- `v8vscedit_list_configurations` — список найденных конфигураций и расширений.
-- `v8vscedit_list_metadata_types` — реестр типов метаданных из `META_TYPES`: папки, дочерние элементы, слоты модулей.
-- `v8vscedit_workspace_overview` — быстрый обзор основной конфигурации и расширений: корни, имена, версии и счётчики объектов.
-- `v8vscedit_search_metadata` — поиск по части строки в предметных путях метаданных выбранной конфигурации; параметр `configuration` обязателен при нескольких корнях.
-- `v8vscedit_list_metadata` — список объектов группы или дочерних элементов по пути без `nodeId`.
-- `v8vscedit_get_properties` — все свойства объекта по предметному пути: текущие значения, `readonly`, допустимые enum/multiEnum-значения.
-- `v8vscedit_set_property_by_path` — безопасное изменение простого свойства по предметному пути.
-- `v8vscedit_list_available_types` — стандартные и конфигурационные типы для свойств `Тип`, `Источник`, `Тип параметра команды`; возвращает русское поле `value`, а для CFE показывает только собственные и заимствованные объекты.
-- `v8vscedit_set_type` — изменение типа реквизита, измерения, ресурса, колонки, константы, общего реквизита или параметра команды; принимает русские значения типа, длину и точность.
-- `v8vscedit_rename_metadata` — переименование объекта или дочернего элемента через общий XML-сервис.
-- `v8vscedit_add_metadata_by_path` — добавление объекта, реквизита, табличной части, колонки, формы, команды или макета по предметному пути.
-- `v8vscedit_remove_metadata` — удаление объекта или дочернего элемента по предметному пути.
-- `v8vscedit_execute_command` — ограниченный запуск разрешённых команд расширения: `v8vscedit.refresh`, `v8vscedit.importConfigurations`, `v8vscedit.updateChangedConfigurations`. Ответ содержит явный исход `outcome` (`done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`) и `result` (успех при `done`/`no-changes`); при `busy` — `heldBy` с именем занявшей guard операции. `importConfigurations` и `updateChangedConfigurations` при нескольких найденных конфигурациях открывают выбор пользователю и ждут его ответа, прежде чем вернуть исход.
+- `onecdev_list_configurations` — список найденных конфигураций и расширений.
+- `onecdev_list_metadata_types` — реестр типов метаданных из `META_TYPES`: папки, дочерние элементы, слоты модулей.
+- `onecdev_workspace_overview` — быстрый обзор основной конфигурации и расширений: корни, имена, версии и счётчики объектов.
+- `onecdev_search_metadata` — поиск по части строки в предметных путях метаданных выбранной конфигурации; параметр `configuration` обязателен при нескольких корнях.
+- `onecdev_list_metadata` — список объектов группы или дочерних элементов по пути без `nodeId`.
+- `onecdev_get_properties` — все свойства объекта по предметному пути: текущие значения, `readonly`, допустимые enum/multiEnum-значения.
+- `onecdev_set_property_by_path` — безопасное изменение простого свойства по предметному пути.
+- `onecdev_list_available_types` — стандартные и конфигурационные типы для свойств `Тип`, `Источник`, `Тип параметра команды`; возвращает русское поле `value`, а для CFE показывает только собственные и заимствованные объекты.
+- `onecdev_set_type` — изменение типа реквизита, измерения, ресурса, колонки, константы, общего реквизита или параметра команды; принимает русские значения типа, длину и точность.
+- `onecdev_rename_metadata` — переименование объекта или дочернего элемента через общий XML-сервис.
+- `onecdev_add_metadata_by_path` — добавление объекта, реквизита, табличной части, колонки, формы, команды или макета по предметному пути.
+- `onecdev_remove_metadata` — удаление объекта или дочернего элемента по предметному пути.
+- `onecdev_execute_command` — ограниченный запуск разрешённых команд расширения: `onecdev.refresh`, `onecdev.importConfigurations`, `onecdev.updateChangedConfigurations`. Ответ содержит явный исход `outcome` (`done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`) и `result` (успех при `done`/`no-changes`); при `busy` — `heldBy` с именем занявшей guard операции. `importConfigurations` и `updateChangedConfigurations` при нескольких найденных конфигурациях открывают выбор пользователю и ждут его ответа, прежде чем вернуть исход.
 
 Предметные пути принимают русские группы и технические имена типов. Примеры:
 
@@ -267,12 +285,12 @@ http://127.0.0.1:38481/mcp
 
 Быстрый порядок для агента:
 
-1. Получить корни через `v8vscedit_workspace_overview`.
-2. Найти объект через `v8vscedit_search_metadata` или получить список через `v8vscedit_list_metadata`.
-3. Для чтения и изменения простых свойств использовать `v8vscedit_get_properties` и `v8vscedit_set_property_by_path`.
-4. Для ссылочного типа сначала вызвать `v8vscedit_list_available_types` с тем же `metadataPath` и брать значение из поля `value`; затем вызвать `v8vscedit_set_type`. Для числа сразу указывать `length`/`digits` и `precision`/`fractionDigits`.
-5. Для состава подсистем использовать `v8vscedit_edit_subsystem_content`: свойства подсистемы меняются обычными `get_properties`/`set_property_by_path`, а объекты в `Content` добавляются и удаляются отдельной точечной операцией.
-6. Для создания использовать `v8vscedit_add_metadata_by_path`, для переименования — `v8vscedit_rename_metadata`.
+1. Получить корни через `onecdev_workspace_overview`.
+2. Найти объект через `onecdev_search_metadata` или получить список через `onecdev_list_metadata`.
+3. Для чтения и изменения простых свойств использовать `onecdev_get_properties` и `onecdev_set_property_by_path`.
+4. Для ссылочного типа сначала вызвать `onecdev_list_available_types` с тем же `metadataPath` и брать значение из поля `value`; затем вызвать `onecdev_set_type`. Для числа сразу указывать `length`/`digits` и `precision`/`fractionDigits`.
+5. Для состава подсистем использовать `onecdev_edit_subsystem_content`: свойства подсистемы меняются обычными `get_properties`/`set_property_by_path`, а объекты в `Content` добавляются и удаляются отдельной точечной операцией.
+6. Для создания использовать `onecdev_add_metadata_by_path`, для переименования — `onecdev_rename_metadata`.
 
 Такой порядок не заставляет агента ориентироваться по внутренним `nodeId` и английским enum-именам, но сохраняет проверки пользовательского режима: enum, boolean, `readonly`, допустимые типы и переименование корневых объектов проходят через те же сервисы, что панель свойств.
 
@@ -292,9 +310,9 @@ http://127.0.0.1:38481/mcp
 
 В настройках расширения доступны параметры:
 
-- `v8vscedit.lsp.mode` — режим языковой поддержки 1С: `bsl-analyzer` или `off`.
-- `v8vscedit.bslAnalyzer.autoUpdate` — проверять обновления `bsl-analyzer` при запуске.
-- `v8vscedit.bslAnalyzer.path` — путь к установленному `bsl-analyzer`; если пусто, расширение скачает бинарник автоматически.
+- `onecdev.lsp.mode` — режим языковой поддержки 1С: `bsl-analyzer` или `off`.
+- `onecdev.bslAnalyzer.autoUpdate` — проверять обновления `bsl-analyzer` при запуске.
+- `onecdev.bslAnalyzer.path` — путь к установленному `bsl-analyzer`; если пусто, расширение скачает бинарник автоматически.
 
 ## Разработка расширения
 

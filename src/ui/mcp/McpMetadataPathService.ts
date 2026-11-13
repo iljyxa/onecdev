@@ -88,7 +88,7 @@ export interface McpListTreePathsResult {
 }
 
 /**
- * Результат «мягкого» резолва канонического пути для tool `v8vscedit_resolve_path`.
+ * Результат «мягкого» резолва канонического пути для tool `onecdev_resolve_path`.
  * Невалидный синтаксис превращается в исключение (внутри `parseCanonicalPath`),
  * валидный синтаксис без узла — в `{ exists: false }` без исключения.
  */
@@ -182,7 +182,7 @@ export class McpMetadataPathService {
   }
 
   /**
-   * «Мягкий» резолв канонического пути для MCP-tool `v8vscedit_resolve_path`.
+   * «Мягкий» резолв канонического пути для MCP-tool `onecdev_resolve_path`.
    *
    * Различия с `resolveNode`:
    *  - невалидный синтаксис пути по-прежнему бросает Error (через
@@ -207,7 +207,7 @@ export class McpMetadataPathService {
 
   /**
    * Возвращает плоский список канонических путей конфигурации без свойств.
-   * Используется MCP-tool `v8vscedit_tree` как быстрая альтернатива
+   * Используется MCP-tool `onecdev_tree` как быстрая альтернатива
    * пагинированному обходу `list`.
    */
   listTreePaths(options: McpListTreePathsOptions = {}): McpListTreePathsResult {
@@ -387,7 +387,7 @@ export class McpMetadataPathService {
       }
       throw new Error(
         `Добавление вложенной подсистемы по пути "${request.path}" не поддерживается ` +
-        `этим инструментом — используй v8vscedit_compile_subsystem с parentPath.`,
+        `этим инструментом — используй onecdev_compile_subsystem с parentPath.`,
       );
     }
 
@@ -651,7 +651,7 @@ export class McpMetadataPathService {
         || path.resolve(rootPath).toLowerCase() === normalizedPath.toLowerCase();
     });
     if (found.length === 0) {
-      throw new Error(`Конфигурация "${configuration}" не найдена. Используйте имя из v8vscedit_workspace_overview.`);
+      throw new Error(`Конфигурация "${configuration}" не найдена. Используйте имя из onecdev_workspace_overview.`);
     }
     return found;
   }

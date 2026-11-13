@@ -34,7 +34,7 @@ suite('BslReadonlyGuard — issue #4: фокус не отбирается пр�
   let tmpFile: string;
 
   setup(() => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-readonly-guard-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-readonly-guard-'));
     tmpFile = path.join(dir, 'Module.bsl');
     fs.writeFileSync(tmpFile, 'Процедура Тест()\nКонецПроцедуры\n', 'utf-8');
   });
@@ -166,7 +166,7 @@ suite('BslReadonlyGuard — issue #81: несохранённый буфер н�
   const disposables: vscode.Disposable[] = [];
 
   setup(() => {
-    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-readonly-guard-dirty-'));
+    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-readonly-guard-dirty-'));
     uri = vscode.Uri.file(path.join(configRoot, 'Module.bsl'));
     fs.writeFileSync(uri.fsPath, 'Процедура Тест()\nКонецПроцедуры\n', 'utf-8');
   });

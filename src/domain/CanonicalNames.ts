@@ -111,8 +111,8 @@ const ref = (metaKind: MetaKind, suffix: string, russianBase: string, englishCan
 /**
  * Полная таблица ссылочных производных типов по §2.2 плана.
  *
- * Используется для генерации списка типов в `v8vscedit_list_available_types`
- * и для разбора имён типов в `v8vscedit_set_type`.
+ * Используется для генерации списка типов в `onecdev_list_available_types`
+ * и для разбора имён типов в `onecdev_set_type`.
  */
 export const REF_KIND_MAP: readonly RefKindInfo[] = [
   // Справочник

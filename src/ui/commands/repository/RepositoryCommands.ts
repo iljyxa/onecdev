@@ -57,7 +57,7 @@ export function registerRepositoryCommands(
   bindDeps: RepositoryBindDeps = DEFAULT_REPOSITORY_BIND_DEPS
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.repository.connect', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.connect', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Подключение к хранилищу', false);
       if (!resolved) {
         return;
@@ -109,7 +109,7 @@ export function registerRepositoryCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.create', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.create', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Создание хранилища', false);
       if (!resolved) {
         return;
@@ -162,7 +162,7 @@ export function registerRepositoryCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.disconnect', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.disconnect', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Отключение от хранилища', true);
       if (!resolved) {
         return;
@@ -190,7 +190,7 @@ export function registerRepositoryCommands(
       }, toCliServices(services), deps.runRepositoryCli, deps.notifyBusy);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.lock', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.lock', async (node: NodeArg) => {
       const repositoryNode = requireRepositoryNode(services, node);
       if (!repositoryNode) {
         return;
@@ -216,7 +216,7 @@ export function registerRepositoryCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.unlock', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.unlock', async (node: NodeArg) => {
       const repositoryNode = requireRepositoryNode(services, node);
       if (!repositoryNode) {
         return;
@@ -244,7 +244,7 @@ export function registerRepositoryCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.commit', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.commit', async (node: NodeArg) => {
       const repositoryNode = requireRepositoryNode(services, node);
       if (!repositoryNode) {
         return;
@@ -282,15 +282,15 @@ export function registerRepositoryCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.update', (node: NodeArg) =>
+    vscode.commands.registerCommand('onecdev.repository.update', (node: NodeArg) =>
       runRepositoryUpdateCommand(services, deps, node, false)
     ),
 
-    vscode.commands.registerCommand('v8vscedit.repository.updateToVersion', (node: NodeArg) =>
+    vscode.commands.registerCommand('onecdev.repository.updateToVersion', (node: NodeArg) =>
       runRepositoryUpdateCommand(services, deps, node, true)
     ),
 
-    vscode.commands.registerCommand('v8vscedit.repository.addUser', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.addUser', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Пользователь хранилища', true);
       if (!resolved) {
         return;
@@ -336,7 +336,7 @@ export function registerRepositoryCommands(
       }, toCliServices(services), deps.runRepositoryCli, deps.notifyBusy);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.copyUsers', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.copyUsers', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Копирование пользователей', true);
       if (!resolved) {
         return;
@@ -382,7 +382,7 @@ export function registerRepositoryCommands(
       }, toCliServices(services), deps.runRepositoryCli, deps.notifyBusy);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.dump', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.dump', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Выгрузка версии', true);
       if (!resolved) {
         return;
@@ -393,7 +393,7 @@ export function registerRepositoryCommands(
         title: 'Выгрузка версии из хранилища',
         defaultUri: vscode.Uri.file(path.join(
           services.workspaceFolder.uri.fsPath,
-          '.v8vscedit',
+          '.onecdev',
           `${sanitizeFileName(target.displayName)}.cf`
         )),
         filters: {
@@ -430,7 +430,7 @@ export function registerRepositoryCommands(
       }, toCliServices(services), deps.runRepositoryCli, deps.notifyBusy);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.report', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.report', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Отчёт по хранилищу', true);
       if (!resolved) {
         return;
@@ -446,7 +446,7 @@ export function registerRepositoryCommands(
         title: 'Отчёт по хранилищу',
         defaultUri: vscode.Uri.file(path.join(
           services.workspaceFolder.uri.fsPath,
-          '.v8vscedit',
+          '.onecdev',
           `repository-report-${sanitizeFileName(target.displayName)}.${defaultExtension}`
         )),
         filters: {
@@ -508,7 +508,7 @@ export function registerRepositoryCommands(
       }, toCliServices(services), deps.runRepositoryCli, deps.notifyBusy);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.repository.setLabel', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.repository.setLabel', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Установка метки', true);
       if (!resolved) {
         return;

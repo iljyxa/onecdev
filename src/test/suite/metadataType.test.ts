@@ -101,7 +101,7 @@ suite('metadataType', () => {
   });
 
   test('Записывает новый тип в XML объекта', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-'));
     const xmlPath = path.join(dir, 'SessionParam.xml');
     fs.writeFileSync(
       xmlPath,
@@ -130,7 +130,7 @@ suite('metadataType', () => {
     assert.ok(saved.includes('<v8:Type>xs:boolean</v8:Type>'));
   });
   test('записывает тип реквизита рядом с самозакрывающимися тегами', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-'));
     const xmlPath = path.join(dir, 'Document.xml');
     fs.writeFileSync(
       xmlPath,

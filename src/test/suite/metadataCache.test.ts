@@ -75,7 +75,7 @@ suite('MetadataCache', () => {
   });
 
   test('Текстовые макеты получают команду открытия содержимого по клику', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-template-cache-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-template-cache-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -111,7 +111,7 @@ suite('MetadataCache', () => {
   });
 
   test('Макеты справочника отображаются в дереве после табличных частей', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-catalog-template-cache-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-catalog-template-cache-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -166,8 +166,8 @@ suite('MetadataCache', () => {
   });
 
   test('РЕГРЕСС: добавление метода не возвращает группу «URL-шаблоны» (инкрементальное обновление flat-объекта)', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cache-http-add-'));
-    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cache-http-proj-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cache-http-add-'));
+    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cache-http-proj-'));
     try {
       copyDirSync(EXAMPLE_CF, configRoot);
       const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };

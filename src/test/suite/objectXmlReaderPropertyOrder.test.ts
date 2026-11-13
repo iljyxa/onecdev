@@ -40,13 +40,13 @@ function makeTempDir(prefix: string): string {
   return dir;
 }
 
-function copyToTemp(source: string, prefix = 'v8vscedit-prop-order-'): string {
+function copyToTemp(source: string, prefix = 'onecdev-prop-order-'): string {
   const target = path.join(makeTempDir(prefix), path.basename(source));
   fs.copyFileSync(source, target);
   return target;
 }
 
-function writeTemp(content: string, name = 'Объект.xml', prefix = 'v8vscedit-prop-order-'): string {
+function writeTemp(content: string, name = 'Объект.xml', prefix = 'onecdev-prop-order-'): string {
   const target = path.join(makeTempDir(prefix), name);
   fs.writeFileSync(target, content, 'utf-8');
   return target;

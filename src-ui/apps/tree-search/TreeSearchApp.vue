@@ -25,7 +25,7 @@ function onSearchInput(value: string): void {
 
 function clearSearch(): void {
   searchQuery.value = '';
-  props.messageBus.send({ type: 'command', command: 'v8vscedit.clearSearch' });
+  props.messageBus.send({ type: 'command', command: 'onecdev.clearSearch' });
 }
 
 function executeCommand(command: string): void {
@@ -77,19 +77,19 @@ onUnmounted(() => {
 
     <template v-if="initialized">
       <div class="actions-section">
-        <vscode-button @click="executeCommand('v8vscedit.importConfigurations')" title="Импорт конфигураций">
+        <vscode-button @click="executeCommand('onecdev.importConfigurations')" title="Импорт конфигураций">
           <span class="codicon codicon-cloud-download"></span>
           <span class="action-label">Импорт</span>
         </vscode-button>
-        <vscode-button @click="executeCommand('v8vscedit.runThinClient')" title="Запустить тонкий клиент">
+        <vscode-button @click="executeCommand('onecdev.runThinClient')" title="Запустить тонкий клиент">
           <span class="codicon codicon-play"></span>
           <span class="action-label">Тонкий клиент</span>
         </vscode-button>
-        <vscode-button @click="executeCommand('v8vscedit.runConfigurator')" title="Запустить конфигуратор">
+        <vscode-button @click="executeCommand('onecdev.runConfigurator')" title="Запустить конфигуратор">
           <span class="codicon codicon-tools"></span>
           <span class="action-label">Конфигуратор</span>
         </vscode-button>
-        <vscode-button @click="executeCommand('v8vscedit.configureEnvironment')" title="Настройки проекта">
+        <vscode-button @click="executeCommand('onecdev.configureEnvironment')" title="Настройки проекта">
           <span class="codicon codicon-settings-gear"></span>
           <span class="action-label">Настройки</span>
         </vscode-button>
@@ -106,7 +106,7 @@ onUnmounted(() => {
           <vscode-button
             v-if="serverStatus.state === 'stopped' || serverStatus.state === 'stale'"
             appearance="secondary"
-            @click="executeCommand('v8vscedit.standalone.start')"
+            @click="executeCommand('onecdev.standalone.start')"
             title="Запустить"
           >
             <span class="codicon codicon-play"></span>
@@ -114,14 +114,14 @@ onUnmounted(() => {
           <vscode-button
             v-if="serverStatus.state === 'running'"
             appearance="secondary"
-            @click="executeCommand('v8vscedit.standalone.stop')"
+            @click="executeCommand('onecdev.standalone.stop')"
             title="Остановить"
           >
             <span class="codicon codicon-stop"></span>
           </vscode-button>
           <vscode-button
             appearance="secondary"
-            @click="executeCommand('v8vscedit.standalone.showLog')"
+            @click="executeCommand('onecdev.standalone.showLog')"
             title="Лог"
           >
             <span class="codicon codicon-output"></span>
@@ -129,7 +129,7 @@ onUnmounted(() => {
           <vscode-button
             v-if="serverStatus.state === 'running'"
             appearance="secondary"
-            @click="executeCommand('v8vscedit.standalone.openWebClient')"
+            @click="executeCommand('onecdev.standalone.openWebClient')"
             title="Открыть в браузере"
           >
             <span class="codicon codicon-browser"></span>

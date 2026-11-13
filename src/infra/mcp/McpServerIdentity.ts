@@ -12,7 +12,7 @@
  */
 
 /** Стабильный маркер продукта: отличает наш `/identity` от любого чужого. */
-export const PRODUCT_ID = 'v8vscedit-mcp';
+export const PRODUCT_ID = 'onecdev-mcp';
 
 /**
  * Версия формы ответа `/identity`. Инкрементируется при несовместимом

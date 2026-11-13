@@ -60,7 +60,7 @@ suite('GitLogReader — readGitLog: реальный запуск `git log` дл
   });
 
   test('вызов вне git-репозитория — мягкий фолбэк [], без исключения', () => {
-    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-no-git-log-')));
+    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-no-git-log-')));
     try {
       assert.deepStrictEqual(readGitLog(outsideAnyRepo), []);
       assert.deepStrictEqual(readGitLog(outsideAnyRepo, 5), []);

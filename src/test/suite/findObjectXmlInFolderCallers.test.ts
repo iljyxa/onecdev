@@ -78,7 +78,7 @@ suite('findObjectXmlInFolder: переиспользование в MetadataCach
   let configRoot: string;
 
   setup(() => {
-    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-find-object-xml-callers-'));
+    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-find-object-xml-callers-'));
   });
 
   teardown(() => {

@@ -15,7 +15,7 @@ import { getRepositoryMergeRoot } from './RepositoryTempCleanup';
 export type MergeChoice = 'compare' | 'replace' | 'keep-local';
 
 export interface ApplyRepositoryMergeOptions {
-  /** Корень рабочей области — там живёт хеш-кэш `.v8vscedit/cache`. */
+  /** Корень рабочей области — там живёт хеш-кэш `.onecdev/cache`. */
   projectRoot: string;
   target: RepositoryTarget;
   dumpDir: string;
@@ -52,7 +52,7 @@ const REPOSITORY_COPY_DIR = 'repository';
 const ALL_SCOPE: ObjectScope = { kind: 'all' };
 
 /**
- * `.v8vscedit/repository/merge/<scopeKey>/<время>-<метка>` — уникален на операцию.
+ * `.onecdev/repository/merge/<scopeKey>/<время>-<метка>` — уникален на операцию.
  * Формат имени разбирает ротация `pruneMergeBackups`: меняется только вместе с ней.
  */
 export function buildMergeBackupDir(workspaceRoot: string, scopeKey: string, label: string, now: Date): string {

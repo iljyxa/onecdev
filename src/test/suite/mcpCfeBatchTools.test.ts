@@ -1,7 +1,7 @@
 /**
- * Тесты MCP-инструментов `v8vscedit_dump_all_cfe` / `v8vscedit_load_all_cfe`
+ * Тесты MCP-инструментов `onecdev_dump_all_cfe` / `onecdev_load_all_cfe`
  * (регистрируются в `registerConfigLifecycleTools`, домен «жизненный цикл
- * конфигурации», рядом с `v8vscedit_dump_cf`/`v8vscedit_load_cf`).
+ * конфигурации», рядом с `onecdev_dump_cf`/`onecdev_load_cf`).
  *
  * Как и в `mcpConfigLifecycleCfTools.test.ts`, тестируется фабрика регистрации
  * на мок-`McpServer`; успешные и отказные сценарии идут по-настоящему: реальный
@@ -48,8 +48,8 @@ import {
   type BatchWorkspace,
 } from './support/cfeBatchFixtures';
 
-const DUMP_TOOL = 'v8vscedit_dump_all_cfe';
-const LOAD_TOOL = 'v8vscedit_load_all_cfe';
+const DUMP_TOOL = 'onecdev_dump_all_cfe';
+const LOAD_TOOL = 'onecdev_load_all_cfe';
 
 interface RegisteredToolConfig {
   readonly title: string;
@@ -219,10 +219,10 @@ suite('McpCfeBatchTools — схемы, каталог, аннотации', () 
     }
   });
 
-  test('описание одиночного v8vscedit_dump_cf больше не утверждает, что выгрузить все расширения нельзя, а отсылает к пакетному инструменту', () => {
+  test('описание одиночного onecdev_dump_cf больше не утверждает, что выгрузить все расширения нельзя, а отсылает к пакетному инструменту', () => {
     // Раньше описание прямо запрещало «все расширения одним вызовом» — после
     // появления пакетного инструмента это ложь, которая направит агента в цикл вручную.
-    const description = tool(server, 'v8vscedit_dump_cf').description;
+    const description = tool(server, 'onecdev_dump_cf').description;
     assert.ok(!/все расширения одним вызовом нельзя/i.test(description), description);
     assert.ok(description.includes(DUMP_TOOL), `описание не отсылает к ${DUMP_TOOL}: ${description}`);
   });

@@ -13,7 +13,7 @@ import {
  * (из resolve*() хранилища), а не из message Node: на Windows тот приходит в неверной кодировке.
  */
 
-const LOCATION = '/ws/.v8vscedit/repository/snapshots/scope/unit';
+const LOCATION = '/ws/.onecdev/repository/snapshots/scope/unit';
 
 function eperm(): Error {
   return Object.assign(new Error("EPERM: operation not permitted, rmdir '\\\\?\\c:\\Ïðîåêòû\\x'"), { code: 'EPERM' });

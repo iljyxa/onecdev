@@ -20,7 +20,7 @@ import { describeFsError, removePathWithRetries } from '../../infra/fs/PathRemov
 
 /**
  * Issue #64 — раскладка и очистка временных артефактов хранилища
- * (`.v8vscedit/repository/objects`, `.v8vscedit/repository/merge`). Каталоги и файлы —
+ * (`.onecdev/repository/objects`, `.onecdev/repository/merge`). Каталоги и файлы —
  * собственные служебные артефакты расширения во временной рабочей области, их формат
  * имён задают `createObjectsFileForNode` и `buildMergeBackupDir`.
  */
@@ -66,10 +66,10 @@ function writeFile(filePath: string, content = ''): void {
 }
 
 suite('RepositoryTempCleanup — раскладка каталогов (issue #64)', () => {
-  test('objects/ и merge/ лежат под .v8vscedit/repository рабочей области', () => {
+  test('objects/ и merge/ лежат под .onecdev/repository рабочей области', () => {
     const root = path.join(os.tmpdir(), 'ws');
-    assert.strictEqual(getRepositoryObjectsDir(root), path.join(root, '.v8vscedit', 'repository', 'objects'));
-    assert.strictEqual(getRepositoryMergeRoot(root), path.join(root, '.v8vscedit', 'repository', 'merge'));
+    assert.strictEqual(getRepositoryObjectsDir(root), path.join(root, '.onecdev', 'repository', 'objects'));
+    assert.strictEqual(getRepositoryMergeRoot(root), path.join(root, '.onecdev', 'repository', 'merge'));
   });
 
   test('createObjectsFileForNode пишет файл в getRepositoryObjectsDir, buildMergeBackupDir — под getRepositoryMergeRoot', () => {

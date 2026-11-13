@@ -187,7 +187,7 @@ export class V8McpServer implements vscode.Disposable {
     registerPropertyTools(server, deps);
 
     // Декомпозированные tools добавления (E8): отдельный tool на каждый корневой
-    // MetaKind и каждый дочерний ChildTag. Бывший общий `v8vscedit_add_metadata_by_path`
+    // MetaKind и каждый дочерний ChildTag. Бывший общий `onecdev_add_metadata_by_path`
     // удалён — он заставлял агента угадывать childTag/templateType/canonical.
     registerAllAddTools(server, {
       paths,
@@ -275,7 +275,7 @@ export class V8McpServer implements vscode.Disposable {
   private async createSession(): Promise<McpSession> {
     let initializedSessionId: string | undefined;
     const server = new McpServer({
-      name: 'v8vscedit',
+      name: 'onecdev',
       version: this.version,
     });
     const transport = new StreamableHTTPServerTransport({
@@ -371,7 +371,7 @@ export class V8McpServer implements vscode.Disposable {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'no-store',
     }).end([
-      'MCP-сервер v8vscedit запущен.',
+      'MCP-сервер onecdev запущен.',
       '',
       'Этот endpoint не открывается как обычная веб-страница.',
       'Подключайте MCP-клиент к этому URL; для GET-потока клиент должен отправлять Accept: text/event-stream.',

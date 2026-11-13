@@ -59,7 +59,7 @@ export class LspManager implements vscode.Disposable {
 
   /** Текущий режим из настроек */
   get mode(): LspMode {
-    return vscode.workspace.getConfiguration('v8vscedit.lsp').get<LspMode>('mode', 'bsl-analyzer');
+    return vscode.workspace.getConfiguration('onecdev.lsp').get<LspMode>('mode', 'bsl-analyzer');
   }
 
   /** Запустить LSP по текущей настройке */
@@ -136,16 +136,16 @@ export class LspManager implements vscode.Disposable {
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand('v8vscedit.bslAnalyzer.restart', () => this.restart()),
-      vscode.commands.registerCommand('v8vscedit.bslAnalyzer.showOutput', () => this.outputChannel.show()),
-      vscode.commands.registerCommand('v8vscedit.bslAnalyzer.update', () => this.checkForUpdate()),
-      vscode.commands.registerCommand('v8vscedit.bslAnalyzer.showMenu', () => this.showMenu()),
+      vscode.commands.registerCommand('onecdev.bslAnalyzer.restart', () => this.restart()),
+      vscode.commands.registerCommand('onecdev.bslAnalyzer.showOutput', () => this.outputChannel.show()),
+      vscode.commands.registerCommand('onecdev.bslAnalyzer.update', () => this.checkForUpdate()),
+      vscode.commands.registerCommand('onecdev.bslAnalyzer.showMenu', () => this.showMenu()),
       { dispose: () => { void this.stopClient(); } },
     );
 
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('v8vscedit.lsp') || e.affectsConfiguration('v8vscedit.bslAnalyzer')) {
+        if (e.affectsConfiguration('onecdev.lsp') || e.affectsConfiguration('onecdev.bslAnalyzer')) {
           void this.restart();
         }
       }),
@@ -157,7 +157,7 @@ export class LspManager implements vscode.Disposable {
     void this.start();
 
     if (this.mode === 'bsl-analyzer' &&
-        vscode.workspace.getConfiguration('v8vscedit.bslAnalyzer').get<boolean>('autoUpdate', true)) {
+        vscode.workspace.getConfiguration('onecdev.bslAnalyzer').get<boolean>('autoUpdate', true)) {
       setTimeout(() => { void this.checkForUpdate(); }, 30_000);
     }
   }

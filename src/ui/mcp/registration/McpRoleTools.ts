@@ -65,7 +65,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   const { paths, services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_role_info',
+    'onecdev_role_info',
     {
       title: 'Информация о правах роли',
       description: [
@@ -87,7 +87,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_validate_role',
+    'onecdev_validate_role',
     {
       title: 'Валидировать роль',
       description: [
@@ -108,7 +108,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_compile_role',
+    'onecdev_compile_role',
     {
       title: 'Создать роль из DSL',
       description: [
@@ -147,7 +147,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_edit_role',
+    'onecdev_edit_role',
     {
       title: 'Точечное редактирование прав роли',
       description: [
@@ -175,7 +175,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_list_default_roles',
+    'onecdev_list_default_roles',
     {
       title: 'Список ролей по умолчанию',
       description: [
@@ -194,7 +194,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_add_default_role',
+    'onecdev_add_default_role',
     {
       title: 'Добавить роль в DefaultRoles',
       description: [
@@ -220,7 +220,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_remove_default_role',
+    'onecdev_remove_default_role',
     {
       title: 'Удалить роль из DefaultRoles',
       description: [
@@ -246,7 +246,7 @@ export function registerRoleTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_set_default_roles',
+    'onecdev_set_default_roles',
     {
       title: 'Задать список DefaultRoles',
       description: [

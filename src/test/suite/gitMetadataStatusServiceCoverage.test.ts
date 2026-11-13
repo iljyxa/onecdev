@@ -48,7 +48,7 @@ function tmpRepo(prefix: string): string {
 
 /** Готовит репозиторий с одним закоммиченным реальным объектом-справочником. */
 function buildBaselineRepo(): { repo: string; catalogsDir: string; xmlPath: string } {
-  const repo = tmpRepo('v8vscedit-status-cov-');
+  const repo = tmpRepo('onecdev-status-cov-');
   const catalogsDir = path.join(repo, 'Catalogs');
   fs.mkdirSync(catalogsDir, { recursive: true });
   const xmlPath = path.join(catalogsDir, 'РолиКонтактныхЛиц.xml');
@@ -281,7 +281,7 @@ suite('GitMetadataStatusService — дополнительное покрыти�
   });
 
   test('kind=child, childKind=Column: колонка табличной части изменена — modified (nesting-aware извлечение через tabularSectionName)', () => {
-    const repo = tmpRepo('v8vscedit-status-cov-column-');
+    const repo = tmpRepo('onecdev-status-cov-column-');
     try {
       const catalogsDir = path.join(repo, 'Catalogs');
       fs.mkdirSync(catalogsDir, { recursive: true });
@@ -328,7 +328,7 @@ suite('GitMetadataStatusService — дополнительное покрыти�
   });
 
   test('kind=child, childKind=Method: метод URL-шаблона HTTP-сервиса изменён — modified (nesting-aware извлечение через urlTemplateName)', () => {
-    const repo = tmpRepo('v8vscedit-status-cov-method-');
+    const repo = tmpRepo('onecdev-status-cov-method-');
     try {
       const servicesDir = path.join(repo, 'HTTPServices');
       fs.mkdirSync(servicesDir, { recursive: true });
@@ -363,7 +363,7 @@ suite('GitMetadataStatusService — дополнительное покрыти�
   });
 
   test('getFileDecorationStatus/getDirectoryStatus вне git-репозитория — undefined без исключения', () => {
-    const outsideAnyRepo = tmpRepo('v8vscedit-status-cov-no-git-');
+    const outsideAnyRepo = tmpRepo('onecdev-status-cov-no-git-');
     try {
       fs.mkdirSync(path.join(outsideAnyRepo, 'Catalogs'));
       const service = new GitMetadataStatusService(outsideAnyRepo);

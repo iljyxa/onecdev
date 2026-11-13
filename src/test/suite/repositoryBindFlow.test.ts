@@ -119,7 +119,7 @@ function harnessFor(ws: LockWorkspace): Harness {
       now: () => NOW,
     }),
     readScope: () => {
-      const file = path.join(ws.workspaceRoot, '.v8vscedit', 'repository', 'state.json');
+      const file = path.join(ws.workspaceRoot, '.onecdev', 'repository', 'state.json');
       if (!fs.existsSync(file)) {
         return {};
       }

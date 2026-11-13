@@ -17,7 +17,7 @@ suite('GitStatusReader — раннер git status/rev-parse', () => {
 
   test('readPorcelainEntries на реальном репозитории возвращает записи untracked-файла', () => {
     // realpathSync: см. gitPorcelainReader.test.ts — иначе /tmp разойдётся с /private/tmp на macOS.
-    const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-status-reader-')));
+    const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-status-reader-')));
     try {
       git(repo, ['init', '-q']);
       fs.writeFileSync(path.join(repo, 'новый.txt'), 'содержимое\n', 'utf-8');
@@ -34,7 +34,7 @@ suite('GitStatusReader — раннер git status/rev-parse', () => {
   });
 
   test('readPorcelainEntries вне git-репозитория — пустой массив, без исключения', () => {
-    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-status-reader-no-git-')));
+    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-status-reader-no-git-')));
     try {
       assert.deepStrictEqual(readPorcelainEntries(outsideAnyRepo), []);
     } finally {
@@ -43,7 +43,7 @@ suite('GitStatusReader — раннер git status/rev-parse', () => {
   });
 
   test('resolveGitRoot на реальном репозитории возвращает его корень', () => {
-    const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-status-reader-root-')));
+    const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-status-reader-root-')));
     try {
       git(repo, ['init', '-q']);
       const nested = path.join(repo, 'src', 'cf');
@@ -56,7 +56,7 @@ suite('GitStatusReader — раннер git status/rev-parse', () => {
   });
 
   test('resolveGitRoot вне git-репозитория — null, без исключения', () => {
-    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-status-reader-no-root-')));
+    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-status-reader-no-root-')));
     try {
       assert.strictEqual(resolveGitRoot(outsideAnyRepo), null);
     } finally {

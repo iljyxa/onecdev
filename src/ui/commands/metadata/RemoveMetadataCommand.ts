@@ -14,7 +14,7 @@ export function registerRemoveMetadataCommand(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.removeMetadata', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.removeMetadata', async (node: MetadataNode | undefined) => {
       await removeMetadata(node, services);
     })
   );

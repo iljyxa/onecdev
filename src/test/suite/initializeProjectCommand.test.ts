@@ -6,10 +6,10 @@ import { ensureProjectDirectoryIsEmpty } from '../../ui/commands/project/Initial
 
 suite('initializeProjectCommand', () => {
   test('разрешает инициализацию только в пустом каталоге', () => {
-    const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-init-empty-'));
+    const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-init-empty-'));
     assert.doesNotThrow(() => ensureProjectDirectoryIsEmpty(emptyDir));
 
-    const nonEmptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-init-non-empty-'));
+    const nonEmptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-init-non-empty-'));
     fs.writeFileSync(path.join(nonEmptyDir, 'env.json'), '{}', 'utf-8');
 
     assert.throws(

@@ -16,7 +16,7 @@ import { skipWithoutCorpus } from './support/corpus';
 const SERVICE_ENTRY_XML = path.resolve(__dirname, '../../../example/2.21/src/cf/HTTPServices/ServiceEntry.xml');
 
 function copyDonor(): { root: string; xmlPath: string; original: string } {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-http-remove-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-http-remove-'));
   const xmlPath = path.join(root, 'ServiceEntry.xml');
   const original = fs.readFileSync(SERVICE_ENTRY_XML, 'utf-8');
   fs.writeFileSync(xmlPath, original, 'utf-8');

@@ -2,7 +2,7 @@
 
 Обязательный стандарт для агентов **architect** и **reviewer** (см. [agentic-pipeline.md](./agentic-pipeline.md)).
 Каждое правило: формулировка — почему — источник. Фокус — TypeScript-расширение с webview-навигатором,
-LSP-клиентом (`vscode-languageclient`) и локальным MCP-сервером, то есть под архитектуру v8vscedit.
+LSP-клиентом (`vscode-languageclient`) и локальным MCP-сервером, то есть под архитектуру onecdev.
 
 Многие правила уже закреплены в корневом `CLAUDE.md`; здесь они собраны вместе с внешними источниками
 и дополнены тем, чего в проекте пока нет. Отметки **[совпадает с CLAUDE.md]** — правило уже действует.
@@ -132,7 +132,7 @@ LSP-клиентом (`vscode-languageclient`) и локальным MCP-сер�
   новых API. [publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
 - **Proposed API — только в Insiders/разработке, публиковать с ним нельзя** (`enabledApiProposals`).
   [using-proposed-api](https://code.visualstudio.com/api/advanced-topics/using-proposed-api)
-- **Каждая настройка — уникальный ID `<extension>.<область>.<ключ>`** (у проекта `v8vscedit.<область>.<ключ>`).
+- **Каждая настройка — уникальный ID `<extension>.<область>.<ключ>`** (у проекта `onecdev.<область>.<ключ>`).
   **[совпадает с CLAUDE.md: раздел «Новая настройка»]**
   [contribution-points](https://code.visualstudio.com/api/references/contribution-points)
 - **Команды — title-case, короткие предлоги не капитализировать.**
@@ -144,7 +144,7 @@ LSP-клиентом (`vscode-languageclient`) и локальным MCP-сер�
 - **Каждая команда из `contributes.commands` должна быть реально зарегистрирована.**
   **[совпадает с CLAUDE.md: запрет №3 + `CommandRegistry`]**
 
-> Примечание для v8vscedit: основной UI — webview `UniversalPanelViewProvider`, контекстное меню узлов
+> Примечание для onecdev: основной UI — webview `UniversalPanelViewProvider`, контекстное меню узлов
 > формируется в коде (`getNodeActions`/`MODULE_SLOT_ACTIONS`), а не через `contributes.menus`. См.
 > `CLAUDE.md` (раздел про основной UI). Правила выше про `contributes` применяются к нативному TreeView.
 

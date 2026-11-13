@@ -6,7 +6,7 @@ import { ConfigurationXmlEditor } from '../../infra/xml/ConfigurationXmlEditor';
 
 suite('configurationXmlEditor', () => {
   test('Изменяет свойства Configuration.xml и роли по умолчанию', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfg-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfg-'));
     const configPath = path.join(dir, 'Configuration.xml');
     fs.writeFileSync(
       configPath,
@@ -43,7 +43,7 @@ suite('configurationXmlEditor', () => {
   });
 
   test('Развёртывает самозакрывающийся <DefaultRoles/> при добавлении роли', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfg-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfg-'));
     const configPath = path.join(dir, 'Configuration.xml');
     fs.writeFileSync(
       configPath,
@@ -75,7 +75,7 @@ suite('configurationXmlEditor', () => {
   });
 
   test('modifyConfigurationProperty с multiEnum DefaultRoles переиспользует setDefaultRoles', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfg-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfg-'));
     const configPath = path.join(dir, 'Configuration.xml');
     fs.writeFileSync(
       configPath,
@@ -102,7 +102,7 @@ suite('configurationXmlEditor', () => {
   });
 
   test('Добавляет и удаляет объект из ChildObjects', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfg-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfg-'));
     fs.mkdirSync(path.join(dir, 'Catalogs'), { recursive: true });
     fs.writeFileSync(path.join(dir, 'Catalogs', 'Клиенты.xml'), '<MetaDataObject />', 'utf-8');
     const configPath = path.join(dir, 'Configuration.xml');
@@ -130,7 +130,7 @@ suite('configurationXmlEditor', () => {
   });
 
   test('Изменяет список владельцев справочника', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-catalog-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-catalog-'));
     const catalogPath = path.join(dir, 'Клиенты.xml');
     fs.writeFileSync(
       catalogPath,
@@ -172,7 +172,7 @@ suite('configurationXmlEditor', () => {
   });
 
   test('Изменяет списки полей через xr:Field', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-catalog-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-catalog-'));
     const catalogPath = path.join(dir, 'Клиенты.xml');
     fs.writeFileSync(
       catalogPath,
@@ -217,7 +217,7 @@ suite('configurationXmlEditor', () => {
   });
 
   test('Переименовывает корневой объект и обновляет Configuration.xml', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfg-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfg-'));
     const catalogs = path.join(dir, 'Catalogs');
     fs.mkdirSync(catalogs, { recursive: true });
     const oldXmlPath = path.join(catalogs, 'Контрагенты.xml');

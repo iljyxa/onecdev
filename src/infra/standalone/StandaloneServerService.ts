@@ -12,6 +12,7 @@ import {
   scanInstalledOnecPlatforms,
 } from '../process';
 import type { Logger } from '../support/Logger';
+import { LEGACY_SERVICE_DIR_NAME } from '../fs/LegacyServiceDirMigration';
 
 export type StandaloneServerState = 'unconfigured' | 'running' | 'unresponsive' | 'stopped' | 'stale' | 'busy';
 
@@ -85,7 +86,7 @@ interface LastExitInfo {
 /**
  * Управляет автономным сервером 1С для файловой базы проекта.
  *
- * Сервис хранит конфигурацию и данные сервера внутри `.v8vscedit/standalone-server`,
+ * Сервис хранит конфигурацию и данные сервера внутри `.onecdev/standalone-server`,
  * чтобы запуск был воспроизводимым и не зависел от пользовательского каталога 1С.
  */
 export class StandaloneServerService {
@@ -377,7 +378,7 @@ export class StandaloneServerService {
       httpAddress: 'localhost',
       httpPort: 8314,
       httpBase: '/',
-      name: 'v8vscedit',
+      name: 'onecdev',
       distributeLicenses: 'allow',
       scheduleJobs: 'allow',
     };
@@ -452,7 +453,7 @@ export class StandaloneServerService {
   }
 
   private getServerRoot(): string {
-    return path.join(this.workspaceRoot, '.v8vscedit', 'standalone-server');
+    return path.join(this.workspaceRoot, '.onecdev', 'standalone-server');
   }
 
   private getSettingsPath(): string {
@@ -584,7 +585,7 @@ function normalizeSettingsInput(
     httpAddress: input.httpAddress.trim() || 'localhost',
     httpPort: normalizePort(input.httpPort),
     httpBase: normalizeHttpBase(input.httpBase),
-    name: input.name.trim() || 'v8vscedit',
+    name: input.name.trim() || 'onecdev',
     distributeLicenses: input.distributeLicenses,
     scheduleJobs: input.scheduleJobs,
   };
@@ -594,7 +595,15 @@ function normalizeStoredSettings(
   stored: Partial<StoredStandaloneServerSettings>,
   defaults: StandaloneServerSettings
 ): StandaloneServerSettings {
-  const storedDatabasePath = asString(stored.databasePath);
+  // Настройки, сохранённые до переименования v8vscedit → onecdev, переехали вместе с
+  // каталогом, но хранят абсолютные пути в `.v8vscedit/`: без пересчёта сервер поднял бы
+  // пустую базу в заново созданном старом каталоге, а данные остались бы в `.onecdev/`.
+  const legacyServerRoot = path.join(
+    path.dirname(path.dirname(defaults.dataPath)),
+    LEGACY_SERVICE_DIR_NAME,
+    path.basename(defaults.dataPath)
+  );
+  const storedDatabasePath = relocateLegacyServerPath(asString(stored.databasePath), legacyServerRoot, defaults.dataPath);
   const oldGeneratedDatabasePath = path.join(defaults.dataPath, 'db-data');
   const databasePath = storedDatabasePath === oldGeneratedDatabasePath
     && defaults.databasePath !== oldGeneratedDatabasePath
@@ -604,7 +613,9 @@ function normalizeStoredSettings(
   return {
     ibsrvPath: asString(stored.ibsrvPath) || defaults.ibsrvPath,
     platformPath: asString(stored.platformPath) || defaults.platformPath,
-    dataPath: asString(stored.dataPath) || defaults.dataPath,
+    // Каталог данных сервера пользователь не выбирает (normalizeSettingsInput всегда ставит
+    // корень сервера), поэтому хранимое значение не читается — оно могло устареть при переносе.
+    dataPath: defaults.dataPath,
     databasePath,
     httpAddress: asString(stored.httpAddress) || defaults.httpAddress,
     httpPort: normalizePort(stored.httpPort ?? defaults.httpPort),
@@ -613,6 +624,15 @@ function normalizeStoredSettings(
     distributeLicenses: stored.distributeLicenses === 'deny' ? 'deny' : 'allow',
     scheduleJobs: stored.scheduleJobs === 'deny' ? 'deny' : 'allow',
   };
+}
+
+/** Путь внутри старого корня сервера — на то же место в новом; остальные пути не трогаются. */
+function relocateLegacyServerPath(storedPath: string, legacyRoot: string, currentRoot: string): string {
+  const relative = path.relative(legacyRoot, storedPath);
+  if (!storedPath || relative.startsWith('..') || path.isAbsolute(relative)) {
+    return storedPath;
+  }
+  return path.join(currentRoot, relative);
 }
 
 function resolveFileDatabasePathFromEnv(env: Record<string, unknown>): string | null {

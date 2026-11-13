@@ -58,7 +58,7 @@ suite('CfFileArgs.buildCfFileDesignerArgs — вектор аргументов 
     return mod.buildCfFileDesignerArgs(options);
   }
 
-  const LOG = '/tmp/v8vscedit-dump-log.txt';
+  const LOG = '/tmp/onecdev-dump-log.txt';
 
   test('dump основной конфигурации: точный вектор без -Extension', () => {
     const args = build({ operation: 'dump', filePath: '/data/base.cf', outLogFile: LOG });

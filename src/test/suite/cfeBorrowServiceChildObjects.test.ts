@@ -117,7 +117,7 @@ suite('CfeBorrowService — ChildObjects оболочки по META_TYPES (issue
   let service: CfeBorrowService;
 
   setup(() => {
-    extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-child-objects-'));
+    extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-child-objects-'));
     fs.cpSync(EVOLC_DIR, extDir, { recursive: true });
     service = new CfeBorrowService();
   });
@@ -181,7 +181,7 @@ suite('CfeBorrowService — ChildObjects оболочки по META_TYPES (issue
   test('DataProcessor: borrowForm регистрирует форму в XML обработки', () => {
     // Форм у обработок в example/ нет — во временную копию выгрузки переносится реальная форма
     // справочника: для заимствования важна только структура Forms/<Имя>.xml + Ext/Form.xml.
-    const cfDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-child-objects-cf-'));
+    const cfDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-child-objects-cf-'));
     try {
       const sourceForms = path.join(CF_DIR, 'Catalogs', 'ПричиныВозврата', 'Forms');
       const targetForms = path.join(cfDir, 'DataProcessors', 'Обработка1', 'Forms');

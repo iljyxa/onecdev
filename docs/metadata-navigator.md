@@ -1,4 +1,4 @@
-# Редактор конфигураций (v8vscedit)
+# Редактор конфигураций (onecdev)
 
 ## Назначение
 
@@ -97,7 +97,7 @@ class MetadataNode extends vscode.TreeItem {
 (`resolveObjectFormNodeParts` → XML владельца + имя формы, `resolveFormBodyFromNode` → тело
 `…/Ext/Form.xml`), внутри — `MetaPathResolver.resolveChildFormXml`/`resolveChildFormDescriptor`/
 `resolveFormXmlByDescriptor`. Модуль лежит в `ui/tree/`, а не в `ui/mcp/`: MCP-инструменты и команды
-навигатора (`v8vscedit.form.info`/`validate`/`remove`) — равноправные потребители дерева, адаптер в одном
+навигатора (`onecdev.form.info`/`validate`/`remove`) — равноправные потребители дерева, адаптер в одном
 из них связал бы их между собой.
 
 **Новый потребитель, которому нужен путь формы** (тело, дескриптор, каталог формы), обязан идти через
@@ -171,7 +171,7 @@ interface NodeDescriptor {
 реестр типов (см. запрет №2 в `CLAUDE.md`).
 
 Полный канон путей `HTTPСервисы.X.URLШаблон.T[.Метод.M]` и состав
-MCP-инструментов `v8vscedit_add_url_template`/`v8vscedit_add_method` — в
+MCP-инструментов `onecdev_add_url_template`/`onecdev_add_method` — в
 [mcp-paths.md](./mcp-paths.md).
 
 ## Команды навигатора (CommandRegistry)
@@ -180,15 +180,15 @@ MCP-инструментов `v8vscedit_add_url_template`/`v8vscedit_add_method`
 
 | Команда | Описание | Когда доступна |
 |---|---|---|
-| `v8vscedit.refresh` | Обновить дерево | Всегда (toolbar) |
-| `v8vscedit.openXmlFile` | Открыть XML объекта | `.*-hasXml$` |
-| `v8vscedit.openObjectModule` | Открыть модуль объекта | Catalog, Document, ... |
-| `v8vscedit.openManagerModule` | Открыть модуль менеджера | Catalog, Document, Enum, ... |
-| `v8vscedit.openConstantModule` | Открыть модуль константы | `Constant-hasXml` |
-| `v8vscedit.openFormModule` | Открыть модуль формы | CommonForm, Form |
-| `v8vscedit.openCommandModule` | Открыть модуль команды | CommonCommand, Command |
-| `v8vscedit.openServiceModule` | Открыть модуль сервиса | WebService, HTTPService |
-| `v8vscedit.openCommonModuleCode` | Открыть модуль | `CommonModule-hasXml` |
+| `onecdev.refresh` | Обновить дерево | Всегда (toolbar) |
+| `onecdev.openXmlFile` | Открыть XML объекта | `.*-hasXml$` |
+| `onecdev.openObjectModule` | Открыть модуль объекта | Catalog, Document, ... |
+| `onecdev.openManagerModule` | Открыть модуль менеджера | Catalog, Document, Enum, ... |
+| `onecdev.openConstantModule` | Открыть модуль константы | `Constant-hasXml` |
+| `onecdev.openFormModule` | Открыть модуль формы | CommonForm, Form |
+| `onecdev.openCommandModule` | Открыть модуль команды | CommonCommand, Command |
+| `onecdev.openServiceModule` | Открыть модуль сервиса | WebService, HTTPService |
+| `onecdev.openCommonModuleCode` | Открыть модуль | `CommonModule-hasXml` |
 
 `CommandRegistry` также создаёт `FileSystemWatcher` на `**/Configuration.xml` — при изменении, создании или удалении вызывается `reloadEntries()`.
 
@@ -296,8 +296,8 @@ resolveObjectXmlForBsl` (поиск владельца для режима по�
 
 ## Отдельно: панель «Изменения метаданных»
 
-Рядом с навигатором в том же контейнере активности `v8vscedit` есть независимая webview-панель
-`v8vsceditChanges` — семантический `git status` в терминах объектов метаданных (stage/unstage/discard/
+Рядом с навигатором в том же контейнере активности `onecdev` есть независимая webview-панель
+`onecdevChanges` — семантический `git status` в терминах объектов метаданных (stage/unstage/discard/
 commit/diff). Она держит свою модель данных изменений (`ChangesModel` из `infra/git/*`, а не
 `MetadataCache`), но её дерево **повторяет навигаторную иерархию** этой панели, обрезанную только до
 изменённых объектов и их предков: `MetadataChangesViewProvider` для каждого изменённого объекта находит

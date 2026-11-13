@@ -24,9 +24,9 @@ export interface FakeWebviewPanelFactory {
   readonly restore: () => void;
 }
 
-/** Состояние, встроенное в HTML webview (`#v8vscedit-initial-state`). */
+/** Состояние, встроенное в HTML webview (`#onecdev-initial-state`). */
 export function readInitialState(html: string): unknown {
-  const match = /id="v8vscedit-initial-state">([^<]*)<\/script>/.exec(html);
+  const match = /id="onecdev-initial-state">([^<]*)<\/script>/.exec(html);
   if (!match) {
     throw new Error('В HTML нет начального состояния webview');
   }

@@ -79,7 +79,7 @@ export interface MetadataCacheUpdateResult {
   updatedPartially: boolean;
 }
 
-const METADATA_CACHE_DIR = path.join('.v8vscedit', 'meta');
+const METADATA_CACHE_DIR = path.join('.onecdev', 'meta');
 const CACHE_SCHEMA_VERSION = 17;
 
 /**

@@ -18,7 +18,7 @@ interface WebviewMessage {
  */
 export class DynamicPanelViewProvider
   implements vscode.WebviewViewProvider, vscode.Disposable, DynamicPanelHost {
-  static readonly viewType = 'v8vsceditDynamicPanel';
+  static readonly viewType = 'onecdevDynamicPanel';
 
   private view: vscode.WebviewView | undefined;
   private readonly htmlFactory: WebviewHtmlFactory;

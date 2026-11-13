@@ -128,7 +128,7 @@ suite('ChildObjects: порядок и декларация — снятие п�
 
   suite('T-17: связка golden ↔ example/ — генератор сверяется с корпусом, а не с самим собой', () => {
     function newConfigRoot(version: string): string {
-      const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-corpus-link-'));
+      const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-corpus-link-'));
       const configXml = [
         '<?xml version="1.0" encoding="utf-8"?>',
         `<MetaDataObject version="${version}">`,

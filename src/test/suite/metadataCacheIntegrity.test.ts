@@ -70,9 +70,9 @@ function countNodes(node: MetadataCacheNode, predicate: (node: MetadataCacheNode
   return count;
 }
 
-/** Каталог служебного кэша `.v8vscedit/meta` относительно корня проекта (temp-корня в тестах). */
+/** Каталог служебного кэша `.onecdev/meta` относительно корня проекта (temp-корня в тестах). */
 function metaCacheDir(projectRoot: string): string {
-  return path.join(projectRoot, '.v8vscedit', 'meta');
+  return path.join(projectRoot, '.onecdev', 'meta');
 }
 
 function listCacheFiles(projectRoot: string): string[] {
@@ -86,7 +86,7 @@ function listCacheFiles(projectRoot: string): string[] {
 suite('MetadataCache — целостность (C3/M4/M5)', () => {
   suite('C3 — свежесть кэша', () => {
     test('loadMetadataCache возвращает снимок, если ФС не менялась с момента сохранения', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-fresh-ok-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-fresh-ok-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -109,7 +109,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('loadMetadataCache возвращает null, если Configuration.xml изменилась после сохранения снимка', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-stale-configxml-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-stale-configxml-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -136,7 +136,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('loadMetadataCache возвращает null, если корневой каталог выгрузки изменился после сохранения снимка', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-stale-rootdir-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-stale-rootdir-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -161,7 +161,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('loadMetadataCache возвращает null для снимка с устаревшей версией схемы', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-old-schema-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-old-schema-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -186,7 +186,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('loadMetadataCache возвращает null, если весь корень выгрузки удалён с диска (statSync падает для обоих путей)', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-stale-rootdir-gone-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-stale-rootdir-gone-');
       const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
       const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
       assert.ok(info);
@@ -194,7 +194,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
       const snapshot = buildMetadataCacheSnapshot(scopeKey, entry);
       // Сохраняем в ОТДЕЛЬНЫЙ каталог проекта, а не внутрь самой выгрузки —
       // иначе rmSync ниже удалит и файл кэша, который нужен для loadMetadataCache.
-      const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cache-project-'));
+      const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cache-project-'));
       try {
         saveMetadataCache(projectRoot, snapshot);
 
@@ -212,7 +212,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('loadMetadataCache возвращает null, если в сохранённом снимке rootPath не строка (испорченный чужой формат)', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-bad-rootpath-type-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-bad-rootpath-type-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -237,7 +237,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('loadMetadataCache возвращает null для файла кэша с испорченным JSON (JSON.parse кидает исключение)', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-broken-json-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-broken-json-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -259,7 +259,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('текущий schemaVersion снимка поднят минимум до 14 (введён fingerprint)', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-schema-version-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-schema-version-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -283,7 +283,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
 
   suite('M4 — атомарность записи кэша', () => {
     test('после saveMetadataCache в каталоге кэша не остаётся временных *.tmp файлов', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-atomic-ok-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-atomic-ok-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -302,7 +302,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('saveMetadataCache пишет через временный файл и rename, а не напрямую writeFileSync в целевой путь', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-atomic-rename-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-atomic-rename-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -355,7 +355,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
       // `fs.writeFileSync(filePath, ...)` упадёт, потому что пишет прямо в
       // целевой путь. Это единственный способ различить два поведения без
       // реального повреждения диска — обоснованный mock внешнего сбоя ФС.
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-atomic-direct-write-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-atomic-direct-write-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -409,7 +409,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
       // (fs.rmSync(tempPath) + throw error) действительно вызывается: подделываем
       // именно временный путь (содержащий ".tmp"), оставляя реальную запись
       // в остальные пути нетронутой.
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-atomic-catch-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-atomic-catch-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const info = parseConfigXml(path.join(configRoot, 'Configuration.xml'));
@@ -465,7 +465,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
 
   suite('M5 — дедуп удаляемых узлов при точечном обновлении кэша', () => {
     test('удаление одного объекта не задевает соседа в той же группе при relatedFiles = [Object.xml, Ext/ObjectModule.bsl]', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-dedup-remove-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-dedup-remove-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const creator = new MetadataXmlCreator();
@@ -516,7 +516,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('перестройка узла по нескольким relatedFiles (объект не удалён) не задваивает узел объекта', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-dedup-rebuild-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-dedup-rebuild-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const creator = new MetadataXmlCreator();
@@ -552,7 +552,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('дедуп нескольких .xml путей одного объекта: Object.xml и путь внутри его каталога схлопываются в один узел', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-dedup-two-xml-paths-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-dedup-two-xml-paths-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const creator = new MetadataXmlCreator();
@@ -585,10 +585,10 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('пустой пересечения relatedFiles с rootPath — updateMetadataCacheForChangedFiles возвращает null без обращения к кэшу', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-unrelated-files-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-unrelated-files-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
-        const outsideRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cache-outside-'));
+        const outsideRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cache-outside-'));
         try {
           // Все переданные пути лежат ВНЕ rootPath выгрузки — relatedFiles пуст,
           // функция обязана вернуть null сразу, не пытаясь даже прочитать Configuration.xml.
@@ -603,7 +603,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('кэш ещё не создан — updateMetadataCacheForChangedFiles строит полный снимок и сохраняет его', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-no-cache-yet-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-no-cache-yet-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         assert.deepStrictEqual(listCacheFiles(configRoot), [], 'Перед первым вызовом кэш не должен существовать');
@@ -627,7 +627,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
       // прислать событие по Configuration.xml независимо от факта реального
       // изменения контента — точечный дедуп сознательно не пытается разбирать
       // такие события точечно и всегда уходит в полную пересборку.
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-changed-configxml-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-changed-configxml-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const creator = new MetadataXmlCreator();
@@ -658,7 +658,7 @@ suite('MetadataCache — целостность (C3/M4/M5)', () => {
     });
 
     test('.xml файл внутри rootPath, не относящийся ни к одному объекту дерева — targetsByNode пуст, возвращается null', () => {
-      const configRoot = makeTempConfigRoot('v8vscedit-cache-unmatched-xml-');
+      const configRoot = makeTempConfigRoot('onecdev-cache-unmatched-xml-');
       try {
         const entry: ConfigEntry = { rootPath: configRoot, kind: 'cf' };
         const creator = new MetadataXmlCreator();

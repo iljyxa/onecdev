@@ -9,7 +9,7 @@ suite('SubsystemXmlService — unescape синонима с &apos;/&quot; (X2)',
     // SubsystemXmlService.unescapeXmlText декодирует только &lt;/&gt;/&amp; — &apos; и &quot;
     // остаются нетронутыми. 1С экранирует апостроф в LocalStringType как &apos;
     // ("Товары &apos;Люкс&apos;"), поэтому синоним с апострофом читается расширением "сырым".
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-subsystem-apos-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-subsystem-apos-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     fs.mkdirSync(path.join(configRoot, 'Subsystems'), { recursive: true });
     fs.writeFileSync(

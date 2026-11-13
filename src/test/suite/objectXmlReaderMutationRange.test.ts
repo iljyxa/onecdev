@@ -25,7 +25,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updateTypeInObject меняет тип ВТОРОЙ колонки ТЧ с текстуально совпадающим Type-блоком; первая нетронута; BOM/EOL сохранены', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-column-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-column-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -111,7 +111,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
       '</MetaDataObject>\r',
     ].join('\n');
 
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-duplicate-ts-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-duplicate-ts-'));
     const xmlPath = path.join(root, 'Документ1.xml');
     fs.writeFileSync(xmlPath, xml, 'utf-8');
 
@@ -145,7 +145,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updateTypeInObject: Column без tabularSectionName — targetRange не строится, возвращает false и не трогает файл', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-column-no-ts-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-column-no-ts-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -162,7 +162,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updateTypeInObject: колонка с несуществующим именем в существующей ТЧ — targetRange не найден, возвращает false', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-column-missing-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-column-missing-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -179,7 +179,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updateTypeInObject: дочерний элемент с несуществующим именем (не Column) — findChildMetaElementRange возвращает null, false', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-attribute-missing-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-attribute-missing-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -195,7 +195,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updatePropertyInObject: Column без tabularSectionName — targetRange не строится, возвращает false и не трогает файл', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-prop-column-no-ts-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-prop-column-no-ts-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -213,7 +213,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updatePropertyInObject: несуществующий StandardAttribute — extractStandardAttributeXml не находит блок, возвращает false', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-prop-standard-missing-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-prop-standard-missing-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -238,7 +238,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
     // КАЖДОМ вызове с одинаковым typeInnerXml, даже когда реальных изменений нет.
     // ЦЕЛЬ (контракт): сравнение должно быть EOL-нечувствительным — повторный вызов
     // с тем же typeInnerXml на CRLF-файле обязан вернуть false и не трогать файл на диске.
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-idempotent-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-idempotent-'));
     const xmlPath = path.join(configRoot, 'ТекущийПользователь.xml');
     const originalXml = fs.readFileSync(SESSION_PARAMETER_XML, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -277,7 +277,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
     // Контроль от переусердствовавшего фикса: если сравнение станет EOL-нечувствительным
     // не только к разделителям строк, но и "проглотит" реальные семантические изменения —
     // это тоже баг. Реальное изменение типа (string → number) обязано остаться true.
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-real-change-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-real-change-'));
     const xmlPath = path.join(configRoot, 'ТекущийПользователь.xml');
     const originalXml = fs.readFileSync(SESSION_PARAMETER_XML, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -297,7 +297,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updatePropertyInObject: дочерний элемент с несуществующим именем (не Column/StandardAttribute) — findChildMetaElementRange null, false', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-prop-attribute-missing-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-prop-attribute-missing-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -315,7 +315,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
   });
 
   test('updatePropertyInObject: повторное применение уже установленного значения — идемпотентно, возвращает false и не трогает файл', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-prop-idempotent-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-prop-idempotent-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -349,7 +349,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
     // `.join('\n')` (голый LF), как и typeBlock в updateTypeInElement. На CRLF-файле это
     // воспроизводит тот же класс бага: повторный вызов с тем же значением обязан быть
     // идемпотентным (false), а не считаться изменением на каждый вызов.
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-x2-prop-insert-idempotent-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-prop-insert-idempotent-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');

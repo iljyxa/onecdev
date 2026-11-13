@@ -47,7 +47,7 @@ export function registerBorrowToExtensionCommand(
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      'v8vscedit.borrowToExtension',
+      'onecdev.borrowToExtension',
       async (node: NodeArg) => {
         await borrowToExtension(node, services);
       }

@@ -14,7 +14,7 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   const { paths, services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_mxl_info',
+    'onecdev_mxl_info',
     {
       title: 'Информация о MXL-макете',
       description: [
@@ -37,7 +37,7 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_validate_mxl',
+    'onecdev_validate_mxl',
     {
       title: 'Валидировать MXL-макет',
       description: [
@@ -58,12 +58,12 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_compile_mxl',
+    'onecdev_compile_mxl',
     {
       title: 'Скомпилировать MXL-макет',
       description: [
         'Перезаписывает содержимое существующего MXL Template.xml из JSON DSL.',
-        'Для нового макета сначала используй v8vscedit_add_template с templateType="Табличный документ".',
+        'Для нового макета сначала используй onecdev_add_template с templateType="Табличный документ".',
         'Принимает канонический путь существующего макета: Справочники.X.Макет.Y.',
       ].join(' '),
       inputSchema: z.object({
@@ -87,7 +87,7 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_decompile_mxl',
+    'onecdev_decompile_mxl',
     {
       title: 'Декомпилировать MXL-макет',
       description: [
@@ -106,7 +106,7 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_skd_info',
+    'onecdev_skd_info',
     {
       title: 'Информация о СКД',
       description: [
@@ -129,7 +129,7 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_validate_skd',
+    'onecdev_validate_skd',
     {
       title: 'Валидировать СКД',
       description: [
@@ -150,12 +150,12 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_compile_skd',
+    'onecdev_compile_skd',
     {
       title: 'Скомпилировать СКД',
       description: [
         'Перезаписывает содержимое существующей СКД Template.xml из JSON DSL.',
-        'Для новой СКД сначала используй v8vscedit_add_template с templateType="Схема компоновки данных".',
+        'Для новой СКД сначала используй onecdev_add_template с templateType="Схема компоновки данных".',
         'Принимает канонический путь существующего макета СКД.',
       ].join(' '),
       inputSchema: z.object({
@@ -178,7 +178,7 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_edit_skd',
+    'onecdev_edit_skd',
     {
       title: 'Изменить СКД',
       description: [

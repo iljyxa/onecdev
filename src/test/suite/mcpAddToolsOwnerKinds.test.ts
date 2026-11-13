@@ -21,8 +21,8 @@ import { createAddToolsHarness, resultText } from './support/mcpAddToolsHarness'
  */
 
 const EXPECTED_EXCEPTIONS: Readonly<Partial<Record<string, readonly MetaKind[]>>> = {
-  v8vscedit_add_attribute: ['CommonAttribute'],
-  v8vscedit_add_column: ['TabularSection'],
+  onecdev_add_attribute: ['CommonAttribute'],
+  onecdev_add_column: ['TabularSection'],
 };
 
 /**
@@ -57,7 +57,7 @@ suite('MCP add_*: allowedOwnerKinds выводится из META_TYPES (T-A2.13)
       const derived = new Set<string>(ownersByChildTags(d));
       return d.allowedOwnerKinds.some((kind) => !derived.has(kind));
     });
-    assert.deepStrictEqual(withException.map((d) => d.toolName).sort(), ['v8vscedit_add_attribute', 'v8vscedit_add_column']);
+    assert.deepStrictEqual(withException.map((d) => d.toolName).sort(), ['onecdev_add_attribute', 'onecdev_add_column']);
     const extraOwners = withException.flatMap((d) => {
       const derived = new Set<string>(ownersByChildTags(d));
       return d.allowedOwnerKinds.filter((kind) => !derived.has(kind));
@@ -67,8 +67,8 @@ suite('MCP add_*: allowedOwnerKinds выводится из META_TYPES (T-A2.13)
 
   test('после расширения childTags: add_attribute принимает регистры, add_template — журнал, планы, бизнес-процесс и задачу', () => {
     const byName = new Map(CHILD_ADD_TOOLS.map((d) => [d.toolName, d.allowedOwnerKinds]));
-    const attribute = byName.get('v8vscedit_add_attribute') ?? [];
-    const template = byName.get('v8vscedit_add_template') ?? [];
+    const attribute = byName.get('onecdev_add_attribute') ?? [];
+    const template = byName.get('onecdev_add_template') ?? [];
     for (const kind of ['InformationRegister', 'AccumulationRegister', 'AccountingRegister', 'CalculationRegister'] as const) {
       assert.ok(attribute.includes(kind), `add_attribute: нет ${kind}`);
       assert.ok(template.includes(kind), `add_template: нет ${kind}`);
@@ -98,9 +98,9 @@ suite('MCP add_*: функциональное добавление на вид�
     test(`${kind}: add_template + add_attribute (в обратном каноническому порядке вызовов) → успех, well-formed, позиция по канону, повтор не меняет файл`, async () => {
       const h = createAddToolsHarness();
       const owner = h.createOwner(kind, 'Тест');
-      const template = await h.call('v8vscedit_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' });
+      const template = await h.call('onecdev_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' });
       assert.ok(!template.isError, resultText(template));
-      const attribute = await h.call('v8vscedit_add_attribute', { path: owner.path, name: 'Реквизит1' });
+      const attribute = await h.call('onecdev_add_attribute', { path: owner.path, name: 'Реквизит1' });
       assert.ok(!attribute.isError, resultText(attribute));
 
       const xml = fs.readFileSync(owner.xmlPath, 'utf-8');
@@ -112,8 +112,8 @@ suite('MCP add_*: функциональное добавление на вид�
       // Повтор с тем же именем — отказ «уже существует», файл байт-в-байт прежний.
       const before = fs.readFileSync(owner.xmlPath);
       for (const [tool, args] of [
-        ['v8vscedit_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' }],
-        ['v8vscedit_add_attribute', { path: owner.path, name: 'Реквизит1' }],
+        ['onecdev_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' }],
+        ['onecdev_add_attribute', { path: owner.path, name: 'Реквизит1' }],
       ] as const) {
         const again = await h.call(tool, { ...args });
         const parsed = JSON.parse(resultText(again)) as { success: boolean; errors: string[] };
@@ -128,9 +128,9 @@ suite('MCP add_*: функциональное добавление на вид�
     test(`${kind}: add_template + add_command (в обратном каноническому порядке) → успех, well-formed, макет перед командой, повтор не меняет файл`, async () => {
       const h = createAddToolsHarness();
       const owner = h.createOwner(kind, 'Тест');
-      const command = await h.call('v8vscedit_add_command', { path: owner.path, name: 'Команда1' });
+      const command = await h.call('onecdev_add_command', { path: owner.path, name: 'Команда1' });
       assert.ok(!command.isError, resultText(command));
-      const template = await h.call('v8vscedit_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' });
+      const template = await h.call('onecdev_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' });
       assert.ok(!template.isError, resultText(template));
 
       const xml = fs.readFileSync(owner.xmlPath, 'utf-8');
@@ -140,7 +140,7 @@ suite('MCP add_*: функциональное добавление на вид�
       assertIndicesAscending(kind, tags);
 
       const before = fs.readFileSync(owner.xmlPath);
-      const again = await h.call('v8vscedit_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' });
+      const again = await h.call('onecdev_add_template', { path: owner.path, name: 'Макет1', templateType: 'Табличный документ' });
       assert.strictEqual((JSON.parse(resultText(again)) as { success: boolean }).success, false);
       assert.ok(fs.readFileSync(owner.xmlPath).equals(before), `${kind}: повторный вызов изменил файл`);
     });
@@ -151,9 +151,9 @@ suite('MCP add_*: понятный отказ для несовместимог�
   this.timeout(30000);
 
   const negatives: readonly (readonly [string, MetaKind, string])[] = [
-    ['v8vscedit_add_dimension', 'Catalog', 'измерение'],
-    ['v8vscedit_add_attribute', 'Enum', 'реквизит'],
-    ['v8vscedit_add_template', 'Constant', 'макет'],
+    ['onecdev_add_dimension', 'Catalog', 'измерение'],
+    ['onecdev_add_attribute', 'Enum', 'реквизит'],
+    ['onecdev_add_template', 'Constant', 'макет'],
   ];
   for (const [tool, kind, russianLabel] of negatives) {
     test(`${tool} на ${kind}: isError, сообщение называет элемент и вид владельца, файл не тронут`, async () => {

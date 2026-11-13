@@ -30,7 +30,7 @@ suite('RepositoryBindingStore — граничные ветки (issue #1)', () 
   let cfeTargetNoName: RepositoryTarget;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-binding-store-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-binding-store-'));
     store = new RepositoryBindingStore(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
     cfeTargetNoName = { configRoot: path.join(workspaceRoot, 'src', 'cfe', 'Ext'), configKind: 'cfe', displayName: 'Расширение' };
   });
@@ -138,7 +138,7 @@ suite('RepositoryBindingStore — readPlatformVersionHint (issue #6)', () => {
   let store: RepositoryBindingStore;
 
   setup(() => {
-    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-binding-hint-'));
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-binding-hint-'));
     store = new RepositoryBindingStore(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
   });
 

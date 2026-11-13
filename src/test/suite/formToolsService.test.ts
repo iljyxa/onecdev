@@ -6,7 +6,7 @@ import { ConfigurationScaffoldService, FormToolsService, MetadataXmlCreator } fr
 
 suite('FormToolsService', () => {
   test('добавляет, анализирует, валидирует и удаляет форму объекта', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Тест', outputDir: root });
     const creator = new MetadataXmlCreator();
     const addCatalog = creator.addRootObject({ configRoot: root, kind: 'Catalog', name: 'Товары' });
@@ -40,7 +40,7 @@ suite('FormToolsService', () => {
   });
 
   test('компилирует DSL формы и редактирует существующую форму', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-dsl-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-dsl-'));
     const formPath = path.join(root, 'Форма', 'Ext', 'Form.xml');
     const service = new FormToolsService();
 
@@ -84,7 +84,7 @@ suite('FormToolsService', () => {
   });
 
   test('компилирует расширенный DSL: radio, autoCmdBar, table с колонками, properties', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-rich-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-rich-'));
     const formPath = path.join(root, 'Форма', 'Ext', 'Form.xml');
     const service = new FormToolsService();
 
@@ -159,7 +159,7 @@ suite('FormToolsService', () => {
   });
 
   test('edit поддерживает after: вставляет элемент после named element', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-edit-after-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-edit-after-'));
     const formPath = path.join(root, 'Форма', 'Ext', 'Form.xml');
     const service = new FormToolsService();
     service.compile({
@@ -197,7 +197,7 @@ suite('FormToolsService', () => {
   });
 
   test('принимает синонимы Purpose: ItemForm, Element, ФормаЭлемента → Object', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-syn-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-syn-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Тест', outputDir: root });
     new MetadataXmlCreator().addRootObject({ configRoot: root, kind: 'Catalog', name: 'Товары' });
     const objectPath = path.join(root, 'Catalogs', 'Товары.xml');
@@ -215,7 +215,7 @@ suite('FormToolsService', () => {
   });
 
   test('autoFill заполняет форму элементами по метаданным справочника', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-auto-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-auto-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Тест', outputDir: root });
     const creator = new MetadataXmlCreator();
     creator.addRootObject({ configRoot: root, kind: 'Catalog', name: 'Контрагенты' });
@@ -240,7 +240,7 @@ suite('FormToolsService', () => {
   });
 
   test('autoFill для списка справочника создаёт DynamicList + колонки', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-list-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-list-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Тест', outputDir: root });
     new MetadataXmlCreator().addRootObject({ configRoot: root, kind: 'Catalog', name: 'Товары' });
     const objectPath = path.join(root, 'Catalogs', 'Товары.xml');
@@ -254,7 +254,7 @@ suite('FormToolsService', () => {
   });
 
   test('autoFill=false оставляет пустой каркас (только основной реквизит)', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-empty-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-empty-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Тест', outputDir: root });
     new MetadataXmlCreator().addRootObject({ configRoot: root, kind: 'Catalog', name: 'Товары' });
     const objectPath = path.join(root, 'Catalogs', 'Товары.xml');
@@ -268,7 +268,7 @@ suite('FormToolsService', () => {
   });
 
   test('добавляет форму внешней обработки тем же механизмом', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-epf-form-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-epf-form-'));
     const externalXml = [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" version="2.17">',

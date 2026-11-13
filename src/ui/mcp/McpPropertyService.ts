@@ -501,12 +501,12 @@ export class McpPropertyService {
  */
 function buildMetadataTypeNote(propertyKey: string): string {
   if (propertyKey === 'Source') {
-    return 'Тип источника подписки. Для смены вызови v8vscedit_set_type с propertyKey="Source". Доступные источники — v8vscedit_list_available_types.';
+    return 'Тип источника подписки. Для смены вызови onecdev_set_type с propertyKey="Source". Доступные источники — onecdev_list_available_types.';
   }
   if (propertyKey === 'CommandParameterType') {
-    return 'Тип параметра команды. Для смены вызови v8vscedit_set_type с propertyKey="CommandParameterType".';
+    return 'Тип параметра команды. Для смены вызови onecdev_set_type с propertyKey="CommandParameterType".';
   }
-  return 'Для смены значения вызови v8vscedit_set_type. Список доступных типов конфигурации возвращает v8vscedit_list_available_types с теми же path и propertyKey, базовый реестр типов — v8vscedit_list_supported_types.';
+  return 'Для смены значения вызови onecdev_set_type. Список доступных типов конфигурации возвращает onecdev_list_available_types с теми же path и propertyKey, базовый реестр типов — onecdev_list_supported_types.';
 }
 
 function readTypeInput(value: unknown): McpSetTypeInput {

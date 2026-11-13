@@ -18,7 +18,7 @@ function buildProbeRepo(): string {
   // realpathSync: на macOS os.tmpdir() отдаёт путь через симлинк /var → /private/var,
   // а git резолвит его в выводе `status`/`show-toplevel` — без этого абсолютные
   // пути в тесте разойдутся с тем, что вернёт git-процесс.
-  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-porcelain-')));
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-porcelain-')));
   const run = (args: string[]): string =>
     execFileSync('git', ['-C', root, ...args], { encoding: 'utf-8' });
 
@@ -155,7 +155,7 @@ suite('GitPorcelainReader', () => {
     let escRepo: string;
 
     suiteSetup(() => {
-      escRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-porcelain-escapes-')));
+      escRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-porcelain-escapes-')));
       execFileSync('git', ['-C', escRepo, 'init', '-q']);
       fs.writeFileSync(path.join(escRepo, 'file\twith\ttab.txt'), '', 'utf-8');
       fs.writeFileSync(path.join(escRepo, 'file\nwith\nnewline.txt'), '', 'utf-8');

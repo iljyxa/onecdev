@@ -30,7 +30,7 @@ import { fixtureUuid, writeConfigurationXml, writeObjectXml } from './support/fl
  * снапшоты, снятые ДО обновления расширения, стали бы нечитаемыми в разгар
  * отмены захвата. Тест на совместимость с манифестом v1 (`{files: [...]}`, без
  * хешей — только копия содержимого рядом в `files/<rel>`) намеренно кладёт файл
- * по этой же схеме: `.v8vscedit/repository/snapshots/<sha1(scopeKey)>/<sha1(fullName)>/`.
+ * по этой же схеме: `.onecdev/repository/snapshots/<sha1(scopeKey)>/<sha1(fullName)>/`.
  */
 
 function buildScopeKey(target: RepositoryTarget): string {
@@ -40,7 +40,7 @@ function buildScopeKey(target: RepositoryTarget): string {
 
 function legacySnapshotDir(workspaceRoot: string, target: RepositoryTarget, fullName: string): string {
   const fullNameHash = crypto.createHash('sha1').update(fullName).digest('hex');
-  return path.join(workspaceRoot, '.v8vscedit', 'repository', 'snapshots', buildScopeKey(target), fullNameHash);
+  return path.join(workspaceRoot, '.onecdev', 'repository', 'snapshots', buildScopeKey(target), fullNameHash);
 }
 
 suite('RepositoryLockSnapshotStore — captureFromDirectory/readSnapshotHashes/restoreToProject', () => {
@@ -142,7 +142,7 @@ suite('RepositoryLockSnapshotStore — captureFromDirectory/readSnapshotHashes/r
       const extraPath = path.join(configRoot, 'Catalogs', 'Объект', 'Ext', 'ObjectModule.bsl');
       fs.writeFileSync(extraPath, 'Процедура НоваяВоВремяЗахвата() КонецПроцедуры', 'utf-8');
 
-      const backupDir = path.join(workspaceRoot, '.v8vscedit', 'repository', 'merge', 'test', 'unlock');
+      const backupDir = path.join(workspaceRoot, '.onecdev', 'repository', 'merge', 'test', 'unlock');
       const projectScope = resolveObjectScope(configRoot, 'Справочник.Объект', target) as Extract<ObjectScope, { kind: 'object' }>;
       const result = store.restoreToProject(target, 'Справочник.Объект', projectScope, backupDir);
 
@@ -349,7 +349,7 @@ suite('RepositoryLockSnapshotStore — captureRootManifest/diffRootManifest (iss
       const configRoot = path.join(workspaceRoot, 'src', 'cf');
       writeConfigurationXml(configRoot, fixtureUuid('snap-root-notobject-config'));
       const target: RepositoryTarget = { configRoot, configKind: 'cf', displayName: 'Тест' };
-      const manifestPath = path.join(workspaceRoot, '.v8vscedit', 'repository', 'snapshots', buildScopeKey(target), 'root-manifest.json');
+      const manifestPath = path.join(workspaceRoot, '.onecdev', 'repository', 'snapshots', buildScopeKey(target), 'root-manifest.json');
       fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
       fs.writeFileSync(manifestPath, '["не объект"]', 'utf-8');
 
@@ -544,7 +544,7 @@ suite('RepositoryLockSnapshotStore — restoreToProject отбрасывает �
         const projectTarget: RepositoryTarget = { configRoot: projectDir, configKind: 'cf', displayName: 'ТорговыйУчет' };
         // Восстанавливаем ТОЛЬКО область владельца (unit) — форма ей больше не принадлежит.
         const unitScope = resolveObjectScope(projectDir, 'Справочник.Контрагенты', projectTarget, 'unit') as Extract<ObjectScope, { kind: 'object' }>;
-        const backupDir = path.join(workspaceRoot, '.v8vscedit', 'repository', 'merge', 'test', 'unlock');
+        const backupDir = path.join(workspaceRoot, '.onecdev', 'repository', 'merge', 'test', 'unlock');
         const result = store.restoreToProject(target, 'Справочник.Контрагенты', unitScope, backupDir);
 
         assert.ok(!result.restored.some((f: string) => path.resolve(f) === path.resolve(formModulePath)), 'Файл формы не должен восстанавливаться — он вне unit-области владельца.');
@@ -648,7 +648,7 @@ suite('RepositoryLockSnapshotStore — удаление через RemoveTree, m
   test('resolve*-методы совпадают с фактической раскладкой снимков', () => {
     const harness = createStoreHarness();
     const { store, target } = harness;
-    const scopeDir = path.join(harness.workspaceRoot, '.v8vscedit', 'repository', 'snapshots', buildScopeKey(target));
+    const scopeDir = path.join(harness.workspaceRoot, '.onecdev', 'repository', 'snapshots', buildScopeKey(target));
     assert.strictEqual(store.resolveScopeDir(target), scopeDir);
     assert.strictEqual(store.resolveSnapshotDir(target, FORM), legacySnapshotDir(harness.workspaceRoot, target, FORM));
     assert.strictEqual(store.resolveRootManifestPath(target), path.join(scopeDir, 'root-manifest.json'));

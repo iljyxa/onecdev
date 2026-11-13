@@ -99,7 +99,7 @@ function replaceDirectorySnapshot(sourceDir: string, targetDir: string): boolean
 
   const backupDir = path.join(
     targetParent,
-    `.${path.basename(targetDir)}.v8vscedit-backup-${String(process.pid)}-${String(Date.now())}`
+    `.${path.basename(targetDir)}.onecdev-backup-${String(process.pid)}-${String(Date.now())}`
   );
   let targetMoved = false;
 

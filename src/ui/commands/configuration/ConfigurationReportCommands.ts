@@ -7,10 +7,10 @@ export function registerConfigurationReportCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.configuration.info', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.configuration.info', async (node: MetadataNode | undefined) => {
       await showConfigurationInfo(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.configuration.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.configuration.validate', async (node: MetadataNode | undefined) => {
       await validateConfiguration(node, services);
     })
   );

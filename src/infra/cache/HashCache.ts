@@ -16,7 +16,7 @@ export interface HashDiffResult {
   deleted: string[];
 }
 
-const HASH_CACHE_DIR = path.join('.v8vscedit', 'cache');
+const HASH_CACHE_DIR = path.join('.onecdev', 'cache');
 const SUPPORTED_FILE_RE = /\.(xml|bsl)$/i;
 const TEMPLATE_CONTENT_RE = /\/Ext\/(?:Template\.(?:txt|bin)|Template\/[^/]+\.html)$/i;
 const CACHE_SCHEMA_VERSION = 1;

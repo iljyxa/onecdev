@@ -6,7 +6,7 @@ import { CfeDiffService } from '../../infra/cfe/CfeDiffService';
 
 suite('cfeDiffService', () => {
   test('показывает заимствованные объекты и перехватчики BSL', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-diff-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-diff-'));
     const cfe = path.join(root, 'cfe');
     fs.mkdirSync(path.join(cfe, 'Catalogs', 'Товары', 'Ext'), { recursive: true });
     fs.writeFileSync(path.join(cfe, 'Configuration.xml'), buildConfigurationXml(), 'utf-8');
@@ -28,7 +28,7 @@ suite('cfeDiffService', () => {
   });
 
   test('проверяет перенос блоков #Вставка в основную конфигурацию', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-diff-transfer-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-diff-transfer-'));
     const cfe = path.join(root, 'cfe');
     const cf = path.join(root, 'cf');
     fs.mkdirSync(path.join(cfe, 'Catalogs', 'Товары', 'Ext'), { recursive: true });
@@ -60,7 +60,7 @@ suite('cfeDiffService', () => {
   });
 
   test('возвращает статусы not_transferred и needs_review для спорных вставок', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-diff-status-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-diff-status-'));
     const cfe = path.join(root, 'cfe');
     const cf = path.join(root, 'cf');
     fs.mkdirSync(path.join(cfe, 'Catalogs', 'Товары', 'Ext'), { recursive: true });
@@ -95,7 +95,7 @@ suite('cfeDiffService', () => {
   });
 
   test('предупреждает, если режим transfer запущен без пути к конфигурации', () => {
-    const cfe = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-diff-warning-'));
+    const cfe = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-diff-warning-'));
     fs.writeFileSync(path.join(cfe, 'Configuration.xml'), buildConfigurationXml(), 'utf-8');
 
     const result = new CfeDiffService().analyze({ extensionPath: cfe, mode: 'transfer' });

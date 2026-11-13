@@ -1,6 +1,6 @@
 # Синхронизация файлов проекта с хранилищем конфигурации
 
-Issue #1 форка. Команды хранилища `v8vscedit.repository.lock` / `update` / `updateToVersion` / `unlock` / `commit`
+Issue #1 форка. Команды хранилища `onecdev.repository.lock` / `update` / `updateToVersion` / `unlock` / `commit`
 меняют не только состояние объектов на сервере и в базе, но и файлы XML-выгрузки проекта. Полный план и решения —
 [plans/repository-file-sync-plan.md](./plans/repository-file-sync-plan.md) (разделы 1–10), факты поведения
 платформы, на которых держится реализация, — там же, §10.12.
@@ -136,13 +136,13 @@ FS_RM_RETRY_DELAY_MS (100)` — на Windows `EPERM`/`EBUSY`/`ENOTEMPTY` при 
 неудаляемым временным каталогом подключает `removePathWithRetries`/`describeFsError` напрямую из
 `infra/fs/PathRemoval.ts`, а не копирует логику повтора.
 
-- `.v8vscedit/repository/objects/<scope>-<ts>.xml` — `Objects.xml` для `-ObjectsFile` живёт только на
+- `.onecdev/repository/objects/<scope>-<ts>.xml` — `Objects.xml` для `-ObjectsFile` живёт только на
   время одного запуска Конфигуратора: `runSubjectCli` (`RepositoryFileSyncShared.ts`) удаляет его в
   `finally` при любом исходе, включая исключение. Дополнительно первым шагом каждой аренды
   `runRepositoryExclusive` → `sweepRepositoryTempArtifacts` подметает все `objects/*.xml` — это
   безопасно, т.к. такие файлы создаются только внутри аренды общего guard'а хранилища (ограничение —
   один процесс расширения на рабочую область, см. «Известные ограничения», issue #77).
-- `.v8vscedit/repository/merge/<scope>/<stamp>-<label>/` — резервные копии перезаписываемых/удаляемых
+- `.onecdev/repository/merge/<scope>/<stamp>-<label>/` — резервные копии перезаписываемых/удаляемых
   файлов и копии версии хранилища для сравнения при `keep-local` (в т.ч. единственная копия отброшенных
   правок при отмене захвата). Ротация — в начале аренды, `pruneMergeBackups`: удаляется каталог старше
   `DEFAULT_MERGE_BACKUP_RETENTION.maxAgeMs` (7 дней) или сверх `maxPerScope` (20) последних в своём
@@ -152,18 +152,18 @@ FS_RM_RETRY_DELAY_MS (100)` — на Windows `EPERM`/`EBUSY`/`ENOTEMPTY` при 
   сравнения на уже удалённую резервную копию покажут «файл не найден».
 - Сбой любого шага очистки не срывает операцию, ради которой взята аренда, — в журнал «1С Редактор»
   идёт строка `[repository][file-sync][warn] очистка временных файлов не удалась: …`.
-- Снимки захвата (`.v8vscedit/repository/snapshots/`) удаляются при отмене захвата и при помещении без
+- Снимки захвата (`.onecdev/repository/snapshots/`) удаляются при отмене захвата и при помещении без
   `keepLocked`; дополнительно — при отключении хранилища (`clearBinding`) и при новой привязке
   (`saveBinding`), обе точки вызывают `discardAll(target)`.
-- Каталоги выгрузки `.v8vscedit/import-temp/repository-dump-*` освобождаются и при исключениях —
+- Каталоги выгрузки `.onecdev/import-temp/repository-dump-*` освобождаются и при исключениях —
   `disposeOnError`/`disposeOnErrorAsync` (`RepositoryTempCleanup.ts`) оборачивают код между выгрузкой во
   временный каталог и передачей владения им вызывающему.
 - Хвосты после аварийного завершения самого процесса расширения (issue #76) подметает
   `sweepStaleOperationTemp` (`infra/process/StaleOperationTempSweep.ts`) при активации расширения
-  (`Container.bootstrap`, асинхронно, без ожидания): каталоги `.v8vscedit/import-temp/*` (все префиксы
+  (`Container.bootstrap`, асинхронно, без ожидания): каталоги `.onecdev/import-temp/*` (все префиксы
   `createImportTempDir` — `repository-dump-`, `import-ext-`, `import-cf-`, `list-ext-`; возраст по mtime,
   т.к. в имени `mkdtemp` метки нет; `infra/fs/WorkspaceTempDir.ts`) и одноразовые выгрузки агента
-  `.v8vscedit/agent/0/workspace/<ключ>-dump-<мс>-<номер>` с `lists/<то же>.txt` (возраст по метке в имени;
+  `.onecdev/agent/0/workspace/<ключ>-dump-<мс>-<номер>` с `lists/<то же>.txt` (возраст по метке в имени;
   имя строит и разбирает только `infra/agent/AgentDumpCleanup.ts`, постоянное зеркало `workspace/<ключ>` не
   трогается). Подметание идёт вне аренды guard'а — слияние и диалог конфликта держат каталог выгрузки и после
   неё, — поэтому живой поток защищает только порог `STALE_OPERATION_TEMP_MAX_AGE_MS` (сутки, строго больше);
@@ -202,7 +202,7 @@ FS_RM_RETRY_DELAY_MS (100)` — на Windows `EPERM`/`EBUSY`/`ENOTEMPTY` при 
   ошибка аутентификации; с ключом база отключается и с неверным паролем, и без параметров хранилища. Захваты
   пользователя при этом остаются на сервере, из отключённой базы их не снять.
 - `repository.update` больше не спрашивает номер версии — всегда получает актуальную (без `-Version`).
-  Номер версии спрашивает отдельная команда узла `v8vscedit.repository.updateToVersion` («Получить версию
+  Номер версии спрашивает отдельная команда узла `onecdev.repository.updateToVersion` («Получить версию
   из хранилища…», иконка `history`, в контекстном меню сразу после `repository.update` при
   `-repoConnected`): `promptRepositoryVersion` (натуральное число без ведущих нулей, `validateRepositoryVersion`)
   → рекурсия → тот же поток `runRepositoryUpdateFlow` с `-Version` и `-Force`.
@@ -226,7 +226,7 @@ FS_RM_RETRY_DELAY_MS (100)` — на Windows `EPERM`/`EBUSY`/`ENOTEMPTY` при 
 локальное» (`keep-local`):
 
 - **Заменить / Сравнить** — локальная версия сначала уходит в бэкап
-  `.v8vscedit/repository/merge/<scopeKey>/<время>-<метка>/<rel>`, затем файл перезаписывается побайтово
+  `.onecdev/repository/merge/<scopeKey>/<время>-<метка>/<rel>`, затем файл перезаписывается побайтово
   (BOM/EOL версии хранилища). «Сравнить» открывает до `MAX_DIFF_TABS = 10` окон единой конвенции сторон
   (слева всегда локальное состояние, справа — версия хранилища): бэкап моих правок слева ↔ файл проекта
   (уже перезаписан версией хранилища) справа, `projectSide: 'repository'` (только текстовые файлы, остальные
@@ -254,7 +254,7 @@ Post-mutation: `suppressConfigurationReloadForFiles` → запись и пат�
 ## Снимки и отмена захвата
 
 `RepositoryLockSnapshotStore.ts`, раскладка
-`.v8vscedit/repository/snapshots/<scopeKey>/<sha1(fullName)>/{manifest.json,files/<rel>}`.
+`.onecdev/repository/snapshots/<scopeKey>/<sha1(fullName)>/{manifest.json,files/<rel>}`.
 Публичные `resolveScopeDir(target)`/`resolveSnapshotDir(target, fullName)`/
 `resolveRootManifestPath(target)` — единственный источник этих путей (используются и самим хранилищем,
 и `RepositorySnapshotSteps.ts` для сообщений об ошибках).
@@ -311,7 +311,7 @@ Post-mutation: `suppressConfigurationReloadForFiles` → запись и пат�
 
 ## Состояние захватов (`state.json`)
 
-`.v8vscedit/repository/state.json`, формат `version: 2` (`RepositoryLockState.ts`). Необязательные поля цели:
+`.onecdev/repository/state.json`, формат `version: 2` (`RepositoryLockState.ts`). Необязательные поля цели:
 `rootRecursive`, `releasedUnderRoot`, `lockGroups` (якорь → состав рекурсивного захвата), `lockModes`
 (`'recursive' | 'object'` — режим последнего захвата единицы). Некорректные значения при чтении отбрасываются.
 `RepositoryLockRequest.refused` (issue #87, см. «Частичный отказ рекурсивного захвата» выше) — единицы,
@@ -401,7 +401,7 @@ Issue #6. `RepositoryLockStatusService.syncTarget(target)` (`infra/repository/Re
 `vscode.workspace.isTrusted`**: это сетевой вызов с учётными данными, подложенный `env.json` в недоверенной
 рабочей области увёл бы хеш пароля на чужой сервер. Исходы идут только в лог `[repository][locks]`, без
 уведомлений; дерево обновляется, только если состояние изменилось. Команда узла
-`v8vscedit.repository.refreshLocks` («Обновить статусы захватов», иконка `refresh`) — в контекстном меню
+`onecdev.repository.refreshLocks` («Обновить статусы захватов», иконка `refresh`) — в контекстном меню
 корня при `-repoConnected` (`UniversalPanelViewProvider.addRepoRootActions`) — делает то же самое по
 запросу, но с немодальными уведомлениями (`RepositoryLockStatusCommands.ts`).
 
@@ -498,9 +498,9 @@ summarizePartialLock` разбирает `failed`-вывод потока `lock`
 только для чтения. `ConfigDumpInfo.xml` не единица хранилища и не ограничивается.
 `EditorReadonlyController` (`ui/readonly/`) подписан на `onDidChangeLocks` и по чистому плану
 `planReadonlyTransitions` переключает readonly открытых вкладок (включая обе стороны диффа) без
-переоткрытия: видимые — сразу, скрытые — при активации. Вкладки служебного `.v8vscedit/`
+переоткрытия: видимые — сразу, скрытые — при активации. Вкладки служебного `.onecdev/`
 (`isInsideWorkspaceServiceDir`, `infra/fs/WorkspaceTempDir.ts`) в план не попадают (issue #79): когда корень
-конфигурации совпадает с корнем рабочей области, бэкапы и копии слияния `.v8vscedit/repository/merge/**`
+конфигурации совпадает с корнем рабочей области, бэкапы и копии слияния `.onecdev/repository/merge/**`
 лежат внутри него, но файлами конфигурации не являются.
 
 Несохранённый документ (`isDirty`) в readonly не переводится (issue #62): readonly сессии запрещает
@@ -579,11 +579,11 @@ readonly файла проекта в обе стороны (issue #78): `writab
 
 ## Настройка
 
-`v8vscedit.repository.syncFilesOnLockUnlock` (по умолчанию `true`) включает выгрузку, слияние, снимки и откат.
+`onecdev.repository.syncFilesOnLockUnlock` (по умолчанию `true`) включает выгрузку, слияние, снимки и откат.
 Захват с `-revised`, guard, состояние захватов и readonly работают всегда. MCP-инструмента нет: команды
-`v8vscedit.repository.*` не входят в `ALLOWED_COMMANDS` моста `v8vscedit_execute_command` — все пять операций
+`onecdev.repository.*` не входят в `ALLOWED_COMMANDS` моста `onecdev_execute_command` — все пять операций
 (`lock`/`update`/`updateToVersion`/`unlock`/`commit`) требуют интерактивных решений пользователя (рекурсия,
-конфликты, откат, номер версии). По той же причине без MCP-инструмента и `v8vscedit.repository.refreshLocks`
+конфликты, откат, номер версии). По той же причине без MCP-инструмента и `onecdev.repository.refreshLocks`
 (issue #6): хотя команда не интерактивна и не требует диалогов, она меняет только локальный кэш
 `state.json`, а не конфигурацию или базу — MCP-поверхность полагается только на операции, что-то реально
 меняющие в проекте или базе (см. правило в `CLAUDE.md` о MCP-инструменте для мутирующих команд).
@@ -644,17 +644,17 @@ readonly файла проекта в обе стороны (issue #78): `writab
   `OneCdFile`/`OneCdTable` реализована, но не покрыта тестами на реальном файле — фикстур такого размера
   нет; закрыта `/* c8 ignore */` с обоснованием.
 - Сбой удаления снимка best-effort (issue #103): если не удалось удалить даже `manifest.json` прошлого
-  захвата, в `.v8vscedit/repository/snapshots/` остаётся устаревший снимок, а `state.json` это никак не
+  захвата, в `.onecdev/repository/snapshots/` остаётся устаревший снимок, а `state.json` это никак не
   отмечает — следующая отмена захвата откатит к его (уже неактуальной) версии хранилища. Пользователь
   получает явное предупреждение с путём каталога, который нужно удалить вручную; автоматического
   повторного удаления при следующей операции нет.
-- Служебный каталог `.v8vscedit` (снимки, резервные копии слияния, временные выгрузки) от LSP-watcher
+- Служебный каталог `.onecdev` (снимки, резервные копии слияния, временные выгрузки) от LSP-watcher
   явно не исключён (issue #104 закрыт иначе): `Container` перезапускает `bsl-analyzer` при появлении
   основной конфигурации, чтобы сервер выбрал её корнем и перестал следить за всей рабочей областью, а
   клиент больше не шлёт `synchronize.fileEvents` — см.
   [bsl-language-support.md](./bsl-language-support.md#перезапуск-при-появлении-основной-конфигурации-issue-104).
   Если основной конфигурации в рабочей области нет вовсе (только cfe) или перезапуск не удался, сервер
-  по-прежнему индексирует и отслеживает весь workspace, включая `.v8vscedit/**`.
+  по-прежнему индексирует и отслеживает весь workspace, включая `.onecdev/**`.
 
 ### Фикстуры статусов захвата (issue #6)
 

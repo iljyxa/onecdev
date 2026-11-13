@@ -95,7 +95,7 @@ export function validateCfFileOutputTarget(filePath: string, overwrite: boolean)
  * нельзя — предикат либо не узнал бы одного из генераторов, либо съел бы
  * пользовательский `.backup.2024-01-15.part`.
  */
-const DUMP_STAGING_SUFFIX = '.v8vscedit.part';
+const DUMP_STAGING_SUFFIX = '.onecdev.part';
 
 /**
  * Путь промежуточного (staging) файла выгрузки — в том же каталоге, что и

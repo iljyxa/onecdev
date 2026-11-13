@@ -43,7 +43,7 @@ function canStop(state: StandaloneServerStatusDto['state']): boolean {
       v-if="!status.configured"
       class="primary-action"
       type="button"
-      @click="messageBus.send({ type: 'command', command: 'v8vscedit.standalone.configure' })"
+      @click="messageBus.send({ type: 'command', command: 'onecdev.standalone.configure' })"
     >
       Настроить автономный сервер
     </button>
@@ -53,7 +53,7 @@ function canStop(state: StandaloneServerStatusDto['state']): boolean {
         title="Запустить автономный сервер"
         aria-label="Запустить автономный сервер"
         :disabled="status.state === 'running' || status.state === 'busy'"
-        @click="messageBus.send({ type: 'command', command: 'v8vscedit.standalone.start' })"
+        @click="messageBus.send({ type: 'command', command: 'onecdev.standalone.start' })"
       >
         <span class="codicon codicon-play" aria-hidden="true" />
       </button>
@@ -62,7 +62,7 @@ function canStop(state: StandaloneServerStatusDto['state']): boolean {
         title="Перезапустить автономный сервер"
         aria-label="Перезапустить автономный сервер"
         :disabled="status.state === 'busy'"
-        @click="messageBus.send({ type: 'command', command: 'v8vscedit.standalone.restart' })"
+        @click="messageBus.send({ type: 'command', command: 'onecdev.standalone.restart' })"
       >
         <span class="codicon codicon-refresh" aria-hidden="true" />
       </button>
@@ -71,7 +71,7 @@ function canStop(state: StandaloneServerStatusDto['state']): boolean {
         title="Остановить автономный сервер"
         aria-label="Остановить автономный сервер"
         :disabled="!canStop(status.state)"
-        @click="messageBus.send({ type: 'command', command: 'v8vscedit.standalone.stop' })"
+        @click="messageBus.send({ type: 'command', command: 'onecdev.standalone.stop' })"
       >
         <span class="codicon codicon-debug-stop" aria-hidden="true" />
       </button>
@@ -80,7 +80,7 @@ function canStop(state: StandaloneServerStatusDto['state']): boolean {
         title="Открыть веб-клиент"
         aria-label="Открыть веб-клиент"
         :disabled="status.state === 'busy'"
-        @click="messageBus.send({ type: 'command', command: 'v8vscedit.standalone.openWebClient' })"
+        @click="messageBus.send({ type: 'command', command: 'onecdev.standalone.openWebClient' })"
       >
         <span class="codicon codicon-browser" aria-hidden="true" />
       </button>
@@ -88,7 +88,7 @@ function canStop(state: StandaloneServerStatusDto['state']): boolean {
         type="button"
         title="Открыть лог автономного сервера"
         aria-label="Открыть лог автономного сервера"
-        @click="messageBus.send({ type: 'command', command: 'v8vscedit.standalone.showLog' })"
+        @click="messageBus.send({ type: 'command', command: 'onecdev.standalone.showLog' })"
       >
         <span class="codicon codicon-output" aria-hidden="true" />
       </button>
@@ -96,7 +96,7 @@ function canStop(state: StandaloneServerStatusDto['state']): boolean {
         type="button"
         title="Настройки автономного сервера"
         aria-label="Настройки автономного сервера"
-        @click="messageBus.send({ type: 'command', command: 'v8vscedit.standalone.configure' })"
+        @click="messageBus.send({ type: 'command', command: 'onecdev.standalone.configure' })"
       >
         <span class="codicon codicon-settings-gear" aria-hidden="true" />
       </button>

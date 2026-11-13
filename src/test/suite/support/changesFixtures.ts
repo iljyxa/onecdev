@@ -61,7 +61,7 @@ export interface ChangesFixture {
 export function buildChangesBaselineRepo(): ChangesFixture {
   // realpathSync: macOS резолвит /tmp в /private/tmp — без этого абсолютные пути
   // из наших вычислений разойдутся с тем, что вернёт git (см. gitPorcelainReader.test.ts).
-  const workspaceRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-changes-ui-')));
+  const workspaceRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-changes-ui-')));
   const cfRoot = path.join(workspaceRoot, 'src', 'cf');
   const catalogsDir = path.join(cfRoot, 'Catalogs');
   fs.mkdirSync(catalogsDir, { recursive: true });
@@ -127,7 +127,7 @@ export function removeFixtureRepo(fixture: ChangesFixture): void {
  * без сети). Возвращает путь поднятого remote — вызывающий обязан удалить его.
  */
 export function attachBareRemote(gitRoot: string): string {
-  const remoteRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-changes-remote-')));
+  const remoteRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-changes-remote-')));
   git(remoteRoot, ['init', '-q', '--bare']);
   git(gitRoot, ['remote', 'add', 'origin', remoteRoot]);
   git(gitRoot, ['push', '-q', '-u', 'origin', 'HEAD']);
@@ -163,7 +163,7 @@ export interface HistoryFixture {
 
 export function buildHistoryRepo(): HistoryFixture {
   // realpathSync: см. обоснование в gitPorcelainReader.test.ts (macOS /tmp → /private/tmp).
-  const repoRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-history-')));
+  const repoRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-history-')));
   const baseFile = path.join(repoRoot, 'base.txt');
 
   // '-b main' — фиксируем имя ветки явно: тесты графа опираются на конкретные

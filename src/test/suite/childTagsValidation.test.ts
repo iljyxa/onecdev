@@ -141,7 +141,7 @@ function copyRealWithInsertion(kind: MetaKind, insertion: string): string {
   // файл тоже годится: самозакрытый тег раскрывается под вставку.
   const source = scanOwnerFiles(kind).find((f) => f.xml.includes('</ChildObjects>') || f.xml.includes('<ChildObjects/>'));
   assert.ok(source, `${kind}: нет реального файла с блоком <ChildObjects>`);
-  const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-childtags-')), (META_TYPES[kind].folder ?? ''));
+  const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-childtags-')), (META_TYPES[kind].folder ?? ''));
   fs.mkdirSync(dir, { recursive: true });
   let xml: string;
   if (source.xml.includes('</ChildObjects>')) {

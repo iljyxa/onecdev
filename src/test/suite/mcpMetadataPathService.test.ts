@@ -161,7 +161,7 @@ suite('McpMetadataPathService — каноническая навигация', 
   // ── resolveObjectXmlPath: канон + абсолютный путь, без relative-from-root ──
 
   test('resolveObjectXmlPath — абсолютный путь к файлу', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-resolve-canonical-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-resolve-canonical-'));
     const catalogsDir = path.join(root, 'Catalogs');
     fs.mkdirSync(catalogsDir, { recursive: true });
     const catalogXml = path.join(catalogsDir, 'Задачи.xml');
@@ -177,7 +177,7 @@ suite('McpMetadataPathService — каноническая навигация', 
   });
 
   test('resolveObjectXmlPath — относительный путь от корня НЕ поддерживается', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-resolve-rel-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-resolve-rel-'));
     const catalogsDir = path.join(root, 'Catalogs');
     fs.mkdirSync(catalogsDir, { recursive: true });
     fs.writeFileSync(path.join(catalogsDir, 'Задачи.xml'), '<MetaDataObject/>', 'utf-8');
@@ -300,7 +300,7 @@ suite('McpMetadataPathService — каноническая навигация', 
     assert.ok(result.total >= 2);
   });
 
-  // ── resolveNodeSafe: для tool v8vscedit_resolve_path ──────────────────
+  // ── resolveNodeSafe: для tool onecdev_resolve_path ──────────────────
 
   test('resolveNodeSafe — существующий узел: exists=true, node заполнен', () => {
     const service = new McpMetadataPathService(createProvider());

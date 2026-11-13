@@ -17,7 +17,7 @@ suite('MetaPathResolver', () => {
     assert.ok(sourceEntry, 'В example/2.20/src/cf/Catalogs нет ни одного справочника');
     const sourceXmlPath = path.join(catalogsDir, sourceEntry.name);
 
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-module-path-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-module-path-'));
     const objectName = path.basename(sourceXmlPath, '.xml');
     const targetFolder = path.join(tempRoot, 'Catalogs');
     const targetXmlPath = path.join(targetFolder, `${objectName}.xml`);
@@ -32,7 +32,7 @@ suite('MetaPathResolver', () => {
   });
 
   test('создаёт модуль менеджера для справочника (разрешённый слот)', () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-module-path-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-module-path-'));
     const xmlPath = path.join(tempRoot, 'Catalogs', 'TestCatalog.xml');
     fs.mkdirSync(path.dirname(xmlPath), { recursive: true });
     fs.writeFileSync(xmlPath, '');
@@ -43,7 +43,7 @@ suite('MetaPathResolver', () => {
   });
 
   test('запрещает создание ObjectModule для регистра сведений', () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-module-path-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-module-path-'));
     const xmlPath = path.join(tempRoot, 'InformationRegisters', 'TestRegister.xml');
     fs.mkdirSync(path.dirname(xmlPath), { recursive: true });
     fs.writeFileSync(xmlPath, '');
@@ -55,7 +55,7 @@ suite('MetaPathResolver', () => {
   });
 
   test('запрещает создание ObjectModule для регистра накопления', () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-module-path-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-module-path-'));
     const xmlPath = path.join(tempRoot, 'AccumulationRegisters', 'TestRegister.xml');
     fs.mkdirSync(path.dirname(xmlPath), { recursive: true });
     fs.writeFileSync(xmlPath, '');
@@ -67,7 +67,7 @@ suite('MetaPathResolver', () => {
   });
 
   test('разрешает создание ManagerModule для регистра сведений', () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-module-path-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-module-path-'));
     const xmlPath = path.join(tempRoot, 'InformationRegisters', 'TestRegister.xml');
     fs.mkdirSync(path.dirname(xmlPath), { recursive: true });
     fs.writeFileSync(xmlPath, '');
@@ -86,7 +86,7 @@ suite('MetaPathResolver', () => {
    */
   suite('resolveXml', () => {
     test('находит XML в глубокой раскладке', () => {
-      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-resolve-xml-'));
+      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-resolve-xml-'));
       const deepPath = path.join(tempRoot, 'Catalogs', 'Спр1', 'Спр1.xml');
       fs.mkdirSync(path.dirname(deepPath), { recursive: true });
       fs.writeFileSync(deepPath, '');
@@ -97,7 +97,7 @@ suite('MetaPathResolver', () => {
     });
 
     test('находит XML в плоской раскладке, если глубокой нет', () => {
-      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-resolve-xml-'));
+      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-resolve-xml-'));
       const flatPath = path.join(tempRoot, 'Catalogs', 'Спр1.xml');
       fs.mkdirSync(path.dirname(flatPath), { recursive: true });
       fs.writeFileSync(flatPath, '');
@@ -108,7 +108,7 @@ suite('MetaPathResolver', () => {
     });
 
     test('возвращает null, если XML объекта не существует ни в одной из раскладок', () => {
-      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-resolve-xml-'));
+      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-resolve-xml-'));
       fs.mkdirSync(path.join(tempRoot, 'Catalogs'), { recursive: true });
 
       const result = new MetaPathResolver().resolveXml(tempRoot, 'Catalog', 'НетТакогоСправочника');
@@ -117,7 +117,7 @@ suite('MetaPathResolver', () => {
     });
 
     test('возвращает null для типа метаданных без папки выгрузки (например, служебной группы дерева)', () => {
-      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-resolve-xml-'));
+      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-resolve-xml-'));
 
       // 'group-type' — служебный узел дерева без записи `folder` в META_TYPES
       // (см. domain/MetaTypes.ts): getMetaFolder возвращает null для него.

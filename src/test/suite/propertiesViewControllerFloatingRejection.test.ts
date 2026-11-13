@@ -48,7 +48,7 @@ suite('PropertiesViewController — B2.3: floating rejection в handlePropertyCh
 
     // xmlPath указывает на РЕАЛЬНО СУЩЕСТВУЮЩУЮ директорию — modifyConfigurationProperty
     // пройдёт fs.existsSync (true) и упадёт на fs.readFileSync с EISDIR.
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-b23-eisdir-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-b23-eisdir-'));
     const brokenXmlPath = configRoot; // директория вместо файла — гарантированный EISDIR
 
     const controller = new PropertiesViewController(

@@ -148,12 +148,12 @@
 - **Новый view/webview:** класс в `ui/views/<Имя>ViewProvider.ts` (без XML/FS) → данные готовит отдельный сервис → создание и команда открытия через `Container`.
 - **Новый сервис инфры:** класс в `infra/<подпапка>/<Имя>Service.ts` без `vscode`, `Logger` через конструктор → создать в `Container.bootstrap` → тест на пример из `example/`.
 - **Новая возможность LSP:** встроенных провайдеров нет; completion/hover/diagnostics добавляются в `bsl-analyzer`, здесь проверяется только интеграция `LspManager`.
-- **Новая настройка:** `package.json → contributes.configuration.properties` с префиксом `v8vscedit.<область>.<ключ>`, `description` на русском → читать только через `vscode.workspace.getConfiguration('v8vscedit')` в UI/Container → при рантайм-влиянии подписка на `onDidChangeConfiguration`.
+- **Новая настройка:** `package.json → contributes.configuration.properties` с префиксом `onecdev.<область>.<ключ>`, `description` на русском → читать только через `vscode.workspace.getConfiguration('onecdev')` в UI/Container → при рантайм-влиянии подписка на `onDidChangeConfiguration`.
 - **Новый watcher:** `FileSystemWatcher` — только в `Container` или `ui/support/`; обработчик делегирует в сервис.
 - **Внешняя интеграция (vrunner):** запуск процесса в `ui/commands/ext/`; декодирование OEM/Win1251 через `iconv-lite`; прогресс/отмена через `vscode.window.withProgress`.
 - **Новая операция чтения данных из базы через пакетный Конфигуратор** (данных, которых нет в
   XML-выгрузке — список/состояние; образец — список подключённых расширений для
-  `v8vscedit.connectExtension`): CLI-команда `cli/commands/<name>.ts` с гейтом по `exitCode` процесса
+  `onecdev.connectExtension`): CLI-команда `cli/commands/<name>.ts` с гейтом по `exitCode` процесса
   (не по тексту лога) и передачей результата через `-ResultFile` (не marker-блок в stdout — избегает
   порчи данных построчным `LineBufferedDecoder`) → чистый парсер в `infra/<область>/<Name>Parser.ts` без
   `vscode`/spawn (снятие BOM, разбор строк, при необходимости — чистая функция выбора для UI) → тонкая
@@ -273,13 +273,13 @@
   `heldBy` держателя) → сообщение о занятости — только `notifyConfigurationOperationBusy`
   (`ui/commands/ext/configurationOperationBusy.ts`), **без `await`** (см. запрет №18) → фоновый (`void`)
   путь без ожидающего пользователя логирует исход в `outputChannel` и уведомляет тем же способом, а не
-  падает молча → контекст enablement `v8vscedit.isUpdatingConfigurations` вручную нигде не выставлять —
+  падает молча → контекст enablement `onecdev.isUpdatingConfigurations` вручную нигде не выставлять —
   его синхронизирует только `Container.wireConfigurationOperationContext()` подпиской на
   `guard.onDidChangeBusy` → модальные диалоги подтверждения по возможности держать ВНЕ аренды (проверка
   занятости — до диалога, повторный захват — после) → runner'ы Конфигуратора и диалоги внедряются через
   `deps`-объект по умолчанию (образец — `RepositoryDatabaseSync.ts`/`RepositoryDatabaseSyncDeps`), чтобы
   логику захвата можно было протестировать без реального процесса 1С → **если команда доступна MCP-мосту
-  `v8vscedit_execute_command`** (`V8McpServer`/`McpConfigLifecycleTools.ts`), она обязана на КАЖДОМ пути
+  `onecdev_execute_command`** (`V8McpServer`/`McpConfigLifecycleTools.ts`), она обязана на КАЖДОМ пути
   возвращать `ConfigurationCommandOutcome` (`ui/commands/ext/configurationCommandOutcome.ts`:
   `done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`), а при занятости — `{ status: 'busy',
   heldBy }`; мост транслирует этот исход как есть и НЕ опрашивает guard заранее (второй источник правды +
@@ -289,7 +289,7 @@
   graceful shutdown, Host/Origin, отличается от «новый MCP-инструмент» из раздела выше): чистая логика —
   в `infra/mcp/` (`McpServerIdentity`, `McpStartDecision`, `McpPortProbe`, `McpConflictPrompt`, `McpHost`,
   без `vscode`) → тонкий адаптер конкретного эндпоинта/диалога — `ui/mcp/V8McpServer.ts` (HTTP-роутинг,
-  служебные `/identity`+`/shutdown` — не MCP-инструменты) и `Container` (чтение настроек `v8vscedit.mcp.*`,
+  служебные `/identity`+`/shutdown` — не MCP-инструменты) и `Container` (чтение настроек `onecdev.mcp.*`,
   показ диалога конфликта порта). См. [mcp-server-lifecycle.md](./mcp-server-lifecycle.md).
 - **Новая часть объекта в панели «Изменения метаданных»** (`MetadataPartKind`, см.
   [git-metadata-changes.md](./git-metadata-changes.md)): случай в

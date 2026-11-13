@@ -34,7 +34,7 @@ suite('roleRightsService', () => {
   });
 
   test('создаёт роль из DSL, регистрирует её и валидирует Rights.xml', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-role-compile-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-role-compile-'));
     new ConfigurationScaffoldService().createConfiguration({
       name: 'Основа',
       outputDir: root,
@@ -76,7 +76,7 @@ suite('roleRightsService', () => {
   });
 
   test('точечно редактирует Rights.xml: grant/revoke/setRls/setFlags/templates и вложенные объекты', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-role-edit-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-role-edit-'));
     new ConfigurationScaffoldService().createConfiguration({
       name: 'Основа',
       outputDir: root,
@@ -147,7 +147,7 @@ suite('roleRightsService', () => {
   });
 
   test('грейс-сценарии edit: ошибки и предупреждения для отсутствующих объектов/прав', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-role-edit-warn-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-role-edit-warn-'));
     new ConfigurationScaffoldService().createConfiguration({
       name: 'Основа2',
       outputDir: root,
@@ -184,7 +184,7 @@ suite('roleRightsService', () => {
   });
 
   test('управляет DefaultRoles через фасад: list/add/remove/set, в т.ч. при <DefaultRoles/>', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-default-roles-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-default-roles-'));
     const configPath = path.join(root, 'Configuration.xml');
     fs.writeFileSync(
       configPath,
@@ -232,7 +232,7 @@ suite('roleRightsService', () => {
   });
 
   test('находит ошибки в некорректном Rights.xml', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-role-invalid-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-role-invalid-'));
     const rightsPath = path.join(root, 'Roles', 'ПлохаяРоль', 'Ext', 'Rights.xml');
     fs.mkdirSync(path.dirname(rightsPath), { recursive: true });
     fs.writeFileSync(rightsPath, buildInvalidRightsXml(), 'utf-8');

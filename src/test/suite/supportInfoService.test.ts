@@ -32,7 +32,7 @@ class TestLogger implements Logger {
 
 /** Создаёт временный каталог конфигурации, вызывает fn и гарантированно чистит его. */
 function withConfigRoot(fn: (configRoot: string) => void): void {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-support-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-support-'));
   const configRoot = path.join(tempDir, 'cf');
   try {
     fn(configRoot);
@@ -227,7 +227,7 @@ suite('SupportInfoService — изменения запрещены (реаль�
   let service: SupportInfoService;
 
   setup(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-support-forbidden-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-support-forbidden-'));
     configRoot = path.join(tempDir, 'cf');
     const source = EXAMPLE_CF_ROOTS['2.21'];
 
@@ -518,7 +518,7 @@ suite('SupportInfoService — плоская и вложенная раскла�
       writeConfigurationXml(configRoot, configUuid);
       writeParentConfigurationsBin(configRoot, new Map());
 
-      const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-support-outside-'));
+      const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-support-outside-'));
       try {
         const bslPath = writeBslFile(path.join(outsideDir, 'CommonModules', 'X', 'Ext', 'Module.bsl'));
 
@@ -967,7 +967,7 @@ suite('SupportInfoService — hasChangesForbidden (issue #22)', () => {
 
   test('путь вне корня конфигурации → false, даже если сама конфигурация с флагом запрета', () => {
     const fixture = buildSupportFixtureRoot('forbidden');
-    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-support-forbidden-outside-'));
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-support-forbidden-outside-'));
     try {
       const service = new SupportInfoService(new TestLogger());
       service.loadConfig(fixture.configRoot);

@@ -254,7 +254,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
 
   test('start на свободном порту → started; повторный start на уже запущенном сервере идемпотентен', async () => {
     const port = await reserveFreePort();
-    const server = createServer('/tmp/v8vscedit-fixture/project-idempotent');
+    const server = createServer('/tmp/onecdev-fixture/project-idempotent');
     spawnedServers.push(server);
 
     const first = await server.start({ host: HOST, port });
@@ -269,7 +269,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
 
   test('два инстанса на одном порту с ОДИНАКОВЫМ projectRoot: второй получает reuse', async () => {
     const port = await reserveFreePort();
-    const projectRoot = '/tmp/v8vscedit-fixture/project-reuse';
+    const projectRoot = '/tmp/onecdev-fixture/project-reuse';
     const serverA = createServer(projectRoot);
     const serverB = createServer(projectRoot);
     spawnedServers.push(serverA, serverB);
@@ -283,8 +283,8 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
 
   test('два инстанса на одном порту с РАЗНЫМ projectRoot: второй получает conflict-foreign с occupant', async () => {
     const port = await reserveFreePort();
-    const serverA = createServer('/tmp/v8vscedit-fixture/project-a', '0.4.1-a');
-    const serverB = createServer('/tmp/v8vscedit-fixture/project-b', '0.4.1-b');
+    const serverA = createServer('/tmp/onecdev-fixture/project-a', '0.4.1-a');
+    const serverB = createServer('/tmp/onecdev-fixture/project-b', '0.4.1-b');
     spawnedServers.push(serverA, serverB);
 
     await serverA.start({ host: HOST, port });
@@ -293,7 +293,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
     assert.strictEqual(resultB.kind, 'conflict-foreign');
     // resultB сужен assert.strictEqual выше до члена conflict-foreign — occupant доступен напрямую.
     assert.strictEqual(resultB.occupant.product, PRODUCT_ID);
-    assert.strictEqual(resultB.occupant.projectRoot, '/tmp/v8vscedit-fixture/project-a');
+    assert.strictEqual(resultB.occupant.projectRoot, '/tmp/onecdev-fixture/project-a');
     assert.strictEqual(resultB.occupant.pid, process.pid, 'занявший порт процесс — тот же тестовый процесс Node');
     assert.strictEqual(resultB.occupant.version, '0.4.1-a');
   });
@@ -310,7 +310,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
       });
     });
     try {
-      const server = createServer('/tmp/v8vscedit-fixture/project-unknown');
+      const server = createServer('/tmp/onecdev-fixture/project-unknown');
       spawnedServers.push(server);
       const result = await server.start({ host: HOST, port });
       assert.deepStrictEqual(result, { kind: 'conflict-unknown' });
@@ -321,7 +321,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
 
   test('GET /identity отдаёт корректный JSON и отвергает запрос с чужим Host (403)', async () => {
     const port = await reserveFreePort();
-    const projectRoot = '/tmp/v8vscedit-fixture/project-identity';
+    const projectRoot = '/tmp/onecdev-fixture/project-identity';
     const server = createServer(projectRoot, '0.9.9-identity-test');
     spawnedServers.push(server);
     await server.start({ host: HOST, port });
@@ -345,7 +345,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
   test('POST /shutdown отвечает 200 и гасит свой сервер: порт реально освобождается', async function () {
     this.timeout(5000);
     const port = await reserveFreePort();
-    const server = createServer('/tmp/v8vscedit-fixture/project-shutdown');
+    const server = createServer('/tmp/onecdev-fixture/project-shutdown');
     spawnedServers.push(server);
     await server.start({ host: HOST, port });
 
@@ -359,7 +359,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
   test('closeAllConnections: stop() резолвится быстро и освобождает порт при открытом SSE-потоке', async function () {
     this.timeout(10000);
     const port = await reserveFreePort();
-    const server = createServer('/tmp/v8vscedit-fixture/project-sse');
+    const server = createServer('/tmp/onecdev-fixture/project-sse');
     spawnedServers.push(server);
     await server.start({ host: HOST, port });
 
@@ -379,7 +379,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
     // источником нестабильности теста. Вместо этого тест перехватывает
     // именно тот поток, что уже открыл сам SDK-клиент.
     const standaloneStream = captureStandaloneSseResponse(port);
-    const client = new Client({ name: 'v8vscedit-test-client', version: '1.0.0' });
+    const client = new Client({ name: 'onecdev-test-client', version: '1.0.0' });
     const transport = new StreamableHTTPClientTransport(new URL(`http://${HOST}:${String(port)}/mcp`));
     await client.connect(transport);
     const sessionId = transport.sessionId;
@@ -423,8 +423,8 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
   test('forceRestart: A запущен, B.forceRestart на тот же host/port гасит A и стартует B', async function () {
     this.timeout(10000);
     const port = await reserveFreePort();
-    const serverA = createServer('/tmp/v8vscedit-fixture/project-force-a', '0.4.1-a');
-    const serverB = createServer('/tmp/v8vscedit-fixture/project-force-b', '0.4.1-b');
+    const serverA = createServer('/tmp/onecdev-fixture/project-force-a', '0.4.1-a');
+    const serverB = createServer('/tmp/onecdev-fixture/project-force-b', '0.4.1-b');
     spawnedServers.push(serverA, serverB);
 
     const startA = await serverA.start({ host: HOST, port });
@@ -436,14 +436,14 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
     const identityAfter = await httpGet(port, '/identity');
     const parsed = parseIdentity(JSON.parse(identityAfter.body) as unknown);
     assert.strictEqual(
-      parsed?.projectRoot, '/tmp/v8vscedit-fixture/project-force-b',
+      parsed?.projectRoot, '/tmp/onecdev-fixture/project-force-b',
       'после forceRestart на порту обязан отвечать B, а не прежний владелец A',
     );
   });
 
   test('повторный start() на adopted-инстансе идемпотентен: возвращает reuse без нового зонда, владелец жив', async () => {
     const port = await reserveFreePort();
-    const projectRoot = '/tmp/v8vscedit-fixture/project-adopted-idempotent';
+    const projectRoot = '/tmp/onecdev-fixture/project-adopted-idempotent';
     const owner = createServer(projectRoot, '0.4.1-owner-idem');
     const adopter = createServer(projectRoot, '0.4.1-adopter-idem');
     spawnedServers.push(owner, adopter);
@@ -470,7 +470,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
   test('forceRestart на СВОЁМ уже запущенном endpoint: сервер сначала гасит себя, затем стартует заново', async function () {
     this.timeout(10000);
     const port = await reserveFreePort();
-    const projectRoot = '/tmp/v8vscedit-fixture/project-self-restart';
+    const projectRoot = '/tmp/onecdev-fixture/project-self-restart';
     const server = createServer(projectRoot, '0.4.1-self-restart-v1');
     spawnedServers.push(server);
 
@@ -495,7 +495,7 @@ suite('V8McpServer — жизненный цикл (identity, reuse/conflict, fo
 
   test('adopted-сервер (после reuse) не гасит владельца своим stop(): владелец продолжает отвечать', async () => {
     const port = await reserveFreePort();
-    const projectRoot = '/tmp/v8vscedit-fixture/project-adopted';
+    const projectRoot = '/tmp/onecdev-fixture/project-adopted';
     const owner = createServer(projectRoot, '0.4.1-owner');
     const adopter = createServer(projectRoot, '0.4.1-adopter');
     spawnedServers.push(owner);
@@ -559,7 +559,7 @@ suite('V8McpServer — IPv6-loopback (::1): форма Host-заголовка �
       return;
     }
     const port = await reserveFreePortOnHost('::1');
-    const projectRoot = '/tmp/v8vscedit-fixture/project-ipv6-identity';
+    const projectRoot = '/tmp/onecdev-fixture/project-ipv6-identity';
     const server = createServer(projectRoot, '0.9.9-ipv6-identity');
     spawnedServers.push(server);
     const started = await server.start({ host: '::1', port });
@@ -586,7 +586,7 @@ suite('V8McpServer — IPv6-loopback (::1): форма Host-заголовка �
       return;
     }
     const port = await reserveFreePortOnHost('::1');
-    const projectRoot = '/tmp/v8vscedit-fixture/project-ipv6-reuse';
+    const projectRoot = '/tmp/onecdev-fixture/project-ipv6-reuse';
     const serverA = createServer(projectRoot, '0.9.9-ipv6-a');
     const serverB = createServer(projectRoot, '0.9.9-ipv6-b');
     spawnedServers.push(serverA, serverB);

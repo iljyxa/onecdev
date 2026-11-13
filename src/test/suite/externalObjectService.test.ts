@@ -6,7 +6,7 @@ import { ExternalObjectService } from '../../infra/xml';
 
 suite('ExternalObjectService', () => {
   test('создаёт внешнюю обработку, добавляет справку и валидирует структуру', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-epf-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-epf-'));
     const service = new ExternalObjectService();
 
     const created = service.createExternalDataProcessor({
@@ -47,7 +47,7 @@ suite('ExternalObjectService', () => {
   });
 
   test('создаёт внешний отчёт с основной СКД и проверяет ссылки', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-erf-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-erf-'));
     const service = new ExternalObjectService();
 
     const created = service.createExternalReport({
@@ -69,7 +69,7 @@ suite('ExternalObjectService', () => {
   });
 
   test('добавляет регистрацию и команды БСП в модуль объекта', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-bsp-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-bsp-'));
     const service = new ExternalObjectService();
     service.createExternalDataProcessor({
       name: 'ПечатьЗаказа',

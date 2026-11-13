@@ -112,7 +112,7 @@ function onNodeDefault(nodeId: string): void {
 
 function sendCommand(command: string): void {
   props.messageBus.send({ type: 'command', command });
-  if (command.startsWith('v8vscedit.standalone.')) {
+  if (command.startsWith('onecdev.standalone.')) {
     startStandalonePollBurst();
   }
 }
@@ -320,29 +320,29 @@ onUnmounted(() => {
       <section v-if="!initialized" class="initialization" aria-label="Инициализация проекта">
         <div class="init-title">Проект не инициализирован</div>
         <div class="init-text">Будут созданы env.json и минимальные каталоги src/cf, src/cfe.</div>
-        <button class="primary-action" type="button" @click="sendCommand('v8vscedit.initializeProject')">
+        <button class="primary-action" type="button" @click="sendCommand('onecdev.initializeProject')">
           Инициализировать проект
         </button>
       </section>
 
       <template v-else>
         <div class="actions">
-          <button type="button" title="Импортировать конфигурации из базы" aria-label="Импортировать конфигурации из базы" @click="sendCommand('v8vscedit.importConfigurations')">
+          <button type="button" title="Импортировать конфигурации из базы" aria-label="Импортировать конфигурации из базы" @click="sendCommand('onecdev.importConfigurations')">
             <span class="codicon codicon-arrow-down" aria-hidden="true" />
           </button>
-          <button type="button" title="Настройки проекта" aria-label="Настройки проекта" @click="sendCommand('v8vscedit.configureEnvironment')">
+          <button type="button" title="Настройки проекта" aria-label="Настройки проекта" @click="sendCommand('onecdev.configureEnvironment')">
             <span class="codicon codicon-settings-gear" aria-hidden="true" />
           </button>
-          <button type="button" title="ИИ и MCP" aria-label="ИИ и MCP" @click="sendCommand('v8vscedit.openAiSettings')">
+          <button type="button" title="ИИ и MCP" aria-label="ИИ и MCP" @click="sendCommand('onecdev.openAiSettings')">
             <span class="ai-mark" aria-hidden="true">AI</span>
           </button>
-          <button class="group-right" type="button" title="Обновить изменённые конфигурации" aria-label="Обновить изменённые конфигурации" @click="sendCommand('v8vscedit.updateChangedConfigurations')">
+          <button class="group-right" type="button" title="Обновить изменённые конфигурации" aria-label="Обновить изменённые конфигурации" @click="sendCommand('onecdev.updateChangedConfigurations')">
             <span class="codicon codicon-database" aria-hidden="true" />
           </button>
-          <button type="button" title="Запустить конфигуратор" aria-label="Запустить конфигуратор" @click="sendCommand('v8vscedit.runConfigurator')">
+          <button type="button" title="Запустить конфигуратор" aria-label="Запустить конфигуратор" @click="sendCommand('onecdev.runConfigurator')">
             <span class="codicon codicon-code-oss" aria-hidden="true" />
           </button>
-          <button type="button" title="Запустить тонкий клиент" aria-label="Запустить тонкий клиент" @click="sendCommand('v8vscedit.runThinClient')">
+          <button type="button" title="Запустить тонкий клиент" aria-label="Запустить тонкий клиент" @click="sendCommand('onecdev.runThinClient')">
             <span class="codicon codicon-play" aria-hidden="true" />
           </button>
         </div>

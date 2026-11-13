@@ -43,7 +43,7 @@ suite('MetadataXmlCreator — вставка дочерних элементов
     assert.ok(originalXml.includes('\r\n'), 'фикстура должна использовать CRLF');
     assert.ok(originalXml.includes('<Name>Регион</Name>'), 'ожидался существующий реквизит "Регион"');
 
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-substr-catalog-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-substr-catalog-'));
     fs.mkdirSync(path.join(configRoot, 'Catalogs'), { recursive: true });
     const xmlPath = path.join(configRoot, 'Catalogs', 'Контрагенты.xml');
     fs.writeFileSync(xmlPath, originalXml, 'utf-8');
@@ -73,7 +73,7 @@ suite('MetadataXmlCreator — вставка дочерних элементов
     // а совпадающее имя колонки уже есть в ПЕРВОЙ, non-greedy поиск может "перепрыгнуть"
     // через закрытие первой секции и решить, что колонка с таким именем уже существует
     // во второй ТЧ — хотя на самом деле она принадлежит первой.
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-two-ts-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-two-ts-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
 
     const creator = new MetadataXmlCreator();

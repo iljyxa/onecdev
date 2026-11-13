@@ -6,7 +6,7 @@ import { BasedOnXmlService } from '../../infra/xml/BasedOnXmlService';
 
 suite('BasedOnXmlService', () => {
   test('Редактирует прямой и обратный ввод на основании', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-based-on-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-based-on-'));
     fs.mkdirSync(path.join(root, 'Catalogs'), { recursive: true });
     fs.mkdirSync(path.join(root, 'Documents'), { recursive: true });
     fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');
@@ -35,7 +35,7 @@ suite('BasedOnXmlService', () => {
   });
 
   test('Быстрый снимок не строит обратные ссылки до прогрева индекса', async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-based-on-fast-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-based-on-fast-'));
     fs.mkdirSync(path.join(root, 'Catalogs'), { recursive: true });
     fs.mkdirSync(path.join(root, 'Documents'), { recursive: true });
     fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');

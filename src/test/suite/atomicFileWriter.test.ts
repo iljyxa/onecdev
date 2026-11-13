@@ -40,7 +40,7 @@ function atomic(): AtomicModule {
   return loaded;
 }
 
-function tmpDir(prefix = 'v8vscedit-atomic-'): string {
+function tmpDir(prefix = 'onecdev-atomic-'): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
 
@@ -62,7 +62,7 @@ suite('AtomicFileWriter.resolveAtomicTempPath (T-B2.22)', () => {
 
   for (const name of targets) {
     test(`цель «${name}»: тот же каталог, путь не равен цели и не оканчивается на .xml`, () => {
-      const dir = path.join(os.tmpdir(), 'v8vscedit-x', 'Catalogs');
+      const dir = path.join(os.tmpdir(), 'onecdev-x', 'Catalogs');
       const target = path.join(dir, name);
       const temp = atomic().resolveAtomicTempPath(target, '123-1');
       assert.strictEqual(path.dirname(temp), dir, 'rename атомарен только в пределах одного каталога/тома');
@@ -183,8 +183,8 @@ suite('AtomicFileWriter.writeFileAtomic (T-B2.23-28)', function () {
     // Выбранное поведение: запись идёт в разрешённый (realpath) файл, а не
     // заменяет саму ссылку обычным файлом. Иначе выгрузка, подключённая в
     // проект симлинком, молча «отвалилась» бы от источника после первой правки.
-    const linkDir = tmpDir('v8vscedit-atomic-link-');
-    const realDir = tmpDir('v8vscedit-atomic-real-');
+    const linkDir = tmpDir('onecdev-atomic-link-');
+    const realDir = tmpDir('onecdev-atomic-real-');
     const real = path.join(realDir, 'Настоящий.xml');
     const link = path.join(linkDir, 'Ссылка.xml');
     fs.writeFileSync(real, 'old', 'utf-8');
@@ -260,7 +260,7 @@ suite('Дедупликация temp+rename: кэши используют об�
   this.timeout(30000);
 
   test('saveHashCache: запись → чтение → эквивалентный снимок, повторная запись не оставляет мусора', () => {
-    const projectRoot = tmpDir('v8vscedit-hash-atomic-');
+    const projectRoot = tmpDir('onecdev-hash-atomic-');
     const scopeKey = buildScopeKey('cf', path.join(projectRoot, 'src', 'cf'));
     const snapshot = {
       schemaVersion: 1 as const,
@@ -275,7 +275,7 @@ suite('Дедупликация temp+rename: кэши используют об�
   });
 
   test('saveMetadataCache: запись → чтение → эквивалентный снимок, повторная запись не оставляет мусора', () => {
-    const configRoot = tmpDir('v8vscedit-meta-atomic-cfg-');
+    const configRoot = tmpDir('onecdev-meta-atomic-cfg-');
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), [
       '<?xml version="1.0" encoding="utf-8"?>',
       '<MetaDataObject version="2.21">',
@@ -288,7 +288,7 @@ suite('Дедупликация temp+rename: кэши используют об�
     ].join('\n'), 'utf-8');
     assert.strictEqual(new MetadataXmlCreator().addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' }).success, true);
 
-    const projectRoot = tmpDir('v8vscedit-meta-atomic-prj-');
+    const projectRoot = tmpDir('onecdev-meta-atomic-prj-');
     const snapshot = buildMetadataCacheSnapshot('atomic-scope', { rootPath: configRoot, kind: 'cf' });
     saveMetadataCache(projectRoot, snapshot);
     saveMetadataCache(projectRoot, snapshot);

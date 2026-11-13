@@ -4,7 +4,7 @@
 
 ## О проекте
 
-`v8vscedit` — расширение для VS Code / Cursor (TypeScript) для работы с выгрузкой конфигураций и расширений 1С:Предприятие: навигация по метаданным из XML, редактирование свойств и состава, создание/удаление объектов метаданных, синхронизация с базой, хранилище конфигурации, LSP для BSL и локальный MCP-сервер для ИИ-агентов.
+`onecdev` (hard fork проекта [v8vscedit](https://github.com/Macegor/v8vscedit) с 2026-11-13, репозиторий `iljyxa/v8vscedit`, лицензия GPL-3.0-only — см. `LICENSE` и `NOTICE`) — расширение для VS Code / Cursor (TypeScript) для работы с выгрузкой конфигураций и расширений 1С:Предприятие: навигация по метаданным из XML, редактирование свойств и состава, создание/удаление объектов метаданных, синхронизация с базой, хранилище конфигурации, LSP для BSL и локальный MCP-сервер для ИИ-агентов.
 
 Две независимые подсистемы:
 1. **Навигатор метаданных** — дерево объектов из XML-выгрузки (CF и CFE), свойства, чтение/создание/редактирование метаданных, открытие BSL-модулей.
@@ -160,7 +160,7 @@ export interface MetaTypeDef {
 
 ### Composition root
 
-`Container.bootstrap()`: создаёт `OutputChannel` и все сервисы → регистрирует `TreeView`/декорации/`FileSystemWatcher` → `CommandRegistry.registerAll(ctx, services)` → `reloadEntries()` → запускает `V8McpServer` (если `v8vscedit.mcp.enabled`) → стартует `LspManager`. Сервисы не создаются через `new` в командах/builder'ах — только через Container.
+`Container.bootstrap()`: создаёт `OutputChannel` и все сервисы → регистрирует `TreeView`/декорации/`FileSystemWatcher` → `CommandRegistry.registerAll(ctx, services)` → `reloadEntries()` → запускает `V8McpServer` (если `onecdev.mcp.enabled`) → стартует `LspManager`. Сервисы не создаются через `new` в командах/builder'ах — только через Container.
 
 ### Основной UI — webview, а не TreeView
 

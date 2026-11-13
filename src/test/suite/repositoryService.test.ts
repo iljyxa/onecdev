@@ -64,8 +64,8 @@ suite('RepositoryService', () => {
   let stateBackup: string | undefined;
 
   const envPath = path.join(EXAMPLE_ROOT, 'env.json');
-  const statePath = path.join(EXAMPLE_ROOT, '.v8vscedit', 'repository', 'state.json');
-  const snapshotsRoot = path.join(EXAMPLE_ROOT, '.v8vscedit', 'repository', 'snapshots');
+  const statePath = path.join(EXAMPLE_ROOT, '.onecdev', 'repository', 'state.json');
+  const snapshotsRoot = path.join(EXAMPLE_ROOT, '.onecdev', 'repository', 'snapshots');
 
   setup(() => {
     service = new RepositoryService(EXAMPLE_ROOT, new ProjectSecretStorage(createFakeSecretStore(), EXAMPLE_ROOT));
@@ -202,7 +202,7 @@ suite('RepositoryService', () => {
    * одного файла, а не работа с выгрузкой.
    */
   function withEnvFile(content: string): { root: string; target: RepositoryTarget } {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-env-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-env-'));
     fs.writeFileSync(path.join(root, 'env.json'), content, 'utf-8');
     return { root, target: { ...sampleTarget, configRoot: path.join(root, 'src', 'cf') } };
   }
@@ -405,7 +405,7 @@ suite('RepositoryService — плоская и вложенная расклад
 
   for (const layout of layouts) {
     test(`Запрещает редактирование незахваченного модуля и снимает запрет после захвата (раскладка объекта: ${layout})`, async () => {
-      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-repo-flat-'));
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-repo-flat-'));
       try {
         const configRoot = path.join(tempDir, 'cf');
         const configUuid = fixtureUuid(`repo-config-${layout}`);
@@ -475,7 +475,7 @@ suite('RepositoryService — isEditRestricted: суффикс единицы (is
   }
 
   async function connectedService(): Promise<ConnectedSuffixService> {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-repo-unit-suffix-'));
+    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-repo-unit-suffix-'));
     tempDirs.push(workspaceRoot);
     const configRoot = path.join(workspaceRoot, 'src', 'cf');
     fs.mkdirSync(path.dirname(configRoot), { recursive: true });
@@ -634,7 +634,7 @@ suite('RepositoryService — временные файлы и снимки (issu
 
   test('removeObjectsFile не трогает файл вне каталога objects/', () => {
     const { workspaceRoot, service } = createTwoTargets();
-    const outside = path.join(workspaceRoot, '.v8vscedit', 'repository', 'outside.xml');
+    const outside = path.join(workspaceRoot, '.onecdev', 'repository', 'outside.xml');
     const nested = path.join(getRepositoryObjectsDir(workspaceRoot), 'nested', 'deep.xml');
     for (const filePath of [outside, nested]) {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });

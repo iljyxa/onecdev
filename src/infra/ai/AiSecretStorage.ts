@@ -18,9 +18,9 @@ export type AiSecretId = 'embeddingApiKey' | 'naparnikToken' | 'onecPassword';
 
 /** Ключи SecretStorage с неймспейсом расширения. */
 const SECRET_STORAGE_KEYS: Record<AiSecretId, string> = {
-  embeddingApiKey: 'v8vscedit.bslAnalyzer.embeddingApiKey',
-  naparnikToken: 'v8vscedit.bslAnalyzer.naparnikToken',
-  onecPassword: 'v8vscedit.bslAnalyzer.onecPassword',
+  embeddingApiKey: 'onecdev.bslAnalyzer.embeddingApiKey',
+  naparnikToken: 'onecdev.bslAnalyzer.naparnikToken',
+  onecPassword: 'onecdev.bslAnalyzer.onecPassword',
 };
 
 /**

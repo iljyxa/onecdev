@@ -33,7 +33,7 @@ suite('McpPropertyService', () => {
   });
 
   test('возвращает и записывает ключевые свойства регламентного задания после штатного создания', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-scheduled-job-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-scheduled-job-'));
     try {
       fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');
       const creator = new MetadataXmlCreator();
@@ -82,7 +82,7 @@ suite('McpPropertyService', () => {
   });
 
   test('возвращает базовые свойства для корневых объектов после штатного создания', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-root-props-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-root-props-'));
     try {
       fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');
       const creator = new MetadataXmlCreator();
@@ -117,7 +117,7 @@ suite('McpPropertyService', () => {
   });
 
   test('возвращает базовые свойства для дочерних объектов после штатного создания', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-child-props-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-child-props-'));
     try {
       fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');
       const creator = new MetadataXmlCreator();
@@ -156,7 +156,7 @@ suite('McpPropertyService', () => {
   });
 
   test('возвращает и записывает свойства подсистемы через общий MCP-сервис свойств', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-subsystem-props-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-subsystem-props-'));
     try {
       fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');
       const created = new SubsystemToolsService().compile({
@@ -189,7 +189,7 @@ suite('McpPropertyService', () => {
   });
 
   test('точечно меняет состав подсистемы через общий сервис подсистем', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-subsystem-content-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-subsystem-content-'));
     try {
       fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');
       const creator = new MetadataXmlCreator();
@@ -223,7 +223,7 @@ suite('McpPropertyService', () => {
   });
 
   test('запрещает недопустимое enum-значение до записи XML', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-prop-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-prop-'));
     try {
       const catalogDir = path.join(root, 'Catalogs');
       fs.mkdirSync(catalogDir, { recursive: true });
@@ -258,7 +258,7 @@ suite('McpPropertyService', () => {
   });
 
   test('принимает русские имена свойств и типов при смене типа', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-type-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-type-'));
     try {
       const xmlPath = path.join(root, 'Параметр.xml');
       fs.writeFileSync(xmlPath, [
@@ -297,7 +297,7 @@ suite('McpPropertyService', () => {
   });
 
   test('принимает длину и точность прямо в изменении типа', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-type-flat-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-type-flat-'));
     try {
       const xmlPath = path.join(root, 'Параметр.xml');
       fs.writeFileSync(xmlPath, [
@@ -337,7 +337,7 @@ suite('McpPropertyService', () => {
   });
 
   test('для свойства metadataType в notes указан tool смены значения', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-meta-notes-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-meta-notes-'));
     try {
       const xmlPath = path.join(root, 'Параметр.xml');
       fs.writeFileSync(xmlPath, [
@@ -366,12 +366,12 @@ suite('McpPropertyService', () => {
       assert.strictEqual(contract.supportedBySetProperty, false);
       assert.ok(contract.notes.length > 0, 'notes должны быть заполнены для metadataType');
       assert.ok(
-        contract.notes.some((note) => note.includes('v8vscedit_list_available_types')),
-        'notes должны упоминать v8vscedit_list_available_types'
+        contract.notes.some((note) => note.includes('onecdev_list_available_types')),
+        'notes должны упоминать onecdev_list_available_types'
       );
       assert.ok(
-        contract.notes.some((note) => note.includes('v8vscedit_set_type')),
-        'notes должны упоминать v8vscedit_set_type'
+        contract.notes.some((note) => note.includes('onecdev_set_type')),
+        'notes должны упоминать onecdev_set_type'
       );
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
@@ -387,7 +387,7 @@ suite('McpPropertyService', () => {
    * записывается всё равно канон `cfg:`.
    */
   test('принимает тип с неймспейс-префиксом, как он записан в XML, и пишет канон cfg:', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-type-prefix-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-type-prefix-'));
     try {
       fs.mkdirSync(path.join(root, 'SessionParameters'), { recursive: true });
       fs.writeFileSync(path.join(root, 'Configuration.xml'), [
@@ -437,7 +437,7 @@ suite('McpPropertyService', () => {
   });
 
   test('запрещает ссылочный тип CFE, если объект не заимствован в расширение', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-cfe-type-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-cfe-type-'));
     try {
       fs.mkdirSync(path.join(root, 'SessionParameters'), { recursive: true });
       const configPath = path.join(root, 'Configuration.xml');

@@ -45,7 +45,7 @@ suite('BslAnalyzerMcpService — маскирование пароля базы'
   });
 
   setup(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-bsl-mcp-'));
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-bsl-mcp-'));
     executable = path.join(dir, 'bsl-analyzer');
     fs.writeFileSync(executable, '#!/bin/sh\nexec sleep 30\n', { mode: 0o755 });
     logLines = [];

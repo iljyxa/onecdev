@@ -1,18 +1,18 @@
 {
-  "name": "v8vscedit",
-  "displayName": "Редактор конфигураций 1С",
+  "name": "onecdev",
+  "displayName": "onecdev — разработка на 1С:Предприятие",
   "description": "Редактор конфигураций и расширений 1С:Предприятие — навигация по метаданным, LSP для BSL, работа с XML-выгрузкой",
   "version": "0.5.0",
-  "publisher": "macegor",
+  "publisher": "iljyxa",
   "license": "GPL-3.0-only",
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Macegor/v8vscedit.git"
+    "url": "https://github.com/iljyxa/v8vscedit.git"
   },
-  "homepage": "https://github.com/Macegor/v8vscedit#readme",
+  "homepage": "https://github.com/iljyxa/v8vscedit#readme",
   "bugs": {
-    "url": "https://github.com/Macegor/v8vscedit/issues"
+    "url": "https://github.com/iljyxa/v8vscedit/issues"
   },
   "keywords": [
     "1c",
@@ -33,11 +33,11 @@
   "activationEvents": [
     "onStartupFinished",
     "workspaceContains:**/Configuration.xml",
-    "onView:v8vsceditUniversal",
-    "onView:v8vsceditChanges",
+    "onView:onecdevUniversal",
+    "onView:onecdevChanges",
     "onLanguage:bsl",
-    "onCommand:v8vscedit.openAiSettings",
-    "onCommand:v8vscedit.refresh"
+    "onCommand:onecdev.openAiSettings",
+    "onCommand:onecdev.refresh"
   ],
   "categories": [
     "Other",
@@ -48,40 +48,40 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "v8vscedit",
+          "id": "onecdev",
           "title": "Редактор конфигураций",
           "icon": "src/icons/activity-bar.svg"
         },
         {
-          "id": "v8vsceditDynamicPanelContainer",
+          "id": "onecdevDynamicPanelContainer",
           "title": "Дин. панель",
           "icon": "src/icons/dynamic-panel.svg"
         },
         {
-          "id": "v8vsceditChangesContainer",
+          "id": "onecdevChangesContainer",
           "title": "Изменения метаданных",
           "icon": "src/icons/changes.svg"
         }
       ]
     },
     "views": {
-      "v8vscedit": [
+      "onecdev": [
         {
-          "id": "v8vsceditUniversal",
+          "id": "onecdevUniversal",
           "name": "Редактор конфигураций",
           "type": "webview"
         }
       ],
-      "v8vsceditChangesContainer": [
+      "onecdevChangesContainer": [
         {
-          "id": "v8vsceditChanges",
+          "id": "onecdevChanges",
           "name": "Изменения метаданных",
           "type": "webview"
         }
       ],
-      "v8vsceditDynamicPanelContainer": [
+      "onecdevDynamicPanelContainer": [
         {
-          "id": "v8vsceditDynamicPanel",
+          "id": "onecdevDynamicPanel",
           "name": "Дин. панель",
           "type": "webview"
         }
@@ -89,206 +89,206 @@
     },
     "commands": [
       {
-        "command": "v8vscedit.refresh",
+        "command": "onecdev.refresh",
         "title": "Обновить",
         "icon": "$(refresh)"
       },
       {
-        "command": "v8vscedit.searchTree",
+        "command": "onecdev.searchTree",
         "title": "Поиск в навигаторе",
         "icon": "$(search)"
       },
       {
-        "command": "v8vscedit.clearTreeSearch",
+        "command": "onecdev.clearTreeSearch",
         "title": "Сбросить поиск в навигаторе",
         "icon": "$(close)"
       },
       {
-        "command": "v8vscedit.dumpConfigurationToCf",
+        "command": "onecdev.dumpConfigurationToCf",
         "title": "Выгрузить конфигурацию в CF-файл",
-        "enablement": "!v8vscedit.isUpdatingConfigurations",
+        "enablement": "!onecdev.isUpdatingConfigurations",
         "icon": "$(package)"
       },
       {
-        "command": "v8vscedit.loadConfigurationFromCf",
+        "command": "onecdev.loadConfigurationFromCf",
         "title": "Загрузить конфигурацию из CF-файла",
-        "enablement": "!v8vscedit.isUpdatingConfigurations",
+        "enablement": "!onecdev.isUpdatingConfigurations",
         "icon": "$(folder-opened)"
       },
       {
-        "command": "v8vscedit.dumpAllExtensionsToCfe",
+        "command": "onecdev.dumpAllExtensionsToCfe",
         "title": "Выгрузить все расширения базы в CFE-файлы",
-        "enablement": "!v8vscedit.isUpdatingConfigurations",
+        "enablement": "!onecdev.isUpdatingConfigurations",
         "icon": "$(archive)"
       },
       {
-        "command": "v8vscedit.loadAllExtensionsFromCfe",
+        "command": "onecdev.loadAllExtensionsFromCfe",
         "title": "Загрузить все расширения базы из CFE-файлов",
-        "enablement": "!v8vscedit.isUpdatingConfigurations",
+        "enablement": "!onecdev.isUpdatingConfigurations",
         "icon": "$(cloud-upload)"
       },
       {
-        "command": "v8vscedit.importConfigurations",
+        "command": "onecdev.importConfigurations",
         "title": "Импортировать конфигурации из базы",
-        "enablement": "!v8vscedit.isUpdatingConfigurations",
+        "enablement": "!onecdev.isUpdatingConfigurations",
         "icon": "$(cloud-download)"
       },
       {
-        "command": "v8vscedit.updateChangedConfigurations",
+        "command": "onecdev.updateChangedConfigurations",
         "title": "Обновить изменённые конфигурации",
-        "enablement": "v8vscedit.hasChangedConfigurations && !v8vscedit.isUpdatingConfigurations",
+        "enablement": "onecdev.hasChangedConfigurations && !onecdev.isUpdatingConfigurations",
         "icon": {
           "light": "./src/icons/light/externalDataSource.svg",
           "dark": "./src/icons/dark/externalDataSource.svg"
         }
       },
       {
-        "command": "v8vscedit.runThinClient",
+        "command": "onecdev.runThinClient",
         "title": "Запустить тонкий клиент",
         "icon": "$(run)"
       },
       {
-        "command": "v8vscedit.runConfigurator",
+        "command": "onecdev.runConfigurator",
         "title": "Запустить конфигуратор",
         "icon": "$(tools)"
       },
       {
-        "command": "v8vscedit.configuration.info",
+        "command": "onecdev.configuration.info",
         "title": "Конфигурация: информация",
         "icon": "$(info)"
       },
       {
-        "command": "v8vscedit.configuration.validate",
+        "command": "onecdev.configuration.validate",
         "title": "Конфигурация: валидировать",
         "icon": "$(check)"
       },
       {
-        "command": "v8vscedit.metadata.info",
+        "command": "onecdev.metadata.info",
         "title": "Метаданные: структура объекта",
         "icon": "$(info)"
       },
       {
-        "command": "v8vscedit.metadata.validate",
+        "command": "onecdev.metadata.validate",
         "title": "Метаданные: валидировать объект",
         "icon": "$(check)"
       },
       {
-        "command": "v8vscedit.role.info",
+        "command": "onecdev.role.info",
         "title": "Роль: права",
         "icon": "$(shield)"
       },
       {
-        "command": "v8vscedit.role.validate",
+        "command": "onecdev.role.validate",
         "title": "Роль: валидировать",
         "icon": "$(verified)"
       },
       {
-        "command": "v8vscedit.subsystem.info",
+        "command": "onecdev.subsystem.info",
         "title": "Подсистема: информация",
         "icon": "$(symbol-namespace)"
       },
       {
-        "command": "v8vscedit.subsystem.validate",
+        "command": "onecdev.subsystem.validate",
         "title": "Подсистема: валидировать",
         "icon": "$(verified)"
       },
       {
-        "command": "v8vscedit.interface.validate",
+        "command": "onecdev.interface.validate",
         "title": "Командный интерфейс: валидировать",
         "icon": "$(list-tree)"
       },
       {
-        "command": "v8vscedit.mxl.info",
+        "command": "onecdev.mxl.info",
         "title": "MXL: структура макета",
         "icon": "$(table)"
       },
       {
-        "command": "v8vscedit.mxl.validate",
+        "command": "onecdev.mxl.validate",
         "title": "MXL: валидировать макет",
         "icon": "$(check)"
       },
       {
-        "command": "v8vscedit.skd.info",
+        "command": "onecdev.skd.info",
         "title": "СКД: структура схемы",
         "icon": "$(symbol-structure)"
       },
       {
-        "command": "v8vscedit.skd.validate",
+        "command": "onecdev.skd.validate",
         "title": "СКД: валидировать схему",
         "icon": "$(verified)"
       },
       {
-        "command": "v8vscedit.help.add",
+        "command": "onecdev.help.add",
         "title": "Справка: добавить к объекту",
         "icon": "$(book)"
       },
       {
-        "command": "v8vscedit.epf.create",
+        "command": "onecdev.epf.create",
         "title": "EPF: создать внешнюю обработку",
         "icon": "$(new-file)"
       },
       {
-        "command": "v8vscedit.erf.create",
+        "command": "onecdev.erf.create",
         "title": "ERF: создать внешний отчёт",
         "icon": "$(new-file)"
       },
       {
-        "command": "v8vscedit.externalObject.validate",
+        "command": "onecdev.externalObject.validate",
         "title": "EPF/ERF: валидировать XML-исходники",
         "icon": "$(verified)"
       },
       {
-        "command": "v8vscedit.epf.bspInit",
+        "command": "onecdev.epf.bspInit",
         "title": "EPF: добавить регистрацию БСП",
         "icon": "$(symbol-key)"
       },
       {
-        "command": "v8vscedit.epf.bspAddCommand",
+        "command": "onecdev.epf.bspAddCommand",
         "title": "EPF: добавить команду БСП",
         "icon": "$(add)"
       },
       {
-        "command": "v8vscedit.form.info",
+        "command": "onecdev.form.info",
         "title": "Форма: структура",
         "icon": "$(symbol-structure)"
       },
       {
-        "command": "v8vscedit.form.validate",
+        "command": "onecdev.form.validate",
         "title": "Форма: валидировать",
         "icon": "$(verified)"
       },
       {
-        "command": "v8vscedit.form.add",
+        "command": "onecdev.form.add",
         "title": "Форма: добавить",
         "icon": "$(window)"
       },
       {
-        "command": "v8vscedit.form.remove",
+        "command": "onecdev.form.remove",
         "title": "Форма: удалить",
         "icon": "$(trash)"
       },
       {
-        "command": "v8vscedit.configureEnvironment",
+        "command": "onecdev.configureEnvironment",
         "title": "Настройки проекта",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "v8vscedit.initializeProject",
+        "command": "onecdev.initializeProject",
         "title": "Инициализировать проект 1С",
         "icon": "$(new-folder)"
       },
       {
-        "command": "v8vscedit.connectExtension",
+        "command": "onecdev.connectExtension",
         "title": "Подключить расширение",
         "icon": "$(add)"
       },
       {
-        "command": "v8vscedit.installAiSkills",
+        "command": "onecdev.installAiSkills",
         "title": "Установить ИИ-роли 1С",
         "icon": "$(extensions)"
       },
       {
-        "command": "v8vscedit.openAiSettings",
+        "command": "onecdev.openAiSettings",
         "title": "ИИ и MCP",
         "icon": {
           "light": "./src/icons/light/ai.svg",
@@ -296,336 +296,336 @@
         }
       },
       {
-        "command": "v8vscedit.standalone.configure",
+        "command": "onecdev.standalone.configure",
         "title": "Автономный сервер: Настроить",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "v8vscedit.standalone.start",
+        "command": "onecdev.standalone.start",
         "title": "Автономный сервер: Запустить",
         "icon": "$(run)"
       },
       {
-        "command": "v8vscedit.standalone.restart",
+        "command": "onecdev.standalone.restart",
         "title": "Автономный сервер: Перезапустить",
         "icon": "$(debug-restart)"
       },
       {
-        "command": "v8vscedit.standalone.stop",
+        "command": "onecdev.standalone.stop",
         "title": "Автономный сервер: Остановить",
         "icon": "$(debug-stop)"
       },
       {
-        "command": "v8vscedit.standalone.openWebClient",
+        "command": "onecdev.standalone.openWebClient",
         "title": "Автономный сервер: Открыть веб-клиент",
         "icon": "$(browser)"
       },
       {
-        "command": "v8vscedit.standalone.showLog",
+        "command": "onecdev.standalone.showLog",
         "title": "Автономный сервер: Открыть лог",
         "icon": "$(output)"
       },
       {
-        "command": "v8vscedit.borrowToExtension",
+        "command": "onecdev.borrowToExtension",
         "title": "Добавить в расширение"
       },
       {
-        "command": "v8vscedit.cfe.addMethodInterceptor",
+        "command": "onecdev.cfe.addMethodInterceptor",
         "title": "CFE: Добавить перехватчик метода",
         "icon": "$(symbol-method)"
       },
       {
-        "command": "v8vscedit.cfe.analyzeExtension",
+        "command": "onecdev.cfe.analyzeExtension",
         "title": "CFE: Анализ расширения",
         "icon": "$(inspect)"
       },
       {
-        "command": "v8vscedit.openXmlFile",
+        "command": "onecdev.openXmlFile",
         "title": "Открыть XML"
       },
       {
-        "command": "v8vscedit.openTemplateContent",
+        "command": "onecdev.openTemplateContent",
         "title": "Открыть содержимое макета"
       },
       {
-        "command": "v8vscedit.openObjectModule",
+        "command": "onecdev.openObjectModule",
         "title": "Открыть модуль объекта"
       },
       {
-        "command": "v8vscedit.openManagerModule",
+        "command": "onecdev.openManagerModule",
         "title": "Открыть модуль менеджера"
       },
       {
-        "command": "v8vscedit.openFormModule",
+        "command": "onecdev.openFormModule",
         "title": "Открыть модуль формы"
       },
       {
-        "command": "v8vscedit.openCommandModule",
+        "command": "onecdev.openCommandModule",
         "title": "Открыть модуль команды"
       },
       {
-        "command": "v8vscedit.openRecordSetModule",
+        "command": "onecdev.openRecordSetModule",
         "title": "Открыть модуль записи"
       },
       {
-        "command": "v8vscedit.openConstantModule",
+        "command": "onecdev.openConstantModule",
         "title": "Открыть модуль константы"
       },
       {
-        "command": "v8vscedit.openServiceModule",
+        "command": "onecdev.openServiceModule",
         "title": "Открыть модуль сервиса"
       },
       {
-        "command": "v8vscedit.openCommonModuleCode",
+        "command": "onecdev.openCommonModuleCode",
         "title": "Открыть модуль"
       },
       {
-        "command": "v8vscedit.showProperties",
+        "command": "onecdev.showProperties",
         "title": "Свойства",
         "icon": "$(list-unordered)"
       },
       {
-        "command": "v8vscedit.addMetadata",
+        "command": "onecdev.addMetadata",
         "title": "Добавить",
         "icon": "$(add)"
       },
       {
-        "command": "v8vscedit.removeMetadata",
+        "command": "onecdev.removeMetadata",
         "title": "Удалить",
         "icon": "$(trash)"
       },
       {
-        "command": "v8vscedit.showConfigActions",
+        "command": "onecdev.showConfigActions",
         "title": "Команды конфигурации/расширения",
         "icon": "$(tools)"
       },
       {
-        "command": "v8vscedit.importConfigurationFromDb",
+        "command": "onecdev.importConfigurationFromDb",
         "title": "Импортировать из базы",
         "icon": "$(cloud-download)"
       },
       {
-        "command": "v8vscedit.updateConfigurationInDb",
+        "command": "onecdev.updateConfigurationInDb",
         "title": "Обновить в базе",
         "icon": "$(sync)"
       },
       {
-        "command": "v8vscedit.decompileExtensionSources",
+        "command": "onecdev.decompileExtensionSources",
         "title": "Импортировать расширение из базы"
       },
       {
-        "command": "v8vscedit.updateExtensionInDb",
+        "command": "onecdev.updateExtensionInDb",
         "title": "Обновить"
       },
       {
-        "command": "v8vscedit.compileAndUpdateExtensionInDb",
+        "command": "onecdev.compileAndUpdateExtensionInDb",
         "title": "Полное обновление расширения в БД"
       },
       {
-        "command": "v8vscedit.bslAnalyzer.showMenu",
+        "command": "onecdev.bslAnalyzer.showMenu",
         "title": "BSL Analyzer: Меню"
       },
       {
-        "command": "v8vscedit.bslAnalyzer.restart",
+        "command": "onecdev.bslAnalyzer.restart",
         "title": "BSL Analyzer: Перезапустить"
       },
       {
-        "command": "v8vscedit.bslAnalyzer.update",
+        "command": "onecdev.bslAnalyzer.update",
         "title": "BSL Analyzer: Проверить обновления"
       },
       {
-        "command": "v8vscedit.bslAnalyzer.showOutput",
+        "command": "onecdev.bslAnalyzer.showOutput",
         "title": "BSL Analyzer: Показать лог"
       },
       {
-        "command": "v8vscedit.repository.connect",
+        "command": "onecdev.repository.connect",
         "title": "Подключить к хранилищу",
         "icon": "$(plug)"
       },
       {
-        "command": "v8vscedit.repository.create",
+        "command": "onecdev.repository.create",
         "title": "Создать хранилище",
         "icon": "$(database)"
       },
       {
-        "command": "v8vscedit.repository.disconnect",
+        "command": "onecdev.repository.disconnect",
         "title": "Отключить от хранилища",
         "icon": "$(debug-disconnect)"
       },
       {
-        "command": "v8vscedit.repository.lock",
+        "command": "onecdev.repository.lock",
         "title": "Захватить в хранилище",
         "icon": "$(lock)"
       },
       {
-        "command": "v8vscedit.repository.unlock",
+        "command": "onecdev.repository.unlock",
         "title": "Освободить в хранилище",
         "icon": "$(unlock)"
       },
       {
-        "command": "v8vscedit.repository.commit",
+        "command": "onecdev.repository.commit",
         "title": "Поместить в хранилище",
         "icon": "$(cloud-upload)"
       },
       {
-        "command": "v8vscedit.repository.update",
+        "command": "onecdev.repository.update",
         "title": "Получить из хранилища",
         "icon": "$(cloud-download)"
       },
       {
-        "command": "v8vscedit.repository.updateToVersion",
+        "command": "onecdev.repository.updateToVersion",
         "title": "Получить версию из хранилища…",
         "icon": "$(history)"
       },
       {
-        "command": "v8vscedit.repository.addUser",
+        "command": "onecdev.repository.addUser",
         "title": "Добавить пользователя хранилища",
         "icon": "$(person-add)"
       },
       {
-        "command": "v8vscedit.repository.copyUsers",
+        "command": "onecdev.repository.copyUsers",
         "title": "Скопировать пользователей",
         "icon": "$(organization)"
       },
       {
-        "command": "v8vscedit.repository.dump",
+        "command": "onecdev.repository.dump",
         "title": "Выгрузить конфигурацию из хранилища",
         "icon": "$(archive)"
       },
       {
-        "command": "v8vscedit.repository.report",
+        "command": "onecdev.repository.report",
         "title": "Построить отчет по хранилищу",
         "icon": "$(graph)"
       },
       {
-        "command": "v8vscedit.repository.refreshLocks",
+        "command": "onecdev.repository.refreshLocks",
         "title": "Обновить статусы захватов",
         "icon": "$(refresh)"
       },
       {
-        "command": "v8vscedit.repository.setLabel",
+        "command": "onecdev.repository.setLabel",
         "title": "Установить метку версии",
         "icon": "$(tag)"
       },
       {
-        "command": "v8vscedit.bsl.surround.if",
+        "command": "onecdev.bsl.surround.if",
         "title": "Если"
       },
       {
-        "command": "v8vscedit.bsl.surround.ifElse",
+        "command": "onecdev.bsl.surround.ifElse",
         "title": "Если / Иначе"
       },
       {
-        "command": "v8vscedit.bsl.surround.try",
+        "command": "onecdev.bsl.surround.try",
         "title": "Попытка"
       },
       {
-        "command": "v8vscedit.bsl.surround.while",
+        "command": "onecdev.bsl.surround.while",
         "title": "Пока"
       },
       {
-        "command": "v8vscedit.bsl.surround.forEach",
+        "command": "onecdev.bsl.surround.forEach",
         "title": "Для каждого"
       },
       {
-        "command": "v8vscedit.bsl.surround.procedure",
+        "command": "onecdev.bsl.surround.procedure",
         "title": "Процедура"
       },
       {
-        "command": "v8vscedit.bsl.surround.function",
+        "command": "onecdev.bsl.surround.function",
         "title": "Функция"
       },
       {
-        "command": "v8vscedit.bsl.surround.region",
+        "command": "onecdev.bsl.surround.region",
         "title": "Область"
       }
     ],
     "submenus": [
       {
-        "id": "v8vscedit.bslSurroundMenu",
+        "id": "onecdev.bslSurroundMenu",
         "label": "Окружить"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "v8vscedit.bsl.surround.if",
+          "command": "onecdev.bsl.surround.if",
           "when": "false"
         },
         {
-          "command": "v8vscedit.bsl.surround.ifElse",
+          "command": "onecdev.bsl.surround.ifElse",
           "when": "false"
         },
         {
-          "command": "v8vscedit.bsl.surround.try",
+          "command": "onecdev.bsl.surround.try",
           "when": "false"
         },
         {
-          "command": "v8vscedit.bsl.surround.while",
+          "command": "onecdev.bsl.surround.while",
           "when": "false"
         },
         {
-          "command": "v8vscedit.bsl.surround.forEach",
+          "command": "onecdev.bsl.surround.forEach",
           "when": "false"
         },
         {
-          "command": "v8vscedit.bsl.surround.procedure",
+          "command": "onecdev.bsl.surround.procedure",
           "when": "false"
         },
         {
-          "command": "v8vscedit.bsl.surround.function",
+          "command": "onecdev.bsl.surround.function",
           "when": "false"
         },
         {
-          "command": "v8vscedit.bsl.surround.region",
+          "command": "onecdev.bsl.surround.region",
           "when": "false"
         }
       ],
       "editor/context": [
         {
-          "submenu": "v8vscedit.bslSurroundMenu",
+          "submenu": "onecdev.bslSurroundMenu",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "1_modification@1"
         }
       ],
-      "v8vscedit.bslSurroundMenu": [
+      "onecdev.bslSurroundMenu": [
         {
-          "command": "v8vscedit.bsl.surround.if",
+          "command": "onecdev.bsl.surround.if",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "conditions@1"
         },
         {
-          "command": "v8vscedit.bsl.surround.ifElse",
+          "command": "onecdev.bsl.surround.ifElse",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "conditions@2"
         },
         {
-          "command": "v8vscedit.bsl.surround.try",
+          "command": "onecdev.bsl.surround.try",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "exceptions@1"
         },
         {
-          "command": "v8vscedit.bsl.surround.while",
+          "command": "onecdev.bsl.surround.while",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "loops@1"
         },
         {
-          "command": "v8vscedit.bsl.surround.forEach",
+          "command": "onecdev.bsl.surround.forEach",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "loops@2"
         },
         {
-          "command": "v8vscedit.bsl.surround.procedure",
+          "command": "onecdev.bsl.surround.procedure",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "declarations@1"
         },
         {
-          "command": "v8vscedit.bsl.surround.function",
+          "command": "onecdev.bsl.surround.function",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "declarations@2"
         },
         {
-          "command": "v8vscedit.bsl.surround.region",
+          "command": "onecdev.bsl.surround.region",
           "when": "editorLangId == bsl && editorHasSelection",
           "group": "regions@1"
         }
@@ -699,7 +699,7 @@
     "configuration": {
       "title": "1С: Редактор конфигураций",
       "properties": {
-        "v8vscedit.lsp.mode": {
+        "onecdev.lsp.mode": {
           "type": "string",
           "default": "bsl-analyzer",
           "enum": [
@@ -712,92 +712,92 @@
           ],
           "description": "Режим языкового сервера BSL"
         },
-        "v8vscedit.bslAnalyzer.autoUpdate": {
+        "onecdev.bslAnalyzer.autoUpdate": {
           "type": "boolean",
           "default": true,
           "description": "Автоматически проверять обновления bsl-analyzer при запуске"
         },
-        "v8vscedit.bslAnalyzer.path": {
+        "onecdev.bslAnalyzer.path": {
           "type": "string",
           "default": "",
           "description": "Путь к исполняемому файлу bsl-analyzer (если пусто — скачивается автоматически)"
         },
-        "v8vscedit.mcp.enabled": {
+        "onecdev.mcp.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Автоматически запускать локальный MCP-сервер после полной загрузки дерева метаданных"
         },
-        "v8vscedit.mcp.host": {
+        "onecdev.mcp.host": {
           "type": "string",
           "default": "127.0.0.1",
           "description": "Локальный адрес MCP-сервера. В целях безопасности принимаются только 127.0.0.1, localhost или ::1"
         },
-        "v8vscedit.mcp.port": {
+        "onecdev.mcp.port": {
           "type": "number",
           "default": 38481,
           "description": "Порт локального MCP-сервера. Если порт занят сервером этого же проекта — используется он; если чужим процессом — расширение предложит закрыть его или сменить порт"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.autoStart": {
+        "onecdev.aiMcp.bslAnalyzer.autoStart": {
           "type": "boolean",
           "default": false,
           "description": "Автоматически запускать локальные MCP-профили bsl-analyzer из панели ИИ и MCP"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.reference.enabled": {
+        "onecdev.aiMcp.bslAnalyzer.reference.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Включить профиль reference MCP-сервера bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.workspace.enabled": {
+        "onecdev.aiMcp.bslAnalyzer.workspace.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Включить профиль workspace MCP-сервера bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.workspace.sourceDir": {
+        "onecdev.aiMcp.bslAnalyzer.workspace.sourceDir": {
           "type": "string",
           "default": "",
           "description": "Каталог проекта для workspace-профиля MCP bsl-analyzer. Если пусто, используется корень открытой рабочей области"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.embedding.url": {
+        "onecdev.aiMcp.bslAnalyzer.embedding.url": {
           "type": "string",
           "default": "",
           "description": "EMBEDDING_URL для семантического поиска MCP bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.embedding.apiKey": {
+        "onecdev.aiMcp.bslAnalyzer.embedding.apiKey": {
           "type": "string",
           "default": "",
           "description": "EMBEDDING_API_KEY для embedding API MCP bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.embedding.model": {
+        "onecdev.aiMcp.bslAnalyzer.embedding.model": {
           "type": "string",
           "default": "qwen/qwen3-embedding-0.6b",
           "description": "EMBEDDING_MODEL для семантического поиска MCP bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.naparnikToken": {
+        "onecdev.aiMcp.bslAnalyzer.naparnikToken": {
           "type": "string",
           "default": "",
           "description": "NAPARNIK_TOKEN для инструмента its_help MCP bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.onec.url": {
+        "onecdev.aiMcp.bslAnalyzer.onec.url": {
           "type": "string",
           "default": "",
           "description": "URL HTTP-сервиса BSLAnalyzerService, например http://localhost/base/hs/bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.onec.user": {
+        "onecdev.aiMcp.bslAnalyzer.onec.user": {
           "type": "string",
           "default": "",
           "description": "Пользователь 1С для live-инструментов MCP bsl-analyzer"
         },
-        "v8vscedit.aiMcp.bslAnalyzer.onec.password": {
+        "onecdev.aiMcp.bslAnalyzer.onec.password": {
           "type": "string",
           "default": "",
           "description": "Пароль 1С для live-инструментов MCP bsl-analyzer"
         },
-        "v8vscedit.repository.syncFilesOnLockUnlock": {
+        "onecdev.repository.syncFilesOnLockUnlock": {
           "type": "boolean",
           "default": true,
-          "description": "Синхронизирует файлы проекта с хранилищем конфигурации при захвате, получении и отмене захвата. Версия хранилища выгружается из базы во временный каталог (только затронутые объекты; для рекурсивного захвата корня — только изменившиеся по ConfigDumpInfo.xml) и сливается с проектом: неизменённые локально файлы заменяются молча, при локальных правках показывается один диалог — сравнить (открыть окна сравнения для переноса правок), заменить версией хранилища или оставить свои файлы. Перед перезаписью и удалением изменённых файлов создаются резервные копии в .v8vscedit/repository/merge. При отмене захвата файлы сравниваются со снимком версии хранилища и по выбору откатываются к нему."
+          "description": "Синхронизирует файлы проекта с хранилищем конфигурации при захвате, получении и отмене захвата. Версия хранилища выгружается из базы во временный каталог (только затронутые объекты; для рекурсивного захвата корня — только изменившиеся по ConfigDumpInfo.xml) и сливается с проектом: неизменённые локально файлы заменяются молча, при локальных правках показывается один диалог — сравнить (открыть окна сравнения для переноса правок), заменить версией хранилища или оставить свои файлы. Перед перезаписью и удалением изменённых файлов создаются резервные копии в .onecdev/repository/merge. При отмене захвата файлы сравниваются со снимком версии хранилища и по выбору откатываются к нему."
         },
-        "v8vscedit.configuration.operationMode": {
+        "onecdev.configuration.operationMode": {
           "type": "string",
           "enum": [
             "batch",
@@ -810,52 +810,52 @@
           "default": "batch",
           "description": "Режим выполнения операций с конфигурацией. По умолчанию используется пакетный режим из версии 0.3.5; агентский режим доступен как дополнительный."
         },
-        "v8vscedit.agent.host": {
+        "onecdev.agent.host": {
           "type": "string",
           "default": "localhost",
           "description": "Адрес SSH-сервера конфигуратора в режиме агента"
         },
-        "v8vscedit.agent.listenAddress": {
+        "onecdev.agent.listenAddress": {
           "type": "string",
           "default": "127.0.0.1",
           "description": "Локальный адрес, на котором конфигуратор слушает SSH-подключения в режиме агента"
         },
-        "v8vscedit.agent.port": {
+        "onecdev.agent.port": {
           "type": "number",
           "default": 1543,
           "description": "Порт SSH-сервера конфигуратора в режиме агента"
         },
-        "v8vscedit.agent.user": {
+        "onecdev.agent.user": {
           "type": "string",
           "default": "",
           "description": "Пользователь SSH для подключения к конфигуратору в режиме агента. Если пусто, используется --db-user из env.json"
         },
-        "v8vscedit.agent.privateKeyPath": {
+        "onecdev.agent.privateKeyPath": {
           "type": "string",
           "default": "",
           "description": "Путь к приватному SSH-ключу для подключения к конфигуратору в режиме агента"
         },
-        "v8vscedit.agent.autoStart": {
+        "onecdev.agent.autoStart": {
           "type": "boolean",
           "default": true,
           "description": "Автоматически запускать конфигуратор с параметром /AgentMode перед операциями с конфигурацией"
         },
-        "v8vscedit.agent.visible": {
+        "onecdev.agent.visible": {
           "type": "boolean",
           "default": false,
           "description": "Запускать конфигуратор в режиме агента с параметром /Visible"
         },
-        "v8vscedit.agent.agentModeArgs": {
+        "onecdev.agent.agentModeArgs": {
           "type": "string",
           "default": "",
           "description": "Дополнительные параметры запуска конфигуратора после /AgentMode"
         },
-        "v8vscedit.agent.progressInterval": {
+        "onecdev.agent.progressInterval": {
           "type": "number",
           "default": 0.5,
           "description": "Интервал сообщений прогресса агента конфигуратора в секундах"
         },
-        "v8vscedit.agent.startupTimeoutMs": {
+        "onecdev.agent.startupTimeoutMs": {
           "type": "number",
           "default": 15000,
           "description": "Максимальное время ожидания открытия SSH-порта после запуска конфигуратора в режиме агента, в миллисекундах"

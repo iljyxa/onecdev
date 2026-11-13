@@ -18,7 +18,7 @@ export class AgentWorkspaceService {
 
   resolveWorkspace(sessionId: string, target: AgentConfigurationTarget): AgentWorkspacePaths {
     const safeSessionId = sanitizePathPart(sessionId);
-    const agentRoot = path.join(this.projectRoot, '.v8vscedit', 'agent');
+    const agentRoot = path.join(this.projectRoot, '.onecdev', 'agent');
     const agentFileRoot = path.join(agentRoot, '0');
     const workspaceRoot = path.join(agentFileRoot, 'workspace', safeSessionId);
     const agentWorkspaceRoot = path.posix.join('workspace', safeSessionId);
@@ -77,7 +77,7 @@ export class AgentWorkspaceService {
   }
 
   getAgentRoot(): string {
-    return path.join(this.projectRoot, '.v8vscedit', 'agent');
+    return path.join(this.projectRoot, '.onecdev', 'agent');
   }
 
   getAgentFileRoot(): string {
