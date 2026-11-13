@@ -1,11 +1,11 @@
-# 1С: Редактор конфигураций (v8vscedit)
+# onecdev — разработка на 1С:Предприятие в VS Code
 
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/macegor.v8vscedit?label=Marketplace&color=1e1e1e)](https://marketplace.visualstudio.com/items?itemName=macegor.v8vscedit)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/macegor.v8vscedit)](https://marketplace.visualstudio.com/items?itemName=macegor.v8vscedit)
+`onecdev` — расширение для VS Code и Cursor, которое позволяет полноценно работать с конфигурациями и расширениями 1С:Предприятие прямо в редакторе: просматривать и менять метаданные, писать код, синхронизировать проект с базой, запускать 1С и работать с хранилищем конфигурации.
 
-`v8vscedit` — расширение для VS Code и Cursor, которое позволяет полноценно работать с конфигурациями и расширениями 1С:Предприятие прямо в редакторе: просматривать и менять метаданные, писать код, синхронизировать проект с базой, запускать 1С и работать с хранилищем конфигурации.
-
-Страница в Marketplace: <https://marketplace.visualstudio.com/items?itemName=macegor.v8vscedit>
+> **Происхождение.** onecdev — независимое продолжение (hard fork) проекта
+> [v8vscedit](https://github.com/Macegor/v8vscedit) (автор — Macegor). С 2026-11-13 развивается отдельно,
+> распространяется под той же лицензией GPL-3.0-only (см. [LICENSE](./LICENSE)); авторство и перечень
+> изменений — в [NOTICE](./NOTICE). onecdev не является продуктом фирмы «1С».
 
 В качестве шаблона проекта используется структура `vanessa-bootstrap`: основная конфигурация хранится в `src/cf`, расширения — в `src/cfe/<ИмяРасширения>`, а параметры окружения задаются в `env.json`.
 
