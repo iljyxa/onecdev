@@ -95,7 +95,7 @@ cursor --install-extension iljyxa.onecdev
 
 ### Из VSIX
 
-1. Скачайте `onecdev-<версия>.vsix` из [GitHub Releases](https://github.com/iljyxa/v8vscedit/releases).
+1. Скачайте `onecdev-<версия>.vsix` из [GitHub Releases](https://github.com/iljyxa/onecdev/releases).
 2. В VS Code или Cursor выполните **Extensions → ... → Install from VSIX...**.
 
 Можно установить и из командной строки:

@@ -12,7 +12,7 @@ GNU General Public License версии 3 (GPL-3.0-only), полный текс�
 
 Авторы исходного кода v8vscedit и последующих изменений (по истории git):
   - Macegor — автор исходного проекта v8vscedit
-  - iljyxa — форк iljyxa/v8vscedit и дальнейшая разработка onecdev
+  - iljyxa — форк iljyxa/onecdev и дальнейшая разработка onecdev
   - Savaderov Andrei
   - Pavel Chegodaev
 
@@ -21,7 +21,7 @@ GNU General Public License версии 3 (GPL-3.0-only), полный текс�
     (https://github.com/microsoft/vscode-codicons), код — MIT.
   - npm-зависимости (MIT, ISC, BSD-2-Clause, BSD-3-Clause, Unlicense) вшиваются
     сборщиком в dist/. Тексты их лицензий находятся в исходных пакетах npm;
-    включение их в VSIX (THIRD_PARTY_LICENSES) — iljyxa/v8vscedit#115.
+    включение их в VSIX (THIRD_PARTY_LICENSES) — iljyxa/onecdev#115.
 
 «1С», «1С:Предприятие» — товарные знаки ООО «1С». onecdev не является
 продуктом фирмы «1С» и не связан с ней.

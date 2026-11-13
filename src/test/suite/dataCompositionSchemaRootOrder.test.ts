@@ -5,7 +5,7 @@ import * as path from 'path';
 import { DataCompositionSchemaService, type SkdEditOperation } from '../../infra/xml/DataCompositionSchemaService';
 
 /**
- * Порядок прямых детей корня схемы СКД при add-* (iljyxa/v8vscedit#31). Эталон порядка снят
+ * Порядок прямых детей корня схемы СКД при add-* (iljyxa/onecdev#31). Эталон порядка снят
  * с выгрузки платформы 8.3.27 и 8.5.1 (import → export переставляет элементы именно так):
  * dataSource, dataSet, dataSetLink, calculatedField, totalField, parameter, template,
  * groupTemplate, settingsVariant. Фикстура — отчёт «Запасы» (BOM + CRLF): dataSource,

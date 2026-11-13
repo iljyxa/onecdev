@@ -5,7 +5,7 @@ import * as path from 'path';
 import { DataCompositionSchemaService } from '../../infra/xml/DataCompositionSchemaService';
 
 /**
- * modify-parameter на реальной выгрузке 1С (iljyxa/v8vscedit#32). Отчёт «Запасы»: BOM + CRLF,
+ * modify-parameter на реальной выгрузке 1С (iljyxa/onecdev#32). Отчёт «Запасы»: BOM + CRLF,
  * dataSetLink перед тремя параметрами схемы. Параметр ищется только среди прямых детей корня:
  * самозакрывающийся вложенный <parameter/> раньше становился началом «блока» до </parameter>
  * следующего параметра схемы, и замена съедала </dataSetLink>.

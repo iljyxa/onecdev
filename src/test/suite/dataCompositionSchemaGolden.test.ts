@@ -320,7 +320,7 @@ suite('DataCompositionSchemaService — байт-golden характеризац
     // неизменённых строк, поэтому 17 внутренних строк запроса остаются на голом LF
     // и после правок, не затрагивающих сам текст запроса (add-field/modify-field/
     // add-parameter/rename-parameter/reorder-parameters ничего не меняют внутри
-    // <query>…</query>) — правка iljyxa/v8vscedit#18. CRLF сохраняется только у последней
+    // <query>…</query>) — правка iljyxa/onecdev#18. CRLF сохраняется только у последней
     // строки запроса «…Организации</query>», т.к. и в исходнике она оканчивалась на CRLF
     // (граница со следующей строкой файла); новые и заменённые блоки получают EOL по
     // стилю заполнения (см. LineEndings.ts).
@@ -610,7 +610,7 @@ suite('DataCompositionSchemaService — байт-golden характеризац
 
     // Шаг 3: add-parameter — новый параметр встаёт после существующих параметров, перед
     // первым settingsVariant: порядок прямых детей корня схемы — xs:sequence, снятый с выгрузки
-    // платформы (iljyxa/v8vscedit#31). Остальной документ не переформатируется.
+    // платформы (iljyxa/onecdev#31). Остальной документ не переформатируется.
     const editAddParameter = service.edit({
       templatePath,
       operation: 'add-parameter',
@@ -659,7 +659,7 @@ suite('DataCompositionSchemaService — байт-golden характеризац
     assert.ok(afterRename.includes('<dcscor:parameter>ПодробныеСведенияОПравахДоступа</dcscor:parameter>'));
 
     // Шаг 5: reorder-parameters — переставляет блоки <parameter> на их собственных местах
-    // (iljyxa/v8vscedit#29): i-й по позиции параметр заменяется i-м в новом порядке. Исходный
+    // (iljyxa/onecdev#29): i-й по позиции параметр заменяется i-м в новом порядке. Исходный
     // ПоказыватьПодробности и добавленный на шаге 3 ПериодАнализа стоят подряд до settingsVariant;
     // после перестановки они меняются местами, разделители и остальной документ не меняются.
     const periodBlock =

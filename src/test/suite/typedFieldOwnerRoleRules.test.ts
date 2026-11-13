@@ -180,7 +180,7 @@ suite('typedFieldOwnerRoleRules — GOLDEN A: идемпотентность н�
       }
       checked += 1;
     }
-    // Известный дефект (iljyxa/v8vscedit#114): нормализация дописывает заимствованному полю
+    // Известный дефект (iljyxa/onecdev#114): нормализация дописывает заимствованному полю
     // расширения (ObjectBelonging=Adopted) полный owner×role-состав. Пин снимается вместе с
     // исправлением; новое неидемпотентное заимствованное поле уронит тест.
     assert.deepStrictEqual(adoptedNonIdempotent, ['../cfe/EVOLC/Catalogs/Контрагенты.xml.КПП']);
