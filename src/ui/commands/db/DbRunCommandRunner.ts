@@ -5,7 +5,7 @@ import { spawn, type ChildProcess } from 'child_process';
 import type { ConfigEntry } from '../../../domain/Configuration';
 import { launchInteractiveDesignerWithAgentPause } from '../../../infra/agent';
 import { resolveDbPassword, type ProjectSecretStorage } from '../../../infra/environment';
-import { normalizeInfoBasePath, resolveV8ExecutablePath, resolveV8PathHintFromVersion } from '../../../infra/process';
+import { formatCommandLineForLog, normalizeInfoBasePath, resolveV8ExecutablePath, resolveV8PathHintFromVersion } from '../../../infra/process';
 import type { RepositoryBinding, RepositoryService } from '../../../infra/repository/RepositoryService';
 import { getAgentOperationServiceForInteractiveDesigner, isAgentConfigurationOperationMode } from '../ext/ExtensionCommandRunner';
 
@@ -45,7 +45,11 @@ export async function runDbClientFromWorkspace(
       ? await getAgentOperationServiceForInteractiveDesigner(workspaceFolder, outputChannel)
       : undefined;
 
-    outputChannel.appendLine(`[db-run] Запуск: ${v8Path} ${buildMaskedLaunchArguments(options, connection).join(' ')}`);
+    // Пароли базы (слитно, `/P<пароль>`) и хранилища (`/ConfigurationRepositoryP <пароль>`)
+    // уходят в маскер ЗНАЧЕНИЯМИ: правило по префиксу намеренно узкое, чтобы не съедать пути.
+    const secretValues = [connection.password, options.repository?.repoPassword]
+      .filter((value): value is string => value !== undefined);
+    outputChannel.appendLine(`[db-run] Запуск: ${formatCommandLineForLog(v8Path, args, secretValues)}`);
     await launchInteractiveDesignerWithAgentPause({
       agentSession: agentService?.service,
       forceAgentDisconnect: agentService?.forceDisconnect,
@@ -137,21 +141,6 @@ export function resolveDesignerRepositoryBinding(
     }
   }
   return Promise.resolve(null);
-}
-
-/**
- * Пароли базы и хранилища не должны попадать в канал вывода; строка для лога
- * собирается тем же построителем, чтобы не расходиться с реальным запуском.
- */
-function buildMaskedLaunchArguments(options: DbRunOptions, params: DbRunConnectionParams): string[] {
-  const mask = (value: string | undefined): string => (value ? '***' : '');
-  return buildLaunchArguments(
-    {
-      ...options,
-      repository: options.repository && { ...options.repository, repoPassword: mask(options.repository.repoPassword) },
-    },
-    { ...params, password: mask(params.password) }
-  );
 }
 
 function spawnDetached(command: string, args: string[], cwd: string): ChildProcess {

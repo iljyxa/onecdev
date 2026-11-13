@@ -59,17 +59,19 @@ npm run lint          # eslint . --max-warnings=0
 npm test              # запуск всех тестов через @vscode/test-electron (out/test/runTests.js)
 npm run test:fast     # прогон без pretest-пересборки; фильтр: MOCHA_GREP='<regex>' npm run test:fast
 npm run coverage:changed # 100% ТОЛЬКО по изменённым production-файлам (гейт задачи; scripts/patch-coverage.mjs)
-                       # по умолчанию сравнение с HEAD (только незакоммиченное); для закоммиченной
-                       # ветки — COVERAGE_BASE_REF=main npm run coverage:changed (сравнение с
-                       # git merge-base); флаг --ignore-test-failures (или
-                       # COVERAGE_IGNORE_TEST_FAILURES=1) допустим только когда npm test уже
-                       # прогнан и все падения классифицированы как унаследованные
+                       # база — COVERAGE_BASE_REF (синоним COVERAGE_BASE), иначе merge-base с
+                       # origin/develop|origin/main; прогон дробится на COVERAGE_SHARDS свежих процессов;
+                       # коды 0/1/2 и канарейка деградации — docs/coverage-gate.md
 npm run coverage      # c8 с глобальным порогом 100% (аспирационный; сейчас RED из-за легаси-долга — не гейт задачи)
 npm run coverage:report  # покрытие без падения по порогу (диагностика)
 ```
 
 - **`npm test` требует предварительной сборки.** Скрипт `pretest` делает `typecheck → build:node → build:webview → test:compile` (без `clean` — сборка инкрементальная; компиляция тестов в `out/` через `tsconfig.test.json`). Тестовый runner берётся из `out/`, т.к. Mocha грузит `out/test/suite/*.js`.
-- Запуск под конкретной версией VS Code: `VSCODE_TEST_VERSION=1.85.0 npm test`.
+- Запуск под конкретной версией VS Code: `VSCODE_TEST_VERSION=1.85.0 npm test`. `takeRunnerSettingsAndSanitize`
+  (`src/test/runnerEnv.ts`) читает эту переменную ДО очистки унаследованного от IDE окружения (очистка
+  стирает всё с префиксом `VSCODE_`, включая саму `VSCODE_TEST_VERSION`) — порядок чтения важен, не
+  переставлять. Если версия ещё не скачана, `@vscode/test-electron` при
+  первом запуске сам скачает её в `.vscode-test/` (нужна сеть); повторные запуски используют кэш.
 - **Отдельный тест — быстро и без `.only`.** Runner (`src/test/suite/index.ts`) читает `MOCHA_GREP` и применяет `mocha.grep()`. Итерация: правка теста → `npm run test:compile` → `MOCHA_GREP='<regex по имени suite/теста>' npm run test:fast` (`test:fast` НЕ запускает `pretest`, т.е. не пересобирает Vite — на порядок быстрее полного `npm test`). `.only` больше не нужен.
 - Перед любым коммитом: `npm run compile` и **`npm run lint`** должны проходить без ошибок и предупреждений.
 - Точки входа: `main` = `./dist/extension.js`; CLI — `dist/cli/onec-tools.js`. Целевая среда — VS Code API ≥ 1.85, TypeScript ≥ 5.3, strict, ES2020.
@@ -117,6 +119,12 @@ src-ui/         # Vue-webview: apps/* (панели), shared/ (protocol/, state/
 ```
 
 `cli/` — отдельный потребитель `domain/` и `infra/`. Если код нужен и расширению, и CLI — он живёт в `infra/<подпапка>/`, а `cli/core/*` даёт тонкий re-export.
+
+Вне `src/` — `scripts/patch-coverage.mjs` (тонкий оркестратор гейта `coverage:changed`: git, спавны,
+ФС, печать) и `scripts/patch-coverage/` (чистые модули без I/O, покрытые тестами наравне с `src/**`:
+`branchFacts.mjs` — детектор ветвлений по TS AST, `diffBase.mjs` — выбор базы диффа, `verdict.mjs` —
+разбор `lcov` и вердикт, `shards.mjs` — планирование и сверка порций прогона). Подробности —
+[docs/coverage-gate.md](./docs/coverage-gate.md).
 
 ### Центральный контракт — `META_TYPES`
 
@@ -186,6 +194,7 @@ Vue-приложения (сборка `vite.webview.config.ts`, проверк�
 - Реквизиты/ТЧ — прямые сегменты без роли-префикса (`Справочники.Контрагенты.ИНН`; внутри ТЧ — `…ТабличнаяЧасть.Имя.Реквизит.Имя`).
 - Английских алиасов (`Catalog.X`) и legacy-форм нет; любая такая форма отбивается с подсказкой канона.
 - У инструментов, работающих с одним узлом, аргумент называется `path`; парные `compile_*` принимают `parentPath`. Никаких `objectPath`/`formPath`/`modulePath` и т.п.
+- Контракт `resolveFormXmlByCanonical` (`ui/mcp/McpPathResolvers.ts`) — путь к **ТЕЛУ** формы (`…/Ext/Form.xml`), не к дескриптору и не к XML объекта: `Справочники.X.Форма.Y` → `Catalogs/X/Forms/Y/Ext/Form.xml`, `ОбщиеФормы.X` → `CommonForms/X/Ext/Form.xml`. См. [mcp-paths.md](./docs/mcp-paths.md#формы-тело-и-дескриптор).
 
 ## Инвариант изменений — рецепты в [change-recipes.md](./docs/change-recipes.md)
 
@@ -204,7 +213,7 @@ Vue-приложения (сборка `vite.webview.config.ts`, проверк�
 9. **Не сохранять пароли/токены в файлы проекта.** Секреты — через VS Code SecretStorage.
 10. **Не создавать файлы при команде «Открыть».** Создание — только явным командам добавления/генерации.
 11. **Не вешать синхронный I/O на getters, tooltip, decoration и hot path дерева.**
-12. **Не терять формат XML.** Любой редактор существующего XML сохраняет BOM и стиль переводов строк исходного файла (`writeTextFilePreservingBomAndEol`).
+12. **Не терять формат XML.** Любой редактор существующего XML сохраняет BOM и стиль переводов строк исходного файла (`writeTextFilePreservingBomAndEol`). **Ловушка:** в `originalContent` передаётся текст, прочитанный ДО замены (отдельная константа перед `replace`), а не уже изменённый — иначе эталон стиля берётся с результата, и сохранение BOM/EOL становится пустой операцией (прецедент — `CfeBorrowService`).
 13. **Справочники свойств не живут в UI** — только в `infra/xml/PropertySchema.ts` (или спец-реестре infra); UI рендерит готовое.
 14. **Команды контекстного меню не хардкодятся в `UniversalPanelViewProvider`** — `addModuleActions` читает `META_TYPES[kind].modules` через `MODULE_SLOT_ACTIONS`.
 15. **Нативный TreeView — не основной UI**; не дублировать логику меню в `package.json`, если она есть в `addModuleActions`.
@@ -223,14 +232,15 @@ Vue-приложения (сборка `vite.webview.config.ts`, проверк�
 ## TDD и покрытие
 
 1. **Любое изменение поведения начинается с теста** (красный → код → зелёный).
-2. **Покрытие кода, ЗАТРОНУТОГО изменением, — 100%** по строкам, веткам, функциям, операторам. Гейт — `npm run coverage:changed` (patch coverage: новые файлы целиком, изменённые — только строки диффа), в конвейере — через `.claude/scripts/qa-gate.sh`, который всегда передаёт `COVERAGE_BASE_REF=<база>` (иначе сравнение с `HEAD` видит лишь незакоммиченное). `--ignore-test-failures` (`COVERAGE_IGNORE_TEST_FAILURES=1`) — только после классификации падений как унаследованных; флаг не подменяет проверку регресса, она делается отдельным полным `npm test`. Глобальный `npm run coverage --100` красный из-за легаси-долга (`ui/tree/nodeBuilders/*`, `ExtensionCommandRunner`, `RepositoryCommandRunner`, `InitializeProjectCommand`, `infra/xml/form/*` и др.) — **известное состояние, не предмет задачи**; не доказывать это заново через stash/baseline. `Container.ts`/`extension.ts` c8 не инструментирует — они покрываются интеграционно и исключены из гейта
+2. **Покрытие кода, ЗАТРОНУТОГО изменением, — 100%** по строкам, веткам, функциям, операторам. Гейт — `npm run coverage:changed` (patch coverage: новые файлы целиком, изменённые — только строки диффа; прогон дробится на свежие процессы `COVERAGE_SHARDS`, иначе V8 теряет поблочную детализацию), в конвейере — через `.claude/scripts/qa-gate.sh`, который всегда передаёт базу (`COVERAGE_BASE_REF`, синоним `COVERAGE_BASE`). Вердикт, коды возврата и канарейка деградации — [docs/coverage-gate.md](./docs/coverage-gate.md); **код 2 — «данным нельзя верить, перемерь», не «допиши тест»**. Глобальный `npm run coverage --100` красный из-за легаси-долга (`ui/tree/nodeBuilders/*`, `ExtensionCommandRunner`, `RepositoryCommandRunner`, `InitializeProjectCommand`, `infra/xml/form/*` и др.) — **известное состояние, не предмет задачи**; не доказывать это заново через stash/baseline. `Container.ts`/`extension.ts` c8 не инструментирует — они покрываются интеграционно и исключены из гейта
 (тот же список исключений `NOT_INSTRUMENTED` в `scripts/patch-coverage.mjs` включает и
 `src/ui/commands/CommandRegistry.ts` — реестр вызовов `register*Commands`, исполняется только при
 активации из `Container`, сами регистраторы проверяются тестами напрямую).
 3. **Заглушки/фиктивные ассёрты/тесты ради покрытия запрещены.** Тест проверяет реальное поведение на настоящих XML-фикстурах (`example/2.20/src/cf`, `example/2.21/src/cf`, `example/2.21/src/cfe/EVOLC`), реальных временных файлах или реальном процессе; mock/stub — только для недоступной внешней системы с обоснованием. Тесты **детерминированы** — без гонок/угадывания таймингов; учитывай фоновое поведение SDK/клиентов.
-4. Непокрываемую из-за VS Code API логику выносить в `domain/`/`infra/` и покрывать unit-тестом; тонкий UI-адаптер — интеграционным тестом. Осознанно недостижимую защитную ветку — `/* c8 ignore */` с обоснованием.
-5. **Все тесты задачи — за один проход** (ветки заранее: ошибки, таймауты, guard'ы, граничные входы; параметризация по конечным множествам — enum/настройки, напр. `host ∈ {127.0.0.1, localhost, ::1}`), чтобы не гонять ре-цикл через гейт.
-6. Перед завершением задачи QA-гейт — GREEN. Если его нельзя выполнить локально — зафиксировать причину, задачу не считать завершённой.
+4. **Тест не пишет в `example/`.** Мутационные сьюты копируют нужное во временный каталог (`fs.mkdtempSync`) и работают там; резервирование в `setup` с восстановлением в `teardown` защитой не является — обрыв прогона между ними оставляет корпус испорченным.
+5. Непокрываемую из-за VS Code API логику выносить в `domain/`/`infra/` и покрывать unit-тестом; тонкий UI-адаптер — интеграционным тестом. Осознанно недостижимую защитную ветку — `/* c8 ignore */` с обоснованием.
+6. **Все тесты задачи — за один проход** (ветки заранее: ошибки, таймауты, guard'ы, граничные входы; параметризация по конечным множествам — enum/настройки, напр. `host ∈ {127.0.0.1, localhost, ::1}`), чтобы не гонять ре-цикл через гейт.
+7. Перед завершением задачи QA-гейт — GREEN. Если его нельзя выполнить локально — зафиксировать причину, задачу не считать завершённой.
 
 ## Рабочий процесс и отладка
 

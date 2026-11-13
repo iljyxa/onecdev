@@ -27,6 +27,12 @@ src/
 │   │   ├── ConfigurationXmlEditor.ts # редактирование Configuration.xml
 │   │   ├── MetadataXmlCreator.ts     # создание новых XML-объектов метаданных
 │   │   ├── MetadataXmlRemover.ts     # удаление XML-объектов метаданных
+│   │   ├── childObjects/             # канон порядка <ChildObjects> (см. docs/xml-format-rulesets.md)
+│   │   │   ├── ChildObjectsOrder.ts  # ДАННЫЕ: CHILD_OBJECTS_ORDER (по MetaKind), childTagRank, hasOrderRule
+│   │   │   └── ChildObjectsEditor.ts # МЕХАНИКА: resolveInsertOffset — не знает ни одного вида метаданных
+│   │   ├── properties/               # канон порядка <Properties> КОРНЕВОГО объекта (docs/xml-format-rulesets.md)
+│   │   │   ├── PropertyOrder.ts      # ДАННЫЕ: ROOT_PROPERTY_ORDER (по MetaKind), rootPropertyRank, hasRootPropertyOrderRule
+│   │   │   └── PropertyInsert.ts     # МЕХАНИКА: insertPropertyBlockInOrder — не знает ни одного вида метаданных
 │   │   ├── CrsMessageXml.ts          # конверт crs:call/crs:call_return/crs:call_exception —
 │   │   │                              # протокол crserver (см. ниже, infra/repository/crs/)
 │   │   └── format/                   # ruleset формата сериализации (см. docs/xml-format-rulesets.md)
@@ -42,8 +48,11 @@ src/
 │   │   ├── SubordinateObjectLayout.ts # единственный источник подкаталогов подчинённых со своим XML
 │   │   │                              # (Forms/Templates/Recalculations/Tables/Cubes/DimensionTables/
 │   │   │                              # Subsystems) — используют RepositoryObjectNames и SupportInfoService
-│   │   └── AtomicFileWrite.ts        # writeFileAtomicSync — общая атомарная запись
-│   │                                  # служебных кэшей (tmp+rename), см. cache/ ниже
+│   │   ├── AtomicFileWriter.ts       # writeFileAtomic/resolveAtomicTempPath: ЕДИНСТВЕННАЯ
+│   │   │                              # реализация temp+rename; через неё идёт любая запись файла
+│   │   │                              # выгрузки и служебных кэшей (docs/architecture.md, «Атомарная запись»)
+│   │   └── ProjectLayout.ts          # resolveConfigDir: src/cf, src/cfe/<имя> — общее для расширения
+│   │                                  # и CLI (cli/core/projectLayout.ts — тонкий re-export)
 │   ├── cfe/                          # расширения: CfeBorrowService, CfeDiffService, CfePatchMethodService
 │   ├── support/                      # SupportInfoReader/Service (ParentConfigurations.bin), Logger,
 │   │                                  # PerfLog — формат строк замера `[perf]` (docs/architecture.md)
@@ -72,7 +81,14 @@ src/
 │   │                                  # docs/git-history-graph.md; граф — сворачиваемый блок панели
 │   │                                  # «Изменения метаданных», отдельного webview/вкладки нет)
 │   ├── environment/                  # bsl-analyzer.toml, окружение проекта, реестр баз
+│   ├── cfFile/                       # CfFileArgs (вектор аргументов /DumpCfg,/LoadCfg),
+│   │                                  # CfFileValidation (guard'ы: суффикс, staging-путь,
+│   │                                  # запрет -AllExtensions, DUMP_STAGING_SUFFIX — маркер
+│   │                                  # принадлежности staging-файла), CfeBatch* (пакетная
+│   │                                  # выгрузка/загрузка всех расширений: Naming/Manifest/
+│   │                                  # Plan/Report) — см. docs/architecture.md
 │   ├── process/                      # поиск платформы, spawn, декодер OEM/Win1251,
+│   │                                  # SensitiveArgs (маскирование паролей в логах),
 │   │                                  # ConfigurationOperationGuard — единая блокировка
 │   │                                  # полного импорта/обновления/применения конфигурации
 │   │                                  # к базе в пределах одного окна (см. docs/architecture.md)
@@ -83,7 +99,10 @@ src/
 │   └── skills/                       # AiSkillsInstaller — установка ИИ-навыков
 │
 ├── ui/                               # Всё, что знает про vscode API
-│   ├── tree/                         # MetadataTreeProvider (тонкий), TreeNode, nodeBuilders/, decorations/
+│   ├── tree/                         # MetadataTreeProvider (тонкий), TreeNode, nodeBuilders/, decorations/,
+│   │                                  # formNodePaths.ts — ЕДИНЫЙ адаптер «узел формы → файлы формы» для
+│   │                                  # ui/mcp и ui/commands (xmlPath узла формы объекта — это XML
+│   │                                  # ВЛАДЕЛЬЦА, а не форма; docs/metadata-navigator.md)
 │   ├── views/                        # webview-провайдеры
 │   │   ├── universal/                # UniversalPanelViewProvider — ОСНОВНОЙ UI навигатора
 │   │   ├── properties/               # PropertyBuilder по PropertySchema
@@ -116,6 +135,12 @@ src/
 ├── cli/                             # Node entry onec-tools.ts + commands/ + core/ (адаптеры)
 └── test/                            # runTests.ts + suite/; runnerTempDir.ts — временный каталог прогона
 ```
+
+Вне `src/` — `scripts/patch-coverage.mjs` (тонкий оркестратор гейта `coverage:changed`: git, спавны,
+ФС, печать) и `scripts/patch-coverage/` (чистые модули без I/O, покрытые тестами наравне с `src/**`:
+`branchFacts.mjs` — детектор ветвлений по TS AST, `diffBase.mjs` — выбор базы диффа, `verdict.mjs` —
+разбор `lcov` и вердикт, `shards.mjs` — планирование и сверка порций прогона). Подробности —
+[coverage-gate.md](./coverage-gate.md).
 
 Оба раннера (`runTests.ts`, `e2e/runE2ETests.ts`) запускают VS Code с `TMPDIR`/`TMP`/`TEMP`, указывающими на
 собственный каталог прогона `v8t-run-*`, и удаляют его после прогона, в том числе упавшего (issue #82).

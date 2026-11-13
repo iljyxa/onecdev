@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import {
   computeFileHash,
   createHashSnapshot,
@@ -6,7 +7,7 @@ import {
   walkSupportedFiles,
   type HashCacheSnapshot,
 } from './HashCache';
-import { writeFileAtomicSync } from '../fs/AtomicFileWrite';
+import { writeFileAtomic } from '../fs/AtomicFileWriter';
 
 export const FILE_STAT_INDEX_SCHEMA_VERSION = 1;
 
@@ -84,7 +85,9 @@ export function loadFileStatIndex(projectRoot: string, scopeKey: string): FileSt
  * глушит — решение о её допустимости принимает вызывающий.
  */
 export function saveFileStatIndex(projectRoot: string, index: FileStatIndex): void {
-  writeFileAtomicSync(getStatIndexFilePath(projectRoot, index.scopeKey), JSON.stringify(index));
+  const filePath = getStatIndexFilePath(projectRoot, index.scopeKey);
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  writeFileAtomic(filePath, JSON.stringify(index));
 }
 
 export function isFileStatEntryReusable(

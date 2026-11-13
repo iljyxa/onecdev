@@ -46,6 +46,16 @@ function countBareLineFeeds(text: string): number {
 }
 
 /**
+ * Начало строки главной (прямой ребёнок главного `<ChildObjects>`) табличной части: по канону
+ * порядка новый реквизит вставляется туда. Отступ ровно в три таба отличает её от вложенных узлов.
+ */
+function mainTabularSectionLineAt(snapshot: string, eol: string): number {
+  const at = snapshot.indexOf(`${eol}\t\t\t<TabularSection uuid=`);
+  assert.ok(at > 0, 'в снимке должна быть табличная часть в главном ChildObjects');
+  return at + eol.length;
+}
+
+/**
  * Проверяет, что `actual` — это `original`, в котором ровно участок `[start, end)` заменён
  * вставкой: всё до и после участка совпадает байт-в-байт. Возвращает саму вставку.
  * (Локальная копия helper'а из `cfeBorrowServiceEol.test.ts` — тот файл не правится этой задачей.)
@@ -108,7 +118,9 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
     test('реквизит ИНН после доимствования ТЧ регистрируется в главном ChildObjects объекта', () => {
       service.borrowChild(CF_DIR, extDir, 'Catalog', 'Контрагенты', 'TabularSection', 'КонтактныеЛица');
       const snapshot = fs.readFileSync(file, 'utf-8');
-      const at = mainCloseAt(snapshot);
+      // Канон порядка <ChildObjects> справочника: реквизит встаёт ПЕРЕД табличной частью —
+      // в начало строки главной ТЧ, а не в конец блока.
+      const at = mainTabularSectionLineAt(snapshot, '\r\n');
 
       const result = service.borrowChild(CF_DIR, extDir, 'Catalog', 'Контрагенты', 'Attribute', 'ИНН');
       assert.strictEqual(result.alreadyBorrowed, false);
@@ -218,7 +230,8 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
 
     test('реквизит объекта Реквизит1 после доимствования ТЧ регистрируется в главном ChildObjects документа, блок ТЧ не меняется', () => {
       const snapshot = borrowTabularSection();
-      const at = mainCloseAt(snapshot);
+      // Канон порядка <ChildObjects> документа: реквизит встаёт ПЕРЕД табличной частью.
+      const at = mainTabularSectionLineAt(snapshot, '\n');
       const tsBefore = tabularSectionSlice(snapshot);
 
       const result = service.borrowChild(CF_DIR, extDir, 'Document', 'АвансовыйОтчет', 'Attribute', 'Реквизит1');
@@ -248,6 +261,7 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
 
     test('команда Команда1 после доимствования ТЧ регистрируется в главном ChildObjects документа, блок ТЧ не меняется', () => {
       const snapshot = borrowTabularSection();
+      // По канону порядка документа команда идёт ПОСЛЕ табличной части — в конец главного блока.
       const at = mainCloseAt(snapshot);
       const tsBefore = tabularSectionSlice(snapshot);
 

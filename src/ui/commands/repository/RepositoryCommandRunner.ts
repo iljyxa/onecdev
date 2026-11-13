@@ -8,6 +8,7 @@ import type { RepositoryBinding, RepositoryNodeRef, RepositoryService, Repositor
 import { resolveDbPassword, type ProjectSecretStorage } from '../../../infra/environment';
 import {
   describeProcessInterruption,
+  formatCommandLineForLog,
   normalizeInfoBasePath,
   pickMostReadableText,
   resolveV8ExecutablePath,
@@ -97,6 +98,7 @@ export async function executeRepositoryCli(
   const title = request.progressTitle ?? request.command;
   let designerArgs: string[];
   let v8Path: string;
+  let secrets: string[];
   try {
     const commandArgs = buildCommandDesignerArgs(request.command, request.extraArgs);
     const connection = await resolveDatabaseConnection(
@@ -108,6 +110,9 @@ export async function executeRepositoryCli(
     if (!binding) {
       throw new Error(`Для "${request.target.displayName}" не настроено подключение к хранилищу в env.json.`);
     }
+    // Пароль базы необязателен по типу (undefined отбрасывается), пароль хранилища —
+    // нет. Пустая строка маскером игнорируется.
+    secrets = [connection.password, binding.repoPassword].filter((value): value is string => value !== undefined);
     designerArgs = ['DESIGNER'];
     appendConnectionDesignerArgs(designerArgs, connection);
     appendRepositoryDesignerArgs(designerArgs, binding);
@@ -126,7 +131,7 @@ export async function executeRepositoryCli(
     services.outputChannel.appendLine(`[repository][error] ${message}`);
     return { status: 'failed', message };
   }
-  return launch(request, title, v8Path, designerArgs, services);
+  return launch(request, title, v8Path, designerArgs, services, secrets);
 }
 
 /** Запуск процесса Конфигуратора; внедряется, чтобы сборку аргументов проверять без 1С. */
@@ -135,7 +140,8 @@ export type RepositoryDesignerLauncher = (
   title: string,
   v8Path: string,
   designerArgs: string[],
-  services: RepositoryCliServices
+  services: RepositoryCliServices,
+  secrets: readonly string[]
 ) => Promise<RepositoryCliResult>;
 
 /* c8 ignore start -- запуск процесса Конфигуратора: платформа 1С недоступна в тестовом окружении;
@@ -145,12 +151,16 @@ async function runRepositoryDesigner(
   title: string,
   v8Path: string,
   designerArgs: string[],
-  services: RepositoryCliServices
+  services: RepositoryCliServices,
+  secrets: readonly string[]
 ): Promise<RepositoryCliResult> {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8repo_'));
   const outFile = path.join(tempDir, `${request.command}.log`);
   const args = [...designerArgs, '/Out', outFile, '/DisableStartupDialogs'];
-  const commandAsText = `${v8Path} ${args.join(' ')}`;
+  // В векторе два секрета: пароль базы (слитно, `/P<пароль>`) и пароль
+  // хранилища (`/ConfigurationRepositoryP <пароль>`). Оба передаются маскеру
+  // ЗНАЧЕНИЯМИ — это точнее правил по ключам и не зависит от формы записи.
+  const commandAsText = formatCommandLineForLog(v8Path, args, secrets);
   beginRepositoryOperationStatus(title, request.progressStartMessage ?? 'Выполняю команду хранилища...');
   try {
     services.outputChannel.appendLine(`[repository] Старт: ${commandAsText}`);

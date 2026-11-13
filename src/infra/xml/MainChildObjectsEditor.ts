@@ -1,4 +1,6 @@
+import { resolveInsertOffset } from './childObjects/ChildObjectsEditor';
 import {
+  detectRootObjectKind,
   escapeXmlText,
   findChildElementRangeInBlock,
   findDirectElementRanges,
@@ -74,6 +76,14 @@ export function registerChildInMainChildObjects(
       from--;
     }
     return `${xml.slice(0, from)}\n${childXml}${xml.slice(main.openEnd + ref.end)}`;
+  }
+
+  // Новый элемент встаёт по канону порядка вида владельца (infra/xml/childObjects): начало строки
+  // первого соседа со старшим рангом. Правила нет — дописывается в конец, как раньше.
+  const canonOffset = resolveInsertOffset(block, detectRootObjectKind(xml), childTag, 'root');
+  if (canonOffset !== null) {
+    const at = main.openEnd + canonOffset;
+    return `${xml.slice(0, at)}${entry}\n${xml.slice(at)}`;
   }
 
   // Запись несёт собственный отступ, поэтому отступ закрывающего тега переносится на новую строку

@@ -11,6 +11,7 @@ import {
 import { extractChildMetaElementXml } from '../../infra/xml/XmlUtils';
 import type { NodeKind } from '../../ui/tree/TreeNode';
 import type { EnumPropertyValue, MetadataTypeValue } from '../../ui/views/properties/_types';
+import { skipWithoutCorpus } from './support/corpus';
 
 /**
  * Характеризационные (снапшот) тесты `PropertyBuilder.ts` — страховочная сеть
@@ -26,14 +27,15 @@ const EXAMPLE_CF = path.resolve(__dirname, '../../../example/2.20/src/cf');
 
 suite('PropertyBuilder — характеризация перед декомпозицией', () => {
   suite('getRootPropertyKeyOrder — порядок ключей корня по всем видам метаданных', () => {
-    // Виды, использующие общий дефолт COMMON_ROOT_META_PROPERTY_KEYS (ветка else
-    // в getRootPropertyKeyOrder) — самая массовая группа контракта, её потеря
-    // при переносе в propertyKeyOrder.ts означала бы, что COMMON_ROOT_META_PROPERTY_KEYS
-    // не мигрировал или ветка по умолчанию сломана.
+    // Виды, использующие общий дефолт (ветка else в getRootPropertyKeyOrder).
+    // Свойств выбора форм тут НЕТ ни одного: общая ветка достаётся служебным узлам
+    // и дочерним элементам (реквизит, колонка, ТЧ, макет, команда), а ни у одного
+    // из них платформа тег `*Form` в <Properties> не пишет — проверено сканом
+    // эталона (см. formPropertyKeysCorpus.test.ts, обратный гейт). Раньше ветка
+    // раздавала всем восемь ключей форм «на всякий случай», и панель предлагала
+    // записать свойство, которого у вида не бывает.
     const COMMON_DEFAULT_KEYS = [
       'Name', 'Synonym', 'Comment', 'ObjectBelonging', 'ExtendedConfigurationObject',
-      'DefaultObjectForm', 'DefaultRecordForm', 'DefaultListForm', 'DefaultChoiceForm',
-      'AuxiliaryObjectForm', 'AuxiliaryRecordForm', 'AuxiliaryListForm', 'AuxiliaryChoiceForm',
       'InputByString', 'SearchStringModeOnInputByString', 'FullTextSearchOnInputByString',
       'ChoiceDataGetModeOnInputByString', 'CreateOnInput', 'ChoiceHistoryOnInput',
       'DataLockControlMode', 'FullTextSearch', 'ObjectPresentation', 'ExtendedObjectPresentation',
@@ -42,7 +44,7 @@ suite('PropertyBuilder — характеризация перед декомп�
     const kindsWithCommonDefault: NodeKind[] = [
       'configuration', 'extension', 'extensions-root', 'group-common', 'group-type',
       'NumeratorsBranch', 'SequencesBranch', 'Subsystem', 'CommonModule', 'CommonAttribute',
-      'Role', 'Bot', 'Interface', 'Constant', 'EventSubscription', 'ExternalDataSource',
+      'Role', 'Bot', 'Interface', 'EventSubscription', 'ExternalDataSource',
       'StandardAttribute', 'Attribute', 'AddressingAttribute', 'TabularSection', 'Column',
       'Form', 'Command', 'Template', 'Dimension', 'Resource', 'EnumValue',
     ];
@@ -52,6 +54,19 @@ suite('PropertyBuilder — характеризация перед декомп�
         assert.deepStrictEqual(getRootPropertyKeyOrder(kind), COMMON_DEFAULT_KEYS);
       });
     }
+
+    // Константа — единственный «общий» вид со своей формой: 999 из 999 констант
+    // эталона несут <DefaultForm/>. Панель константы идёт типозависимой веткой
+    // (getTypeAwarePropertyKeyOrder), но общий порядок обязан знать про DefaultForm.
+    test('Constant -> общий дефолт + DefaultForm на месте блока форм', () => {
+      assert.deepStrictEqual(getRootPropertyKeyOrder('Constant'), [
+        'Name', 'Synonym', 'Comment', 'ObjectBelonging', 'ExtendedConfigurationObject', 'DefaultForm',
+        'InputByString', 'SearchStringModeOnInputByString', 'FullTextSearchOnInputByString',
+        'ChoiceDataGetModeOnInputByString', 'CreateOnInput', 'ChoiceHistoryOnInput',
+        'DataLockControlMode', 'FullTextSearch', 'ObjectPresentation', 'ExtendedObjectPresentation',
+        'ListPresentation', 'ExtendedListPresentation', 'Explanation', 'BasedOn',
+      ]);
+    });
 
     test('SessionParameter и DefinedType -> ["Name","Synonym","Comment","Type"]', () => {
       const expected = ['Name', 'Synonym', 'Comment', 'Type'];
@@ -213,17 +228,28 @@ suite('PropertyBuilder — характеризация перед декомп�
       ]);
     });
 
-    test('InformationRegister и CalculationRegister -> общий контракт регистра сведений', () => {
-      const expected = [
+    // Регистр сведений и регистр расчёта делят один контракт ВЕЗДЕ, кроме форм:
+    // формы записи у регистра расчёта в эталоне нет (только список).
+    test('InformationRegister -> контракт регистра сведений (с формой записи)', () => {
+      assert.deepStrictEqual(getRootPropertyKeyOrder('InformationRegister'), [
         'Name', 'Synonym', 'Comment', 'UseStandardCommands', 'EditType', 'DefaultRecordForm',
         'DefaultListForm', 'AuxiliaryRecordForm', 'AuxiliaryListForm', 'InformationRegisterPeriodicity',
         'WriteMode', 'MainFilterOnPeriod', 'IncludeHelpInContents', 'DataLockControlMode',
         'FullTextSearch', 'EnableTotalsSliceFirst', 'EnableTotalsSliceLast', 'RecordPresentation',
         'ExtendedRecordPresentation', 'ListPresentation', 'ExtendedListPresentation', 'Explanation',
         'DataHistory', 'UpdateDataHistoryImmediatelyAfterWrite', 'ExecuteAfterWriteDataHistoryVersionProcessing',
-      ];
-      assert.deepStrictEqual(getRootPropertyKeyOrder('InformationRegister'), expected);
-      assert.deepStrictEqual(getRootPropertyKeyOrder('CalculationRegister'), expected);
+      ]);
+    });
+
+    test('CalculationRegister -> тот же контракт, но без формы записи', () => {
+      assert.deepStrictEqual(getRootPropertyKeyOrder('CalculationRegister'), [
+        'Name', 'Synonym', 'Comment', 'UseStandardCommands', 'EditType',
+        'DefaultListForm', 'AuxiliaryListForm', 'InformationRegisterPeriodicity',
+        'WriteMode', 'MainFilterOnPeriod', 'IncludeHelpInContents', 'DataLockControlMode',
+        'FullTextSearch', 'EnableTotalsSliceFirst', 'EnableTotalsSliceLast', 'RecordPresentation',
+        'ExtendedRecordPresentation', 'ListPresentation', 'ExtendedListPresentation', 'Explanation',
+        'DataHistory', 'UpdateDataHistoryImmediatelyAfterWrite', 'ExecuteAfterWriteDataHistoryVersionProcessing',
+      ]);
     });
 
     test('AccumulationRegister -> контракт регистра накопления', () => {
@@ -246,8 +272,8 @@ suite('PropertyBuilder — характеризация перед декомп�
     test('Report -> контракт отчёта', () => {
       assert.deepStrictEqual(getRootPropertyKeyOrder('Report'), [
         'Name', 'Synonym', 'Comment', 'UseStandardCommands', 'DefaultForm', 'AuxiliaryForm',
-        'MainDataCompositionSchema', 'DefaultSettingsForm', 'AuxiliarySettingsForm',
-        'DefaultVariantForm', 'AuxiliaryVariantForm', 'VariantsStorage', 'SettingsStorage',
+        'DefaultSettingsForm', 'AuxiliarySettingsForm', 'DefaultVariantForm', 'AuxiliaryVariantForm',
+        'MainDataCompositionSchema', 'VariantsStorage', 'SettingsStorage',
         'IncludeHelpInContents', 'ExtendedPresentation', 'Explanation',
       ]);
     });
@@ -262,8 +288,8 @@ suite('PropertyBuilder — характеризация перед декомп�
     test('BusinessProcess -> COMMON + DOCUMENT_LIKE + поля бизнес-процесса (mergePropertyKeys)', () => {
       assert.deepStrictEqual(getRootPropertyKeyOrder('BusinessProcess'), [
         'Name', 'Synonym', 'Comment', 'ObjectBelonging', 'ExtendedConfigurationObject',
-        'DefaultObjectForm', 'DefaultRecordForm', 'DefaultListForm', 'DefaultChoiceForm',
-        'AuxiliaryObjectForm', 'AuxiliaryRecordForm', 'AuxiliaryListForm', 'AuxiliaryChoiceForm',
+        'DefaultObjectForm', 'DefaultListForm', 'DefaultChoiceForm',
+        'AuxiliaryObjectForm', 'AuxiliaryListForm', 'AuxiliaryChoiceForm',
         'InputByString', 'SearchStringModeOnInputByString', 'FullTextSearchOnInputByString',
         'ChoiceDataGetModeOnInputByString', 'CreateOnInput', 'ChoiceHistoryOnInput',
         'DataLockControlMode', 'FullTextSearch', 'ObjectPresentation', 'ExtendedObjectPresentation',
@@ -279,8 +305,8 @@ suite('PropertyBuilder — характеризация перед декомп�
     test('Task -> COMMON + DOCUMENT_LIKE + поля задачи (mergePropertyKeys)', () => {
       assert.deepStrictEqual(getRootPropertyKeyOrder('Task'), [
         'Name', 'Synonym', 'Comment', 'ObjectBelonging', 'ExtendedConfigurationObject',
-        'DefaultObjectForm', 'DefaultRecordForm', 'DefaultListForm', 'DefaultChoiceForm',
-        'AuxiliaryObjectForm', 'AuxiliaryRecordForm', 'AuxiliaryListForm', 'AuxiliaryChoiceForm',
+        'DefaultObjectForm', 'DefaultListForm', 'DefaultChoiceForm',
+        'AuxiliaryObjectForm', 'AuxiliaryListForm', 'AuxiliaryChoiceForm',
         'InputByString', 'SearchStringModeOnInputByString', 'FullTextSearchOnInputByString',
         'ChoiceDataGetModeOnInputByString', 'CreateOnInput', 'ChoiceHistoryOnInput',
         'DataLockControlMode', 'FullTextSearch', 'ObjectPresentation', 'ExtendedObjectPresentation',
@@ -297,8 +323,8 @@ suite('PropertyBuilder — характеризация перед декомп�
     test('ExchangePlan -> COMMON + EXCHANGE_PLAN_ROOT_EXTRA_KEYS', () => {
       assert.deepStrictEqual(getRootPropertyKeyOrder('ExchangePlan'), [
         'Name', 'Synonym', 'Comment', 'ObjectBelonging', 'ExtendedConfigurationObject',
-        'DefaultObjectForm', 'DefaultRecordForm', 'DefaultListForm', 'DefaultChoiceForm',
-        'AuxiliaryObjectForm', 'AuxiliaryRecordForm', 'AuxiliaryListForm', 'AuxiliaryChoiceForm',
+        'DefaultObjectForm', 'DefaultListForm', 'DefaultChoiceForm',
+        'AuxiliaryObjectForm', 'AuxiliaryListForm', 'AuxiliaryChoiceForm',
         'InputByString', 'SearchStringModeOnInputByString', 'FullTextSearchOnInputByString',
         'ChoiceDataGetModeOnInputByString', 'CreateOnInput', 'ChoiceHistoryOnInput',
         'DataLockControlMode', 'FullTextSearch', 'ObjectPresentation', 'ExtendedObjectPresentation',
@@ -316,20 +342,33 @@ suite('PropertyBuilder — характеризация перед декомп�
       assert.deepStrictEqual(result.slice(0, -2), getRootPropertyKeyOrder('Catalog'));
     });
 
-    test('ChartOfAccounts -> CATALOG + доп. поля плана счетов (mergePropertyKeys)', () => {
+    // План счетов и план видов расчёта строятся из набора справочника, но форм
+    // ГРУППЫ у них в эталоне нет ни одной (иерархия есть, формы группы платформа
+    // не пишет) — поэтому набор совпадает со справочником только за вычетом их.
+    const CATALOG_FOLDER_FORM_KEYS = [
+      'DefaultFolderForm', 'DefaultFolderChoiceForm', 'AuxiliaryFolderForm', 'AuxiliaryFolderChoiceForm',
+    ];
+
+    test('ChartOfAccounts -> CATALOG без форм групп + доп. поля плана счетов (mergePropertyKeys)', () => {
       const result = getRootPropertyKeyOrder('ChartOfAccounts');
       assert.deepStrictEqual(result.slice(-5), [
         'ExtDimensionTypes', 'MaxExtDimensionCount', 'CodeMask', 'AutoOrderByCode', 'OrderLength',
       ]);
-      assert.deepStrictEqual(result.slice(0, -5), getRootPropertyKeyOrder('Catalog'));
+      assert.deepStrictEqual(
+        result.slice(0, -5),
+        getRootPropertyKeyOrder('Catalog').filter((key) => !CATALOG_FOLDER_FORM_KEYS.includes(key))
+      );
     });
 
-    test('ChartOfCalculationTypes -> CATALOG + доп. поля видов расчёта (mergePropertyKeys)', () => {
+    test('ChartOfCalculationTypes -> CATALOG без форм групп + доп. поля видов расчёта (mergePropertyKeys)', () => {
       const result = getRootPropertyKeyOrder('ChartOfCalculationTypes');
       assert.deepStrictEqual(result.slice(-3), [
         'DependenceOnCalculationTypes', 'BaseCalculationTypes', 'ActionPeriodUse',
       ]);
-      assert.deepStrictEqual(result.slice(0, -3), getRootPropertyKeyOrder('Catalog'));
+      assert.deepStrictEqual(
+        result.slice(0, -3),
+        getRootPropertyKeyOrder('Catalog').filter((key) => !CATALOG_FOLDER_FORM_KEYS.includes(key))
+      );
     });
 
     test('DocumentJournal -> контракт журнала документов', () => {
@@ -356,6 +395,12 @@ suite('PropertyBuilder — характеризация перед декомп�
   });
 
   suite('buildRootMetaObjectProperties — снапшот на реальных фикстурах example/2.20/src/cf', () => {
+    // `example/` не отслеживается git — без корпуса сьют пропускается, а не падает
+    // (единый гейт: support/corpus.ts).
+    suiteSetup(function () {
+      skipWithoutCorpus(this);
+    });
+
     // Enum взят полностью (маленький, компактный объект) — deep-equal всего массива
     // защищает и от потери ключей, и от изменения структуры/значений value.
     test('Enums/PushУведомления.xml -> полный снапшот свойств', () => {
@@ -387,10 +432,12 @@ suite('PropertyBuilder — характеризация перед декомп�
           },
           source: 'local',
         },
-        { key: 'DefaultListForm', title: 'Основная форма списка', kind: 'string', value: '', readonly: false, source: 'local' },
-        { key: 'DefaultChoiceForm', title: 'Основная форма выбора', kind: 'string', value: '', readonly: false, source: 'local' },
-        { key: 'AuxiliaryListForm', title: 'Дополнительная форма списка', kind: 'string', value: '', readonly: false, source: 'local' },
-        { key: 'AuxiliaryChoiceForm', title: 'Дополнительная форма выбора', kind: 'string', value: '', readonly: false, source: 'local' },
+        // section/sectionOrder — секция «Формы» (80) у свойств выбора форм ЛЮБОГО
+        // вида: именно по этому заголовку панель рендерит контрол выбора формы.
+        { key: 'DefaultListForm', title: 'Основная форма списка', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
+        { key: 'DefaultChoiceForm', title: 'Основная форма выбора', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
+        { key: 'AuxiliaryListForm', title: 'Дополнительная форма списка', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
+        { key: 'AuxiliaryChoiceForm', title: 'Дополнительная форма выбора', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
         { key: 'ListPresentation', title: 'Представление списка', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local' },
         { key: 'ExtendedListPresentation', title: 'Расширенное представление списка', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local' },
         { key: 'Explanation', title: 'Пояснение', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local' },
@@ -559,10 +606,12 @@ suite('PropertyBuilder — характеризация перед декомп�
         { key: 'Comment', kind: 'localizedString', section: null },
         { key: 'UseStandardCommands', kind: 'boolean', section: null },
         { key: 'EditType', kind: 'enum', section: null },
-        { key: 'DefaultRecordForm', kind: 'string', section: null },
-        { key: 'DefaultListForm', kind: 'string', section: null },
-        { key: 'AuxiliaryRecordForm', kind: 'string', section: null },
-        { key: 'AuxiliaryListForm', kind: 'string', section: null },
+        // Секция «Формы» появилась у всех видов, а не только у справочника и
+        // документа: именно она включает в панели контрол выбора формы.
+        { key: 'DefaultRecordForm', kind: 'string', section: 'Формы' },
+        { key: 'DefaultListForm', kind: 'string', section: 'Формы' },
+        { key: 'AuxiliaryRecordForm', kind: 'string', section: 'Формы' },
+        { key: 'AuxiliaryListForm', kind: 'string', section: 'Формы' },
         { key: 'InformationRegisterPeriodicity', kind: 'enum', section: null },
         { key: 'WriteMode', kind: 'enum', section: null },
         { key: 'MainFilterOnPeriod', kind: 'boolean', section: null },
@@ -584,6 +633,12 @@ suite('PropertyBuilder — характеризация перед декомп�
   });
 
   suite('Экстракторы — точечная страховка перед переносом в propertyExtractors.ts', () => {
+    // `example/` не отслеживается git — без корпуса сьют пропускается, а не падает
+    // (единый гейт: support/corpus.ts).
+    suiteSetup(function () {
+      skipWithoutCorpus(this);
+    });
+
     test('extractRootObjectPropertiesInnerXml достаёт внутренность блока Properties корневого тега', () => {
       const xmlPath = path.join(EXAMPLE_CF, 'Enums', 'PushУведомления.xml');
       const xml = fs.readFileSync(xmlPath, 'utf-8');

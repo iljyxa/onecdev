@@ -80,13 +80,15 @@ const REMOVE_COMMANDS: readonly RemoveCommandCase[] = [
   },
   {
     label: 'removeForm',
-    // Владелец формы вычисляется из пути `<Объект>/Forms/<Форма>.xml`, сам файл формы не читается.
+    // Узел формы объекта несёт XML владельца в `xmlPath` и `metaContext.ownerObjectXmlPath`
+    // (контракт builder'а дерева, ui/tree/formNodePaths.ts); сам файл формы не читается.
     run: (xmlPath, services) => removeForm(
       new MetadataNode(
         {
           label: 'ФормаЭлемента',
           nodeKind: 'Form',
-          xmlPath: path.join(xmlPath.slice(0, -'.xml'.length), 'Forms', 'ФормаЭлемента.xml'),
+          xmlPath,
+          metaContext: { rootMetaKind: 'Catalog', ownerObjectXmlPath: xmlPath },
         },
         vscode.TreeItemCollapsibleState.None
       ),

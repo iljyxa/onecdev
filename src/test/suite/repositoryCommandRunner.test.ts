@@ -335,6 +335,60 @@ suite('RepositoryCommandRunner — executeRepositoryCli: гарантирова�
   });
 });
 
+suite('RepositoryCommandRunner — executeRepositoryCli: секреты для маскера', () => {
+  let workspaceRoot: string;
+
+  setup(() => {
+    workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-execcli-secrets-'));
+  });
+
+  teardown(() => {
+    fs.rmSync(workspaceRoot, { recursive: true, force: true });
+  });
+
+  test('пароль базы из env.json передаётся запуску в списке секретов, а не только в аргументах', async () => {
+    const fakeV8 = path.join(workspaceRoot, 'bin', '1cv8');
+    fs.mkdirSync(path.dirname(fakeV8), { recursive: true });
+    fs.writeFileSync(fakeV8, '', 'utf-8');
+    fs.writeFileSync(
+      path.join(workspaceRoot, 'env.json'),
+      JSON.stringify({
+        default: {
+          '--ibconnection': '/F/tmp/база',
+          '--db-user': 'Админ',
+          '--db-pwd': 'пароль-базы',
+          '--path': fakeV8,
+          '--repo-path': '/tmp/хранилище',
+          '--repo-user': 'Admin',
+        },
+      }),
+      'utf-8'
+    );
+    const secretStorage = new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot);
+    const target: RepositoryTarget = { configRoot: path.join(workspaceRoot, 'src', 'cf'), configKind: 'cf', displayName: 'Тест' };
+    const launched: { designerArgs: string[]; secrets: string[] }[] = [];
+
+    const result = await executeRepositoryCli(
+      { command: 'repository-lock', target, extraArgs: buildLockExtraArgs('/tmp/objects.xml') },
+      {
+        workspaceFolder: { uri: vscode.Uri.file(workspaceRoot), name: 'test', index: 0 },
+        outputChannel: { appendLine: () => undefined } as unknown as vscode.OutputChannel,
+        repositoryService: new RepositoryService(workspaceRoot, secretStorage),
+        projectSecretStorage: secretStorage,
+      },
+      (_request, _title, _v8Path, designerArgs, _services, secrets) => {
+        launched.push({ designerArgs, secrets: [...secrets] });
+        return Promise.resolve({ status: 'done' });
+      }
+    );
+
+    assert.deepStrictEqual(result, { status: 'done' });
+    assert.strictEqual(launched.length, 1);
+    assert.ok(launched[0].secrets.includes('пароль-базы'), launched[0].secrets.join('|'));
+    assert.ok(launched[0].designerArgs.includes('/Pпароль-базы'), launched[0].designerArgs.join(' '));
+  });
+});
+
 suite('RepositoryCommandRunner — runRepositoryCliCommand: обёртка с UI-реакцией', () => {
   let workspaceRoot: string;
   let repositoryService: RepositoryService;

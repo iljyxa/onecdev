@@ -165,7 +165,7 @@ suite('Запуск конфигуратора с параметрами хра�
       ]);
       const logLine = launchLogLine();
       assert.ok(logLine.endsWith(
-        `DESIGNER /F ${infoBasePath} /NАдмин /P*** /ConfigurationRepositoryF /srv/хранилище /ConfigurationRepositoryN Разработчик /ConfigurationRepositoryP ***`
+        `DESIGNER /F ${infoBasePath} /NАдмин /P******** /ConfigurationRepositoryF /srv/хранилище /ConfigurationRepositoryN Разработчик /ConfigurationRepositoryP ********`
       ), logLine);
     });
 
@@ -180,6 +180,18 @@ suite('Запуск конфигуратора с параметрами хра�
       const args = await launch('DESIGNER', null);
 
       assert.deepStrictEqual(args, ['DESIGNER', '/F', infoBasePath, '/NАдмин', '/Pпароль-базы']);
+    });
+
+    test('база без пароля: параметр /P не передаётся, запуск не падает на пустом секрете', async () => {
+      writeEnvJson(workspaceRoot, {
+        '--ibconnection': `/F${infoBasePath}`,
+        '--db-user': 'Админ',
+        '--path': designer.executablePath,
+      });
+
+      const args = await launch('DESIGNER', null);
+
+      assert.deepStrictEqual(args, ['DESIGNER', '/F', infoBasePath, '/NАдмин']);
     });
 
     test('тонкий клиент параметры хранилища не получает', async () => {

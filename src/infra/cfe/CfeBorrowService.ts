@@ -4,6 +4,7 @@ import * as path from 'path';
 import { META_TYPES, type MetaKind, type MetaTypeDef, getMetaFolder } from '../../domain/MetaTypes';
 import { buildBorrowedChildXml } from '../xml/BorrowedChildXml';
 import { ConfigurationXmlEditor } from '../xml/ConfigurationXmlEditor';
+import { writeFileAtomic } from '../fs/AtomicFileWriter';
 import {
   MAIN_CHILD_OBJECTS_ENTRY_INDENT,
   ensureMainChildObjects,
@@ -235,7 +236,7 @@ export class CfeBorrowService {
     const targetDir = path.join(extDir, folder);
     fs.mkdirSync(targetDir, { recursive: true });
     const targetFile = path.join(targetDir, `${objectName}.xml`);
-    fs.writeFileSync(targetFile, borrowedXml, 'utf-8');
+    writeFileAtomic(targetFile, borrowedXml);
 
     const extConfigXmlPath = path.join(extDir, 'Configuration.xml');
     this.configEditor.addChildObject(extConfigXmlPath, `${typeName}.${objectName}`);
@@ -299,7 +300,7 @@ export class CfeBorrowService {
     fs.mkdirSync(formMetaDir, { recursive: true });
 
     const formMetaXml = this.buildBorrowedFormMetaXml(formName, sourceFormUuid, formatVersion);
-    fs.writeFileSync(formMetaFile, formMetaXml, 'utf-8');
+    writeFileAtomic(formMetaFile, formMetaXml);
     files.push(formMetaFile);
 
     const sourceFormExtXmlPath = path.join(
@@ -311,14 +312,14 @@ export class CfeBorrowService {
       const formExtDir = path.join(formMetaDir, formName, 'Ext');
       fs.mkdirSync(formExtDir, { recursive: true });
       const formExtFile = path.join(formExtDir, 'Form.xml');
-      fs.writeFileSync(formExtFile, borrowedFormExtXml, 'utf-8');
+      writeFileAtomic(formExtFile, borrowedFormExtXml);
       files.push(formExtFile);
 
       const moduleDir = path.join(formExtDir, 'Form');
       fs.mkdirSync(moduleDir, { recursive: true });
       const moduleFile = path.join(moduleDir, 'Module.bsl');
       if (!fs.existsSync(moduleFile)) {
-        fs.writeFileSync(moduleFile, '', 'utf-8');
+        writeFileAtomic(moduleFile, '');
         files.push(moduleFile);
       }
     }
