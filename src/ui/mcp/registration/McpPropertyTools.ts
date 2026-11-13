@@ -14,7 +14,7 @@ export function registerPropertyTools(server: McpServer, deps: McpRegistrationDe
   const { paths, properties, services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_get_properties',
+    'onecdev_get_properties',
     {
       title: 'Свойства объекта по пути',
       description: [
@@ -37,13 +37,13 @@ export function registerPropertyTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_set_property_by_path',
+    'onecdev_set_property_by_path',
     {
       title: 'Изменить свойство по пути',
       description: [
         'Меняет простое свойство объекта по каноническому пути с проверками enum/boolean/readonly.',
         'Корневые свойства доступны по path="Конфигурация" или "Расширение".',
-        'Для DefaultRoles удобнее v8vscedit_add_default_role / set_default_roles.',
+        'Для DefaultRoles удобнее onecdev_add_default_role / set_default_roles.',
       ].join(' '),
       inputSchema: z.object({
         path: z.string(),
@@ -65,15 +65,15 @@ export function registerPropertyTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_set_properties',
+    'onecdev_set_properties',
     {
       title: 'Пакетная смена свойств по пути',
       description: [
         'Меняет несколько простых свойств объекта за один вызов. properties —',
         'объект вида { propertyKey: value, ... }, ключи — английские имена свойств',
-        'из v8vscedit_get_properties. Применяет последовательно, в отчёте',
+        'из onecdev_get_properties. Применяет последовательно, в отчёте',
         'показывает результат каждой пары. Для типов (Type/Source/CommandParameterType)',
-        'используй v8vscedit_set_type — set_properties их пропустит.',
+        'используй onecdev_set_type — set_properties их пропустит.',
       ].join(' '),
       inputSchema: z.object({
         path: z.string(),
@@ -107,12 +107,12 @@ export function registerPropertyTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_set_type',
+    'onecdev_set_type',
     {
       title: 'Изменить тип объекта',
       description: [
         'Меняет свойство Тип / Источник / Тип параметра команды по каноническому пути.',
-        'Перед ссылочным типом вызови v8vscedit_list_available_types для того же path.',
+        'Перед ссылочным типом вызови onecdev_list_available_types для того же path.',
         'Принимает русские имена типов и квалификаторы (длина/точность).',
       ].join(' '),
       inputSchema: z.object({
@@ -144,7 +144,7 @@ export function registerPropertyTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_rename_metadata',
+    'onecdev_rename_metadata',
     {
       title: 'Переименовать метаданные',
       description: [
@@ -171,7 +171,7 @@ export function registerPropertyTools(server: McpServer, deps: McpRegistrationDe
   );
 
   server.registerTool(
-    'v8vscedit_remove_metadata',
+    'onecdev_remove_metadata',
     {
       title: 'Удалить метаданные',
       description: [

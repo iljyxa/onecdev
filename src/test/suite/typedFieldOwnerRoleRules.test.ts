@@ -647,7 +647,7 @@ suite('typedFieldOwnerRoleRules — известный испорченный ф
     if (!fs.existsSync(KNOWN_CORRUPTED_FIXTURE)) {
       this.skip();
     }
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-corrupted-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-corrupted-'));
     const dir = path.join(tmpDir, 'DataProcessors');
     fs.mkdirSync(dir, { recursive: true });
     const xmlPath = path.join(dir, 'ПосчитатьТест.xml');
@@ -682,7 +682,7 @@ suite('typedFieldOwnerRoleRules — CRLF + BOM: идемпотентный вы�
     const lfContent = fs.readFileSync(sourcePath, 'utf-8').replace(/\r\n/g, '\n');
     const crlfWithBom = `\ufeff${lfContent.replace(/\n/g, '\r\n')}`;
 
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-crlf-bom-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-crlf-bom-'));
     const dir = path.join(tmpDir, 'Catalogs');
     fs.mkdirSync(dir, { recursive: true });
     const xmlPath = path.join(dir, 'Контрагенты.xml');
@@ -755,7 +755,7 @@ suite('typedFieldOwnerRoleRules — ветки updateTypeInObject: guard\'ы и 
 
   test('несуществующий файл — false, а не исключение', () => {
     assert.strictEqual(
-      new ObjectXmlReader().updateTypeInObject(path.join(os.tmpdir(), 'v8vscedit-нет-такого-файла', 'Файл.xml'), {
+      new ObjectXmlReader().updateTypeInObject(path.join(os.tmpdir(), 'onecdev-нет-такого-файла', 'Файл.xml'), {
         targetKind: 'Attribute',
         targetName: 'Х',
         typeInnerXml: NUMBER_TYPE,
@@ -1038,7 +1038,7 @@ function extractControlledKeysFromXml(xml: string): string[] {
 
 /** Копирует реальный эталонный объект во временный каталог (исходники в example/ не портим). */
 function copyExampleObjectToTmp(sourceXmlPath: string, folder: string): string {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-goldenb-'));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-goldenb-'));
   const dir = path.join(tmpDir, folder);
   fs.mkdirSync(dir, { recursive: true });
   const dest = path.join(dir, path.basename(sourceXmlPath));
@@ -1109,7 +1109,7 @@ function assertOnlyTypeBlockChangedInFile(
 }
 
 function writeMinimalCatalogWithColumn(): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-guard-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-guard-'));
   const dir = path.join(root, 'Catalogs');
   fs.mkdirSync(dir, { recursive: true });
   const xmlPath = path.join(dir, 'Тест.xml');
@@ -1143,7 +1143,7 @@ function writeMinimalCatalogWithColumn(): string {
 }
 
 function writeRootTypeTargetXml(targetKind: 'SessionParameter' | 'DefinedType'): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-roottype-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-roottype-'));
   const folder = targetKind === 'SessionParameter' ? 'SessionParameters' : 'DefinedTypes';
   const dir = path.join(root, folder);
   fs.mkdirSync(dir, { recursive: true });
@@ -1166,7 +1166,7 @@ function writeRootTypeTargetXml(targetKind: 'SessionParameter' | 'DefinedType'):
 
 /** Свежий корневой объект вида `kind` для проверки состава по владельцу в add-пути. */
 function makeRootObjectForOwnerRulesTest(kind: MetaKind): { configRoot: string; ownerXml: string } {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-ownerrules-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-ownerrules-'));
   fs.writeFileSync(
     path.join(configRoot, 'Configuration.xml'),
     '<?xml version="1.0" encoding="utf-8"?>\n<MetaDataObject version="2.21">\n\t<Configuration>\n\t\t<Properties>\n\t\t\t<Name>Тест</Name>\n\t\t\t<Synonym/>\n\t\t</Properties>\n\t\t<ChildObjects/>\n\t</Configuration>\n</MetaDataObject>',

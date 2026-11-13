@@ -110,16 +110,16 @@ interface TreeAction {
 }
 
 const MODULE_SLOT_ACTIONS: Partial<Record<string, { command: string; title: string; icon: IconDto }>> = {
-  Object:       { command: 'v8vscedit.openObjectModule',    title: 'Открыть модуль объекта',   icon: codicon('code') },
-  Manager:      { command: 'v8vscedit.openManagerModule',   title: 'Открыть модуль менеджера', icon: codicon('code') },
-  ValueManager: { command: 'v8vscedit.openConstantModule',  title: 'Открыть модуль константы', icon: codicon('code') },
-  RecordSet:    { command: 'v8vscedit.openRecordSetModule', title: 'Открыть модуль записи',    icon: codicon('code') },
-  Service:      { command: 'v8vscedit.openServiceModule',   title: 'Открыть модуль сервиса',   icon: codicon('code') },
-  CommonModule: { command: 'v8vscedit.openCommonModuleCode', title: 'Открыть модуль',          icon: codicon('code') },
-  CommonCommand:{ command: 'v8vscedit.openCommandModule',   title: 'Открыть модуль команды',   icon: codicon('code') },
-  CommonForm:   { command: 'v8vscedit.openFormModule',      title: 'Открыть модуль формы',     icon: codicon('code') },
-  ChildForm:    { command: 'v8vscedit.openFormModule',      title: 'Открыть модуль формы',     icon: codicon('code') },
-  ChildCommand: { command: 'v8vscedit.openCommandModule',   title: 'Открыть модуль команды',   icon: codicon('code') },
+  Object:       { command: 'onecdev.openObjectModule',    title: 'Открыть модуль объекта',   icon: codicon('code') },
+  Manager:      { command: 'onecdev.openManagerModule',   title: 'Открыть модуль менеджера', icon: codicon('code') },
+  ValueManager: { command: 'onecdev.openConstantModule',  title: 'Открыть модуль константы', icon: codicon('code') },
+  RecordSet:    { command: 'onecdev.openRecordSetModule', title: 'Открыть модуль записи',    icon: codicon('code') },
+  Service:      { command: 'onecdev.openServiceModule',   title: 'Открыть модуль сервиса',   icon: codicon('code') },
+  CommonModule: { command: 'onecdev.openCommonModuleCode', title: 'Открыть модуль',          icon: codicon('code') },
+  CommonCommand:{ command: 'onecdev.openCommandModule',   title: 'Открыть модуль команды',   icon: codicon('code') },
+  CommonForm:   { command: 'onecdev.openFormModule',      title: 'Открыть модуль формы',     icon: codicon('code') },
+  ChildForm:    { command: 'onecdev.openFormModule',      title: 'Открыть модуль формы',     icon: codicon('code') },
+  ChildCommand: { command: 'onecdev.openCommandModule',   title: 'Открыть модуль команды',   icon: codicon('code') },
 };
 
 const FALLBACK_HTML =
@@ -128,16 +128,16 @@ const FALLBACK_HTML =
 
 const CHILDREN_CHUNK_SIZE = 40;
 const PASSIVE_NODE_ACTIONS = new Set<string>([
-  'v8vscedit.showProperties',
-  'v8vscedit.openXmlFile',
-  'v8vscedit.openObjectModule',
-  'v8vscedit.openManagerModule',
-  'v8vscedit.openConstantModule',
-  'v8vscedit.openRecordSetModule',
-  'v8vscedit.openServiceModule',
-  'v8vscedit.openCommonModuleCode',
-  'v8vscedit.openCommandModule',
-  'v8vscedit.openFormModule',
+  'onecdev.showProperties',
+  'onecdev.openXmlFile',
+  'onecdev.openObjectModule',
+  'onecdev.openManagerModule',
+  'onecdev.openConstantModule',
+  'onecdev.openRecordSetModule',
+  'onecdev.openServiceModule',
+  'onecdev.openCommonModuleCode',
+  'onecdev.openCommandModule',
+  'onecdev.openFormModule',
 ]);
 
 /**
@@ -145,8 +145,8 @@ const PASSIVE_NODE_ACTIONS = new Set<string>([
  * Генерирует HTML через renderVueWebviewHtml, передаёт состояние дерева как TreeNodeDto[].
  */
 export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
-  static readonly viewType = 'v8vsceditUniversal';
-  private static readonly selectedNodeStateKey = 'v8vscedit.universalPanel.selectedNodeKey';
+  static readonly viewType = 'onecdevUniversal';
+  private static readonly selectedNodeStateKey = 'onecdev.universalPanel.selectedNodeKey';
 
   private view: vscode.WebviewView | undefined;
   private readonly nodeById = new Map<string, MetadataNode>();
@@ -526,10 +526,10 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     const contextValue = node.contextValue ?? '';
     const actions: TreeAction[] = [];
     if (contextValue.startsWith('extensions-root')) {
-      actions.push({ command: 'v8vscedit.connectExtension', title: 'Подключить расширение', icon: codicon('plug') });
+      actions.push({ command: 'onecdev.connectExtension', title: 'Подключить расширение', icon: codicon('plug') });
     }
     if (node.addMetadataTarget) {
-      actions.push({ command: 'v8vscedit.addMetadata', title: 'Добавить', icon: codicon('add') });
+      actions.push({ command: 'onecdev.addMetadata', title: 'Добавить', icon: codicon('add') });
     }
     return actions.map((action) => ({
       id: action.command,
@@ -648,7 +648,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     // Сначала показываем свойства — DynamicPanelController ставит окно приоритета,
     // и последующие программные события активного редактора не перебьют state.
     if (node.xmlPath && !node.hidePropertiesCommand) {
-      await this.executeCommand('v8vscedit.showProperties', node);
+      await this.executeCommand('onecdev.showProperties', node);
     }
     if (node.command) {
       // Связанный документ (модуль/XML) открываем без перехвата фокуса:
@@ -665,10 +665,10 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     }
     // Двойной клик по подсистеме открывает полноценный редактор (состав, дочерние подсистемы).
     if (node.nodeKind === 'Subsystem') {
-      await this.executeCommand('v8vscedit.openSubsystemEditor', node);
+      await this.executeCommand('onecdev.openSubsystemEditor', node);
       return;
     }
-    await this.executeCommand('v8vscedit.showProperties', node);
+    await this.executeCommand('onecdev.showProperties', node);
   }
 
   private async executeCommand(command: string, node?: MetadataNode, options?: Record<string, unknown>): Promise<void> {
@@ -694,7 +694,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
 
   /**
    * Проверяет, что инициированная из webview команда допустима (S2): только
-   * зарегистрированные команды расширения `v8vscedit.*`. Список команд
+   * зарегистрированные команды расширения `onecdev.*`. Список команд
    * кэшируется — команды расширения регистрируются при активации и стабильны.
    */
   private async isWebviewCommandAllowed(command: string): Promise<boolean> {
@@ -736,7 +736,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     const query = value.trim();
     this.services.treeProvider.setSearchQuery(query);
     const hasSearch = query.length > 2;
-    void vscode.commands.executeCommand('setContext', 'v8vscedit.hasTreeSearch', hasSearch);
+    void vscode.commands.executeCommand('setContext', 'onecdev.hasTreeSearch', hasSearch);
     this.services.setTreeMessage(hasSearch ? `Поиск: ${query}` : undefined);
     this.services.refreshActionsView();
   }
@@ -765,82 +765,82 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     };
 
     if (node.xmlPath && /^configuration-hasXml|^extension-hasXml/.test(ctxValue)) {
-      add('v8vscedit.configuration.info', 'Информация', codicon('info'));
-      add('v8vscedit.configuration.validate', 'Валидировать', codicon('check'));
-      add('v8vscedit.showConfigActions', 'Команды конфигурации/расширения', codicon('tools'));
-      add('v8vscedit.importConfigurationFromDb', 'Импортировать из базы', codicon('cloud-download'));
-      add('v8vscedit.updateConfigurationInDb', 'Обновить в базе', codicon('sync'));
-      add('v8vscedit.dumpConfigurationToCf', 'Выгрузить в файл', codicon('package'));
-      add('v8vscedit.loadConfigurationFromCf', 'Загрузить из файла', codicon('folder-opened'));
+      add('onecdev.configuration.info', 'Информация', codicon('info'));
+      add('onecdev.configuration.validate', 'Валидировать', codicon('check'));
+      add('onecdev.showConfigActions', 'Команды конфигурации/расширения', codicon('tools'));
+      add('onecdev.importConfigurationFromDb', 'Импортировать из базы', codicon('cloud-download'));
+      add('onecdev.updateConfigurationInDb', 'Обновить в базе', codicon('sync'));
+      add('onecdev.dumpConfigurationToCf', 'Выгрузить в файл', codicon('package'));
+      add('onecdev.loadConfigurationFromCf', 'Загрузить из файла', codicon('folder-opened'));
     }
     if (ctxValue.startsWith('extensions-root')) {
-      add('v8vscedit.connectExtension', 'Подключить расширение', codicon('plug'));
+      add('onecdev.connectExtension', 'Подключить расширение', codicon('plug'));
       // Пакетные операции работают со ВСЕЙ базой, поэтому их место — узел-контейнер
       // расширений, а не корень конфигурации и не конкретное расширение.
-      add('v8vscedit.dumpAllExtensionsToCfe', 'Выгрузить все расширения в файлы', codicon('archive'));
-      add('v8vscedit.loadAllExtensionsFromCfe', 'Загрузить все расширения из файлов', codicon('cloud-upload'));
+      add('onecdev.dumpAllExtensionsToCfe', 'Выгрузить все расширения в файлы', codicon('archive'));
+      add('onecdev.loadAllExtensionsFromCfe', 'Загрузить все расширения из файлов', codicon('cloud-upload'));
     }
     if (ctxValue.startsWith('extension-hasXml')) {
-      add('v8vscedit.compileAndUpdateExtensionInDb', 'Полное обновление расширения в БД', codicon('cloud-upload'));
-      add('v8vscedit.cfe.analyzeExtension', 'Анализ расширения', codicon('inspect'));
+      add('onecdev.compileAndUpdateExtensionInDb', 'Полное обновление расширения в БД', codicon('cloud-upload'));
+      add('onecdev.cfe.analyzeExtension', 'Анализ расширения', codicon('inspect'));
     }
     if (this.canAddCfeInterceptor(node, ctxValue)) {
-      add('v8vscedit.cfe.addMethodInterceptor', 'Добавить перехватчик', codicon('symbol-method'));
+      add('onecdev.cfe.addMethodInterceptor', 'Добавить перехватчик', codicon('symbol-method'));
     }
     if (this.canBorrow(node, ctxValue)) {
-      add('v8vscedit.borrowToExtension', 'Добавить в расширение', codicon('add'));
+      add('onecdev.borrowToExtension', 'Добавить в расширение', codicon('add'));
     }
     if (node.xmlPath) {
       if (!/^(configuration|extension)-hasXml/.test(ctxValue)) {
-        add('v8vscedit.metadata.info', 'Структура объекта', codicon('info'));
-        add('v8vscedit.metadata.validate', 'Валидировать объект', codicon('check'));
+        add('onecdev.metadata.info', 'Структура объекта', codicon('info'));
+        add('onecdev.metadata.validate', 'Валидировать объект', codicon('check'));
       }
       if (node.nodeKind === 'Role') {
-        add('v8vscedit.role.info', 'Права роли', codicon('shield'));
-        add('v8vscedit.role.validate', 'Валидировать роль', codicon('verified'));
+        add('onecdev.role.info', 'Права роли', codicon('shield'));
+        add('onecdev.role.validate', 'Валидировать роль', codicon('verified'));
       }
       if (node.nodeKind === 'Subsystem') {
-        add('v8vscedit.subsystem.info', 'Информация о подсистеме', codicon('symbol-namespace'));
-        add('v8vscedit.subsystem.validate', 'Валидировать подсистему', codicon('verified'));
-        add('v8vscedit.interface.validate', 'Валидировать командный интерфейс', codicon('list-tree'));
+        add('onecdev.subsystem.info', 'Информация о подсистеме', codicon('symbol-namespace'));
+        add('onecdev.subsystem.validate', 'Валидировать подсистему', codicon('verified'));
+        add('onecdev.interface.validate', 'Валидировать командный интерфейс', codicon('list-tree'));
       }
       if (node.nodeKind === 'Template' || node.nodeKind === 'CommonTemplate') {
-        add('v8vscedit.mxl.info', 'MXL: структура', codicon('table'));
-        add('v8vscedit.mxl.validate', 'MXL: валидировать', codicon('check'));
-        add('v8vscedit.skd.info', 'СКД: структура', codicon('symbol-structure'));
-        add('v8vscedit.skd.validate', 'СКД: валидировать', codicon('verified'));
+        add('onecdev.mxl.info', 'MXL: структура', codicon('table'));
+        add('onecdev.mxl.validate', 'MXL: валидировать', codicon('check'));
+        add('onecdev.skd.info', 'СКД: структура', codicon('symbol-structure'));
+        add('onecdev.skd.validate', 'СКД: валидировать', codicon('verified'));
       }
       if (node.nodeKind === 'Form' || node.nodeKind === 'CommonForm') {
-        add('v8vscedit.form.info', 'Форма: структура', codicon('symbol-structure'));
-        add('v8vscedit.form.validate', 'Форма: валидировать', codicon('verified'));
+        add('onecdev.form.info', 'Форма: структура', codicon('symbol-structure'));
+        add('onecdev.form.validate', 'Форма: валидировать', codicon('verified'));
       }
       if (this.canAddHelp(node)) {
-        add('v8vscedit.help.add', 'Добавить справку', codicon('book'));
+        add('onecdev.help.add', 'Добавить справку', codicon('book'));
       }
       if (node.nodeKind !== 'Form' && node.nodeKind !== 'CommonForm' && this.canAddForm(node)) {
-        add('v8vscedit.form.add', 'Добавить форму', codicon('window'));
+        add('onecdev.form.add', 'Добавить форму', codicon('window'));
       }
       if (node.nodeKind === 'DataProcessor' || node.nodeKind === 'Report') {
-        add('v8vscedit.epf.bspInit', 'БСП: регистрация', codicon('symbol-key'));
-        add('v8vscedit.epf.bspAddCommand', 'БСП: добавить команду', codicon('add'));
+        add('onecdev.epf.bspInit', 'БСП: регистрация', codicon('symbol-key'));
+        add('onecdev.epf.bspAddCommand', 'БСП: добавить команду', codicon('add'));
       }
-      add('v8vscedit.openXmlFile', 'Открыть XML', codicon('file-code'));
+      add('onecdev.openXmlFile', 'Открыть XML', codicon('file-code'));
     }
     this.addModuleActions(node, add);
     if (node.xmlPath && !node.hidePropertiesCommand) {
-      add('v8vscedit.showProperties', 'Свойства', codicon('list-unordered'));
+      add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
     }
     if (node.addMetadataTarget) {
-      add('v8vscedit.addMetadata', 'Добавить', codicon('add'));
+      add('onecdev.addMetadata', 'Добавить', codicon('add'));
     }
     if (node.canRemoveMetadata) {
-      add('v8vscedit.removeMetadata', 'Удалить', codicon('trash'));
+      add('onecdev.removeMetadata', 'Удалить', codicon('trash'));
     }
     if (ctxValue.includes('-repoUnlocked')) {
-      add('v8vscedit.repository.lock', 'Захватить в хранилище', codicon('lock'));
+      add('onecdev.repository.lock', 'Захватить в хранилище', codicon('lock'));
     }
     if (ctxValue.includes('-repoLocked')) {
-      add('v8vscedit.repository.unlock', 'Освободить в хранилище', codicon('unlock'));
+      add('onecdev.repository.unlock', 'Освободить в хранилище', codicon('unlock'));
     }
     if (/^(configuration|extension)-hasXml/.test(ctxValue)) {
       this.addRepoRootActions(ctxValue, add);
@@ -851,9 +851,9 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       !ctxValue.startsWith('group-common') &&
       !ctxValue.startsWith('group-type')
     ) {
-      add('v8vscedit.repository.commit', 'Поместить в хранилище', codicon('cloud-upload'));
-      add('v8vscedit.repository.update', 'Получить из хранилища', codicon('cloud-download'));
-      add('v8vscedit.repository.updateToVersion', 'Получить версию из хранилища…', codicon('history'));
+      add('onecdev.repository.commit', 'Поместить в хранилище', codicon('cloud-upload'));
+      add('onecdev.repository.update', 'Получить из хранилища', codicon('cloud-download'));
+      add('onecdev.repository.updateToVersion', 'Получить версию из хранилища…', codicon('history'));
     }
     return actions;
   }
@@ -916,17 +916,17 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
 
   private addRepoRootActions(ctxValue: string, add: (command: string, title: string, icon: IconDto) => void): void {
     if (ctxValue.includes('-repoDisconnected')) {
-      add('v8vscedit.repository.connect', 'Подключить к хранилищу', codicon('plug'));
+      add('onecdev.repository.connect', 'Подключить к хранилищу', codicon('plug'));
     }
-    add('v8vscedit.repository.create', 'Создать хранилище', codicon('database'));
+    add('onecdev.repository.create', 'Создать хранилище', codicon('database'));
     if (!ctxValue.includes('-repoConnected')) {return;}
-    add('v8vscedit.repository.refreshLocks', 'Обновить статусы захватов', codicon('refresh'));
-    add('v8vscedit.repository.disconnect', 'Отключить от хранилища', codicon('debug-disconnect'));
-    add('v8vscedit.repository.addUser', 'Добавить пользователя хранилища', codicon('person-add'));
-    add('v8vscedit.repository.copyUsers', 'Скопировать пользователей', codicon('organization'));
-    add('v8vscedit.repository.dump', 'Выгрузить конфигурацию из хранилища', codicon('archive'));
-    add('v8vscedit.repository.report', 'Построить отчет по хранилищу', codicon('graph'));
-    add('v8vscedit.repository.setLabel', 'Установить метку версии', codicon('tag'));
+    add('onecdev.repository.refreshLocks', 'Обновить статусы захватов', codicon('refresh'));
+    add('onecdev.repository.disconnect', 'Отключить от хранилища', codicon('debug-disconnect'));
+    add('onecdev.repository.addUser', 'Добавить пользователя хранилища', codicon('person-add'));
+    add('onecdev.repository.copyUsers', 'Скопировать пользователей', codicon('organization'));
+    add('onecdev.repository.dump', 'Выгрузить конфигурацию из хранилища', codicon('archive'));
+    add('onecdev.repository.report', 'Построить отчет по хранилищу', codicon('graph'));
+    add('onecdev.repository.setLabel', 'Установить метку версии', codicon('tag'));
   }
 
   private resolveGitStatus(node: MetadataNode): MetadataGitDecorationStatus | undefined {

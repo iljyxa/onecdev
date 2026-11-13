@@ -9,11 +9,11 @@ export function registerDbCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.configureEnvironment', () => {
+    vscode.commands.registerCommand('onecdev.configureEnvironment', () => {
       void services.projectEnvironmentViewProvider.show();
     }),
 
-    vscode.commands.registerCommand('v8vscedit.runThinClient', async () => {
+    vscode.commands.registerCommand('onecdev.runThinClient', async () => {
       const shouldContinue = await confirmUpdateBeforeThinClient(services);
       if (!shouldContinue) {
         return;
@@ -22,7 +22,7 @@ export function registerDbCommands(
       await runDbClientFromWorkspace(services.workspaceFolder, services.outputChannel, services.projectSecretStorage, { mode: 'ENTERPRISE' });
     }),
 
-    vscode.commands.registerCommand('v8vscedit.runConfigurator', async () => {
+    vscode.commands.registerCommand('onecdev.runConfigurator', async () => {
       const repository = await resolveDesignerRepositoryBinding(services.repositoryService, services.treeProvider.getEntries());
       await runDbClientFromWorkspace(services.workspaceFolder, services.outputChannel, services.projectSecretStorage, { mode: 'DESIGNER', repository });
     })
@@ -59,6 +59,6 @@ async function confirmUpdateBeforeThinClient(services: CommandServices): Promise
     return false;
   }
 
-  const outcome = await vscode.commands.executeCommand<ConfigurationCommandOutcome>('v8vscedit.updateChangedConfigurations');
+  const outcome = await vscode.commands.executeCommand<ConfigurationCommandOutcome>('onecdev.updateChangedConfigurations');
   return isConfigurationCommandSucceeded(outcome);
 }

@@ -1,5 +1,5 @@
 /**
- * Тесты пакетного MCP-инструмента `v8vscedit_set_properties`.
+ * Тесты пакетного MCP-инструмента `onecdev_set_properties`.
  *
  * Проверяют поведение метода `McpPropertyService.setProperties`:
  *  - happy-path: несколько валидных свойств одного узла применяются
@@ -26,7 +26,7 @@ import { McpPropertyService } from '../../ui/mcp/McpPropertyService';
 
 suite('McpPropertyService.setProperties', () => {
   test('happy-path: применяет несколько свойств одного справочника за один вызов', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-set-props-happy-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-set-props-happy-'));
     try {
       const xmlPath = setupCatalog(root, 'Контрагенты');
       const node = createCatalogNode(xmlPath, 'Контрагенты');
@@ -54,7 +54,7 @@ suite('McpPropertyService.setProperties', () => {
   });
 
   test('частичный сбой: валидные свойства применяются, невалидное попадает в failed', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-set-props-partial-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-set-props-partial-'));
     try {
       const xmlPath = setupCatalog(root, 'Партнёры');
       const node = createCatalogNode(xmlPath, 'Партнёры');
@@ -81,7 +81,7 @@ suite('McpPropertyService.setProperties', () => {
   });
 
   test('все значения невалидны: applied пуст, changedFiles пуст, XML не меняется', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-set-props-all-bad-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-set-props-all-bad-'));
     try {
       const xmlPath = setupCatalog(root, 'Клиенты');
       const before = fs.readFileSync(xmlPath, 'utf-8');
@@ -104,7 +104,7 @@ suite('McpPropertyService.setProperties', () => {
   });
 
   test('changedFiles накапливаются без дубликатов при правках одного файла', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-set-props-dedup-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-set-props-dedup-'));
     try {
       const xmlPath = setupCatalog(root, 'Города');
       const node = createCatalogNode(xmlPath, 'Города');

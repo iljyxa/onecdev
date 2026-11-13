@@ -116,7 +116,7 @@ suite('Properties — справочник', () => {
     // от конкретного объекта и не модифицирует фикстуру example/.
     const sourcePath = findFirstCatalogWithoutStandardAttributes()
       ?? path.join(EXAMPLE_CF, 'Catalogs', 'Товары.xml');
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-catalog-prop-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-catalog-prop-'));
     try {
       const targetPath = path.join(tempRoot, path.basename(sourcePath));
       fs.copyFileSync(sourcePath, targetPath);

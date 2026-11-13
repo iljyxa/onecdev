@@ -94,7 +94,7 @@ export interface SupportFixtureRoot {
  * объектами разных кодов режима, а не единичный XML.
  */
 export function buildSupportFixtureRoot(variant: 'normal' | 'forbidden'): SupportFixtureRoot {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-support-fixture-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-support-fixture-'));
   const configRoot = path.join(tempDir, 'cf');
   const source = EXAMPLE_CF_ROOTS['2.21'];
 

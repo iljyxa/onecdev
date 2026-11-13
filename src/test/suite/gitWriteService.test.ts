@@ -28,7 +28,7 @@ function statusOf(repo: string, relPath: string): string {
 
 function buildBaselineRepo(): string {
   // realpathSync: см. комментарий в gitPorcelainReader.test.ts.
-  const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-git-write-service-')));
+  const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-git-write-service-')));
   git(repo, ['init', '-q', '-b', 'main']);
   git(repo, ['config', 'user.email', 'test@test.local']);
   git(repo, ['config', 'user.name', 'test']);
@@ -49,7 +49,7 @@ function buildBaselineRepo(): string {
  * поднятого remote — вызывающий обязан удалить его в teardown.
  */
 function attachBareRemote(repo: string): string {
-  const remote = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-git-remote-')));
+  const remote = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-git-remote-')));
   git(remote, ['init', '-q', '--bare', '-b', 'main']);
   git(repo, ['remote', 'add', 'origin', remote]);
   git(repo, ['push', '-q', '-u', 'origin', 'HEAD']);
@@ -165,7 +165,7 @@ suite('GitWriteService — мутации git над набором файлов
   });
 
   test('отсутствие git-репозитория — мутирующие операции падают управляемой ошибкой, а не тихо теряют изменение', () => {
-    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-no-git-write-')));
+    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-no-git-write-')));
     const somePath = path.join(outsideAnyRepo, 'файл.txt');
     fs.writeFileSync(somePath, 'содержимое\n', 'utf-8');
     try {
@@ -209,7 +209,7 @@ suite('GitWriteService — мутации git над набором файлов
     const remote = attachBareRemote(repo);
     // Второй клон правит remote «извне» — так в origin появляется коммит,
     // которого нет локально; pull обязан привести его fast-forward'ом.
-    const otherClone = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-git-clone-')));
+    const otherClone = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-git-clone-')));
     try {
       git(otherClone, ['clone', '-q', remote, '.']);
       git(otherClone, ['config', 'user.email', 'other@test.local']);

@@ -215,7 +215,7 @@ suite('RepositoryLockState — таблица переходов (план ар�
 
 suite('RepositoryLockState — миграция и устойчивость state.json', () => {
   function stateFilePath(workspaceRoot: string): string {
-    return path.join(workspaceRoot, '.v8vscedit', 'repository', 'state.json');
+    return path.join(workspaceRoot, '.onecdev', 'repository', 'state.json');
   }
 
   test('старый state.json v2 без новых полей читается без потерь', () => {
@@ -522,7 +522,7 @@ suite('RepositoryLockState — lockModes и единицы (issue #1, разде
     try {
       const target: RepositoryTarget = { configRoot: path.join(workspaceRoot, 'src', 'cf'), configKind: 'cf', displayName: 'Тест' };
       const scopeKey = crypto.createHash('sha1').update(`cf|${path.resolve(target.configRoot)}|`).digest('hex');
-      const filePath = path.join(workspaceRoot, '.v8vscedit', 'repository', 'state.json');
+      const filePath = path.join(workspaceRoot, '.onecdev', 'repository', 'state.json');
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(
         filePath,
@@ -641,7 +641,7 @@ suite('RepositoryLockState — статусы захватов с сервера
   }
 
   function readStateText(workspaceRoot: string): string {
-    return fs.readFileSync(path.join(workspaceRoot, '.v8vscedit', 'repository', 'state.json'), 'utf-8');
+    return fs.readFileSync(path.join(workspaceRoot, '.onecdev', 'repository', 'state.json'), 'utf-8');
   }
 
   function collectEvents(state: RepositoryLockState): RepositoryLocksChangedEvent[] {
@@ -686,7 +686,7 @@ suite('RepositoryLockState — статусы захватов с сервера
   test('чужой захват перекрывает локальный: isLocked=false, запись и каталог снимка сохраняются; следующий опрос возвращает own', () => {
     const { workspaceRoot, state, target } = createState();
     state.applyLock(target, { anchor: 'Справочник.А', members: ['Справочник.А'] });
-    const snapshotDir = path.join(workspaceRoot, '.v8vscedit', 'repository', 'snapshots', 'probe');
+    const snapshotDir = path.join(workspaceRoot, '.onecdev', 'repository', 'snapshots', 'probe');
     fs.mkdirSync(snapshotDir, { recursive: true });
     state.applyServerLocks(target, sync(state, { foreign: { 'Справочник.А': { user: 'Petrov' } } }));
     assert.strictEqual(state.isLocked(target, 'Справочник.А'), false);
@@ -818,7 +818,7 @@ suite('RepositoryLockState — статусы захватов с сервера
   test('мусор в новых полях отбрасывается', () => {
     const { workspaceRoot, state, target } = createState();
     state.applyLock(target, { anchor: 'Справочник.А', members: ['Справочник.А'] });
-    const filePath = path.join(workspaceRoot, '.v8vscedit', 'repository', 'state.json');
+    const filePath = path.join(workspaceRoot, '.onecdev', 'repository', 'state.json');
     const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as { scopes: Record<string, Record<string, unknown>> };
     const scope = Object.values(raw.scopes)[0];
     scope.foreignLocks = {
@@ -861,7 +861,7 @@ suite('RepositoryLockState — applyLock с отказанными единиц�
   const TEMPLATE = 'Справочник.ПричиныВозврата.Макет.Печать';
 
   function readScope(workspaceRoot: string): Record<string, unknown> {
-    const raw = JSON.parse(fs.readFileSync(path.join(workspaceRoot, '.v8vscedit', 'repository', 'state.json'), 'utf-8')) as {
+    const raw = JSON.parse(fs.readFileSync(path.join(workspaceRoot, '.onecdev', 'repository', 'state.json'), 'utf-8')) as {
       scopes: Record<string, Record<string, unknown>>;
     };
     return Object.values(raw.scopes)[0];
@@ -1001,7 +1001,7 @@ suite('RepositoryLockState — applyReportedOwnLocks: свои захваты и
     assert.deepStrictEqual(state.applyReportedOwnLocks(target, report([])), []);
     assert.strictEqual(state.getRevision(), revision);
     assert.strictEqual(events.length, 0);
-    assert.strictEqual(fs.existsSync(path.join(workspaceRoot, '.v8vscedit', 'repository', 'state.json')), false);
+    assert.strictEqual(fs.existsSync(path.join(workspaceRoot, '.onecdev', 'repository', 'state.json')), false);
   });
 
   test('штатный захват сообщённого — own, подтверждён; следующий опрос целиком заменяет записи запасного пути', () => {

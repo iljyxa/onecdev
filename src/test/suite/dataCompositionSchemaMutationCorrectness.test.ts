@@ -44,7 +44,7 @@ suite('DataCompositionSchemaService — корректность мутатор�
     // dataSet.field как <dataPath>/<field>, dataSetLink.field как <sourceExpression>/<destinationExpression>.
     // Мутатор modify-field обязан менять только дерево конкретного dataSet (по диапазону),
     // не задевая dataSetLink, даже если оба содержат одноимённый текст "Товар".
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-skd-nesting-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-skd-nesting-'));
     const templatePath = path.join(root, 'Схема', 'Ext', 'Template.xml');
     const service = new DataCompositionSchemaService();
 
@@ -84,7 +84,7 @@ suite('DataCompositionSchemaService — корректность мутатор�
   test('modify-filter второго settingsVariant с идентичной структурой первого не меняет первый вариант', () => {
     // Оба варианта построены из одинаковых selection/filter/structure — единственное
     // отличие внутри settings-блока после редактирования должно появиться у "Второй".
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-skd-variants-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-skd-variants-'));
     const templatePath = path.join(root, 'Схема', 'Ext', 'Template.xml');
     const service = new DataCompositionSchemaService();
 
@@ -121,7 +121,7 @@ suite('DataCompositionSchemaService — rename-parameter должен быть �
   });
 
   test('rename-parameter меняет <name> параметра и ссылки &Имя, но НЕ трогает dataPath/field/значение фильтра с тем же текстом', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-skd-rename-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-skd-rename-'));
     const templatePath = path.join(root, 'Схема', 'Ext', 'Template.xml');
     const service = new DataCompositionSchemaService();
 

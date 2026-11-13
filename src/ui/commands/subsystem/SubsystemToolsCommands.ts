@@ -7,13 +7,13 @@ export function registerSubsystemToolsCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.subsystem.info', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.subsystem.info', async (node: MetadataNode | undefined) => {
       await showSubsystemInfo(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.subsystem.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.subsystem.validate', async (node: MetadataNode | undefined) => {
       await validateSubsystem(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.interface.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.interface.validate', async (node: MetadataNode | undefined) => {
       await validateCommandInterface(node, services);
     })
   );

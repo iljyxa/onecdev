@@ -63,7 +63,7 @@ suite('CLI-команды dump-cf/load-cf — регистрация и guard-в
   });
 
   setup(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cf-cli-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cf-cli-'));
   });
 
   teardown(() => {

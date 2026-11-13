@@ -89,7 +89,7 @@ function createServices(overrides: Partial<CommandServices>): CommandServices {
   };
   const base: CommandServices = {
     treeProvider: notImplemented('treeProvider') as never,
-    workspaceFolder: { uri: vscode.Uri.file('/tmp/v8vscedit-fixture'), name: 'fixture', index: 0 },
+    workspaceFolder: { uri: vscode.Uri.file('/tmp/onecdev-fixture'), name: 'fixture', index: 0 },
     metadataXmlCreator: new MetadataXmlCreator(),
     metadataXmlRemover: new MetadataXmlRemover(),
     configurationInfoService: notImplemented('configurationInfoService') as never,
@@ -230,24 +230,24 @@ function callTool(harness: Harness, name: string, args: Record<string, unknown>)
 const FORM_PATH = 'Справочники.Контрагенты.Форма.ФормаЭлемента';
 const TEMPLATE_PATH = 'Справочники.Контрагенты.Макет.ЗагрузкаИзФайла';
 
-const FORM_TOOLS = ['v8vscedit_set_property_by_path', 'v8vscedit_set_properties', 'v8vscedit_set_type', 'v8vscedit_compile_form', 'v8vscedit_edit_form'] as const;
-const TEMPLATE_TOOLS = ['v8vscedit_compile_mxl', 'v8vscedit_compile_skd', 'v8vscedit_edit_skd'] as const;
+const FORM_TOOLS = ['onecdev_set_property_by_path', 'onecdev_set_properties', 'onecdev_set_type', 'onecdev_compile_form', 'onecdev_edit_form'] as const;
+const TEMPLATE_TOOLS = ['onecdev_compile_mxl', 'onecdev_compile_skd', 'onecdev_edit_skd'] as const;
 
 function argsFor(toolName: string, canonical: string): Record<string, unknown> {
   switch (toolName) {
-    case 'v8vscedit_set_property_by_path':
+    case 'onecdev_set_property_by_path':
       return { path: canonical, propertyKey: 'Comment', value: 'issue-46' };
-    case 'v8vscedit_set_properties':
+    case 'onecdev_set_properties':
       return { path: canonical, properties: { Comment: 'issue-46' } };
-    case 'v8vscedit_set_type':
+    case 'onecdev_set_type':
       return { path: canonical, propertyKey: 'Comment', value: 'issue-46' };
-    case 'v8vscedit_compile_form':
-    case 'v8vscedit_compile_mxl':
-    case 'v8vscedit_compile_skd':
+    case 'onecdev_compile_form':
+    case 'onecdev_compile_mxl':
+    case 'onecdev_compile_skd':
       return { path: canonical, definition: {} };
-    case 'v8vscedit_edit_form':
+    case 'onecdev_edit_form':
       return { path: canonical, definition: {} };
-    case 'v8vscedit_edit_skd':
+    case 'onecdev_edit_skd':
       return { path: canonical, operation: 'add-field', value: 'X' };
     default:
       throw new Error(`неизвестный tool ${toolName}`);
@@ -288,7 +288,7 @@ suite('MCP: инструменты Form/Template блокируются по з�
     }
   });
 
-  test('M4 (захвачена сама форма): v8vscedit_set_property_by_path успешен и меняет файл формы, гейт post-mutation отработал', async () => {
+  test('M4 (захвачена сама форма): onecdev_set_property_by_path успешен и меняет файл формы, гейт post-mutation отработал', async () => {
     const harness = createHarness();
     try {
       await bindAndConnect(harness);
@@ -297,7 +297,7 @@ suite('MCP: инструменты Form/Template блокируются по з�
       const formXml = unitXmlPath(harness, 'Catalogs/Контрагенты/Forms/ФормаЭлемента.xml');
       const before = fs.readFileSync(formXml, 'utf-8');
 
-      const result = callTool(harness, 'v8vscedit_set_property_by_path', { path: FORM_PATH, propertyKey: 'Comment', value: 'issue-46-m4' });
+      const result = callTool(harness, 'onecdev_set_property_by_path', { path: FORM_PATH, propertyKey: 'Comment', value: 'issue-46-m4' });
       assert.strictEqual(isErrorResult(result), false, `ожидался успех, получено: ${extractText(result)}`);
 
       const after = fs.readFileSync(formXml, 'utf-8');
@@ -314,11 +314,11 @@ suite('MCP: инструменты Form/Template блокируются по з�
       await bindAndConnect(harness);
       applyMode(harness, 'M4');
 
-      const renameResult = callTool(harness, 'v8vscedit_rename_metadata', { path: FORM_PATH, newName: 'ФормаЭлемента2' });
+      const renameResult = callTool(harness, 'onecdev_rename_metadata', { path: FORM_PATH, newName: 'ФормаЭлемента2' });
       assert.strictEqual(isErrorResult(renameResult), true, `rename_metadata должен блокироваться по владельцу: ${extractText(renameResult)}`);
       assert.ok(extractText(renameResult).includes('не захвачен в хранилище конфигурации'));
 
-      const removeResult = callTool(harness, 'v8vscedit_remove_form', { path: FORM_PATH });
+      const removeResult = callTool(harness, 'onecdev_remove_form', { path: FORM_PATH });
       assert.strictEqual(isErrorResult(removeResult), true, `remove_form должен блокироваться по владельцу: ${extractText(removeResult)}`);
       assert.ok(extractText(removeResult).includes('не захвачен в хранилище конфигурации'));
     } finally {
@@ -535,13 +535,13 @@ suite('MCP: свойства корня «Конфигурация» требу�
       const configurationXml = path.join(harness.configRoot, 'Configuration.xml');
       const before = fs.readFileSync(configurationXml, 'utf-8');
 
-      const denied = callTool(harness, 'v8vscedit_set_property_by_path', { path: 'Конфигурация', propertyKey: 'Comment', value: 'issue-55' });
+      const denied = callTool(harness, 'onecdev_set_property_by_path', { path: 'Конфигурация', propertyKey: 'Comment', value: 'issue-55' });
       assert.strictEqual(isErrorResult(denied), true, `ожидалась блокировка, получено: ${extractText(denied)}`);
       assert.ok(extractText(denied).includes('не захвачен в хранилище конфигурации'), extractText(denied));
       assert.strictEqual(fs.readFileSync(configurationXml, 'utf-8'), before);
 
       harness.repositoryService.setLocked(harness.target, [getRootLockName(harness.target)], true);
-      const allowed = callTool(harness, 'v8vscedit_set_property_by_path', { path: 'Конфигурация', propertyKey: 'Comment', value: 'issue-55' });
+      const allowed = callTool(harness, 'onecdev_set_property_by_path', { path: 'Конфигурация', propertyKey: 'Comment', value: 'issue-55' });
       assert.strictEqual(isErrorResult(allowed), false, `ожидался успех, получено: ${extractText(allowed)}`);
       assert.ok(fs.readFileSync(configurationXml, 'utf-8').includes('issue-55'));
     } finally {

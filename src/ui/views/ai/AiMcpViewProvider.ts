@@ -50,7 +50,7 @@ type AiMcpViewMessage =
   | { readonly type: 'installAiSkills' };
 
 export class AiMcpViewProvider implements vscode.Disposable {
-  static readonly viewType = 'v8vsceditAiMcpPanel';
+  static readonly viewType = 'onecdevAiMcpPanel';
 
   private panel: vscode.WebviewPanel | undefined;
 
@@ -117,7 +117,7 @@ export class AiMcpViewProvider implements vscode.Disposable {
    * реальные значения берутся из SecretStorage в {@link getResolvedSettings}.
    */
   private getConfigSettings(): AiMcpSettings {
-    const config = vscode.workspace.getConfiguration('v8vscedit');
+    const config = vscode.workspace.getConfiguration('onecdev');
     return normalizeAiMcpSettings({
       extensionAutoStart: config.get<boolean>('mcp.enabled'),
       extensionHost: config.get<string>('mcp.host'),
@@ -235,7 +235,7 @@ export class AiMcpViewProvider implements vscode.Disposable {
         this.postState();
         return;
       }
-      await vscode.commands.executeCommand('v8vscedit.installAiSkills');
+      await vscode.commands.executeCommand('onecdev.installAiSkills');
     } catch (error) {
       const text = error instanceof Error ? error.message : String(error);
       this.outputChannel.appendLine(`[ai-mcp][error] ${text}`);
@@ -249,7 +249,7 @@ export class AiMcpViewProvider implements vscode.Disposable {
     // безопасен: ниже мы вообще не обновляем config-ключи секретов.
     const merged = mergeAiMcpSaveSettings(this.getConfigSettings(), settings);
     const normalized = normalizeAiMcpSettings(merged, this.workspaceFolder.uri.fsPath);
-    const config = vscode.workspace.getConfiguration('v8vscedit');
+    const config = vscode.workspace.getConfiguration('onecdev');
     const target = vscode.ConfigurationTarget.Workspace;
     await config.update('mcp.enabled', normalized.extensionAutoStart, target);
     await config.update('mcp.host', normalized.extensionHost, target);
@@ -293,7 +293,7 @@ export class AiMcpViewProvider implements vscode.Disposable {
         await this.clearLegacySecretConfig(id);
         continue;
       }
-      const config = vscode.workspace.getConfiguration('v8vscedit');
+      const config = vscode.workspace.getConfiguration('onecdev');
       const legacy = config.get<string>(SECRET_CONFIG_KEYS[id])?.trim();
       if (legacy) {
         await this.secretStorage.set(id, legacy);
@@ -304,7 +304,7 @@ export class AiMcpViewProvider implements vscode.Disposable {
 
   /** Удаляет устаревшее значение секрета из настроек во всех таргетах. */
   private async clearLegacySecretConfig(id: AiSecretId): Promise<void> {
-    const config = vscode.workspace.getConfiguration('v8vscedit');
+    const config = vscode.workspace.getConfiguration('onecdev');
     const key = SECRET_CONFIG_KEYS[id];
     for (const target of [
       vscode.ConfigurationTarget.Workspace,

@@ -59,10 +59,10 @@ export class ProjectSecretStorage {
   }
 
   private dbPasswordKey(): string {
-    return `v8vscedit.env.${this.workspaceHash}.dbPassword`;
+    return `onecdev.env.${this.workspaceHash}.dbPassword`;
   }
 
   private repoPasswordKey(scopeKey: string): string {
-    return `v8vscedit.repository.${scopeKey}.password`;
+    return `onecdev.repository.${scopeKey}.password`;
   }
 }

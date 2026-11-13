@@ -9,7 +9,7 @@ export function registerTreeSearchCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.searchTree', () => {
+    vscode.commands.registerCommand('onecdev.searchTree', () => {
       const input = vscode.window.createInputBox();
       const disposables: vscode.Disposable[] = [];
       input.title = 'Поиск в навигаторе';
@@ -34,7 +34,7 @@ export function registerTreeSearchCommands(
 
       input.show();
     }),
-    vscode.commands.registerCommand('v8vscedit.clearTreeSearch', () => {
+    vscode.commands.registerCommand('onecdev.clearTreeSearch', () => {
       applySearch('', services);
     })
   );
@@ -45,6 +45,6 @@ function applySearch(value: string, services: CommandServices): void {
   services.treeProvider.setSearchQuery(query);
 
   const hasSearch = query.length > 2;
-  void vscode.commands.executeCommand('setContext', 'v8vscedit.hasTreeSearch', hasSearch);
+  void vscode.commands.executeCommand('setContext', 'onecdev.hasTreeSearch', hasSearch);
   services.setTreeMessage(hasSearch ? `Поиск: ${query}` : undefined);
 }

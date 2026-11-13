@@ -42,7 +42,7 @@ suite('formatRegistry — SCAFFOLD_FORMAT_VERSION и isKnownFormatVersion', () =
 
 suite('ConfigurationScaffoldService — версия формата берётся из реестра, вывод байт-в-байт', () => {
   test('createConfiguration: Configuration.xml содержит version из SCAFFOLD_FORMAT_VERSION', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-fmt-cf-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-fmt-cf-'));
     new ConfigurationScaffoldService().createConfiguration({
       name: 'ТестФормата',
       outputDir: root,
@@ -61,7 +61,7 @@ suite('ConfigurationScaffoldService — версия формата берётс
   });
 
   test('createExtension: Configuration.xml и Role.xml расширения содержат версию из реестра', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-fmt-cfe-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-fmt-cfe-'));
     new ConfigurationScaffoldService().createExtension({
       name: 'РасширениеФормата',
       outputDir: root,
@@ -77,7 +77,7 @@ suite('ConfigurationScaffoldService — версия формата берётс
   });
 
   test('Languages/Русский.xml тоже содержит версию из реестра (buildLanguageXml)', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-fmt-lang-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-fmt-lang-'));
     new ConfigurationScaffoldService().createConfiguration({
       name: 'ТестЯзыка',
       outputDir: root,
@@ -91,7 +91,7 @@ suite('ConfigurationScaffoldService — версия формата берётс
 
 suite('ExternalObjectService — версия формата берётся из реестра, вывод байт-в-байт', () => {
   test('createExternalDataProcessor: EPF.xml содержит version из SCAFFOLD_FORMAT_VERSION', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-fmt-epf-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-fmt-epf-'));
     new ExternalObjectService().createExternalDataProcessor({
       name: 'ПроверкаФормата',
       outputDir: root,
@@ -103,7 +103,7 @@ suite('ExternalObjectService — версия формата берётся из
   });
 
   test('createExternalReport с withSkd: ERF.xml и Template.xml дескриптор содержат version из реестра', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-fmt-erf-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-fmt-erf-'));
     new ExternalObjectService().createExternalReport({
       name: 'ОтчётФормата',
       outputDir: root,
@@ -124,7 +124,7 @@ suite('ExternalObjectService — версия формата берётся из
   test('validate: белый список версий строится через isKnownFormatVersion — известные версии проходят без warn', () => {
     const service = new ExternalObjectService();
     for (const version of ['2.17', '2.18', '2.20', '2.21']) {
-      const root = fs.mkdtempSync(path.join(os.tmpdir(), `v8vscedit-fmt-val-${version}-`));
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), `onecdev-fmt-val-${version}-`));
       const objectXml = path.join(root, 'ПроверкаВерсии.xml');
       fs.writeFileSync(objectXml, buildMinimalExternalDataProcessorXml(version), 'utf-8');
 
@@ -138,7 +138,7 @@ suite('ExternalObjectService — версия формата берётся из
   });
 
   test('validate: неизвестная версия формата даёт предупреждение "Необычная версия" через isKnownFormatVersion', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-fmt-val-unknown-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-fmt-val-unknown-'));
     const objectXml = path.join(root, 'ПроверкаНеизвестной.xml');
     fs.writeFileSync(objectXml, buildMinimalExternalDataProcessorXml('9.99'), 'utf-8');
 

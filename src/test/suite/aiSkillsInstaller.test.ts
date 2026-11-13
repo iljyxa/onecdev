@@ -18,10 +18,10 @@ suite('AiSkillsInstaller', () => {
         platform,
       });
 
-      const mcpRolePath = path.join(root, '.codex', 'skills', 'v8vscedit-mcp-required', 'SKILL.md');
+      const mcpRolePath = path.join(root, '.codex', 'skills', 'onecdev-mcp-required', 'SKILL.md');
       const content = fs.readFileSync(mcpRolePath, 'utf-8');
       assert.strictEqual(result.installedCount, 5);
-      assert.ok(content.includes('v8vscedit_get_properties'));
+      assert.ok(content.includes('onecdev_get_properties'));
       assert.ok(content.includes('Не запускай Python/PowerShell-скрипты'));
       assert.ok(!content.includes('github.com/Nikolay-Shirokov/cc-1c-skills'));
     } finally {
@@ -43,10 +43,10 @@ suite('AiSkillsInstaller', () => {
         platform,
       });
 
-      const mcpRulePath = path.join(rulesDir, 'v8vscedit-mcp-required.mdc');
+      const mcpRulePath = path.join(rulesDir, 'onecdev-mcp-required.mdc');
       const content = fs.readFileSync(mcpRulePath, 'utf-8');
       assert.ok(content.includes('alwaysApply: true'));
-      assert.ok(content.includes('v8vscedit_search_metadata'));
+      assert.ok(content.includes('onecdev_search_metadata'));
       assert.strictEqual(fs.readFileSync(path.join(rulesDir, 'project_rules.mdc'), 'utf-8'), 'custom rule');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
@@ -60,7 +60,7 @@ suite('AiSkillsInstaller', () => {
       fs.writeFileSync(path.join(root, 'opencode.json'), JSON.stringify({
         instructions: ['docs/project-rules.md'],
         mcp: {
-          v8vscedit: {
+          onecdev: {
             type: 'remote',
             url: 'http://127.0.0.1:44444/mcp',
             enabled: false,
@@ -78,11 +78,11 @@ suite('AiSkillsInstaller', () => {
         platform,
       });
 
-      const rolePath = path.join(root, '.opencode', 'instructions', 'v8vscedit-mcp-required.md');
+      const rolePath = path.join(root, '.opencode', 'instructions', 'onecdev-mcp-required.md');
       const config = JSON.parse(fs.readFileSync(path.join(root, 'opencode.json'), 'utf-8')) as {
         instructions: string[];
         mcp: {
-          v8vscedit: {
+          onecdev: {
             type: string;
             url: string;
             enabled: boolean;
@@ -98,8 +98,8 @@ suite('AiSkillsInstaller', () => {
       assert.ok(content.includes('Для добавления используй отдельный инструмент на каждый тип'));
       assert.ok(config.instructions.includes('docs/project-rules.md'));
       assert.ok(config.instructions.includes('.opencode/instructions/*.md'));
-      assert.strictEqual(config.mcp.v8vscedit.enabled, true);
-      assert.strictEqual(config.mcp.v8vscedit.url, 'http://127.0.0.1:44444/mcp');
+      assert.strictEqual(config.mcp.onecdev.enabled, true);
+      assert.strictEqual(config.mcp.onecdev.url, 'http://127.0.0.1:44444/mcp');
       assert.strictEqual(config.mcp.other.url, 'https://example.com/mcp');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
@@ -118,18 +118,18 @@ suite('AiSkillsInstaller', () => {
 
       const claudeMdPath = path.join(root, 'CLAUDE.md');
       const claudeMd = fs.readFileSync(claudeMdPath, 'utf-8');
-      assert.ok(claudeMd.includes('<!-- v8vscedit:claude-roles:start -->'));
-      assert.ok(claudeMd.includes('<!-- v8vscedit:claude-roles:end -->'));
-      assert.ok(claudeMd.includes('v8vscedit: обязательная работа через MCP'));
-      assert.ok(claudeMd.includes('v8vscedit: senior 1C developer'));
+      assert.ok(claudeMd.includes('<!-- onecdev:claude-roles:start -->'));
+      assert.ok(claudeMd.includes('<!-- onecdev:claude-roles:end -->'));
+      assert.ok(claudeMd.includes('onecdev: обязательная работа через MCP'));
+      assert.ok(claudeMd.includes('onecdev: senior 1C developer'));
 
       // на диске остаются только on-demand скиллы
       const skillsRoot = path.join(root, '.claude', 'skills');
-      assert.ok(!fs.existsSync(path.join(skillsRoot, 'v8vscedit-mcp-required')));
-      assert.ok(!fs.existsSync(path.join(skillsRoot, 'v8vscedit-1c-developer')));
-      assert.ok(fs.existsSync(path.join(skillsRoot, 'v8vscedit-bsp-developer', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(skillsRoot, 'v8vscedit-metadata-manager', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(skillsRoot, 'v8vscedit-bsl-module-standards', 'SKILL.md')));
+      assert.ok(!fs.existsSync(path.join(skillsRoot, 'onecdev-mcp-required')));
+      assert.ok(!fs.existsSync(path.join(skillsRoot, 'onecdev-1c-developer')));
+      assert.ok(fs.existsSync(path.join(skillsRoot, 'onecdev-bsp-developer', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(skillsRoot, 'onecdev-metadata-manager', 'SKILL.md')));
+      assert.ok(fs.existsSync(path.join(skillsRoot, 'onecdev-bsl-module-standards', 'SKILL.md')));
 
       // installedCount считает и always-apply, и on-demand
       assert.strictEqual(result.installedCount, 5);
@@ -148,9 +148,9 @@ suite('AiSkillsInstaller', () => {
         '',
         'Пользовательские правила, которые нельзя терять.',
         '',
-        '<!-- v8vscedit:claude-roles:start -->',
+        '<!-- onecdev:claude-roles:start -->',
         'старое содержимое блока',
-        '<!-- v8vscedit:claude-roles:end -->',
+        '<!-- onecdev:claude-roles:end -->',
         '',
         '## После блока',
         'еще пользовательский текст',
@@ -169,7 +169,7 @@ suite('AiSkillsInstaller', () => {
       assert.ok(updated.includes('После блока'));
       assert.ok(updated.includes('еще пользовательский текст'));
       assert.ok(!updated.includes('старое содержимое блока'));
-      assert.ok(updated.includes('v8vscedit: обязательная работа через MCP'));
+      assert.ok(updated.includes('onecdev: обязательная работа через MCP'));
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -180,17 +180,17 @@ suite('AiSkillsInstaller', () => {
     try {
       const platform = AI_SKILLS_PLATFORMS.find((item) => item.id === 'claude-code') ?? AI_SKILLS_PLATFORMS[0];
       const skillsRoot = path.join(root, '.claude', 'skills');
-      const staleSkillDir = path.join(skillsRoot, 'v8vscedit-mcp-required');
+      const staleSkillDir = path.join(skillsRoot, 'onecdev-mcp-required');
       fs.mkdirSync(staleSkillDir, { recursive: true });
       fs.writeFileSync(
         path.join(staleSkillDir, 'SKILL.md'),
-        `---\nname: v8vscedit-mcp-required\n---\n<!-- v8vscedit:generated-role -->\nстарая версия\n`,
+        `---\nname: onecdev-mcp-required\n---\n<!-- onecdev:generated-role -->\nстарая версия\n`,
         'utf-8'
       );
       // пользовательский скилл с тем же id-каталогом, но без маркера — не удаляется
-      const userSkillDir = path.join(skillsRoot, 'v8vscedit-1c-developer');
+      const userSkillDir = path.join(skillsRoot, 'onecdev-1c-developer');
       fs.mkdirSync(userSkillDir, { recursive: true });
-      fs.writeFileSync(path.join(userSkillDir, 'SKILL.md'), '---\nname: v8vscedit-1c-developer\n---\nручной\n', 'utf-8');
+      fs.writeFileSync(path.join(userSkillDir, 'SKILL.md'), '---\nname: onecdev-1c-developer\n---\nручной\n', 'utf-8');
 
       const installer = new AiSkillsInstaller({ appendLine: () => undefined });
       installer.installProjectRoles({
@@ -214,7 +214,7 @@ suite('AiSkillsInstaller', () => {
         '  "$schema": "https://opencode.ai/config.json",',
         '  // существующий MCP нельзя терять',
         '  "mcp": {',
-        '    "v8vscedit": {',
+        '    "onecdev": {',
         '      "type": "remote",',
         '      "url": "http://127.0.0.1:38481/mcp",',
         '    },',
@@ -231,13 +231,13 @@ suite('AiSkillsInstaller', () => {
       const config = JSON.parse(fs.readFileSync(path.join(root, 'opencode.json'), 'utf-8')) as {
         instructions: string[];
         mcp: {
-          v8vscedit: {
+          onecdev: {
             enabled: boolean;
           };
         };
       };
       assert.ok(config.instructions.includes('.opencode/instructions/*.md'));
-      assert.strictEqual(config.mcp.v8vscedit.enabled, true);
+      assert.strictEqual(config.mcp.onecdev.enabled, true);
       assert.ok(!fs.existsSync(path.join(root, 'opencode.json.bak')));
     } finally {
       fs.rmSync(root, { recursive: true, force: true });

@@ -15,7 +15,7 @@ export function registerNavigationTools(server: McpServer, deps: McpRegistration
   const { paths, properties, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_workspace_overview',
+    'onecdev_workspace_overview',
     {
       title: 'Обзор конфигураций и расширений',
       description: 'Возвращает основную конфигурацию, расширения, корневые пути и счётчики объектов без обхода дерева по nodeId.',
@@ -25,7 +25,7 @@ export function registerNavigationTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_search_metadata',
+    'onecdev_search_metadata',
     {
       title: 'Поиск метаданных по пути',
       description: 'Ищет по части строки в предметных путях метаданных выбранной конфигурации: например "Польз" найдёт Справочники.Пользователи.',
@@ -40,7 +40,7 @@ export function registerNavigationTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_list_metadata',
+    'onecdev_list_metadata',
     {
       title: 'Список метаданных по группе или объекту',
       description: 'Возвращает объекты группы или дочерние элементы по предметному пути без nodeId: список справочников, форм, реквизитов, измерений, ресурсов и т.п.',
@@ -57,7 +57,7 @@ export function registerNavigationTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_tree',
+    'onecdev_tree',
     {
       title: 'Плоское дерево канонических путей',
       description: [
@@ -78,7 +78,7 @@ export function registerNavigationTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_resolve_path',
+    'onecdev_resolve_path',
     {
       title: 'Резолв канонического пути',
       description: [
@@ -107,7 +107,7 @@ export function registerNavigationTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_list_supported_types',
+    'onecdev_list_supported_types',
     {
       title: 'Реестр платформенных типов',
       description: [
@@ -125,7 +125,7 @@ export function registerNavigationTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_list_available_types',
+    'onecdev_list_available_types',
     {
       title: 'Доступные типы 1С',
       description: [

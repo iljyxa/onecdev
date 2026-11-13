@@ -65,7 +65,7 @@ const FIXTURES: readonly Fixture[] = [
 
 function copyFixtureToTemp(fx: Fixture): { readonly templatePath: string; readonly original: string } {
   const fixturePath = path.join(EXAMPLE_ROOT, fx.version, 'src', 'cf', fx.relPath);
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-skd-mixed-eol-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-skd-mixed-eol-'));
   const destDir = path.join(root, 'Ext');
   fs.mkdirSync(destDir, { recursive: true });
   const templatePath = path.join(destDir, 'Template.xml');

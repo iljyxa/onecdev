@@ -10,16 +10,16 @@ export function registerFormToolsCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.form.info', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.form.info', async (node: MetadataNode | undefined) => {
       await showFormInfo(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.form.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.form.validate', async (node: MetadataNode | undefined) => {
       await validateForm(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.form.add', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.form.add', async (node: MetadataNode | undefined) => {
       await addForm(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.form.remove', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.form.remove', async (node: MetadataNode | undefined) => {
       await removeForm(node, services);
     })
   );
@@ -170,7 +170,7 @@ export async function removeForm(node: MetadataNode | undefined, services: Comma
  * `metaContext` (общая с MCP деривация), а не арифметикой над `node.xmlPath`:
  * там лежит XML владельца, и двойной `dirname` уводил путь на уровень выше
  * конфигурации. Общая форма владельца не имеет и попадает в ручную ветку —
- * удалять её этой командой нечем (как и `v8vscedit_remove_form`).
+ * удалять её этой командой нечем (как и `onecdev_remove_form`).
  */
 async function resolveRemoveTarget(
   node: MetadataNode | undefined,

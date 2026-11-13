@@ -14,7 +14,7 @@ suite('Изолированный временный каталог тестов
   let parent: string;
 
   setup(() => {
-    parent = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-runner-tmp-'));
+    parent = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-runner-tmp-'));
   });
 
   teardown(() => {

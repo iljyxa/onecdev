@@ -35,7 +35,7 @@ function readInnerChildTags(configPath: string): { type: string; name: string }[
 
 suite('ConfigurationXmlEditor.addChildObject — T-15: сортировка ChildObjects Configuration.xml после переезда CONFIGURATION_CHILD_ORDER', () => {
   test('известные виды сортируются по заданному порядку типов, а НЕ по порядку добавления', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfgorder-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfgorder-'));
     makeObjectStub(dir, 'Documents', 'Заказ');
     makeObjectStub(dir, 'Catalogs', 'Клиенты');
     makeObjectStub(dir, 'Subsystems', 'ОсновнаяПодсистема');
@@ -62,7 +62,7 @@ suite('ConfigurationXmlEditor.addChildObject — T-15: сортировка Chil
   });
 
   test('неизвестный (не входящий в канон) тип попадает В КОНЕЦ, после всех известных', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfgorder-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfgorder-'));
     makeObjectStub(dir, 'Catalogs', 'Клиенты');
     makeObjectStub(dir, 'ExternalDataSources', 'Прочее');
     const configPath = newConfigXml(dir, '');
@@ -82,7 +82,7 @@ suite('ConfigurationXmlEditor.addChildObject — T-15: сортировка Chil
   });
 
   test('внутри ОДНОГО вида элементы сортируются по имени (локаль ru)', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfgorder-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfgorder-'));
     makeObjectStub(dir, 'Catalogs', 'Яблоки');
     makeObjectStub(dir, 'Catalogs', 'Апельсины');
     makeObjectStub(dir, 'Catalogs', 'Бананы');

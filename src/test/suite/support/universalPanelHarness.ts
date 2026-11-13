@@ -86,7 +86,7 @@ function createFakeMemento(): vscode.Memento {
 }
 
 function extractInitialState(html: string): InitialStateLike {
-  const match = /<script[^>]*id="v8vscedit-initial-state"[^>]*>([\s\S]*?)<\/script>/.exec(html);
+  const match = /<script[^>]*id="onecdev-initial-state"[^>]*>([\s\S]*?)<\/script>/.exec(html);
   if (!match) {
     throw new Error(`в HTML не найден блок начального состояния: ${html.slice(0, 200)}...`);
   }
@@ -94,7 +94,7 @@ function extractInitialState(html: string): InitialStateLike {
 }
 
 export function createUniversalPanelFixture(): UniversalPanelFixture {
-  const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-universal-panel-')));
+  const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-universal-panel-')));
   const entries: ConfigEntry[] = [
     { kind: 'cf', rootPath: CF_ROOT },
     { kind: 'cfe', rootPath: CFE_EVOLC_ROOT },

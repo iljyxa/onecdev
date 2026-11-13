@@ -114,7 +114,7 @@ function baseDeps(overrides: Partial<RepositoryFileSyncDeps> = {}): RepositoryFi
 function legacySnapshotDir(harness: Harness, fullName: string): string {
   const scopeKey = crypto.createHash('sha1').update(`cf|${path.resolve(harness.configRoot)}|`).digest('hex');
   const fullNameHash = crypto.createHash('sha1').update(fullName).digest('hex');
-  return path.join(harness.workspaceRoot, '.v8vscedit', 'repository', 'snapshots', scopeKey, fullNameHash);
+  return path.join(harness.workspaceRoot, '.onecdev', 'repository', 'snapshots', scopeKey, fullNameHash);
 }
 
 /** Реальный Catalogs/Контрагенты.xml БЕЗ ссылок на формы (текстовая правка копии — не сборка XML). */

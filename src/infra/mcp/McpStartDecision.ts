@@ -4,7 +4,7 @@
  * `V8McpServer.start` больше не авто-инкрементит порт: при `EADDRINUSE` он один
  * раз зондирует занявший порт процесс (`McpPortProbe.probeIdentity`) и передаёт
  * результат сюда. Здесь решается, переиспользовать ли чужой (но «свой» по
- * product+projectRoot) endpoint, сообщить ли о конфликте с v8vscedit другого
+ * product+projectRoot) endpoint, сообщить ли о конфликте с onecdev другого
  * проекта или о конфликте с процессом, который вообще не наш MCP-сервер.
  */
 import * as path from 'path';

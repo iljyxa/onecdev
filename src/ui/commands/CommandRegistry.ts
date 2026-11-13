@@ -35,7 +35,7 @@ export function registerCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.refresh', () => {
+    vscode.commands.registerCommand('onecdev.refresh', () => {
       void services.reloadEntries();
     })
   );

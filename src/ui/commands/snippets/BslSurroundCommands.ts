@@ -17,35 +17,35 @@ const BSL_LANGUAGE_ID = 'bsl';
 
 const BSL_SURROUND_COMMANDS: readonly BslSurroundCommand[] = [
   {
-    id: 'v8vscedit.bsl.surround.if',
+    id: 'onecdev.bsl.surround.if',
     snippetName: 'Окружить: Если'
   },
   {
-    id: 'v8vscedit.bsl.surround.ifElse',
+    id: 'onecdev.bsl.surround.ifElse',
     snippetName: 'Окружить: Если иначе'
   },
   {
-    id: 'v8vscedit.bsl.surround.try',
+    id: 'onecdev.bsl.surround.try',
     snippetName: 'Окружить: Попытка'
   },
   {
-    id: 'v8vscedit.bsl.surround.while',
+    id: 'onecdev.bsl.surround.while',
     snippetName: 'Окружить: Пока'
   },
   {
-    id: 'v8vscedit.bsl.surround.forEach',
+    id: 'onecdev.bsl.surround.forEach',
     snippetName: 'Окружить: Для каждого'
   },
   {
-    id: 'v8vscedit.bsl.surround.procedure',
+    id: 'onecdev.bsl.surround.procedure',
     snippetName: 'Окружить: Процедура'
   },
   {
-    id: 'v8vscedit.bsl.surround.function',
+    id: 'onecdev.bsl.surround.function',
     snippetName: 'Окружить: Функция'
   },
   {
-    id: 'v8vscedit.bsl.surround.region',
+    id: 'onecdev.bsl.surround.region',
     snippetName: 'Окружить: Область'
   }
 ];

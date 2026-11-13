@@ -1,6 +1,6 @@
 /**
- * Тесты регистрации команд `v8vscedit.dumpConfigurationToCf` /
- * `v8vscedit.loadConfigurationFromCf` (`src/ui/commands/ext/CfFileCommands.ts`)
+ * Тесты регистрации команд `onecdev.dumpConfigurationToCf` /
+ * `onecdev.loadConfigurationFromCf` (`src/ui/commands/ext/CfFileCommands.ts`)
  * и их паритета с `package.json → contributes.commands`.
  *
  * ВАЖНО про окружение теста: реальное расширение (`src/extension.ts`) в
@@ -8,14 +8,14 @@
  * `undefined` сразу же, если нет открытой рабочей папки
  * (`vscode.workspace.workspaceFolders` пуст, а `src/test/runTests.ts` не
  * передаёт папку в `launchArgs`), и `Container.bootstrap` (а значит и
- * реальная регистрация всех `v8vscedit.*` команд) не вызывается. Поэтому
+ * реальная регистрация всех `onecdev.*` команд) не вызывается. Поэтому
  * вызов `registerCfFileCommands` здесь напрямую с фейковым контекстом НЕ
  * конфликтует с реальной регистрацией той же команды — это тот же приём,
  * которым в этом проекте ещё никто не пользовался (см. обоснование в
  * `extensionListParser.test.ts`, почему обычно строят только чистые функции),
  * но здесь он безопасен именно из-за пустого workspace в тестовом хосте.
  *
- * Тела команд `v8vscedit.dumpConfigurationToCf`/`v8vscedit.loadConfigurationFromCf`
+ * Тела команд `onecdev.dumpConfigurationToCf`/`onecdev.loadConfigurationFromCf`
  * по контракту ОБЯЗАНЫ проверять общий `ConfigurationOperationGuard` ПЕРВЫМ
  * действием и возвращаться раньше, чем произойдёт обращение к остальным полям
  * `services` (диалоги выбора файла и т.п.) — именно поэтому в тестах ниже, где
@@ -31,7 +31,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import type { CommandServices } from '../../ui/commands/_shared';
-// registerCommands — единственная точка проводки ВСЕХ v8vscedit.*-команд
+// registerCommands — единственная точка проводки ВСЕХ onecdev.*-команд
 // (Container.bootstrap её не вызывает в тестовом Extension Host — см. шапку
 // файла), поэтому файл существует всегда (не «красный» модуль задания) и
 // импортируется статически.
@@ -45,8 +45,8 @@ interface CfFileCommandsModule {
   registerCfFileCommands(context: vscode.ExtensionContext, services: CommandServices): void;
 }
 
-const DUMP_COMMAND_ID = 'v8vscedit.dumpConfigurationToCf';
-const LOAD_COMMAND_ID = 'v8vscedit.loadConfigurationFromCf';
+const DUMP_COMMAND_ID = 'onecdev.dumpConfigurationToCf';
+const LOAD_COMMAND_ID = 'onecdev.loadConfigurationFromCf';
 
 /** Минимальный реальный `ExtensionContext`-дубль: единственное, что использует `registerCommand`, — массив подписок. */
 function createFakeContext(): vscode.ExtensionContext {
@@ -140,8 +140,8 @@ suite('CfFileCommands — регистрация dumpConfigurationToCf/loadConfi
       const entry = declared.find((item) => item.command === id);
       assert.ok(entry, `команда ${id} должна быть объявлена в package.json → contributes.commands`);
       assert.ok(entry.title && entry.title.trim().length > 0, `у команды ${id} должен быть title`);
-      assert.ok(entry.enablement?.includes('v8vscedit.isUpdatingConfigurations'),
-        `у команды ${id} enablement обязан ссылаться на v8vscedit.isUpdatingConfigurations (защита от параллельного запуска): "${String(entry.enablement)}"`);
+      assert.ok(entry.enablement?.includes('onecdev.isUpdatingConfigurations'),
+        `у команды ${id} enablement обязан ссылаться на onecdev.isUpdatingConfigurations (защита от параллельного запуска): "${String(entry.enablement)}"`);
     }
   });
 

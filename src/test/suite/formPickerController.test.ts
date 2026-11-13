@@ -113,7 +113,7 @@ function createDump(commonForms: readonly string[], options: { withOwnForm?: boo
   configXmlPath: string;
   reportXmlPath: string;
 } {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-picker-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-picker-'));
   const configXmlPath = path.join(configRoot, 'Configuration.xml');
   fs.writeFileSync(
     configXmlPath,

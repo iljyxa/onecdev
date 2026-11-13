@@ -14,7 +14,7 @@ type ProjectEnvironmentMessage =
  * Webview-панель выбора платформы 1С и рабочей информационной базы проекта.
  */
 export class ProjectEnvironmentViewProvider implements vscode.Disposable {
-  static readonly viewType = 'v8vsceditEnvironmentPanel';
+  static readonly viewType = 'onecdevEnvironmentPanel';
 
   private panel: vscode.WebviewPanel | undefined;
   private loadingTimer: NodeJS.Timeout | undefined;

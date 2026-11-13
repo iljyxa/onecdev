@@ -49,7 +49,7 @@ suite('RepositoryMergeApplier — buildMergeBackupDir', () => {
     assert.strictEqual(a, b);
     assert.ok(posix(a).includes('scope-1'));
     assert.ok(posix(a).includes('lock'));
-    assert.ok(posix(a).startsWith(posix(path.join('/ws', '.v8vscedit', 'repository', 'merge'))));
+    assert.ok(posix(a).startsWith(posix(path.join('/ws', '.onecdev', 'repository', 'merge'))));
   });
 
   test('разные моменты времени дают разные каталоги (не коллизируют между операциями)', () => {

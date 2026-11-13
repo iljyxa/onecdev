@@ -26,7 +26,7 @@ function readNormalized(filePath: string): string {
 
 suite('ExternalObjectService — байт-golden характеризация (предусловие дробления на infra/xml/external/*)', () => {
   test('createExternalDataProcessor: полный байтовый эталон XML объекта и ObjectModule.bsl', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-epf-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-epf-'));
     const service = new ExternalObjectService();
     service.createExternalDataProcessor({ name: 'ТестоваяОбработка', synonym: 'Тестовая обработка', outputDir: root });
 
@@ -78,7 +78,7 @@ suite('ExternalObjectService — байт-golden характеризация (�
   });
 
   test('createExternalReport (withSkd): полный байтовый эталон XML отчёта, ObjectModule.bsl, дескриптора и тела СКД-шаблона', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-erf-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-erf-'));
     const service = new ExternalObjectService();
     service.createExternalReport({ name: 'ТестовыйОтчет', synonym: 'Тестовый отчет', outputDir: root, withSkd: true });
 
@@ -174,7 +174,7 @@ suite('ExternalObjectService — байт-golden характеризация (�
   });
 
   test('addHelp: полный байтовый эталон Ext/Help.xml (с версией формата) и Ext/Help/ru.html', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-help-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-help-'));
     const service = new ExternalObjectService();
     service.createExternalDataProcessor({ name: 'ОбработкаСпоСправкой', synonym: 'Обработка со справкой', outputDir: root });
 
@@ -210,7 +210,7 @@ suite('ExternalObjectService — байт-golden характеризация (�
   });
 
   test('initBspRegistration + addBspCommand (ПечатнаяФорма, с targets): полный байтовый эталон модуля объекта', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-bsp-print-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-bsp-print-'));
     const service = new ExternalObjectService();
     service.createExternalDataProcessor({ name: 'ПечатьЗаказаGolden', outputDir: root });
 
@@ -286,7 +286,7 @@ suite('ExternalObjectService — байт-golden характеризация (�
   });
 
   test('initBspRegistration + addBspCommand (ДополнительнаяОбработка, без targets): полный байтовый эталон модуля объекта', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-bsp-noargs-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-bsp-noargs-'));
     const service = new ExternalObjectService();
     service.createExternalDataProcessor({ name: 'ДопОбработкаGolden', outputDir: root });
 

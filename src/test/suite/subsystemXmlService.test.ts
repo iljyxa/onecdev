@@ -6,7 +6,7 @@ import { SubsystemXmlService } from '../../infra/xml/SubsystemXmlService';
 
 suite('SubsystemXmlService', () => {
   test('читает и сохраняет принадлежность объекта к подсистемам', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-subsystems-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-subsystems-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     fs.mkdirSync(path.join(configRoot, 'Subsystems', 'Продажи', 'Subsystems', 'Розница'), { recursive: true });
     fs.writeFileSync(

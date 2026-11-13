@@ -19,7 +19,7 @@ const FIXTURE_TAGS = [
 ];
 
 function copyFixture(version: '2.20' | '2.21'): { readonly templatePath: string; readonly original: string } {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-skd-root-order-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-skd-root-order-'));
   const templatePath = path.join(root, 'Ext', 'Template.xml');
   fs.mkdirSync(path.dirname(templatePath), { recursive: true });
   fs.copyFileSync(path.join(EXAMPLE_ROOT, version, 'src', 'cf', REL_PATH), templatePath);
@@ -133,7 +133,7 @@ suite('DataCompositionSchemaService.edit — add-* соблюдают поряд
   }
 
   test('схема без корня DataCompositionSchema: add-total файл не меняет', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-skd-root-order-noroot-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-skd-root-order-noroot-'));
     const templatePath = path.join(root, 'Ext', 'Template.xml');
     fs.mkdirSync(path.dirname(templatePath), { recursive: true });
     const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Other>\n\t<parameter>\n\t\t<name>А</name>\n\t</parameter>\n</Other>\n';

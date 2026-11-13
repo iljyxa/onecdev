@@ -21,7 +21,7 @@ import { skipWithoutCorpus } from './support/corpus';
 const SERVICE_ENTRY_XML = path.resolve(__dirname, '../../../example/2.21/src/cf/HTTPServices/ServiceEntry.xml');
 
 function copyDonor(): { root: string; xmlPath: string } {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-http-mutation-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-http-mutation-'));
   const xmlPath = path.join(root, 'ServiceEntry.xml');
   fs.copyFileSync(SERVICE_ENTRY_XML, xmlPath);
   return { root, xmlPath };

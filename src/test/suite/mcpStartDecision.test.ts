@@ -4,7 +4,7 @@
  * авто-инкрементит порт — при `EADDRINUSE` он один раз зондирует занявший
  * порт процесс (`McpPortProbe.probeIdentity`) и передаёт результат сюда,
  * чтобы решить: переиспользовать чужой (но "свой" по product+projectRoot)
- * endpoint, сообщить о конфликте с чужим v8vscedit другого проекта или о
+ * endpoint, сообщить о конфликте с чужим onecdev другого проекта или о
  * конфликте с процессом, который вообще не является нашим MCP-сервером.
  *
  * Модуль чистый (без vscode/http) — тестируется без сети, на реальных
@@ -63,7 +63,7 @@ suite('infra/mcp/McpStartDecision', () => {
     const decision = decideMcpStart(occupant, '/Users/dev/project-a');
     assert.deepStrictEqual(
       decision, { kind: 'conflict-unknown' },
-      'чужой product — это вообще другой процесс на порту, не "чужой v8vscedit"; выдавать occupant для него нельзя',
+      'чужой product — это вообще другой процесс на порту, не "чужой onecdev"; выдавать occupant для него нельзя',
     );
   });
 });

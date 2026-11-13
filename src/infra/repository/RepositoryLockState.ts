@@ -123,7 +123,7 @@ export function buildRepositoryScopeKey(target: RepositoryTarget): string {
 }
 
 /**
- * Локальное состояние захватов хранилища (`.v8vscedit/repository/state.json`) и
+ * Локальное состояние захватов хранилища (`.onecdev/repository/state.json`) и
  * событие его изменения — источник для пересчёта readonly открытых редакторов.
  */
 export class RepositoryLockState {
@@ -448,7 +448,7 @@ export class RepositoryLockState {
   }
 
   private getStateFilePath(): string {
-    return path.join(this.workspaceRoot, '.v8vscedit', 'repository', 'state.json');
+    return path.join(this.workspaceRoot, '.onecdev', 'repository', 'state.json');
   }
 
   private load(): RepositoryStateFile {

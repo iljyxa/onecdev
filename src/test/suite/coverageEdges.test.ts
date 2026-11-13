@@ -40,7 +40,7 @@ suite('coverage edge-сценарии на реальных данных', () =>
     // Тест работает на эталоне `example/` (не в git) — без корпуса пропускается.
     skipWithoutCorpus(this);
     this.timeout(60000);
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-coverage-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-coverage-'));
     const dataDir = path.join(tempRoot, 'data');
     fs.mkdirSync(dataDir, { recursive: true });
     fs.writeFileSync(path.join(dataDir, 'Object.xml'), '<MetaDataObject/>', 'utf-8');
@@ -80,7 +80,7 @@ OrderInList=not-a-number
     assert.strictEqual(bases[0]?.connection, '/F/tmp/base;with-semicolon');
     assert.strictEqual(bases[0]?.order, undefined);
 
-    const platformDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-platform-'));
+    const platformDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-platform-'));
     const binDir = path.join(platformDir, 'bin');
     fs.mkdirSync(binDir, { recursive: true });
     const exePath = path.join(binDir, process.platform === 'win32' ? '1cv8.exe' : '1cv8');

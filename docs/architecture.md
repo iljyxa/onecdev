@@ -2,13 +2,13 @@
 
 ## Назначение
 
-VSCode-расширение `v8vscedit` предоставляет два независимых блока:
+VSCode-расширение `onecdev` предоставляет два независимых блока:
 
 1. **[Навигатор метаданных](./metadata-navigator.md)** — дерево объектов конфигураций и расширений из XML-выгрузки.
 2. **[Языковая поддержка BSL](./bsl-language-support.md)** — LSP-клиент для внешнего `bsl-analyzer`.
 
 Дополнительно — независимая webview-панель **[«Изменения метаданных»](./git-metadata-changes.md)**
-(`v8vsceditChanges`): `git status` рабочей копии в терминах объектов метаданных, с полноценными
+(`onecdevChanges`): `git status` рабочей копии в терминах объектов метаданных, с полноценными
 git-операциями (stage/unstage/discard/commit/diff); дерево панели повторяет навигаторную иерархию
 основного дерева конфигурации (обрезанную по изменениям), переиспользуя и Vue-компонент отрисовки,
 и саму структуру `MetadataTreeProvider`.
@@ -55,7 +55,7 @@ src/
 │   │                                  # (чистый helper состояния блока «История» поверх
 │   │                                  # historyGraphController/historyGraphDtoBuilder) +
 │   │                                  # MetadataChangesViewProvider (единственный webview-провайдер
-│   │                                  # v8vsceditChanges — строит цепочки предков через
+│   │                                  # onecdevChanges — строит цепочки предков через
 │   │                                  # treeProvider.getParent на реальном MetadataTreeProvider и
 │   │                                  # диспетчеризует команды блока «История»)
 │   ├── views/history/                # ТОЛЬКО чистые модули (без vscode): historyGraphDtoBuilder/
@@ -126,7 +126,7 @@ src/
 
 Когда UI-команде нужны данные, которых нет в XML-выгрузке, а есть только в самой
 базе 1С (пример — список расширений, уже подключённых к базе, для команды
-`v8vscedit.connectExtension`), связка устроена в три слоя:
+`onecdev.connectExtension`), связка устроена в три слоя:
 
 1. **CLI-команда** (`cli/commands/<name>.ts`, образец — `listDbExtensions.ts`)
    запускает пакетный Конфигуратор с нужным ключом (`/DumpDBCfgList
@@ -157,7 +157,7 @@ src/
 <файл>` уже устоявшийся — его использует каждая из `export-configuration`/
 `import-configuration`/`update-configuration`/`repository-*`.
 
-Образец целиком: `v8vscedit.connectExtension` — список расширений для QuickPick
+Образец целиком: `onecdev.connectExtension` — список расширений для QuickPick
 берётся через `list-db-extensions` (CLI) → `listConnectedDatabaseExtensions`
 (UI-обёртка) → `resolveExtensionNameToConnect` (сам диалог, только выбор из
 базы, без пункта «Ввести вручную…» и без `showInputBox`):
@@ -189,8 +189,8 @@ src/
 обёртка спавна, переиспользует `resolveConnectionFromSettings`/
 `runInternalCliCommand` из `ExtensionCommandRunner`, как импорт/обновление) →
 `ui/commands/ext/CfFileCommands.ts` (диалоги QuickPick/SaveDialog/OpenDialog) и
-`ui/mcp/registration/McpConfigLifecycleTools.ts` (`v8vscedit_dump_cf`/
-`v8vscedit_load_cf`) — оба вызывают ровно один и тот же `CfFileCommandRunner`.
+`ui/mcp/registration/McpConfigLifecycleTools.ts` (`onecdev_dump_cf`/
+`onecdev_load_cf`) — оба вызывают ровно один и тот же `CfFileCommandRunner`.
 
 **Всё поведение платформы ниже снято эмпирически** прогонами на реальном
 Конфигураторе 8.3.27.1989 на временных файловых базах (`1cv8 CREATEINFOBASE
@@ -234,7 +234,7 @@ src/
 только при `exitCode === 0`; staging удаляется в `finally` независимо от
 исхода. Проверено вживую: при сбое целевой файл не появляется, а уже
 существующий файл не портится. Имя staging-файла оканчивается маркером
-`DUMP_STAGING_SUFFIX` (`.v8vscedit.part`), по которому опознаётся остаток
+`DUMP_STAGING_SUFFIX` (`.onecdev.part`), по которому опознаётся остаток
 прерванной выгрузки (см. «Пакетный случай» ниже); перенос и уборка —
 `moveStagingToTarget`/`safeRemoveFile` из `cli/core/onecCommon.ts`.
 
@@ -242,7 +242,7 @@ src/
 (`infra/process/`, см. «Сериализация операций Конфигуратора с базой»), что у
 импорта/обновления и синхронизации с хранилищем: выгрузка/загрузка CF-файла
 работает с той же базой и выгрузкой, поэтому конкурентный запуск любой пары из
-них повредил бы данные. `v8vscedit_dump_cf`/`v8vscedit_load_cf` берут тот же
+них повредил бы данные. `onecdev_dump_cf`/`onecdev_load_cf` берут тот же
 guard через `withConfigurationOperationLock` (`runExclusive`) в
 `McpConfigLifecycleTools.ts` — MCP-агент и пользователь работают с одной базой,
 и разделять guard по источнику вызова нельзя.
@@ -257,7 +257,7 @@ hash-кэша — файлы XML-выгрузки проекта при загр
 обратно в базу поверх только что загруженного CF, обнулив результат операции.
 Вместо этого пользователю после загрузки явно показывается предупреждение,
 что XML-выгрузка проекта больше не соответствует базе, и предлагается импорт
-конфигураций (`v8vscedit.importConfigurations`); MCP возвращает то же самое
+конфигураций (`onecdev.importConfigurations`); MCP возвращает то же самое
 через поле `projectSourcesOutdated: true`. **Это правило намеренно нарушает
 общий пункт «Единый post-mutation путь» из раздела про MCP-сервер ниже** — при
 похожих задачах не «чинить» это обратно без повторного замера платформы.
@@ -276,11 +276,11 @@ hash-кэша — файлы XML-выгрузки проекта при загр
   `db-load-cfe-all`) + общий `cfeBatchShared.ts`; отчёт возвращается через
   `-ResultFile` (тот же file-handoff, что у `list-db-extensions`);
 - `ui/commands/ext/CfeBatchCommandRunner.ts` (спавн CLI, разбор отчёта) →
-  `CfeBatchCommands.ts` (диалоги; команды `v8vscedit.dumpAllExtensionsToCfe`/
-  `v8vscedit.loadAllExtensionsFromCfe`) и пункты в `getNodeActions` на узле
+  `CfeBatchCommands.ts` (диалоги; команды `onecdev.dumpAllExtensionsToCfe`/
+  `onecdev.loadAllExtensionsFromCfe`) и пункты в `getNodeActions` на узле
   `extensions-root` (пакетные операции работают со ВСЕЙ базой — место им на
   контейнере расширений, не на корне конфигурации и не на одном расширении);
-- MCP `v8vscedit_dump_all_cfe`/`v8vscedit_load_all_cfe`
+- MCP `onecdev_dump_all_cfe`/`onecdev_load_all_cfe`
   (`McpConfigLifecycleTools.ts`) зовут тот же `CfeBatchCommandRunner` под тем
   же `ConfigurationOperationGuard`.
 
@@ -310,11 +310,11 @@ hash-кэша — файлы XML-выгрузки проекта при загр
    вычислить заранее (расширение есть в каталоге, но нет в базе без
    `createMissing`; манифест ссылается на отсутствующий файл), отбиваются ДО
    первого `/LoadCfg` и останавливают всё, включая здоровые расширения.
-   MCP-контракт зеркально разный: `v8vscedit_dump_all_cfe` при частичном отказе —
-   УСПЕХ со списком `failed`; `v8vscedit_load_all_cfe` при `failedAt` —
+   MCP-контракт зеркально разный: `onecdev_dump_all_cfe` при частичном отказе —
+   УСПЕХ со списком `failed`; `onecdev_load_all_cfe` при `failedAt` —
    исключение (база в промежуточном состоянии, штатным итогом это не является).
 4. **Маркер принадлежности staging-файла — `DUMP_STAGING_SUFFIX =
-   '.v8vscedit.part'`** (`infra/cfFile/CfFileValidation.ts`, рядом с
+   '.onecdev.part'`** (`infra/cfFile/CfFileValidation.ts`, рядом с
    `resolveDumpStagingPath`); правило общее для одиночной и пакетной выгрузки.
    Своим остаток признаёт `isDumpStagingFileName` ТОЛЬКО по маркеру, а не по
    форме уникального суффикса: форм две (`pid-время` у одиночной, `pid-время-
@@ -342,7 +342,7 @@ hash-кэша — файлы XML-выгрузки проекта при загр
    используют и `dump-cf`, и `dump-cfe-all`. Второй копии temp+rename быть не
    должно.
 8. **Post-mutation путь для load не вызывается** — то же сознательное
-   отклонение и с тем же обоснованием, что у одиночного `v8vscedit_load_cf`
+   отклонение и с тем же обоснованием, что у одиночного `onecdev_load_cf`
    (см. выше). `applyToDatabase` делает `/UpdateDBCfg -Extension <имя>` по
    одному на каждое ЗАГРУЖЕННОЕ расширение строго после последнего `/LoadCfg`
    (`/UpdateDBCfg -AllExtensions` применил бы и не загружавшиеся расширения);
@@ -451,7 +451,7 @@ XML, импорт/обновление конфигурации в базе). М
 неуверенность в записи индекса разрешается в пользу перехеширования файла, а не в пользу
 доверия индексу.
 
-- **Файл** — `.v8vscedit/cache/<sha1(scopeKey)>.stat.json`, рядом со снапшотом хешей той же
+- **Файл** — `.onecdev/cache/<sha1(scopeKey)>.stat.json`, рядом со снапшотом хешей той же
   области (`<sha1(scopeKey)>.json`); оба пути строятся от общего стема
   `HashCache.resolveHashCacheFileStem(projectRoot, scopeKey)`.
 - **Критерий переиспользования записи** (`isFileStatEntryReusable`) — текущий `size`/`mtimeMs`/
@@ -474,7 +474,7 @@ XML, импорт/обновление конфигурации в базе). М
   индекса не должно превращать сбой записи служебного файла в падение `reloadEntries` при
   активации расширения.
 - **`HashCacheSnapshot` и его формат не меняются.** `buildHashSnapshotWithStatIndex` строит ТОТ
-  ЖЕ `HashCacheSnapshot` (`.v8vscedit/cache/<sha1>.json`), что и прежний `buildHashSnapshot`, —
+  ЖЕ `HashCacheSnapshot` (`.onecdev/cache/<sha1>.json`), что и прежний `buildHashSnapshot`, —
   индекс лишь избавляет от чтения содержимого файлов, чей stat не разошёлся. `diffHashSnapshots`,
   `patchHashSnapshot`, CLI (`src/cli/core/hashCache.ts`) и `AgentOperationService` не знают о
   существовании индекса и не меняются.
@@ -553,16 +553,16 @@ API:
 `Container` создаёт единственный экземпляр в конструкторе (`onListenerError` пишет `[guard][error] …` в
 outputChannel) и в `bootstrap()` подписывается на `onDidChangeBusy` в приватном
 `wireConfigurationOperationContext()` — это ЕДИНСТВЕННОЕ место, выставляющее контекст enablement
-`v8vscedit.isUpdatingConfigurations` (`package.json → contributes.commands[].enablement`); отказ
+`onecdev.isUpdatingConfigurations` (`package.json → contributes.commands[].enablement`); отказ
 `setContext` логируется отдельно (`[guard][error] setContext: …`), т.к. вызов асинхронный и не проходит
 через `onListenerError` самого guard'а. Экземпляр публикуется в `CommandServices.configurationOperationGuard`
-(и автоматически попадает в `buildMcpCommandServices` — MCP-мост `v8vscedit_execute_command` синхронизован
+(и автоматически попадает в `buildMcpCommandServices` — MCP-мост `onecdev_execute_command` синхронизован
 с UI-командами через тот же guard).
 
 Обе команды, доступные MCP-мосту (`importConfigurations`, `updateChangedConfigurations`), возвращают
 `ConfigurationCommandOutcome` (`ui/commands/ext/configurationCommandOutcome.ts`, без `vscode`) на каждом
 пути — `done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed` — вместо прежних `boolean`/`undefined`,
-которые не различали «занято», «отменено» и «сбой». Мост `v8vscedit_execute_command`
+которые не различали «занято», «отменено» и «сбой». Мост `onecdev_execute_command`
 (`ui/mcp/registration/McpConfigLifecycleTools.ts`) сам guard заранее не опрашивает и не подменяет исход —
 он вызывает команду через `vscode.commands.executeCommand` и транслирует её `ConfigurationCommandOutcome`
 в ответ как есть (`busy` + `heldBy` при занятости приходят от самой команды). Предпроверка guard'а в мосте
@@ -784,7 +784,7 @@ extension.ts
 - [Навигатор метаданных](./metadata-navigator.md) — дерево, команды, path resolver.
 - [Языковая поддержка BSL](./bsl-language-support.md) — запуск `bsl-analyzer` и настройки.
 - [Парсинг XML конфигурации](./metadata-parser.md) — алгоритмы разбора Configuration.xml и объектных XML.
-- [Изменения метаданных](./git-metadata-changes.md) — семантический git по объектам 1С, представление `v8vsceditChanges`.
-- [История изменений](./git-history-graph.md) — граф git-коммитов по объектам 1С, сворачиваемый блок панели `v8vsceditChanges`.
+- [Изменения метаданных](./git-metadata-changes.md) — семантический git по объектам 1С, представление `onecdevChanges`.
+- [История изменений](./git-history-graph.md) — граф git-коммитов по объектам 1С, сворачиваемый блок панели `onecdevChanges`.
 - [Синхронизация с хранилищем](./repository-file-sync.md) — файлы проекта при захвате/получении/отмене захвата/помещении, единицы хранилища, слияние, снимки, readonly.
 - [Жизненный цикл MCP-сервера](./mcp-server-lifecycle.md) — старт/остановка, освобождение порта, обнаружение и разрешение конфликта порта; канон путей MCP-инструментов — отдельно, в [mcp-paths.md](./mcp-paths.md).

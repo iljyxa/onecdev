@@ -6,15 +6,15 @@ import { AgentWorkspaceService } from '../../infra/agent/AgentWorkspaceService';
 import { mirrorDirectorySnapshot } from '../../infra/agent/DirectorySnapshot';
 
 suite('AgentWorkspaceService', () => {
-  test('строит пути агента внутри .v8vscedit/agent', () => {
+  test('строит пути агента внутри .onecdev/agent', () => {
     const root = createTempRoot();
     try {
       const service = new AgentWorkspaceService(root);
       const workspace = service.resolveWorkspace('file-base', { kind: 'cfe', extensionName: 'EVOLC' });
 
       assert.strictEqual(workspace.projectRoot, root);
-      assert.strictEqual(workspace.agentRoot, path.join(root, '.v8vscedit', 'agent'));
-      assert.strictEqual(workspace.targetDir, path.join(root, '.v8vscedit', 'agent', '0', 'workspace', 'file-base', 'cfe', 'EVOLC'));
+      assert.strictEqual(workspace.agentRoot, path.join(root, '.onecdev', 'agent'));
+      assert.strictEqual(workspace.targetDir, path.join(root, '.onecdev', 'agent', '0', 'workspace', 'file-base', 'cfe', 'EVOLC'));
       assert.strictEqual(workspace.targetAgentDir, 'workspace/file-base/cfe/EVOLC');
       assert.ok(!workspace.targetDir.startsWith(path.join(root, 'src', 'cfe')));
     } finally {
@@ -31,7 +31,7 @@ suite('AgentWorkspaceService', () => {
         'Catalogs/Контрагенты.xml',
       ]);
 
-      assert.strictEqual(listPath, path.join(root, '.v8vscedit', 'agent', '0', 'lists', 'operation-1.txt'));
+      assert.strictEqual(listPath, path.join(root, '.onecdev', 'agent', '0', 'lists', 'operation-1.txt'));
       const data = fs.readFileSync(listPath);
       assert.deepStrictEqual([...data.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
       assert.strictEqual(data.subarray(3).toString('utf-8'), 'Configuration.xml\nCatalogs/Контрагенты.xml');
@@ -57,7 +57,7 @@ suite('AgentWorkspaceService', () => {
     const root = createTempRoot();
     try {
       const source = path.join(root, 'src', 'cf');
-      const target = path.join(root, '.v8vscedit', 'agent', 'workspace', 'cf');
+      const target = path.join(root, '.onecdev', 'agent', 'workspace', 'cf');
       fs.mkdirSync(source, { recursive: true });
       fs.mkdirSync(target, { recursive: true });
       fs.writeFileSync(path.join(source, 'Configuration.xml'), '<new/>', 'utf-8');
@@ -75,5 +75,5 @@ suite('AgentWorkspaceService', () => {
 });
 
 function createTempRoot(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-agent-test-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-agent-test-'));
 }

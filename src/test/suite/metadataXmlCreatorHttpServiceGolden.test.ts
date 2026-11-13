@@ -39,7 +39,7 @@ function configXml21(): string {
 }
 
 function newConfigRoot(): string {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-http-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-http-'));
   fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), configXml21(), 'utf-8');
   return configRoot;
 }

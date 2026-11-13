@@ -22,10 +22,10 @@ export function registerCfeBatchCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.dumpAllExtensionsToCfe', async () => {
+    vscode.commands.registerCommand('onecdev.dumpAllExtensionsToCfe', async () => {
       await dumpAllExtensionsToCfe(services);
     }),
-    vscode.commands.registerCommand('v8vscedit.loadAllExtensionsFromCfe', async () => {
+    vscode.commands.registerCommand('onecdev.loadAllExtensionsFromCfe', async () => {
       await loadAllExtensionsFromCfe(services);
     })
   );
@@ -198,7 +198,7 @@ async function offerPostLoadSteps(): Promise<void> {
     'Позже'
   );
   if (choice === importAction) {
-    await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+    await vscode.commands.executeCommand('onecdev.importConfigurations');
   }
 }
 

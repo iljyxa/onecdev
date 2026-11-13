@@ -35,7 +35,7 @@ suite('GitBlobReader — чтение содержимого blob из HEAD и �
 
   suiteSetup(() => {
     // realpathSync: см. комментарий в gitPorcelainReader.test.ts.
-    repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-git-blob-reader-')));
+    repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-git-blob-reader-')));
     filePath = path.join(repo, 'CommandModule.bsl');
     baselineContent = fs.readFileSync(FIXTURE_BSL, 'utf-8');
     fs.writeFileSync(filePath, baselineContent, 'utf-8');
@@ -92,7 +92,7 @@ suite('GitBlobReader — чтение содержимого blob из HEAD и �
   });
 
   test('отсутствие git-репозитория по указанному пути — мягкий null, без исключения', () => {
-    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-no-git-')));
+    const outsideAnyRepo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-no-git-')));
     try {
       assert.strictEqual(readBlobAtHead(outsideAnyRepo, path.join(outsideAnyRepo, 'файл.bsl')), null);
       assert.strictEqual(readBlobAtIndex(outsideAnyRepo, path.join(outsideAnyRepo, 'файл.bsl')), null);
@@ -116,7 +116,7 @@ suite('GitBlobReader — readBlobAtRef: чтение содержимого на
   let v1Hash: string;
 
   suiteSetup(() => {
-    repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-git-blob-ref-')));
+    repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-git-blob-ref-')));
     filePath = path.join(repo, 'файл.bsl');
     v1Content = 'Процедура Тест() КонецПроцедуры // V1\n';
     v2Content = 'Процедура Тест() КонецПроцедуры // V2\n';

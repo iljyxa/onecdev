@@ -44,7 +44,7 @@ suite('GitMetadataStatusService — характеризация текущег�
     // /var → /private/var, а `git rev-parse --show-toplevel` резолвит симлинк.
     // Без этого все абсолютные пути ниже разойдутся с git-root и статус
     // всегда будет undefined.
-    repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-git-status-char-')));
+    repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-git-status-char-')));
     catalogsDir = path.join(repo, 'Catalogs');
     fs.mkdirSync(catalogsDir, { recursive: true });
 

@@ -56,7 +56,7 @@ function createFakeSecretStore(): SecretStore {
 
 /** Создаёт изолированный кэш-каталог для MetadataTreeProvider (не участвует в проверках — только требование конструктора). */
 function makeCacheRoot(): { cacheRoot: string; dispose: () => void } {
-  const cacheRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-support-indicator-cache-'));
+  const cacheRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-support-indicator-cache-'));
   return { cacheRoot, dispose: () => fs.rmSync(cacheRoot, { recursive: true, force: true }) };
 }
 
@@ -320,7 +320,7 @@ suite('MetadataTreeProvider — applySupportDecoration: ранние выход�
   });
 
   test('supportService есть, но .bin для этого корня не загружен (hasConfigData=false) — суффикса нет', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-support-indicator-no-bin-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-support-indicator-no-bin-'));
     const { cacheRoot, dispose } = makeCacheRoot();
     try {
       const configRoot = path.join(tempDir, 'cf');

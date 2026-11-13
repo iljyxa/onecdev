@@ -5,9 +5,9 @@
  * Тестовый хост запускается БЕЗ workspace-папки (см. `src/test/runTests.ts` —
  * `launchArgs` не содержит открываемой папки), поэтому `extension.ts.activate()`
  * возвращает `undefined` до вызова `Container.bootstrap`, и ни один
- * `v8vscedit.*` command не зарегистрирован реальным расширением — проверено:
+ * `onecdev.*` command не зарегистрирован реальным расширением — проверено:
  * ни один существующий тест не строит workspaceFolders и не полагается на
- * реальную регистрацию `v8vscedit.*` (`rg "workspaceFolders" src/test/suite`
+ * реальную регистрацию `onecdev.*` (`rg "workspaceFolders" src/test/suite`
  * пусто). Поэтому регистрация тех же id вручную через
  * `registerExtensionCommands`/`registerRepositoryCommands`/`registerDbCommands`
  * с фейковым `context = { subscriptions: [] }` не конфликтует с уже
@@ -34,7 +34,7 @@
  * команды), поэтому обе ветки успеха/провала/отмены/гонки с guard'ом
  * проверяются без реального процесса 1С и без реального QuickPick UI.
  * `registerDbCommands`/`registerConfigLifecycleTools` (MCP-мост
- * `v8vscedit_execute_command`) добавлены в тот же harness: обе точки идут
+ * `onecdev_execute_command`) добавлены в тот же harness: обе точки идут
  * через `vscode.commands.executeCommand`, поэтому используют ОДНИ и те же
  * зарегистрированные на `servicesBox`/`depsProxy` команды.
  */
@@ -271,7 +271,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       setTreeProcessingState: () => { setTreeCalls += 1; },
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.updateChangedConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
 
     assert.deepStrictEqual(result, { status: 'busy', heldBy: 'Хранилище: синхронизация' });
     assert.strictEqual(getChangedCalls, 0);
@@ -291,7 +291,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       treeProvider: { getEntries: () => { getEntriesCalls += 1; return []; } } as unknown as CommandServices['treeProvider'],
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
     assert.deepStrictEqual(result, { status: 'busy', heldBy: 'Хранилище: синхронизация' });
     assert.strictEqual(getEntriesCalls, 0);
@@ -302,12 +302,12 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
   });
 
   const RUN_EXCLUSIVE_CASES: { command: string; node: NodeArg; label: string }[] = [
-    { command: 'v8vscedit.importConfigurationFromDb', node: CF_NODE, label: 'importConfigurationFromDb (cf)' },
-    { command: 'v8vscedit.updateConfigurationInDb', node: CF_NODE, label: 'updateConfigurationInDb (cf)' },
-    { command: 'v8vscedit.updateConfigurationInDb', node: CFE_NODE, label: 'updateConfigurationInDb (cfe)' },
-    { command: 'v8vscedit.decompileExtensionSources', node: CFE_NODE, label: 'decompileExtensionSources (extension)' },
-    { command: 'v8vscedit.updateExtensionInDb', node: CFE_NODE, label: 'updateExtensionInDb (extension)' },
-    { command: 'v8vscedit.compileAndUpdateExtensionInDb', node: CFE_NODE, label: 'compileAndUpdateExtensionInDb (extension)' },
+    { command: 'onecdev.importConfigurationFromDb', node: CF_NODE, label: 'importConfigurationFromDb (cf)' },
+    { command: 'onecdev.updateConfigurationInDb', node: CF_NODE, label: 'updateConfigurationInDb (cf)' },
+    { command: 'onecdev.updateConfigurationInDb', node: CFE_NODE, label: 'updateConfigurationInDb (cfe)' },
+    { command: 'onecdev.decompileExtensionSources', node: CFE_NODE, label: 'decompileExtensionSources (extension)' },
+    { command: 'onecdev.updateExtensionInDb', node: CFE_NODE, label: 'updateExtensionInDb (extension)' },
+    { command: 'onecdev.compileAndUpdateExtensionInDb', node: CFE_NODE, label: 'compileAndUpdateExtensionInDb (extension)' },
   ];
 
   RUN_EXCLUSIVE_CASES.forEach(({ command, node, label }) => {
@@ -358,7 +358,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       setTreeProcessingState: (state) => { setTreeCalls.push(state); },
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.updateChangedConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
 
     assert.deepStrictEqual(result, { status: 'no-changes' });
     assert.strictEqual(getChangedCalls, 1);
@@ -391,7 +391,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       },
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.updateChangedConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
 
     assert.deepStrictEqual(result, { status: 'done', completed: [CF_NAME] });
     assert.strictEqual(pickCalls, 0, 'единственная изменённая конфигурация не должна открывать picker');
@@ -416,7 +416,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         pickChangedConfigurations: () => Promise.resolve(cancelledSelection),
       });
 
-      const result = await vscode.commands.executeCommand('v8vscedit.updateChangedConfigurations');
+      const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
 
       assert.deepStrictEqual(result, { status: 'cancelled' });
       assert.strictEqual(guard.isBusy, false);
@@ -444,7 +444,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       updateExtension: () => { callOrder.push('cfe'); return Promise.resolve(false); },
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.updateChangedConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
 
     assert.deepStrictEqual(result, { status: 'failed', completed: [CF_NAME], stoppedAt: CFE_NAME });
     assert.deepStrictEqual(callOrder, ['cf', 'cfe']);
@@ -466,7 +466,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       updateMainConfiguration: () => Promise.reject(new Error('Конфигуратор упал')),
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.updateChangedConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
 
     assert.deepStrictEqual(result, { status: 'failed', completed: [], error: 'Конфигуратор упал' });
     assert.strictEqual(bridgeErrorMessages.length, 1);
@@ -487,7 +487,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       // детерминированное доказательство отсутствия await.
       bridgeWarningMessageResolver = () => new Promise<string | undefined>(() => undefined);
 
-      const result = await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+      const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
       assert.deepStrictEqual(result, { status: 'no-targets' });
       assert.strictEqual(getEntriesCalls, 1);
@@ -510,7 +510,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         pickImportTargets: () => Promise.resolve(cancelledSelection),
       });
 
-      const result = await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+      const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
       assert.deepStrictEqual(result, { status: 'cancelled' });
       assert.deepStrictEqual(events, []);
@@ -531,7 +531,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       },
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
     assert.deepStrictEqual(result, { status: 'busy', heldBy: 'Синхронизация с хранилищем: Основная конфигурация' });
     assert.strictEqual(guard.heldBy, 'Синхронизация с хранилищем: Основная конфигурация');
@@ -563,7 +563,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       decompileExtension: () => Promise.resolve(true),
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
     assert.deepStrictEqual(result, { status: 'done', completed: [CF_NAME, CFE_NAME] });
     assert.strictEqual(reloadCalls, 1);
@@ -594,7 +594,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       decompileExtension: () => Promise.resolve(false),
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
     assert.deepStrictEqual(result, { status: 'failed', completed: [CF_NAME], stoppedAt: CFE_NAME });
     assert.strictEqual(reloadCalls, 0);
@@ -616,7 +616,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       decompileMainConfiguration: () => Promise.reject(new Error('Конфигуратор упал')),
     });
 
-    const result = await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+    const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
     assert.deepStrictEqual(result, { status: 'failed', completed: [], error: 'Конфигуратор упал' });
   });
@@ -645,7 +645,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       } as unknown as CommandServices['repositoryCommitViewProvider'],
     });
 
-    await vscode.commands.executeCommand('v8vscedit.repository.commit', CF_NODE);
+    await vscode.commands.executeCommand('onecdev.repository.commit', CF_NODE);
 
     assert.strictEqual(showCalls, 0);
     assert.strictEqual(resolveFullNameCalls, 0);
@@ -698,10 +698,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     }
 
     [
-      'v8vscedit.repository.lock',
-      'v8vscedit.repository.unlock',
-      'v8vscedit.repository.update',
-      'v8vscedit.repository.updateToVersion',
+      'onecdev.repository.lock',
+      'onecdev.repository.unlock',
+      'onecdev.repository.update',
+      'onecdev.repository.updateToVersion',
     ].forEach((command) => {
       test(`${command}: guard занят «Хранилище: синхронизация» — ни showQuickPick, ни showInputBox, чужая аренда цела`, async () => {
         const guard = new ConfigurationOperationGuard();
@@ -723,7 +723,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
     });
 
-    ['v8vscedit.repository.update', 'v8vscedit.repository.updateToVersion'].forEach((command) => {
+    ['onecdev.repository.update', 'onecdev.repository.updateToVersion'].forEach((command) => {
       test(`${command}: узел без XML — предупреждение, ни диалогов, ни аренды guard'а`, async () => {
         const guard = new ConfigurationOperationGuard();
         servicesBox.current = createServices({ configurationOperationGuard: guard });
@@ -773,7 +773,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     }
 
     setup(() => {
-      workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-repo-commands-'));
+      workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-repo-commands-'));
       fs.cpSync(EXAMPLE_CF, path.join(workspaceRoot, 'src', 'cf'), { recursive: true });
       fs.writeFileSync(path.join(workspaceRoot, 'env.json'), JSON.stringify({
         default: { '--ibconnection': '/F/tmp/база', '--repo-path': '/tmp/хранилище', '--repo-user': 'Admin' },
@@ -851,11 +851,11 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     });
 
     const cases: { command: string; cli: string; answers: boolean[]; input?: string }[] = [
-      { command: 'v8vscedit.repository.lock', cli: 'repository-lock', answers: [false] },
-      { command: 'v8vscedit.repository.unlock', cli: 'repository-unlock', answers: [false, true] },
-      { command: 'v8vscedit.repository.update', cli: 'repository-update', answers: [true] },
-      { command: 'v8vscedit.repository.updateToVersion', cli: 'repository-update', answers: [true], input: ' 125 ' },
-      { command: 'v8vscedit.repository.commit', cli: 'repository-commit', answers: [] },
+      { command: 'onecdev.repository.lock', cli: 'repository-lock', answers: [false] },
+      { command: 'onecdev.repository.unlock', cli: 'repository-unlock', answers: [false, true] },
+      { command: 'onecdev.repository.update', cli: 'repository-update', answers: [true] },
+      { command: 'onecdev.repository.updateToVersion', cli: 'repository-update', answers: [true], input: ' 125 ' },
+      { command: 'onecdev.repository.commit', cli: 'repository-commit', answers: [] },
     ];
 
     cases.forEach(({ command, cli, answers, input }) => {
@@ -905,7 +905,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       };
       servicesBox.current = { ...servicesBox.current, repositoryCommitViewProvider: commitView };
       try {
-        await vscode.commands.executeCommand('v8vscedit.repository.commit', catalogNode(true));
+        await vscode.commands.executeCommand('onecdev.repository.commit', catalogNode(true));
       } finally {
         commitView.dispose();
         panels.restore();
@@ -923,7 +923,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       const target = repositoryService.resolveTargetByXmlPath(path.join(workspaceRoot, 'src', 'cf', 'Configuration.xml'));
       assert.ok(target);
 
-      await vscode.commands.executeCommand('v8vscedit.repository.lock', catalogNode(true));
+      await vscode.commands.executeCommand('onecdev.repository.lock', catalogNode(true));
 
       assert.strictEqual(repositoryService.isLocked(target, 'Справочник.Контрагенты'), true);
     });
@@ -932,7 +932,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       pickAnswers = [false];
       inputAnswer = '125';
 
-      await vscode.commands.executeCommand('v8vscedit.repository.update', catalogNode(true));
+      await vscode.commands.executeCommand('onecdev.repository.update', catalogNode(true));
 
       assert.strictEqual(inputBoxCalls, 0);
       assert.strictEqual(cliRequests.length, 1);
@@ -943,7 +943,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       pickAnswers = [false];
       inputAnswer = ' 125 ';
 
-      await vscode.commands.executeCommand('v8vscedit.repository.updateToVersion', catalogNode(true));
+      await vscode.commands.executeCommand('onecdev.repository.updateToVersion', catalogNode(true));
 
       assert.strictEqual(inputBoxCalls, 1);
       assert.strictEqual(cliRequests.length, 1);
@@ -958,8 +958,8 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
      * объекты применяются и без него, — поэтому вопрос не задаётся, ключ передаётся всегда.
      */
     [
-      { command: 'v8vscedit.repository.update', input: '' },
-      { command: 'v8vscedit.repository.updateToVersion', input: '9' },
+      { command: 'onecdev.repository.update', input: '' },
+      { command: 'onecdev.repository.updateToVersion', input: '9' },
     ].forEach(({ command, input }) => {
       test(`${command}: единственный вопрос — рекурсия, «-Force» передаётся всегда (issue #80)`, async () => {
         pickAnswers = [false];
@@ -974,12 +974,12 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     });
 
     ([
-      { command: 'v8vscedit.repository.lock', answers: [undefined], input: '' },
-      { command: 'v8vscedit.repository.unlock', answers: [undefined], input: '' },
-      { command: 'v8vscedit.repository.unlock', answers: [false, undefined], input: '' },
-      { command: 'v8vscedit.repository.update', answers: [undefined], input: '' },
-      { command: 'v8vscedit.repository.updateToVersion', answers: [], input: undefined },
-      { command: 'v8vscedit.repository.updateToVersion', answers: [undefined], input: '5' },
+      { command: 'onecdev.repository.lock', answers: [undefined], input: '' },
+      { command: 'onecdev.repository.unlock', answers: [undefined], input: '' },
+      { command: 'onecdev.repository.unlock', answers: [false, undefined], input: '' },
+      { command: 'onecdev.repository.update', answers: [undefined], input: '' },
+      { command: 'onecdev.repository.updateToVersion', answers: [], input: undefined },
+      { command: 'onecdev.repository.updateToVersion', answers: [undefined], input: '5' },
     ] as { command: string; answers: (boolean | undefined)[]; input: string | undefined }[]).forEach(({ command, answers, input }, index) => {
       test(`${command}: пользователь отменил диалог (вариант ${String(index + 1)}) → Конфигуратор не запускается`, async () => {
         pickAnswers = [...answers];
@@ -1029,10 +1029,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
 
     /** Команда и ответы на её вопросы, кроме вопроса о рекурсии. */
     const leafCommands: { command: string; answers: boolean[]; input?: string }[] = [
-      { command: 'v8vscedit.repository.lock', answers: [] },
-      { command: 'v8vscedit.repository.unlock', answers: [false] },
-      { command: 'v8vscedit.repository.update', answers: [] },
-      { command: 'v8vscedit.repository.updateToVersion', answers: [], input: '7' },
+      { command: 'onecdev.repository.lock', answers: [] },
+      { command: 'onecdev.repository.unlock', answers: [false] },
+      { command: 'onecdev.repository.update', answers: [] },
+      { command: 'onecdev.repository.updateToVersion', answers: [], input: '7' },
     ];
 
     leafCommands.forEach(({ command, answers, input }) => {
@@ -1105,7 +1105,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       } as unknown as CommandServices['repositoryCommitViewProvider'],
     });
 
-    await vscode.commands.executeCommand('v8vscedit.repository.commit', CF_NODE);
+    await vscode.commands.executeCommand('onecdev.repository.commit', CF_NODE);
 
     assert.strictEqual(showCalls, 1);
     assert.deepStrictEqual(events, []);
@@ -1178,7 +1178,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         listDatabaseExtensions: () => { listCalls += 1; return Promise.resolve(['EVOLC']); },
       });
 
-      await vscode.commands.executeCommand('v8vscedit.connectExtension');
+      await vscode.commands.executeCommand('onecdev.connectExtension');
 
       assert.strictEqual(listCalls, 0);
       assert.strictEqual(quickPickCalls, 0);
@@ -1197,7 +1197,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
       onQuickPick = () => { foreignLease = guard.tryAcquire('Синхронизация с хранилищем: Основная конфигурация'); };
 
-      await vscode.commands.executeCommand('v8vscedit.connectExtension');
+      await vscode.commands.executeCommand('onecdev.connectExtension');
 
       assert.strictEqual(quickPickCalls, 1);
       assert.deepStrictEqual(informationMessages, ['Операция с конфигурацией уже выполняется. Дождитесь её завершения.']);
@@ -1221,7 +1221,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         reloadEntries: () => Promise.resolve(),
       });
 
-      await vscode.commands.executeCommand('v8vscedit.connectExtension');
+      await vscode.commands.executeCommand('onecdev.connectExtension');
 
       assert.strictEqual(quickPickCalls, 2);
       assert.deepStrictEqual(errorMessages, []);
@@ -1256,7 +1256,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         },
       });
 
-      await vscode.commands.executeCommand('v8vscedit.connectExtension');
+      await vscode.commands.executeCommand('onecdev.connectExtension');
 
       assert.deepStrictEqual(observedDuringDecompile, { dirExists: true, heldBy: 'Подключение расширения EVOLC' });
       assert.strictEqual(fs.existsSync(path.join(extensionRoot, 'Configuration.xml')), true);
@@ -1291,7 +1291,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
           },
         });
 
-        await vscode.commands.executeCommand('v8vscedit.connectExtension');
+        await vscode.commands.executeCommand('onecdev.connectExtension');
 
         assert.strictEqual(dirExistedDuringDecompile, true);
         assert.strictEqual(fs.existsSync(extensionRoot), false);
@@ -1302,7 +1302,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
   });
 
   /**
-   * Issue #39: `v8vscedit.runThinClient` (DbCommands) должен пропускать запуск
+   * Issue #39: `onecdev.runThinClient` (DbCommands) должен пропускать запуск
    * тонкого клиента, когда предварительное обновление конфигураций отбилось
    * `busy`. `DbRunCommandRunner` не инжектируется (архитектор не выносил его в
    * deps для этой задачи) — наблюдаемый эффект «была ли реальная попытка
@@ -1347,7 +1347,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         getChangedConfigurations: () => [{ kind: 'cf', rootPath: EXAMPLE_CF, name: CF_NAME, changedFilesCount: 2 }],
       });
 
-      await vscode.commands.executeCommand('v8vscedit.runThinClient');
+      await vscode.commands.executeCommand('onecdev.runThinClient');
 
       assert.strictEqual(
         outputLines.some((line) => line.includes('[db-run]')),
@@ -1373,7 +1373,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         updateMainConfiguration: () => { updateRunnerCalls += 1; return Promise.resolve(true); },
       });
 
-      await vscode.commands.executeCommand('v8vscedit.runThinClient');
+      await vscode.commands.executeCommand('onecdev.runThinClient');
 
       assert.strictEqual(updateRunnerCalls, 1, 'исход "done" обязан быть получен через реальный вызов runner\'а обновления');
       assert.strictEqual(
@@ -1398,7 +1398,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         updateMainConfiguration: () => { updateRunnerCalls += 1; return Promise.resolve(false); },
       });
 
-      await vscode.commands.executeCommand('v8vscedit.runThinClient');
+      await vscode.commands.executeCommand('onecdev.runThinClient');
 
       assert.strictEqual(updateRunnerCalls, 1, 'исход "failed" обязан быть получен через реальный вызов runner\'а обновления');
       assert.strictEqual(
@@ -1441,7 +1441,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       (vscode.window as Pick<typeof vscode.window, 'showInformationMessage'>).showInformationMessage =
         () => Promise.resolve(undefined);
       try {
-        await vscode.commands.executeCommand('v8vscedit.runConfigurator');
+        await vscode.commands.executeCommand('onecdev.runConfigurator');
       } finally {
         (vscode.window as Pick<typeof vscode.window, 'showInformationMessage'>).showInformationMessage = originalShowInformationMessage;
       }
@@ -1455,7 +1455,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
   });
 
   /**
-   * Issue #39: MCP-мост `v8vscedit_execute_command` идёт через
+   * Issue #39: MCP-мост `onecdev_execute_command` идёт через
    * `vscode.commands.executeCommand`, поэтому попадает в ТЕ ЖЕ команды,
    * зарегистрированные выше на `servicesBox`/`depsProxy`. `registerConfigLifecycleTools`
    * читает из `McpRegistrationDeps` только `services`/`gate` для этого
@@ -1465,7 +1465,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
    * `paths`/`properties`/`mutations`/`xmlEditor`/`services` — структурные
    * заглушки, которых этот tool не касается.
    */
-  suite('MCP-мост v8vscedit_execute_command — общий guard и явный исход (issue #39)', () => {
+  suite('MCP-мост onecdev_execute_command — общий guard и явный исход (issue #39)', () => {
     let executeCommandTool: (args: Record<string, unknown>) => Promise<{ content: { type: string; text: string }[]; isError?: boolean }>;
 
     suiteSetup(() => {
@@ -1484,8 +1484,8 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         gate: new McpMutationGate({} as unknown as McpCommandServices),
       };
       registerConfigLifecycleTools(mockServer as unknown as McpServer, deps);
-      const tool = tools.get('v8vscedit_execute_command');
-      assert.ok(tool, 'v8vscedit_execute_command должен быть зарегистрирован');
+      const tool = tools.get('onecdev_execute_command');
+      assert.ok(tool, 'onecdev_execute_command должен быть зарегистрирован');
       executeCommandTool = tool.handler as typeof executeCommandTool;
     });
 
@@ -1497,7 +1497,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       return (result as { isError?: boolean }).isError === true;
     }
 
-    ['v8vscedit.importConfigurations', 'v8vscedit.updateChangedConfigurations'].forEach((command) => {
+    ['onecdev.importConfigurations', 'onecdev.updateChangedConfigurations'].forEach((command) => {
       test(`busy: "${command}" — {command, outcome:'busy', heldBy, result:false}, аренда цела`, async () => {
         const guard = new ConfigurationOperationGuard();
         const lease = guard.tryAcquire('Синхронизация с хранилищем: Основная конфигурация');
@@ -1525,10 +1525,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         markConfigurationsClean: () => undefined,
       });
 
-      const result = await executeCommandTool({ command: 'v8vscedit.updateChangedConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations' });
 
       assert.deepStrictEqual(extractResponse(result), {
-        command: 'v8vscedit.updateChangedConfigurations',
+        command: 'onecdev.updateChangedConfigurations',
         outcome: 'no-changes',
         result: true,
       });
@@ -1546,10 +1546,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
       depsBox.current = createDeps({ updateMainConfiguration: () => Promise.resolve(true) });
 
-      const result = await executeCommandTool({ command: 'v8vscedit.updateChangedConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations' });
 
       assert.deepStrictEqual(extractResponse(result), {
-        command: 'v8vscedit.updateChangedConfigurations',
+        command: 'onecdev.updateChangedConfigurations',
         outcome: 'done',
         completed: [CF_NAME],
         result: true,
@@ -1575,10 +1575,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         updateExtension: () => Promise.resolve(false),
       });
 
-      const result = await executeCommandTool({ command: 'v8vscedit.updateChangedConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations' });
 
       assert.deepStrictEqual(extractResponse(result), {
-        command: 'v8vscedit.updateChangedConfigurations',
+        command: 'onecdev.updateChangedConfigurations',
         outcome: 'failed',
         completed: [CF_NAME],
         stoppedAt: CFE_NAME,
@@ -1598,10 +1598,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
       depsBox.current = createDeps({ pickChangedConfigurations: () => Promise.resolve(undefined) });
 
-      const result = await executeCommandTool({ command: 'v8vscedit.updateChangedConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations' });
 
       assert.deepStrictEqual(extractResponse(result), {
-        command: 'v8vscedit.updateChangedConfigurations',
+        command: 'onecdev.updateChangedConfigurations',
         outcome: 'cancelled',
         result: false,
       });
@@ -1613,10 +1613,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         treeProvider: { getEntries: () => [] } as unknown as CommandServices['treeProvider'],
       });
 
-      const result = await executeCommandTool({ command: 'v8vscedit.importConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations' });
 
       assert.deepStrictEqual(extractResponse(result), {
-        command: 'v8vscedit.importConfigurations',
+        command: 'onecdev.importConfigurations',
         outcome: 'no-targets',
         result: false,
       });
@@ -1629,10 +1629,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
       depsBox.current = createDeps({ pickImportTargets: () => Promise.resolve(undefined) });
 
-      const result = await executeCommandTool({ command: 'v8vscedit.importConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations' });
 
       assert.deepStrictEqual(extractResponse(result), {
-        command: 'v8vscedit.importConfigurations',
+        command: 'onecdev.importConfigurations',
         outcome: 'cancelled',
         result: false,
       });
@@ -1660,10 +1660,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         decompileExtension: () => Promise.resolve(true),
       });
 
-      const result = await executeCommandTool({ command: 'v8vscedit.importConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations' });
 
       assert.deepStrictEqual(extractResponse(result), {
-        command: 'v8vscedit.importConfigurations',
+        command: 'onecdev.importConfigurations',
         outcome: 'done',
         completed: [CF_NAME, CFE_NAME],
         result: true,
@@ -1680,12 +1680,12 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
 
       test('успешный refresh — {outcome:"done", completed:[], result:true}, команда вызвана 1 раз', async () => {
         let calls = 0;
-        disposable = vscode.commands.registerCommand('v8vscedit.refresh', () => { calls += 1; });
+        disposable = vscode.commands.registerCommand('onecdev.refresh', () => { calls += 1; });
 
-        const result = await executeCommandTool({ command: 'v8vscedit.refresh' });
+        const result = await executeCommandTool({ command: 'onecdev.refresh' });
 
         assert.deepStrictEqual(extractResponse(result), {
-          command: 'v8vscedit.refresh',
+          command: 'onecdev.refresh',
           outcome: 'done',
           completed: [],
           result: true,
@@ -1694,11 +1694,11 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
 
       test('refresh бросил исключение — isError:true, текст ошибки', async () => {
-        disposable = vscode.commands.registerCommand('v8vscedit.refresh', () => {
+        disposable = vscode.commands.registerCommand('onecdev.refresh', () => {
           throw new Error('x');
         });
 
-        const result = await executeCommandTool({ command: 'v8vscedit.refresh' });
+        const result = await executeCommandTool({ command: 'onecdev.refresh' });
 
         assert.strictEqual(isErrorResult(result), true);
         assert.strictEqual(result.content[0].text, 'x');
@@ -1725,14 +1725,14 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     const target: RepositoryTarget = { configRoot: EXAMPLE_CF, configKind: 'cf', displayName: 'Основная конфигурация' };
 
     const cases: { command: string; cli: string; title: string }[] = [
-      { command: 'v8vscedit.repository.connect', cli: 'repository-bind', title: 'Подключение к хранилищу: Основная конфигурация' },
-      { command: 'v8vscedit.repository.create', cli: 'repository-create', title: 'Создание хранилища: Основная конфигурация' },
-      { command: 'v8vscedit.repository.disconnect', cli: 'repository-unbind', title: 'Отключение от хранилища: Основная конфигурация' },
-      { command: 'v8vscedit.repository.addUser', cli: 'repository-add-user', title: 'Пользователь хранилища: Основная конфигурация' },
-      { command: 'v8vscedit.repository.copyUsers', cli: 'repository-copy-users', title: 'Копирование пользователей: Основная конфигурация' },
-      { command: 'v8vscedit.repository.dump', cli: 'repository-dump', title: 'Выгрузка версии: Основная конфигурация' },
-      { command: 'v8vscedit.repository.report', cli: 'repository-report', title: 'Отчёт по хранилищу: Основная конфигурация' },
-      { command: 'v8vscedit.repository.setLabel', cli: 'repository-set-label', title: 'Установка метки: Основная конфигурация' },
+      { command: 'onecdev.repository.connect', cli: 'repository-bind', title: 'Подключение к хранилищу: Основная конфигурация' },
+      { command: 'onecdev.repository.create', cli: 'repository-create', title: 'Создание хранилища: Основная конфигурация' },
+      { command: 'onecdev.repository.disconnect', cli: 'repository-unbind', title: 'Отключение от хранилища: Основная конфигурация' },
+      { command: 'onecdev.repository.addUser', cli: 'repository-add-user', title: 'Пользователь хранилища: Основная конфигурация' },
+      { command: 'onecdev.repository.copyUsers', cli: 'repository-copy-users', title: 'Копирование пользователей: Основная конфигурация' },
+      { command: 'onecdev.repository.dump', cli: 'repository-dump', title: 'Выгрузка версии: Основная конфигурация' },
+      { command: 'onecdev.repository.report', cli: 'repository-report', title: 'Отчёт по хранилищу: Основная конфигурация' },
+      { command: 'onecdev.repository.setLabel', cli: 'repository-set-label', title: 'Установка метки: Основная конфигурация' },
     ];
 
     setup(() => {
@@ -1757,7 +1757,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       };
       stubsRef.showSaveDialog = () => {
         dialogCalls.push('showSaveDialog');
-        return Promise.resolve(vscode.Uri.file(path.join(os.tmpdir(), 'v8vscedit-repo-dump.cf')));
+        return Promise.resolve(vscode.Uri.file(path.join(os.tmpdir(), 'onecdev-repo-dump.cf')));
       };
 
       const guard = new ConfigurationOperationGuard();
@@ -1837,7 +1837,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     test('узел не корень конфигурации — предупреждение, guard не проверяется, Конфигуратор не запускается', async () => {
       const lease = servicesBox.current.configurationOperationGuard.tryAcquire('Импорт конфигураций');
 
-      await vscode.commands.executeCommand('v8vscedit.repository.report', {
+      await vscode.commands.executeCommand('onecdev.repository.report', {
         xmlPath: path.join(EXAMPLE_CF, 'Catalogs', 'Контрагенты.xml'),
         nodeKind: 'Catalog',
       });
@@ -1850,8 +1850,8 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     });
 
     [
-      { command: 'v8vscedit.repository.report', cli: 'repository-report', ran: false },
-      { command: 'v8vscedit.repository.connect', cli: 'repository-bind', ran: true },
+      { command: 'onecdev.repository.report', cli: 'repository-report', ran: false },
+      { command: 'onecdev.repository.connect', cli: 'repository-bind', ran: true },
     ].forEach(({ command, cli, ran }) => {
       test(`${command}: подключения к хранилищу нет — ${ran ? 'подключение его и не требует, «' + cli + '» выполняется' : 'предупреждение, Конфигуратор не запускается'}`, async () => {
         servicesBox.current = {
@@ -1886,7 +1886,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         };
         stubsRef.showQuickPick = ((items: readonly { value: boolean }[]) => Promise.resolve(pick(items))) as unknown as typeof vscode.window.showQuickPick;
 
-        await vscode.commands.executeCommand('v8vscedit.repository.disconnect', CF_NODE);
+        await vscode.commands.executeCommand('onecdev.repository.disconnect', CF_NODE);
 
         assert.strictEqual(requests.length, 1);
         assert.deepStrictEqual(requests[0].extraArgs, extraArgs);

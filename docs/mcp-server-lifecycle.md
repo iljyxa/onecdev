@@ -14,8 +14,8 @@
    старт (reload окна, переактивация) видит порт как занятый спустя долгое время после `stop()`.
 2. **Расширение молча занимало соседний порт.** Старая версия `V8McpServer.start()` при `EADDRINUSE`
    инкрементировала порт и пробовала следующий — агент подключался не туда, куда указывала настройка
-   `v8vscedit.mcp.port`, без предупреждения. Ситуация особенно опасна, если порт занят MCP-сервером
-   **другого** проекта v8vscedit: агент получил бы доступ к чужой конфигурации 1С.
+   `onecdev.mcp.port`, без предупреждения. Ситуация особенно опасна, если порт занят MCP-сервером
+   **другого** проекта onecdev: агент получил бы доступ к чужой конфигурации 1С.
 
 ## Архитектура по слоям
 
@@ -23,7 +23,7 @@
 
 | Модуль | Ответственность |
 |---|---|
-| `McpServerIdentity.ts` | Форма идентичности `{ product, protocol, pid, projectRoot, version, endpoint }`, публикуемая на `/identity`. `PRODUCT_ID = 'v8vscedit-mcp'`, `IDENTITY_PROTOCOL = 1` (инкрементируется при несовместимом изменении формы). `serializeIdentity`/`parseIdentity` — сериализация и **строгая** валидация: любое несовпадающее поле, неверный тип или не-JSON-объект даёт `undefined`, а не «похоже на наш сервер». |
+| `McpServerIdentity.ts` | Форма идентичности `{ product, protocol, pid, projectRoot, version, endpoint }`, публикуемая на `/identity`. `PRODUCT_ID = 'onecdev-mcp'`, `IDENTITY_PROTOCOL = 1` (инкрементируется при несовместимом изменении формы). `serializeIdentity`/`parseIdentity` — сериализация и **строгая** валидация: любое несовпадающее поле, неверный тип или не-JSON-объект даёт `undefined`, а не «похоже на наш сервер». |
 | `McpStartDecision.ts` | `decideMcpStart(probe, currentProjectRoot) → 'reuse' \| 'conflict-foreign' \| 'conflict-unknown'`. Чужой `product` → `conflict-unknown`; свой `product`, но другой `projectRoot` (после нормализации хвостового разделителя пути) → `conflict-foreign` с занявшим `occupant`; тот же `projectRoot` → `reuse` с его `endpoint`. |
 | `McpPortProbe.ts` | Реальный сетевой I/O: `probeIdentity(host, port)` — `GET /identity` с таймаутом, `requestShutdown(host, port)` — `POST /shutdown`, `waitForPortRelease(host, port)` — поллинг реального `bind` до освобождения порта, `reclaimPort(host, port)` = `requestShutdown` → `waitForPortRelease`. Единственная «внешняя система» этого модуля — сам порт ОС, поэтому он законно живёт в `infra/` с `http`/`net`, но без `vscode`. |
 | `McpConflictPrompt.ts` | Чистое построение текста/действий диалога конфликта (`buildMcpConflictPrompt`) и разбор выбора пользователя (`resolveMcpConflictAction`) — вынесено из `Container`, чтобы соответствие «тип конфликта → текст/кнопки» проверялось unit-тестом без реального `vscode.window.showWarningMessage`. |
@@ -77,7 +77,7 @@ stop(): Promise<void>;
   `endpoint` (для `reuse` — endpoint инстанса-владельца, «adopted»).
 - `conflict-foreign` — `buildMcpConflictPrompt` формирует сообщение с `projectRoot` занявшего процесса и
   две кнопки: «Принудительно закрыть и запустить» → `mcpServer.forceRestart(options)` (```reclaimPort```
-  → повторный `start`), «Сменить порт» → `workbench.action.openSettings` на `v8vscedit.mcp.port`.
+  → повторный `start`), «Сменить порт» → `workbench.action.openSettings` на `onecdev.mcp.port`.
 - `conflict-unknown` (порт занят процессом, не отвечающим нашим `/identity`) — только кнопка «Сменить
   порт»; принудительно гасить чужой процесс расширение не пытается.
 
@@ -86,7 +86,7 @@ unit-тестом без extension host; в `Container` остаётся тол�
 `vscode.window.showWarningMessage`.
 
 Тот же путь (`start` → `handleMcpStartResult`) используется и при рестарте по смене настройки
-`v8vscedit.mcp` (`wireMcpConfigurationWatcher`: `stop()` → `startMcpServer()`), и при ручном запуске из
+`onecdev.mcp` (`wireMcpConfigurationWatcher`: `stop()` → `startMcpServer()`), и при ручном запуске из
 панели AI (`AiMcpViewProvider` → `startMcpServer(true)` с `force=true`, минуя проверку
 `mcp.enabled`).
 
@@ -115,7 +115,7 @@ unit-тестом без extension host; в `Container` остаётся тол�
   `start()` просто вернёт новый `McpStartResult`, и `handleMcpStartResult` покажет диалог заново;
   бесконечного цикла нет, но пользователю придётся нажать «Принудительно закрыть и запустить» столько
   раз, сколько потребуется портy освободиться.
-- Описание настройки `v8vscedit.mcp.port` в `package.json` ("Если порт занят, расширение попробует
+- Описание настройки `onecdev.mcp.port` в `package.json` ("Если порт занят, расширение попробует
   следующие порты") **устарело** после отказа от авто-инкремента — актуальное поведение см. выше
   («Разрешение конфликта порта при старте»); правка самого текста настройки вне области ответственности
   этого документа (правка `package.json` — задача разработчика/архитектора, не документатора).

@@ -42,16 +42,16 @@ suite('UniversalPanelViewProvider — команда «Получить верс
   test('узел подключён к хранилищу — updateToVersion сразу после repository.update', () => {
     const commands = createProvider().getNodeActions(catalogNode('Catalog-hasXml-repoConnected-repoUnlocked')).map((action) => action.command);
 
-    const updateIndex = commands.indexOf('v8vscedit.repository.update');
+    const updateIndex = commands.indexOf('onecdev.repository.update');
     assert.ok(updateIndex >= 0, commands.join(', '));
-    assert.strictEqual(commands[updateIndex + 1], 'v8vscedit.repository.updateToVersion');
+    assert.strictEqual(commands[updateIndex + 1], 'onecdev.repository.updateToVersion');
   });
 
   test('узел без подключения к хранилищу — ни получения, ни получения версии', () => {
     const commands = createProvider().getNodeActions(catalogNode('Catalog-hasXml')).map((action) => action.command);
 
-    assert.ok(!commands.includes('v8vscedit.repository.update'), commands.join(', '));
-    assert.ok(!commands.includes('v8vscedit.repository.updateToVersion'), commands.join(', '));
+    assert.ok(!commands.includes('onecdev.repository.update'), commands.join(', '));
+    assert.ok(!commands.includes('onecdev.repository.updateToVersion'), commands.join(', '));
   });
 });
 
@@ -74,7 +74,7 @@ suite('UniversalPanelViewProvider — статусы захватов (issue #6)
   for (const [title, node] of withRefresh) {
     test(`refreshLocks есть: ${title}`, () => {
       const commands = createProvider().getNodeActions(node).map((action) => action.command);
-      assert.ok(commands.includes('v8vscedit.repository.refreshLocks'), commands.join(', '));
+      assert.ok(commands.includes('onecdev.repository.refreshLocks'), commands.join(', '));
     });
   }
 
@@ -85,7 +85,7 @@ suite('UniversalPanelViewProvider — статусы захватов (issue #6)
   for (const [title, node] of withoutRefresh) {
     test(`refreshLocks нет: ${title}`, () => {
       const commands = createProvider().getNodeActions(node).map((action) => action.command);
-      assert.ok(!commands.includes('v8vscedit.repository.refreshLocks'), commands.join(', '));
+      assert.ok(!commands.includes('onecdev.repository.refreshLocks'), commands.join(', '));
     });
   }
 

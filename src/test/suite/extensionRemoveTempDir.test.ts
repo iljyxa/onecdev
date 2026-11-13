@@ -54,7 +54,7 @@ suite('ExtensionCommandRunner — removeTempDir (issue #104)', () => {
   });
 
   test('отсутствующий каталог — без исключения, лог пуст', () => {
-    const tempRoot = path.join(makeWorkspace(), '.v8vscedit', 'import-temp', 'нет-такого');
+    const tempRoot = path.join(makeWorkspace(), '.onecdev', 'import-temp', 'нет-такого');
     const output = createOutput();
     configurationProcessPort.removeTempDir(tempRoot, output.channel);
     assert.deepStrictEqual(output.lines, []);

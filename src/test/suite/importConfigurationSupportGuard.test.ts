@@ -27,7 +27,7 @@ interface TempLayout {
 
 /** Каталог выгрузки, в котором гарду нужен только `Ext/ParentConfigurations.bin`. */
 function makeConfigDir(bin: { copyFrom: string } | { text: string } | undefined): TempLayout {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-import-guard-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-import-guard-'));
   const configDir = path.join(tempDir, 'cf');
   fs.mkdirSync(path.join(configDir, 'Ext'), { recursive: true });
   const binPath = path.join(configDir, 'Ext', 'ParentConfigurations.bin');

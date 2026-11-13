@@ -144,7 +144,7 @@ function buildFlowchart(version: string): string {
 }
 
 function buildGraphicalTemplate(version: string): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-gs-tpl-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-gs-tpl-'));
   const ensure: (dir: string, type: TemplateType, version: string, ruleset?: FormatRuleset) => string[] = ensureTemplateContentFiles;
   const created = ensure(dir, 'GraphicalSchema', version, resolveFormatRuleset(version));
   assert.strictEqual(created.length, 1, 'GraphicalSchema создаёт ровно один Ext/Template.xml');
@@ -340,7 +340,7 @@ suite('Схема бизнес-процесса: MetadataXmlCreator.addRootObjec
         // Эталонной схемы этой генерации в корпусе нет (корпус форка) — сверять не с чем.
         this.skip();
       }
-      const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-bp-flowchart-'));
+      const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-bp-flowchart-'));
       fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), [
         '<?xml version="1.0" encoding="utf-8"?>',
         `<MetaDataObject version="${version}">`,
@@ -398,7 +398,7 @@ suite('Макеты: ensureTemplateContentFiles × все 8 TemplateType (T-A1.9
 
   for (const type of Object.keys(EXPECTED) as TemplateType[]) {
     test(`${type}: файлы созданы, декларация UTF-8, повторный вызов ничего не перезаписывает`, () => {
-      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-tpl-all-'));
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-tpl-all-'));
       const created = ensureTemplateContentFiles(dir, type, '2.21');
       assert.deepStrictEqual(
         created.map((f) => path.relative(dir, f).split(path.sep).join('/')).sort(),

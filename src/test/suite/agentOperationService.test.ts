@@ -67,13 +67,13 @@ suite('AgentOperationService', () => {
 
   test('считает уже подключенную базу успешным connect-ib и выполняет команду операции', async () => {
     const transport = new FakeTransport(new Error('Соединение с информационной базой уже\nустановлено'));
-    const service = new AgentOperationService('/tmp/v8vscedit-test-project', new FakeTransportFactory(transport));
+    const service = new AgentOperationService('/tmp/onecdev-test-project', new FakeTransportFactory(transport));
     const messages: string[] = [];
 
     await service.updateDatabaseConfiguration({
       kind: 'cf',
       name: 'Основная',
-      rootPath: '/tmp/v8vscedit-test-project/src/cf',
+      rootPath: '/tmp/onecdev-test-project/src/cf',
     }, {
       onMessage: (message) => messages.push(message),
     });
@@ -156,7 +156,7 @@ suite('AgentOperationService', () => {
 
       await service.loadChangedAndUpdate({ kind: 'cf', name: 'Основная', rootPath: configRoot });
 
-      const agentRoot = path.join(tempRoot, '.v8vscedit', 'agent', '0', 'workspace', 'cf', 'cf');
+      const agentRoot = path.join(tempRoot, '.onecdev', 'agent', '0', 'workspace', 'cf', 'cf');
       // Изменённый модуль скопирован.
       assert.strictEqual(fs.existsSync(path.join(agentRoot, 'Documents', 'Заказ', 'Ext', 'ObjectModule.bsl')), true);
       // Раньше тест требовал, чтобы НЕизменённый модуль отсутствовал в воркспейсе — это и приводило
@@ -232,7 +232,7 @@ suite('AgentOperationService', () => {
       const service = new AgentOperationService(tempRoot, new FakeTransportFactory(transport));
       await service.loadChangedAndUpdate({ kind: 'cf', name: 'Основная', rootPath: configRoot });
 
-      const agentRoot = path.join(tempRoot, '.v8vscedit', 'agent', '0', 'workspace', 'cf', 'cf');
+      const agentRoot = path.join(tempRoot, '.onecdev', 'agent', '0', 'workspace', 'cf', 'cf');
       assert.strictEqual(
         fs.existsSync(path.join(agentRoot, 'Configuration.xml')),
         true,
@@ -380,9 +380,9 @@ suite('AgentOperationService — dumpToDirectory (issue #1)', () => {
       const listFileMatch = /--list-file=("[^"]*"|\S+)/.exec(dumpCommand);
       assert.ok(listFileMatch, 'Аргумент --list-file должен присутствовать в команде.');
       // Пути в командах агента задаются относительно его файлового корня
-      // `<projectRoot>/.v8vscedit/agent/0` (AgentWorkspaceService.toAgentPath) —
+      // `<projectRoot>/.onecdev/agent/0` (AgentWorkspaceService.toAgentPath) —
       // абсолютный путь сломал бы SSH-режим агента.
-      const listFilePath = path.join(tempRoot, '.v8vscedit', 'agent', '0', listFileMatch[1].replace(/^"|"$/g, ''));
+      const listFilePath = path.join(tempRoot, '.onecdev', 'agent', '0', listFileMatch[1].replace(/^"|"$/g, ''));
       assert.ok(fs.existsSync(listFilePath), `Файл списка объектов должен существовать: ${listFilePath}`);
       const listContent = fs.readFileSync(listFilePath, 'utf-8');
       fullNames.forEach((fullName) => assert.ok(listContent.includes(fullName), `Список должен содержать "${fullName}".`));

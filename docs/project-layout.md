@@ -111,7 +111,7 @@ src/
 │   │   │                              # changesHistorySection (чистый helper состояния блока
 │   │   │                              # «История» поверх views/history/*, см. ниже) +
 │   │   │                              # MetadataChangesViewProvider (ЕДИНСТВЕННЫЙ webview-провайдер
-│   │   │                              # v8vsceditChanges — панель с ДВУМЯ сворачиваемыми блоками
+│   │   │                              # onecdevChanges — панель с ДВУМЯ сворачиваемыми блоками
 │   │   │                              # «Изменения»/«История»; дерево «Изменения» повторяет иерархию
 │   │   │                              # навигатора через treeProvider; см. docs/git-metadata-changes.md
 │   │   │                              # и docs/git-history-graph.md)

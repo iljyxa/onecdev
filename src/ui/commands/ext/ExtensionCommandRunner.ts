@@ -127,7 +127,7 @@ let activeOperationCount = 0;
 
 export function isAgentConfigurationOperationMode(): boolean {
   const mode = vscode.workspace
-    .getConfiguration('v8vscedit.configuration')
+    .getConfiguration('onecdev.configuration')
     .get<string>('operationMode', 'batch');
   return mode === 'agent';
 }
@@ -1104,7 +1104,7 @@ async function runAgentConfigurationOperation(
 
 function logAgentDiagnostics(workspaceFolder: vscode.WorkspaceFolder, outputChannel: vscode.OutputChannel): void {
   const workspaceRoot = workspaceFolder.uri.fsPath;
-  const agentBaseDir = path.join(workspaceRoot, '.v8vscedit', 'agent');
+  const agentBaseDir = path.join(workspaceRoot, '.onecdev', 'agent');
   outputChannel.appendLine(`[agent][diag] Каталог агента: ${agentBaseDir}`);
   // Сам конфигуратор пишет дамп в `~/.1cv8/1C/1cv8/dumps` либо в каталог временных файлов платформы.
   // Здесь сообщаем только то, что мы заведомо знаем — служебный каталог расширения.
@@ -1136,7 +1136,7 @@ async function startAgentOperationService(
   let agentProcess: DesignerAgentProcess | undefined;
   if (agentSettings.autoStart) {
     agentProcess = new DesignerAgentProcess();
-    const agentBaseDir = path.join(workspaceRoot, '.v8vscedit', 'agent');
+    const agentBaseDir = path.join(workspaceRoot, '.onecdev', 'agent');
     fs.mkdirSync(agentBaseDir, { recursive: true });
     const args = buildAgentStartLogArgs(toDesignerAgentConnection(connection), agentSettings, agentBaseDir);
     outputChannel.appendLine(`[agent] Запуск конфигуратора: ${args.join(' ')}`);
@@ -1201,7 +1201,7 @@ function createAgentOperationServiceEntry(
 }
 
 function readAgentCommandSettings(connection: ConnectionParams): AgentCommandSettings {
-  const config = vscode.workspace.getConfiguration('v8vscedit.agent');
+  const config = vscode.workspace.getConfiguration('onecdev.agent');
   const rawModeArgs = config.get<string>('agentModeArgs', '');
   const configuredUser = config.get<string>('user', '').trim();
   return {
@@ -1462,7 +1462,7 @@ function replaceDirectorySnapshot(sourceDir: string, targetDir: string): boolean
 
   const backupDir = path.join(
     targetParent,
-    `.${path.basename(targetDir)}.v8vscedit-backup-${String(process.pid)}-${String(Date.now())}`
+    `.${path.basename(targetDir)}.onecdev-backup-${String(process.pid)}-${String(Date.now())}`
   );
   let targetMoved = false;
 

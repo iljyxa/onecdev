@@ -63,7 +63,7 @@ suite('CLI dump-cfe-all — parseDumpCfeAllArgs (guard-ветки без под�
   let outputDir: string;
 
   setup(() => {
-    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-dump-cfe-all-args-')));
+    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-dump-cfe-all-args-')));
     outputDir = path.join(tempDir, 'out');
     fs.mkdirSync(outputDir);
   });
@@ -146,7 +146,7 @@ suite('CLI load-cfe-all — parseLoadCfeAllArgs (guard-ветки без под�
   let inputDir: string;
 
   setup(() => {
-    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-load-cfe-all-args-')));
+    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-load-cfe-all-args-')));
     inputDir = path.join(tempDir, 'in');
     fs.mkdirSync(inputDir);
   });

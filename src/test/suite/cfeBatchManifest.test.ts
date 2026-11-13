@@ -108,7 +108,7 @@ suite('CfeBatchManifest.parseCfeManifest — недоверчивый разбо
     const text = JSON.stringify({
       version: 1,
       createdAt: '2026-09-29T00:00:00.000Z',
-      generator: 'v8vscedit',
+      generator: 'onecdev',
       items: [{ extensionName: 'EVOLC', fileName: 'EVOLC.cfe', status: 'ok', sizeBytes: 5, note: 'заметка' }],
     });
     const parsed = parseCfeManifest(text);
@@ -159,7 +159,7 @@ suite('CfeBatchManifest.readCfeManifest / writeCfeManifest — на реальн
   let dir: string;
 
   setup(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-manifest-'));
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-manifest-'));
   });
 
   teardown(() => {

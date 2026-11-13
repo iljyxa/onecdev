@@ -14,7 +14,7 @@ export function registerInstallAiSkillsCommand(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.installAiSkills', async () => {
+    vscode.commands.registerCommand('onecdev.installAiSkills', async () => {
       const platform = await pickPlatform(services.workspaceFolder.uri.fsPath);
       if (!platform) {
         return;
@@ -23,7 +23,7 @@ export function registerInstallAiSkillsCommand(
       const targetDir = path.join(services.workspaceFolder.uri.fsPath, ...platform.targetPrefix.split('/'));
       if (hasExistingRoleFiles(targetDir, platform)) {
         const confirmed = await vscode.window.showWarningMessage(
-          `Файлы ролей v8vscedit в ${platform.targetPrefix}/ будут обновлены.`,
+          `Файлы ролей onecdev в ${platform.targetPrefix}/ будут обновлены.`,
           { modal: true },
           'Обновить'
         );
@@ -80,7 +80,7 @@ async function pickPlatform(projectRoot: string): Promise<AiSkillsPlatform | und
   const items = AI_SKILLS_PLATFORMS.map((platform): PlatformPickItem => ({
     label: platform.label,
     description: hasExistingRoleFiles(path.join(projectRoot, ...platform.targetPrefix.split('/')), platform)
-      ? `${platform.targetPrefix} — роли v8vscedit уже установлены, будут обновлены`
+      ? `${platform.targetPrefix} — роли onecdev уже установлены, будут обновлены`
       : platform.targetPrefix,
     platform,
   }));

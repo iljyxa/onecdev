@@ -52,7 +52,7 @@ interface SubsystemInitialState {
  * Отправляет начальное состояние и обрабатывает сообщения через xmlService.
  */
 export class SubsystemEditorViewProvider implements vscode.Disposable {
-  static readonly viewType = 'v8vsceditSubsystemEditor';
+  static readonly viewType = 'onecdevSubsystemEditor';
 
   private panel: vscode.WebviewPanel | undefined;
   private htmlFactory: WebviewHtmlFactory;

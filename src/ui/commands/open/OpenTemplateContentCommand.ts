@@ -10,7 +10,7 @@ export function registerOpenTemplateContentCommand(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.openTemplateContent', async (node: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.openTemplateContent', async (node: NodeArg) => {
       if (!node.xmlPath) {
         return;
       }

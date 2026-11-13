@@ -1,7 +1,7 @@
 /**
  * P1b: `src-ui/apps/tree-search/TreeSearchApp.vue` вызывает `executeCommand(id)`
  * с рядом устаревших идентификаторов команд, которых нет в
- * `package.json contributes.commands` — т.е. `v8vscedit.commands.executeCommand`
+ * `package.json contributes.commands` — т.е. `onecdev.commands.executeCommand`
  * в `TreeSearchViewProvider.handleMessage` реально их не выполнит: команда не
  * пройдёт allowlist `isWebviewCommandAllowed` (id физически не в списке
  * зарегистрированных, `vscode.commands.getCommands(true)` его не вернёт).
@@ -10,7 +10,7 @@
  *
  * Список id извлекается не хардкодом, а реальным парсингом исходника Vue —
  * единственный паттерн вызова команд в этом компоненте: literal-строка внутри
- * `executeCommand('v8vscedit....')`. Так тест не разъезжается с кодом при
+ * `executeCommand('onecdev....')`. Так тест не разъезжается с кодом при
  * будущих правках компонента и одновременно детерминирован (в файле нет
  * динамических построений id).
  */
@@ -58,9 +58,9 @@ suite('TreeSearchApp.vue — идентификаторы команд webview (
 
     const missing = usedIds.filter((id) => !declaredIds.has(id));
 
-    // Красный ожидаемо: v8vscedit.decompileExtension, v8vscedit.environmentSettings,
-    // v8vscedit.startStandaloneServer, v8vscedit.stopStandaloneServer,
-    // v8vscedit.openStandaloneServerLog, v8vscedit.openStandaloneServer
+    // Красный ожидаемо: onecdev.decompileExtension, onecdev.environmentSettings,
+    // onecdev.startStandaloneServer, onecdev.stopStandaloneServer,
+    // onecdev.openStandaloneServerLog, onecdev.openStandaloneServer
     // отсутствуют в package.json (их заменили другими id в других местах, но
     // TreeSearchApp.vue не обновили).
     assert.deepStrictEqual(
@@ -75,14 +75,14 @@ suite('TreeSearchApp.vue — идентификаторы команд webview (
     // src/ui/commands/**) — то, чем TreeSearchApp.vue должен вызывать
     // соответствующие действия после исправления P1b.
     const expectedActualIds = [
-      'v8vscedit.importConfigurations',
-      'v8vscedit.runThinClient',
-      'v8vscedit.runConfigurator',
-      'v8vscedit.configureEnvironment',
-      'v8vscedit.standalone.start',
-      'v8vscedit.standalone.stop',
-      'v8vscedit.standalone.showLog',
-      'v8vscedit.standalone.openWebClient',
+      'onecdev.importConfigurations',
+      'onecdev.runThinClient',
+      'onecdev.runConfigurator',
+      'onecdev.configureEnvironment',
+      'onecdev.standalone.start',
+      'onecdev.standalone.stop',
+      'onecdev.standalone.showLog',
+      'onecdev.standalone.openWebClient',
     ];
     const declaredIds = readDeclaredCommandIds();
 
@@ -94,14 +94,14 @@ suite('TreeSearchApp.vue — идентификаторы команд webview (
   test('isWebviewCommandAllowed допускает каждый актуальный id при реальном списке зарегистрированных команд', () => {
     const declaredIds = [...readDeclaredCommandIds()];
     const expectedActualIds = [
-      'v8vscedit.importConfigurations',
-      'v8vscedit.runThinClient',
-      'v8vscedit.runConfigurator',
-      'v8vscedit.configureEnvironment',
-      'v8vscedit.standalone.start',
-      'v8vscedit.standalone.stop',
-      'v8vscedit.standalone.showLog',
-      'v8vscedit.standalone.openWebClient',
+      'onecdev.importConfigurations',
+      'onecdev.runThinClient',
+      'onecdev.runConfigurator',
+      'onecdev.configureEnvironment',
+      'onecdev.standalone.start',
+      'onecdev.standalone.stop',
+      'onecdev.standalone.showLog',
+      'onecdev.standalone.openWebClient',
     ];
 
     for (const id of expectedActualIds) {
@@ -115,16 +115,16 @@ suite('TreeSearchApp.vue — идентификаторы команд webview (
 
   test('устаревшие id, которые сейчас отправляет TreeSearchApp.vue, guard отклоняет как незарегистрированные', () => {
     // Прямое подтверждение практического следствия бага P1b: даже если бы
-    // guard пропустил произвольный v8vscedit.*-префикс, эти id физически не
+    // guard пропустил произвольный onecdev.*-префикс, эти id физически не
     // зарегистрированы в системе — команда no-op с точки зрения пользователя.
     const declaredIds = [...readDeclaredCommandIds()];
     const legacyIds = [
-      'v8vscedit.decompileExtension',
-      'v8vscedit.environmentSettings',
-      'v8vscedit.startStandaloneServer',
-      'v8vscedit.stopStandaloneServer',
-      'v8vscedit.openStandaloneServerLog',
-      'v8vscedit.openStandaloneServer',
+      'onecdev.decompileExtension',
+      'onecdev.environmentSettings',
+      'onecdev.startStandaloneServer',
+      'onecdev.stopStandaloneServer',
+      'onecdev.openStandaloneServerLog',
+      'onecdev.openStandaloneServer',
     ];
 
     for (const id of legacyIds) {

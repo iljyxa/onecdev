@@ -73,7 +73,7 @@ suite('MetadataMutationService — проверка SupportMode.Locked при ad
   let configRoot: string;
 
   setup(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-add-support-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-add-support-'));
     configRoot = path.join(tempDir, 'cf');
     fs.mkdirSync(configRoot, { recursive: true });
   });

@@ -6,7 +6,7 @@
  * `afterMutation` (~строка 1911) гардит исключительно `changedFiles.length===0`,
  * а не факт успеха мутации.
  *
- * Тест воспроизводит реальный call-site `v8vscedit_edit_role`
+ * Тест воспроизводит реальный call-site `onecdev_edit_role`
  * (V8McpServer.ts, ~строка 1201-1207):
  *   const result = this.services.roleRightsService.edit({ rightsPath, operations });
  *   this.afterMutation([...result.changedFiles]);
@@ -75,7 +75,7 @@ function createRoleTreeProvider(rightsXmlPath: string): MetadataTreeProvider {
     {
       label: 'Конфигурация',
       nodeKind: 'configuration',
-      xmlPath: '/tmp/v8vscedit-fixture/Configuration.xml',
+      xmlPath: '/tmp/onecdev-fixture/Configuration.xml',
       childrenLoader: () => [rolesGroup],
     },
     vscode.TreeItemCollapsibleState.Collapsed,
@@ -83,7 +83,7 @@ function createRoleTreeProvider(rightsXmlPath: string): MetadataTreeProvider {
 
   return {
     getAutomationRoots: () => [configurationRoot],
-    getEntries: () => [{ rootPath: '/tmp/v8vscedit-fixture', kind: 'cf' as const }],
+    getEntries: () => [{ rootPath: '/tmp/onecdev-fixture', kind: 'cf' as const }],
   } as unknown as MetadataTreeProvider;
 }
 
@@ -142,8 +142,8 @@ function createServices(
   return { services, spy };
 }
 
-suite('V8McpServer — v8vscedit_edit_role учитывает success результата мутации (5b)', () => {
-  const rightsXmlPath = '/tmp/v8vscedit-fixture/Roles/ТестоваяРоль/Ext/Rights.xml';
+suite('V8McpServer — onecdev_edit_role учитывает success результата мутации (5b)', () => {
+  const rightsXmlPath = '/tmp/onecdev-fixture/Roles/ТестоваяРоль/Ext/Rights.xml';
 
   test('success:false с непустым changedFiles: post-mutation путь НЕ должен запускаться', () => {
     // Синтетический результат: сервис успел записать файл (changedFiles непустой),
@@ -165,12 +165,12 @@ suite('V8McpServer — v8vscedit_edit_role учитывает success резул
     // Доработка жизненного цикла MCP-сервера (5c) добавляет обязательные
     // projectRoot/version в конструктор — этот тест конструирует V8McpServer
     // только чтобы вызвать приватный registerTools, поэтому значения фиктивны.
-    const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/v8vscedit-fixture', '0.0.0-test');
+    const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/onecdev-fixture', '0.0.0-test');
     const { tools, server: mockMcpServer } = createMockMcpServer();
     (server as unknown as { registerTools(mcp: unknown): void }).registerTools(mockMcpServer);
 
-    const tool = tools.get('v8vscedit_edit_role');
-    assert.ok(tool, 'v8vscedit_edit_role должен быть зарегистрирован');
+    const tool = tools.get('onecdev_edit_role');
+    assert.ok(tool, 'onecdev_edit_role должен быть зарегистрирован');
     tool.handler({
       path: 'Роли.ТестоваяРоль',
       operations: [{ op: 'revoke', object: 'Catalog.Тест', rights: ['Read'] }],
@@ -202,12 +202,12 @@ suite('V8McpServer — v8vscedit_edit_role учитывает success резул
       errors: [],
     };
     const { services, spy } = createServices(rightsXmlPath, okResult);
-    const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/v8vscedit-fixture', '0.0.0-test');
+    const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/onecdev-fixture', '0.0.0-test');
     const { tools, server: mockMcpServer } = createMockMcpServer();
     (server as unknown as { registerTools(mcp: unknown): void }).registerTools(mockMcpServer);
 
-    const tool = tools.get('v8vscedit_edit_role');
-    assert.ok(tool, 'v8vscedit_edit_role должен быть зарегистрирован');
+    const tool = tools.get('onecdev_edit_role');
+    assert.ok(tool, 'onecdev_edit_role должен быть зарегистрирован');
     tool.handler({
       path: 'Роли.ТестоваяРоль',
       operations: [{ op: 'revoke', object: 'Catalog.Тест', rights: ['Read'] }],
@@ -233,12 +233,12 @@ suite('V8McpServer — v8vscedit_edit_role учитывает success резул
       errors: [],
     };
     const { services, spy } = createServices(rightsXmlPath, noopResult);
-    const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/v8vscedit-fixture', '0.0.0-test');
+    const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/onecdev-fixture', '0.0.0-test');
     const { tools, server: mockMcpServer } = createMockMcpServer();
     (server as unknown as { registerTools(mcp: unknown): void }).registerTools(mockMcpServer);
 
-    const tool = tools.get('v8vscedit_edit_role');
-    assert.ok(tool, 'v8vscedit_edit_role должен быть зарегистрирован');
+    const tool = tools.get('onecdev_edit_role');
+    assert.ok(tool, 'onecdev_edit_role должен быть зарегистрирован');
     tool.handler({
       path: 'Роли.ТестоваяРоль',
       operations: [{ op: 'revoke', object: 'Catalog.Тест', rights: ['Read'] }],

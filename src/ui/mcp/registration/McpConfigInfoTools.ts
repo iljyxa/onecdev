@@ -17,7 +17,7 @@ export function registerConfigInfoTools(server: McpServer, deps: McpRegistration
   const { paths, services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_configuration_info',
+    'onecdev_configuration_info',
     {
       title: 'Информация о конфигурации',
       description: [
@@ -39,7 +39,7 @@ export function registerConfigInfoTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_validate_configuration',
+    'onecdev_validate_configuration',
     {
       title: 'Валидировать конфигурацию',
       description: [
@@ -60,7 +60,7 @@ export function registerConfigInfoTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_metadata_info',
+    'onecdev_metadata_info',
     {
       title: 'Информация об объекте метаданных',
       description: [
@@ -84,7 +84,7 @@ export function registerConfigInfoTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_validate_metadata',
+    'onecdev_validate_metadata',
     {
       title: 'Валидировать объект метаданных',
       description: [
@@ -119,7 +119,7 @@ export function registerConfigInfoTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_subsystem_info',
+    'onecdev_subsystem_info',
     {
       title: 'Информация о подсистеме',
       description: [
@@ -142,7 +142,7 @@ export function registerConfigInfoTools(server: McpServer, deps: McpRegistration
   );
 
   server.registerTool(
-    'v8vscedit_validate_subsystem',
+    'onecdev_validate_subsystem',
     {
       title: 'Валидировать подсистему',
       description: [

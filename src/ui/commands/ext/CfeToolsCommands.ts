@@ -25,10 +25,10 @@ const SLOT_TO_MODULE_PATH: Record<ModuleSlot, string> = {
 
 export function registerCfeToolsCommands(context: vscode.ExtensionContext, services: CommandServices): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.cfe.addMethodInterceptor', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.cfe.addMethodInterceptor', async (node: MetadataNode | undefined) => {
       await addMethodInterceptor(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.cfe.analyzeExtension', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.cfe.analyzeExtension', async (node: MetadataNode | undefined) => {
       await analyzeExtension(node, services);
     })
   );

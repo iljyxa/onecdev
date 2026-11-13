@@ -8,7 +8,7 @@ suite('envJsonTemplate.ensureEnvJson', () => {
   let dir: string;
 
   setup(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-env-'));
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-env-'));
   });
 
   teardown(() => {

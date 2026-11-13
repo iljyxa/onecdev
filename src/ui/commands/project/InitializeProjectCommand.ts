@@ -40,7 +40,7 @@ const GITIGNORE_RULES = [
   '.vscode/',
   '.cursor/',
   '.codex/',
-  '.v8vscedit/',
+  '.onecdev/',
 ] as const;
 
 /**
@@ -51,7 +51,7 @@ export function registerInitializeProjectCommand(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.initializeProject', async () => {
+    vscode.commands.registerCommand('onecdev.initializeProject', async () => {
       const rootPath = services.workspaceFolder.uri.fsPath;
       try {
         ensureProjectDirectoryIsEmpty(rootPath);

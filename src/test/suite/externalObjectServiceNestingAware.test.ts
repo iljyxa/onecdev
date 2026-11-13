@@ -14,7 +14,7 @@ suite('ExternalObjectService — parseChildObjects учитывает вложе
     // но содержит фрагмент TabularSection вместе с вложенным Attribute — plain-regex
     // parseChildObjects распознаёт этот Attribute как узел ВЕРХНЕГО уровня (вместо
     // TabularSection(1)+Form(1) отчёт покажет ложный Attribute(1)).
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-epf-nesting-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-epf-nesting-'));
     const service = new ExternalObjectService();
     service.createExternalDataProcessor({ name: 'ОбработкаСТЧ', outputDir: root });
 

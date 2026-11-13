@@ -312,7 +312,7 @@ suite('LineEndings.preserveBomAndEol — построчное сохранени
   });
 
   test('writeTextFilePreservingBomAndEol пишет на диск ПОБАЙТНО то же, что возвращает preserveBomAndEol(original, next), включая физические байты BOM EF BB BF', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-line-endings-write-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-line-endings-write-'));
     const filePath = path.join(root, 'test.xml');
     // BOM + CRLF-файл с одной голой LF-строкой внутри (форма реальных СКД-выгрузок 1С).
     const original = '\ufeff<a>\r\n\tтекст\n</a>\r\n';

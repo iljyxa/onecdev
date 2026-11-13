@@ -49,7 +49,7 @@ const REAL_PASSWORD = 'Qz7!SuperSecretDbPwd_42';
 const MASK = '********';
 // Заведомо не существующий на диске путь: `resolveExplicitV8Path` обязан
 // бросить синхронно ДО спавна DESIGNER — платформа 1С не трогается вовсе.
-const ABSENT_V8_PATH_SEGMENTS = ['definitely', 'not', 'installed', 'v8vscedit-test-fixture', '1cv8'];
+const ABSENT_V8_PATH_SEGMENTS = ['definitely', 'not', 'installed', 'onecdev-test-fixture', '1cv8'];
 
 function absentV8Path(root: string): string {
   return path.join(root, ...ABSENT_V8_PATH_SEGMENTS);
@@ -122,7 +122,7 @@ suite('CfFileCommandRunner — runDumpConfigurationToCf/runLoadConfigurationFrom
   let tempDir: string;
 
   setup(() => {
-    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cf-runner-')));
+    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cf-runner-')));
   });
 
   teardown(() => {

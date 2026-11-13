@@ -52,7 +52,7 @@ suite('eventSubscriptionProperties', () => {
   });
 
   test('раскрывает определяемые типы при расчете общих событий', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-event-sub-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-event-sub-'));
     fs.mkdirSync(path.join(root, 'DefinedTypes'), { recursive: true });
     fs.mkdirSync(path.join(root, 'EventSubscriptions'), { recursive: true });
     fs.writeFileSync(path.join(root, 'Configuration.xml'), '<MetaDataObject><Configuration><Properties><Name>Тест</Name></Properties></Configuration></MetaDataObject>', 'utf-8');
@@ -110,7 +110,7 @@ suite('eventSubscriptionProperties', () => {
   });
 
   test('записывает новый Source подписки на событие', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-event-sub-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-event-sub-'));
     const xmlPath = path.join(dir, 'EventSubscription.xml');
     fs.writeFileSync(xmlPath, buildEventSubscriptionXml('<v8:Type>cfg:DocumentObject.ЗаказПокупателя</v8:Type>', 'BeforeWrite'), 'utf-8');
 

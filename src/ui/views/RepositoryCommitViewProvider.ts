@@ -18,7 +18,7 @@ type RepositoryCommitMessage =
  * Использует Vue-приложение для рендеринга формы.
  */
 export class RepositoryCommitViewProvider implements vscode.Disposable {
-  static readonly viewType = 'v8vsceditRepositoryCommitPanel';
+  static readonly viewType = 'onecdevRepositoryCommitPanel';
 
   private panel: vscode.WebviewPanel | undefined;
   private resolvePromise: ((value: RepositoryCommitFormData | undefined) => void) | undefined;

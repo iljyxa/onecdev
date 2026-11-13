@@ -22,8 +22,8 @@ import { STALE_OPERATION_TEMP_MAX_AGE_MS, sweepStaleOperationTemp } from '../../
 
 /**
  * Issue #76 — хвосты временных каталогов операций после аварийного завершения
- * extension host: `.v8vscedit/import-temp/*` (возраст по mtime) и одноразовые выгрузки
- * агента `.v8vscedit/agent/0/{workspace,lists}` (возраст по метке в имени).
+ * extension host: `.onecdev/import-temp/*` (возраст по mtime) и одноразовые выгрузки
+ * агента `.onecdev/agent/0/{workspace,lists}` (возраст по метке в имени).
  */
 
 const HOUR = 60 * 60 * 1000;
@@ -73,7 +73,7 @@ suite('WorkspaceTempDir — раскладка import-temp (issue #76)', () => {
     const first = createImportTempDir(workspaceRoot, 'repository-dump-');
     const second = createImportTempDir(workspaceRoot, 'repository-dump-');
 
-    assert.strictEqual(getImportTempRoot(workspaceRoot), path.join(workspaceRoot, '.v8vscedit', 'import-temp'));
+    assert.strictEqual(getImportTempRoot(workspaceRoot), path.join(workspaceRoot, '.onecdev', 'import-temp'));
     for (const dir of [first, second]) {
       assert.strictEqual(path.dirname(dir), getImportTempRoot(workspaceRoot));
       assert.match(path.basename(dir), /^repository-dump-.+$/);
@@ -86,11 +86,11 @@ suite('WorkspaceTempDir — раскладка import-temp (issue #76)', () => {
 suite('WorkspaceTempDir — isInsideWorkspaceServiceDir (issue #79)', () => {
   const root = path.join(path.sep, 'ws');
   const cases: readonly { name: string; filePath: string; expected: boolean }[] = [
-    { name: 'бэкап слияния', filePath: path.join(root, '.v8vscedit', 'repository', 'merge', 's', 'b', 'ObjectModule.bsl'), expected: true },
-    { name: 'сам служебный каталог', filePath: path.join(root, '.v8vscedit'), expected: true },
+    { name: 'бэкап слияния', filePath: path.join(root, '.onecdev', 'repository', 'merge', 's', 'b', 'ObjectModule.bsl'), expected: true },
+    { name: 'сам служебный каталог', filePath: path.join(root, '.onecdev'), expected: true },
     { name: 'файл конфигурации', filePath: path.join(root, 'Catalogs', 'А', 'Ext', 'ObjectModule.bsl'), expected: false },
-    { name: 'каталог с похожим именем', filePath: path.join(root, '.v8vscedit-backup', 'x.bsl'), expected: false },
-    { name: 'служебный каталог другой рабочей области', filePath: path.join(path.sep, 'other', '.v8vscedit', 'x.bsl'), expected: false },
+    { name: 'каталог с похожим именем', filePath: path.join(root, '.onecdev-backup', 'x.bsl'), expected: false },
+    { name: 'служебный каталог другой рабочей области', filePath: path.join(path.sep, 'other', '.onecdev', 'x.bsl'), expected: false },
   ];
   for (const { name, filePath, expected } of cases) {
     test(`${name} → ${String(expected)}`, () => {

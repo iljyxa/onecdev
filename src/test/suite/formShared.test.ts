@@ -157,7 +157,7 @@ suite('FormShared.readFormXml (T5/T8)', () => {
   let tmp: string;
 
   suiteSetup(() => {
-    tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-readformxml-')));
+    tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-readformxml-')));
   });
   suiteTeardown(() => {
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -229,7 +229,7 @@ suite('FormShared.resolveFormXmlPath / resolveFormXmlPathForWrite (T6)', () => {
 
   suiteSetup(() => {
     fixture = createFormFixtureExport();
-    tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-resolveformxml-')));
+    tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-resolveformxml-')));
   });
   suiteTeardown(() => {
     fs.rmSync(fixture.configRoot, { recursive: true, force: true });

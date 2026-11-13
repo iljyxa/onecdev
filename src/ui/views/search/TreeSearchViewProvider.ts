@@ -26,7 +26,7 @@ interface TreeSearchState {
  * Использует Vue-приложение для рендеринга.
  */
 export class TreeSearchViewProvider implements vscode.WebviewViewProvider {
-  static readonly viewType = 'v8vsceditActions';
+  static readonly viewType = 'onecdevActions';
 
   private view: vscode.WebviewView | undefined;
   private htmlFactory: WebviewHtmlFactory;
@@ -87,13 +87,13 @@ export class TreeSearchViewProvider implements vscode.WebviewViewProvider {
 
   private async handleMessage(message: TreeSearchMessage): Promise<void> {
     if (message.type === 'command') {
-      if (message.command === 'v8vscedit.clearSearch') {
+      if (message.command === 'onecdev.clearSearch') {
         this.applySearch('');
         return;
       }
       if (!(await this.isWebviewCommandAllowed(message.command))) {
         // Отклоняем произвольную команду из webview (S2): выполнять можно только
-        // зарегистрированные команды расширения v8vscedit.*.
+        // зарегистрированные команды расширения onecdev.*.
         return;
       }
       try {
@@ -132,7 +132,7 @@ export class TreeSearchViewProvider implements vscode.WebviewViewProvider {
     this.services.treeProvider.setSearchQuery(query);
 
     const hasSearch = query.length > 2;
-    void vscode.commands.executeCommand('setContext', 'v8vscedit.hasTreeSearch', hasSearch);
+    void vscode.commands.executeCommand('setContext', 'onecdev.hasTreeSearch', hasSearch);
     this.services.setTreeMessage(hasSearch ? `Поиск: ${query}` : undefined);
   }
 }

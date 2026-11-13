@@ -111,7 +111,7 @@ const databasePath = ref('');
 const httpAddress = ref('');
 const httpPort = ref(8314);
 const httpBase = ref('/');
-const name = ref('v8vscedit');
+const name = ref('onecdev');
 const distributeLicenses = ref<StandaloneServerSwitch>('allow');
 const scheduleJobs = ref<StandaloneServerSwitch>('allow');
 const saving = ref(false);
@@ -158,7 +158,7 @@ function applyState(nextState: StandaloneServerSettingsSnapshot): void {
   httpAddress.value = nextState.settings.httpAddress || 'localhost';
   httpPort.value = nextState.settings.httpPort || 8314;
   httpBase.value = nextState.settings.httpBase || '/';
-  name.value = nextState.settings.name || 'v8vscedit';
+  name.value = nextState.settings.name || 'onecdev';
   distributeLicenses.value = nextState.settings.distributeLicenses || 'allow';
   scheduleJobs.value = nextState.settings.scheduleJobs || 'allow';
 }

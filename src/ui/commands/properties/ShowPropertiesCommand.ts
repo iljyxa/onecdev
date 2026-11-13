@@ -12,13 +12,13 @@ export function registerShowPropertiesCommand(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.showProperties', (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.showProperties', (node: MetadataNode | undefined) => {
       if (!node) {
         return;
       }
       services.dynamicPanelController.showProperties(node);
     }),
-    vscode.commands.registerCommand('v8vscedit.openSubsystemEditor', (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.openSubsystemEditor', (node: MetadataNode | undefined) => {
       if (node?.nodeKind !== 'Subsystem') {
         return;
       }

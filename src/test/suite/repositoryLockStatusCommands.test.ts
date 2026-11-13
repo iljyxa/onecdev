@@ -236,13 +236,13 @@ suite('RepositoryLockStatusCommands — обновление и автообно
     const context = { subscriptions: [] as { dispose(): unknown }[] } as unknown as vscode.ExtensionContext;
     registerRepositoryLockStatusCommands(context, harness.services as unknown as CommandServices, notifier);
     disposables.push(...context.subscriptions);
-    assert.ok((await vscode.commands.getCommands(true)).includes('v8vscedit.repository.refreshLocks'));
-    await vscode.commands.executeCommand('v8vscedit.repository.refreshLocks', rootNode(harness));
+    assert.ok((await vscode.commands.getCommands(true)).includes('onecdev.repository.refreshLocks'));
+    await vscode.commands.executeCommand('onecdev.repository.refreshLocks', rootNode(harness));
     assert.deepStrictEqual(notifier.messages.map((item) => item.level), ['info']);
     const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8')) as { contributes: { commands: { command: string; title: string; icon?: string }[] } };
     assert.deepStrictEqual(
-      manifest.contributes.commands.find((item) => item.command === 'v8vscedit.repository.refreshLocks'),
-      { command: 'v8vscedit.repository.refreshLocks', title: 'Обновить статусы захватов', icon: '$(refresh)' }
+      manifest.contributes.commands.find((item) => item.command === 'onecdev.repository.refreshLocks'),
+      { command: 'onecdev.repository.refreshLocks', title: 'Обновить статусы захватов', icon: '$(refresh)' }
     );
   });
 });

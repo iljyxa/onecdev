@@ -14,7 +14,7 @@ type StandaloneServerMessage =
  * Webview-панель настройки автономного сервера 1С.
  */
 export class StandaloneServerViewProvider implements vscode.Disposable {
-  static readonly viewType = 'v8vsceditStandaloneServerPanel';
+  static readonly viewType = 'onecdevStandaloneServerPanel';
 
   private panel: vscode.WebviewPanel | undefined;
 

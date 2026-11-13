@@ -173,7 +173,7 @@ suite('Properties — команды', () => {
   });
 
   test('Записывает тип параметра встроенной команды в XML объекта', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-command-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-command-'));
     const xmlPath = path.join(dir, 'Document.xml');
     fs.writeFileSync(
       xmlPath,

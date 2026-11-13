@@ -1,5 +1,5 @@
 /**
- * Тесты MCP-инструментов `v8vscedit_dump_cf`/`v8vscedit_load_cf`
+ * Тесты MCP-инструментов `onecdev_dump_cf`/`onecdev_load_cf`
  * (`src/ui/mcp/registration/McpConfigLifecycleTools.ts`, домен
  * «жизненный цикл конфигурации»).
  *
@@ -127,7 +127,7 @@ function createDeps(configurationOperationGuard = new ConfigurationOperationGuar
   } as unknown as McpRegistrationDeps;
 }
 
-suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
+suite('McpConfigLifecycleTools — onecdev_dump_cf/onecdev_load_cf', () => {
   let validationMod: CfFileValidationModule | undefined;
   let server: MockMcpServer;
   let tempDir: string;
@@ -141,7 +141,7 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     server = createMockServer();
     guard = new ConfigurationOperationGuard();
     registerConfigLifecycleTools(server as never, createDeps(guard));
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-cf-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-cf-'));
   });
 
   teardown(() => {
@@ -172,25 +172,25 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
 
   // ─── Часть 4, F.24: регистрация + метаданные tools ───
 
-  test('оба tool-а зарегистрированы: v8vscedit_dump_cf и v8vscedit_load_cf', () => {
-    assert.ok(server.tools.has('v8vscedit_dump_cf'), 'v8vscedit_dump_cf должен быть зарегистрирован');
-    assert.ok(server.tools.has('v8vscedit_load_cf'), 'v8vscedit_load_cf должен быть зарегистрирован');
+  test('оба tool-а зарегистрированы: onecdev_dump_cf и onecdev_load_cf', () => {
+    assert.ok(server.tools.has('onecdev_dump_cf'), 'onecdev_dump_cf должен быть зарегистрирован');
+    assert.ok(server.tools.has('onecdev_load_cf'), 'onecdev_load_cf должен быть зарегистрирован');
   });
 
-  test('v8vscedit_load_cf: destructiveHint === true (загрузка необратимо меняет основную конфигурацию проекта)', () => {
-    const tool = server.tools.get('v8vscedit_load_cf');
+  test('onecdev_load_cf: destructiveHint === true (загрузка необратимо меняет основную конфигурацию проекта)', () => {
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
     assert.strictEqual(tool.annotations?.destructiveHint, true);
   });
 
-  test('v8vscedit_dump_cf: destructiveHint === false (выгрузка не меняет ни базу, ни проект)', () => {
-    const tool = server.tools.get('v8vscedit_dump_cf');
+  test('onecdev_dump_cf: destructiveHint === false (выгрузка не меняет ни базу, ни проект)', () => {
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
     assert.strictEqual(tool.annotations?.destructiveHint, false);
   });
 
-  test('v8vscedit_dump_cf: inputSchema — outputFile обязателен, extensionName/overwrite опциональны, нет allExtensions', () => {
-    const tool = server.tools.get('v8vscedit_dump_cf');
+  test('onecdev_dump_cf: inputSchema — outputFile обязателен, extensionName/overwrite опциональны, нет allExtensions', () => {
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
     const shape = schemaShapeSignature(tool.inputSchema);
     assert.strictEqual(shape.outputFile, false, 'outputFile обязателен');
@@ -199,8 +199,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     assert.ok(!('allExtensions' in shape), 'схема НЕ должна содержать allExtensions ни в каком виде — см. эмпирику платформы (флаг проглатывается молча)');
   });
 
-  test('v8vscedit_load_cf: inputFile и confirm обязательны, extensionName/applyToDatabase опциональны, нет allExtensions', () => {
-    const tool = server.tools.get('v8vscedit_load_cf');
+  test('onecdev_load_cf: inputFile и confirm обязательны, extensionName/applyToDatabase опциональны, нет allExtensions', () => {
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
     const shape = schemaShapeSignature(tool.inputSchema);
     assert.strictEqual(shape.inputFile, false, 'inputFile обязателен');
@@ -212,8 +212,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
 
   test('паритет: оба tool-а присутствуют в каталоге EXTENSION_MCP_TOOLS для ИИ-агента', () => {
     const catalogued = new Set(EXTENSION_MCP_TOOLS.map((tool) => tool.name));
-    assert.ok(catalogued.has('v8vscedit_dump_cf'), 'v8vscedit_dump_cf отсутствует в EXTENSION_MCP_TOOLS');
-    assert.ok(catalogued.has('v8vscedit_load_cf'), 'v8vscedit_load_cf отсутствует в EXTENSION_MCP_TOOLS');
+    assert.ok(catalogued.has('onecdev_dump_cf'), 'onecdev_dump_cf отсутствует в EXTENSION_MCP_TOOLS');
+    assert.ok(catalogued.has('onecdev_load_cf'), 'onecdev_load_cf отсутствует в EXTENSION_MCP_TOOLS');
   });
 
   // ─── Часть 4, F.25: guard-ветки без спавна ───
@@ -221,8 +221,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
   // Занятый guard: инструмент обязан отказать «уже выполняется» ДО валидации входа и не
   // трогать чужую аренду (тот же общий guard, что у команд импорта/обновления и хранилища).
   for (const [toolName, args] of [
-    ['v8vscedit_dump_cf', (dir: string) => ({ outputFile: path.join(dir, 'out.cf') })],
-    ['v8vscedit_load_cf', (dir: string) => ({ inputFile: path.join(dir, 'absent.cf'), confirm: true })],
+    ['onecdev_dump_cf', (dir: string) => ({ outputFile: path.join(dir, 'out.cf') })],
+    ['onecdev_load_cf', (dir: string) => ({ inputFile: path.join(dir, 'absent.cf'), confirm: true })],
   ] as const) {
     test(`${toolName}: guard операций занят → isError «уже выполняется», чужая аренда не освобождена`, async () => {
       const tool = server.tools.get(toolName);
@@ -240,8 +240,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     });
   }
 
-  test('v8vscedit_load_cf: confirm=false → isError, текст предупреждает о необратимости', async () => {
-    const tool = server.tools.get('v8vscedit_load_cf');
+  test('onecdev_load_cf: confirm=false → isError, текст предупреждает о необратимости', async () => {
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
     const result = await tool.handler({ inputFile: path.join(tempDir, 'whatever.cf'), confirm: false });
     assert.ok(isErrorResult(result), 'confirm=false обязан давать isError');
@@ -249,8 +249,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     assert.ok(text.includes('необратим'), `сообщение обязано предупреждать о необратимости операции: "${text}"`);
   });
 
-  test('v8vscedit_load_cf: confirm не передан (undefined) → isError, текст предупреждает о необратимости', async () => {
-    const tool = server.tools.get('v8vscedit_load_cf');
+  test('onecdev_load_cf: confirm не передан (undefined) → isError, текст предупреждает о необратимости', async () => {
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
     const result = await tool.handler({ inputFile: path.join(tempDir, 'whatever.cf') });
     assert.ok(isErrorResult(result), 'отсутствие confirm обязано давать isError (нет неявного согласия по умолчанию)');
@@ -258,8 +258,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     assert.ok(text.includes('необратим'), `сообщение обязано предупреждать о необратимости операции: "${text}"`);
   });
 
-  test('v8vscedit_load_cf: confirm=true, но несуществующий inputFile → isError с ТЕМ ЖЕ текстом, что и infra-валидатор (доказывает переиспользование, а не дублирование логики)', async () => {
-    const tool = server.tools.get('v8vscedit_load_cf');
+  test('onecdev_load_cf: confirm=true, но несуществующий inputFile → isError с ТЕМ ЖЕ текстом, что и infra-валидатор (доказывает переиспользование, а не дублирование логики)', async () => {
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
     const inputFile = path.join(tempDir, 'absent.cf');
     const result = await tool.handler({ inputFile, confirm: true });
@@ -269,8 +269,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
       'MCP обязан вернуть РОВНО то же сообщение, что и infra/cfFile/CfFileValidation — иначе он обходит/дублирует guard');
   });
 
-  test('v8vscedit_load_cf: confirm=true, extensionName задан, но файл ".cf" (неверный суффикс) → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
-    const tool = server.tools.get('v8vscedit_load_cf');
+  test('onecdev_load_cf: confirm=true, extensionName задан, но файл ".cf" (неверный суффикс) → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
     const inputFile = path.join(tempDir, 'mismatched.cf');
     fs.writeFileSync(inputFile, Buffer.from([1]));
@@ -280,8 +280,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     assert.strictEqual(extractText(result), expected);
   });
 
-  test('v8vscedit_dump_cf: несуществующий каталог назначения → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
-    const tool = server.tools.get('v8vscedit_dump_cf');
+  test('onecdev_dump_cf: несуществующий каталог назначения → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
     const outputFile = path.join(tempDir, 'no-such-dir', 'out.cf');
     const result = await tool.handler({ outputFile });
@@ -290,8 +290,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     assert.strictEqual(extractText(result), expected);
   });
 
-  test('v8vscedit_dump_cf: extensionName задан, но outputFile ".cf" (неверный суффикс) → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
-    const tool = server.tools.get('v8vscedit_dump_cf');
+  test('onecdev_dump_cf: extensionName задан, но outputFile ".cf" (неверный суффикс) → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
     const outputFile = path.join(tempDir, 'mismatched.cf');
     const result = await tool.handler({ outputFile, extensionName: 'EVOLC' });
@@ -300,8 +300,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     assert.strictEqual(extractText(result), expected);
   });
 
-  test('v8vscedit_dump_cf: outputFile уже существует, overwrite не передан (по умолчанию false) → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
-    const tool = server.tools.get('v8vscedit_dump_cf');
+  test('onecdev_dump_cf: outputFile уже существует, overwrite не передан (по умолчанию false) → isError с ТЕМ ЖЕ текстом, что и infra-валидатор', async () => {
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
     const outputFile = path.join(tempDir, 'existing.cf');
     fs.writeFileSync(outputFile, 'data');
@@ -311,8 +311,8 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf', () => {
     assert.strictEqual(extractText(result), expected);
   });
 
-  test('v8vscedit_dump_cf: outputFile уже существует, overwrite=true → guard проходит (не isError с тем же сообщением про существующий файл)', async () => {
-    const tool = server.tools.get('v8vscedit_dump_cf');
+  test('onecdev_dump_cf: outputFile уже существует, overwrite=true → guard проходит (не isError с тем же сообщением про существующий файл)', async () => {
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
     const outputFile = path.join(tempDir, 'existing-ow.cf');
     fs.writeFileSync(outputFile, 'data');
@@ -361,7 +361,7 @@ function createOutputChannel(): vscode.OutputChannel {
  * какой-либо зависимости от таймингов или окружения.
  */
 function absentV8Path(root: string): string {
-  return path.join(root, 'definitely', 'not', 'installed', 'v8vscedit-test-fixture', '1cv8');
+  return path.join(root, 'definitely', 'not', 'installed', 'onecdev-test-fixture', '1cv8');
 }
 
 /**
@@ -416,13 +416,13 @@ function parseResult(result: unknown): Record<string, unknown> {
   return JSON.parse(extractText(result)) as Record<string, unknown>;
 }
 
-suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf (успешный путь и обработка результата CLI)', () => {
+suite('McpConfigLifecycleTools — onecdev_dump_cf/onecdev_load_cf (успешный путь и обработка результата CLI)', () => {
   let tempDir: string;
   let workspaceFolder: vscode.WorkspaceFolder;
   let server: MockMcpServer;
 
   setup(() => {
-    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mcp-cf-success-')));
+    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-cf-success-')));
     workspaceFolder = fakeWorkspaceFolder(tempDir);
     server = createMockServer();
     registerConfigLifecycleTools(server as never, createDepsWithWorkspace(workspaceFolder, createOutputChannel()));
@@ -432,10 +432,10 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf (успе
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  test('v8vscedit_dump_cf: guard проходит, платформы нет → dumped=false → isError с сообщением про неуспех выгрузки (ветка if (!dumped))', async function () {
+  test('onecdev_dump_cf: guard проходит, платформы нет → dumped=false → isError с сообщением про неуспех выгрузки (ветка if (!dumped))', async function () {
     this.timeout(15_000);
     writeEnvJson(tempDir, absentV8Path(tempDir));
-    const tool = server.tools.get('v8vscedit_dump_cf');
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
 
     const outputFile = path.join(tempDir, 'no-platform-dump.cf');
@@ -447,14 +447,14 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf (успе
     );
   });
 
-  test('v8vscedit_dump_cf: успешный путь (заглушка вместо 1cv8, exit 0) — файл создан, ответ содержит outputFile/extensionName/overwrite', async function () {
+  test('onecdev_dump_cf: успешный путь (заглушка вместо 1cv8, exit 0) — файл создан, ответ содержит outputFile/extensionName/overwrite', async function () {
     this.timeout(15_000);
     if (process.platform === 'win32') {
       this.skip();
     }
     const fakeV8 = createFakeDesignerExecutable(tempDir, 'dump');
     writeEnvJson(tempDir, fakeV8);
-    const tool = server.tools.get('v8vscedit_dump_cf');
+    const tool = server.tools.get('onecdev_dump_cf');
     assert.ok(tool);
 
     const outputFile = path.join(tempDir, 'success-dump.cf');
@@ -467,10 +467,10 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf (успе
     assert.strictEqual(fs.readFileSync(outputFile, 'utf-8'), 'fake-cf-bytes');
   });
 
-  test('v8vscedit_load_cf: guard проходит, платформы нет → loaded=false → isError с сообщением про неуспех загрузки (ветка if (!loaded))', async function () {
+  test('onecdev_load_cf: guard проходит, платформы нет → loaded=false → isError с сообщением про неуспех загрузки (ветка if (!loaded))', async function () {
     this.timeout(15_000);
     writeEnvJson(tempDir, absentV8Path(tempDir));
-    const tool = server.tools.get('v8vscedit_load_cf');
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
 
     const inputFile = path.join(tempDir, 'no-platform-load.cf');
@@ -483,14 +483,14 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf (успе
     );
   });
 
-  test('v8vscedit_load_cf: успешный путь, applyToDatabase не передан → databaseConfigurationUpdated=false, в ответе есть предупреждение о рассинхроне выгрузки и базы (projectSourcesOutdated=true)', async function () {
+  test('onecdev_load_cf: успешный путь, applyToDatabase не передан → databaseConfigurationUpdated=false, в ответе есть предупреждение о рассинхроне выгрузки и базы (projectSourcesOutdated=true)', async function () {
     this.timeout(15_000);
     if (process.platform === 'win32') {
       this.skip();
     }
     const fakeV8 = createFakeDesignerExecutable(tempDir, 'noop');
     writeEnvJson(tempDir, fakeV8);
-    const tool = server.tools.get('v8vscedit_load_cf');
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
 
     const inputFile = path.join(tempDir, 'success-load.cf');
@@ -504,14 +504,14 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf (успе
       'ответ обязан предупреждать, что XML-выгрузка проекта больше не соответствует базе — иначе агент решит, что дерево проекта уже актуально');
   });
 
-  test('v8vscedit_load_cf: успешный путь, applyToDatabase=true, основная конфигурация → databaseConfigurationUpdated=true (buildApplyTarget: ветка cf)', async function () {
+  test('onecdev_load_cf: успешный путь, applyToDatabase=true, основная конфигурация → databaseConfigurationUpdated=true (buildApplyTarget: ветка cf)', async function () {
     this.timeout(15_000);
     if (process.platform === 'win32') {
       this.skip();
     }
     const fakeV8 = createFakeDesignerExecutable(tempDir, 'noop');
     writeEnvJson(tempDir, fakeV8);
-    const tool = server.tools.get('v8vscedit_load_cf');
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
 
     const inputFile = path.join(tempDir, 'success-load-apply.cf');
@@ -523,14 +523,14 @@ suite('McpConfigLifecycleTools — v8vscedit_dump_cf/v8vscedit_load_cf (успе
     assert.strictEqual(data.projectSourcesOutdated, true);
   });
 
-  test('v8vscedit_load_cf: успешный путь, applyToDatabase=true, расширение → databaseConfigurationUpdated=true (buildApplyTarget: ветка cfe, -Extension в update-configuration)', async function () {
+  test('onecdev_load_cf: успешный путь, applyToDatabase=true, расширение → databaseConfigurationUpdated=true (buildApplyTarget: ветка cfe, -Extension в update-configuration)', async function () {
     this.timeout(15_000);
     if (process.platform === 'win32') {
       this.skip();
     }
     const fakeV8 = createFakeDesignerExecutable(tempDir, 'noop');
     writeEnvJson(tempDir, fakeV8);
-    const tool = server.tools.get('v8vscedit_load_cf');
+    const tool = server.tools.get('onecdev_load_cf');
     assert.ok(tool);
 
     const inputFile = path.join(tempDir, 'success-load-apply.cfe');

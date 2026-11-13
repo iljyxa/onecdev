@@ -39,7 +39,7 @@ function styled(lf: string, style: { eol: string; bom: boolean }): string {
 }
 
 function newDirs(): { cfDir: string; extDir: string } {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-borrow-fidelity-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-borrow-fidelity-'));
   const cfDir = path.join(root, 'cf');
   const extDir = path.join(root, 'ext');
   fs.mkdirSync(cfDir, { recursive: true });

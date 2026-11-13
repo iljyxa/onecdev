@@ -16,7 +16,7 @@
  *     `registerTools` (`server.registerTool(...)` прямо в V8McpServer.ts).
  *     Для каждого — имя, title, description (построчно, дословно) и набор
  *     ключей inputSchema с их опциональностью. Было 59 на момент снятия эталона;
- *     +2 — пакетные v8vscedit_dump_all_cfe/v8vscedit_load_all_cfe (новая
+ *     +2 — пакетные onecdev_dump_all_cfe/onecdev_load_all_cfe (новая
  *     функциональность, а не дробление: см. cfeBatch*.test.ts).
  *     Отдельно вызываемые `registerAllAddTools` (45 root + 11 child = 56 tools)
  *     сюда не входят — они уже застрахованы `mcpAddTools.test.ts` как
@@ -117,7 +117,7 @@ function createBaselineServices(overrides: Partial<CommandServices> = {}): Comma
   };
   const base: CommandServices = {
     treeProvider: createEmptyTreeProvider(),
-    workspaceFolder: { uri: vscode.Uri.file('/tmp/v8vscedit-fixture'), name: 'fixture', index: 0 },
+    workspaceFolder: { uri: vscode.Uri.file('/tmp/onecdev-fixture'), name: 'fixture', index: 0 },
     metadataXmlCreator: new MetadataXmlCreator(),
     metadataXmlRemover: new MetadataXmlRemover(),
     configurationInfoService: notImplemented('configurationInfoService') as never,
@@ -160,7 +160,7 @@ function createBaselineServices(overrides: Partial<CommandServices> = {}): Comma
     setTreeMessage: () => undefined,
     setTreeProcessingState: () => undefined,
     refreshActionsView: () => undefined,
-    // Issue #10: MCP-мост v8vscedit_execute_command идёт через общий guard —
+    // Issue #10: MCP-мост onecdev_execute_command идёт через общий guard —
     // поле обязательно в CommandServices, гейт мутаций сюда не заглядывает,
     // поэтому реальный (а не notImplemented) экземпляр.
     configurationOperationGuard: new ConfigurationOperationGuard(),
@@ -173,7 +173,7 @@ function registerAllTools(services: CommandServices): { tools: Map<string, Regis
   // Доработка жизненного цикла MCP-сервера (5c) добавляет обязательные
   // projectRoot/version в конструктор — этот golden-тест бьёт по каталогу
   // tools через registerTools, само значение projectRoot/version не проверяет.
-  const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/v8vscedit-fixture', '0.0.0-test');
+  const server = new V8McpServer(services, new ConfigurationXmlEditor(), '/tmp/onecdev-fixture', '0.0.0-test');
   const mock = createMockServer();
   (server as unknown as { registerTools(mcp: unknown): void }).registerTools(mock);
   return { tools: mock.tools };
@@ -227,121 +227,121 @@ interface ExpectedTool {
 
 const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
-    name: 'v8vscedit_workspace_overview',
+    name: 'onecdev_workspace_overview',
     title: 'Обзор конфигураций и расширений',
     description: 'Возвращает основную конфигурацию, расширения, корневые пути и счётчики объектов без обхода дерева по nodeId.',
     schemaKeys: {},
   },
   {
-    name: 'v8vscedit_search_metadata',
+    name: 'onecdev_search_metadata',
     title: 'Поиск метаданных по пути',
     description: 'Ищет по части строки в предметных путях метаданных выбранной конфигурации: например "Польз" найдёт Справочники.Пользователи.',
     schemaKeys: { query: false, configuration: false, kind: true, limit: true },
   },
   {
-    name: 'v8vscedit_list_metadata',
+    name: 'onecdev_list_metadata',
     title: 'Список метаданных по группе или объекту',
     description: 'Возвращает объекты группы или дочерние элементы по предметному пути без nodeId: список справочников, форм, реквизитов, измерений, ресурсов и т.п.',
     schemaKeys: { configuration: true, parentPath: true, kind: true, group: true, query: true, limit: true },
   },
   {
-    name: 'v8vscedit_tree',
+    name: 'onecdev_tree',
     title: 'Плоское дерево канонических путей',
     description: 'Возвращает плоский список канонических путей метаданных. Используй для быстрой ориентации в конфигурации без пагинации. Канон путей: множественное число корня, прямые реквизиты/ТЧ, без английских алиасов (Справочники.Контрагенты.ИНН, не Catalog.Counterparties.Attribute.TIN).',
     schemaKeys: { configuration: true, scope: true, depth: true, include: true, limit: true },
   },
   {
-    name: 'v8vscedit_resolve_path',
+    name: 'onecdev_resolve_path',
     title: 'Резолв канонического пути',
     description: 'Нормализует канонический путь и проверяет наличие узла в дереве. Возвращает каноническую форму входа и exists. На вход принимает только канонические русские пути; английские/legacy формы (Catalog.X) отбиваются с подсказкой канона. exists=false без ошибки означает «узла нет».',
     schemaKeys: { path: false, configuration: true },
   },
   {
-    name: 'v8vscedit_list_supported_types',
+    name: 'onecdev_list_supported_types',
     title: 'Реестр платформенных типов',
     description: 'Возвращает доступные типы для свойства по контексту: реквизит метаданных, реквизит формы, параметр команды, источник подписки. Для metadataAttribute / formAttribute базовая группа выдаётся даже без configuration; ссылочные группы (Справочник/Документ/…) появляются только при указанной configuration.',
     schemaKeys: { context: false, configuration: true },
   },
   {
-    name: 'v8vscedit_configuration_info',
+    name: 'onecdev_configuration_info',
     title: 'Информация о конфигурации',
     description: 'Свойства конфигурации/расширения и счётчики ChildObjects. Принимает канонический путь корня: Конфигурация или Расширение.',
     schemaKeys: { path: false, configuration: true, mode: true, limit: true, offset: true },
   },
   {
-    name: 'v8vscedit_validate_configuration',
+    name: 'onecdev_validate_configuration',
     title: 'Валидировать конфигурацию',
     description: 'Проверяет Configuration.xml, ChildObjects, DefaultLanguage и базовые enum-значения. Принимает канонический путь корня: Конфигурация или Расширение.',
     schemaKeys: { path: false, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_metadata_info',
+    name: 'onecdev_metadata_info',
     title: 'Информация об объекте метаданных',
     description: 'Возвращает структуру объекта: реквизиты, табличные части, формы, команды, макеты. Принимает канонический путь объекта: Справочники.Контрагенты, Документы.РасходТовара, РегистрыСведений.КурсыВалют, Перечисления.СтатусыЗаказа и т.п.',
     schemaKeys: { path: false, configuration: true, mode: true, name: true, limit: true, offset: true },
   },
   {
-    name: 'v8vscedit_validate_metadata',
+    name: 'onecdev_validate_metadata',
     title: 'Валидировать объект метаданных',
     description: 'Проверяет XML объекта, тип, имя, UUID, дочерние элементы и связанные файлы. Принимает канонический путь объекта (Справочники.Контрагенты) либо массив таких путей через `paths` для пакетной проверки.',
     schemaKeys: { path: true, paths: true, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_subsystem_info',
+    name: 'onecdev_subsystem_info',
     title: 'Информация о подсистеме',
     description: 'Возвращает свойства подсистемы, состав, дерево дочерних подсистем и CommandInterface.xml. Принимает канонический путь подсистемы: Подсистема.Продажи.Розница.',
     schemaKeys: { path: false, configuration: true, mode: true, name: true, limit: true, offset: true },
   },
   {
-    name: 'v8vscedit_validate_subsystem',
+    name: 'onecdev_validate_subsystem',
     title: 'Валидировать подсистему',
     description: 'Проверяет XML подсистемы: свойства, Content, ChildObjects, файлы и CommandInterface.xml. Принимает канонический путь подсистемы: Подсистема.Продажи.Розница.',
     schemaKeys: { path: false, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_mxl_info',
+    name: 'onecdev_mxl_info',
     title: 'Информация о MXL-макете',
     description: 'Возвращает области, параметры, текст и статистику табличного документа. Принимает канонический путь макета: Справочники.X.Макет.СчетФактура или ОбщиеМакеты.X.',
     schemaKeys: { path: false, configuration: true, withText: true, maxParams: true, limit: true, offset: true },
   },
   {
-    name: 'v8vscedit_validate_mxl',
+    name: 'onecdev_validate_mxl',
     title: 'Валидировать MXL-макет',
     description: 'Проверяет Template.xml табличного документа: строки, колонки, палитры, области. Принимает канонический путь макета: Справочники.X.Макет.СчетФактура или ОбщиеМакеты.X.',
     schemaKeys: { path: false, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_compile_mxl',
+    name: 'onecdev_compile_mxl',
     title: 'Скомпилировать MXL-макет',
-    description: 'Перезаписывает содержимое существующего MXL Template.xml из JSON DSL. Для нового макета сначала используй v8vscedit_add_template с templateType="Табличный документ". Принимает канонический путь существующего макета: Справочники.X.Макет.Y.',
+    description: 'Перезаписывает содержимое существующего MXL Template.xml из JSON DSL. Для нового макета сначала используй onecdev_add_template с templateType="Табличный документ". Принимает канонический путь существующего макета: Справочники.X.Макет.Y.',
     schemaKeys: { path: false, configuration: true, definition: false },
   },
   {
-    name: 'v8vscedit_decompile_mxl',
+    name: 'onecdev_decompile_mxl',
     title: 'Декомпилировать MXL-макет',
     description: 'Возвращает редактируемый JSON DSL по существующему Template.xml табличного документа. Принимает канонический путь макета: Справочники.X.Макет.СчетФактура или ОбщиеМакеты.X.',
     schemaKeys: { path: false, configuration: true },
   },
   {
-    name: 'v8vscedit_skd_info',
+    name: 'onecdev_skd_info',
     title: 'Информация о СКД',
     description: 'Возвращает наборы, запросы, поля, итоги, параметры и варианты СКД. Принимает канонический путь макета: Отчеты.X.Макет.ОсновнаяСхема.',
     schemaKeys: { path: false, configuration: true, mode: true, name: true, limit: true, offset: true },
   },
   {
-    name: 'v8vscedit_validate_skd',
+    name: 'onecdev_validate_skd',
     title: 'Валидировать СКД',
     description: 'Проверяет Template.xml схемы компоновки данных: XML, дубли наборов, полей и параметров. Принимает канонический путь макета: Отчеты.X.Макет.ОсновнаяСхема.',
     schemaKeys: { path: false, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_compile_skd',
+    name: 'onecdev_compile_skd',
     title: 'Скомпилировать СКД',
-    description: 'Перезаписывает содержимое существующей СКД Template.xml из JSON DSL. Для новой СКД сначала используй v8vscedit_add_template с templateType="Схема компоновки данных". Принимает канонический путь существующего макета СКД.',
+    description: 'Перезаписывает содержимое существующей СКД Template.xml из JSON DSL. Для новой СКД сначала используй onecdev_add_template с templateType="Схема компоновки данных". Принимает канонический путь существующего макета СКД.',
     schemaKeys: { path: false, configuration: true, definition: false },
   },
   {
-    name: 'v8vscedit_edit_skd',
+    name: 'onecdev_edit_skd',
     title: 'Изменить СКД',
     description: 'Точечно редактирует Template.xml СКД: поля, итоги, параметры, запрос, выборку, фильтры. Принимает канонический путь макета: Отчеты.X.Макет.ОсновнаяСхема.',
     schemaKeys: {
@@ -350,55 +350,55 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
     },
   },
   {
-    name: 'v8vscedit_add_help',
+    name: 'onecdev_add_help',
     title: 'Добавить встроенную справку',
     description: 'Создаёт Ext/Help.xml и Ext/Help/<lang>.html для объекта и проставляет IncludeHelpInContents у форм при отсутствии. Принимает канонический путь объекта: Справочники.Контрагенты.',
     schemaKeys: { path: false, configuration: true, lang: true, title: true },
   },
   {
-    name: 'v8vscedit_create_epf',
+    name: 'onecdev_create_epf',
     title: 'Создать внешнюю обработку EPF',
     description: 'Создаёт минимальные XML-исходники внешней обработки: корневой XML, каталог Ext и ObjectModule.bsl.',
     schemaKeys: { name: false, synonym: true, outputDir: false },
   },
   {
-    name: 'v8vscedit_create_erf',
+    name: 'onecdev_create_erf',
     title: 'Создать внешний отчёт ERF',
     description: 'Создаёт минимальные XML-исходники внешнего отчёта; опционально добавляет основную СКД и привязку MainDataCompositionSchema.',
     schemaKeys: { name: false, synonym: true, outputDir: false, withSkd: true },
   },
   {
-    name: 'v8vscedit_validate_external_object',
+    name: 'onecdev_validate_external_object',
     title: 'Валидировать EPF/ERF XML',
     description: 'Проверяет структуру XML-исходников внешней обработки или отчёта: InternalInfo, Properties, ChildObjects, ссылки и файлы.',
     schemaKeys: { objectPath: false, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_epf_bsp_init',
+    name: 'onecdev_epf_bsp_init',
     title: 'Добавить регистрацию БСП',
     description: 'Добавляет функцию СведенияОВнешнейОбработке в ObjectModule.bsl внешней обработки/отчёта и базовый обработчик команды.',
     schemaKeys: { objectPath: false, kind: false, targets: true },
   },
   {
-    name: 'v8vscedit_epf_bsp_add_command',
+    name: 'onecdev_epf_bsp_add_command',
     title: 'Добавить команду БСП',
     description: 'Добавляет команду в СведенияОВнешнейОбработке и создаёт/дополняет серверный, клиентский или печатный обработчик.',
     schemaKeys: { objectPath: false, identifier: false, commandType: true, presentation: true, formModulePath: true },
   },
   {
-    name: 'v8vscedit_form_info',
+    name: 'onecdev_form_info',
     title: 'Информация о форме',
     description: 'Возвращает структуру управляемой формы: иерархию элементов, реквизиты, команды и события. Принимает канонический путь формы: Справочники.Контрагенты.Форма.ФормаСписка или общую форму ОбщиеФормы.X.',
     schemaKeys: { path: false, configuration: true, expand: true, limit: true, offset: true },
   },
   {
-    name: 'v8vscedit_validate_form',
+    name: 'onecdev_validate_form',
     title: 'Валидировать форму',
     description: 'Проверяет Form.xml: версию, уникальность ID внутри каждого пространства нумерации (элементы формы / реквизиты / команды / колонки таблицы отдельно — не по всему файлу), DataPath, CommandName, события, callType, типы. Регион <BaseForm> (копия базовой формы в расширении) из проверки уникальности исключается целиком. Принимает канонический путь формы: Справочники.Контрагенты.Форма.ФормаСписка или ОбщиеФормы.X.',
     schemaKeys: { path: false, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_add_form',
+    name: 'onecdev_add_form',
     title: 'Добавить форму',
     description: 'Создаёт управляемую форму у объекта: Forms/<Имя>.xml, Form.xml, Module.bsl, регистрирует <Form>Имя</Form> в ChildObjects. parentPath — канонический путь объекта-владельца (Справочники.Контрагенты); name — идентификатор формы 1С (ФормаЭлемента/ФормаСписка/…).',
     schemaKeys: {
@@ -407,97 +407,97 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
     },
   },
   {
-    name: 'v8vscedit_remove_form',
+    name: 'onecdev_remove_form',
     title: 'Удалить форму',
     description: 'Удаляет форму у объекта: каталог формы, дескриптор Forms/<Имя>.xml, снимает регистрацию из ChildObjects и очищает DefaultForm/DefaultObjectForm/… Принимает канонический путь формы: Справочники.Контрагенты.Форма.ФормаСписка.',
     schemaKeys: { path: false, configuration: true },
   },
   {
-    name: 'v8vscedit_compile_form',
+    name: 'onecdev_compile_form',
     title: 'Скомпилировать форму',
-    description: 'Перезаписывает Form.xml из JSON DSL (целиком). Для создания новой формы с регистрацией в объекте и Module.bsl используй v8vscedit_add_form. Принимает канонический путь существующей формы: Справочники.X.Форма.Y или ОбщиеФормы.X.',
+    description: 'Перезаписывает Form.xml из JSON DSL (целиком). Для создания новой формы с регистрацией в объекте и Module.bsl используй onecdev_add_form. Принимает канонический путь существующей формы: Справочники.X.Форма.Y или ОбщиеФормы.X.',
     schemaKeys: { path: false, configuration: true, definition: true, fromObject: true },
   },
   {
-    name: 'v8vscedit_edit_form',
+    name: 'onecdev_edit_form',
     title: 'Изменить форму',
     description: 'Точечно добавляет элементы, реквизиты, команды и события в существующий Form.xml. Не перезаписывает форму целиком (в отличие от compile). Принимает канонический путь формы: Справочники.X.Форма.Y или ОбщиеФормы.X.',
     schemaKeys: { path: false, configuration: true, definition: false },
   },
   {
-    name: 'v8vscedit_compile_subsystem',
+    name: 'onecdev_compile_subsystem',
     title: 'Создать подсистему',
     description: 'Создаёт XML подсистемы из JSON DSL и регистрирует её в Configuration.xml или родительской подсистеме. parentPath — канонический путь: Конфигурация / Расширение (по умолчанию) или Подсистема.X.Y.',
     schemaKeys: { parentPath: true, configuration: true, definition: false },
   },
   {
-    name: 'v8vscedit_edit_subsystem_content',
+    name: 'onecdev_edit_subsystem_content',
     title: 'Изменить состав подсистемы',
-    description: 'Добавляет и убирает объекты из Content подсистемы по каноническим путям или ссылкам вида Catalog.Товары. Свойства подсистемы — через v8vscedit_get_properties и v8vscedit_set_property_by_path. Принимает канонический путь подсистемы: Подсистема.Продажи.Розница.',
+    description: 'Добавляет и убирает объекты из Content подсистемы по каноническим путям или ссылкам вида Catalog.Товары. Свойства подсистемы — через onecdev_get_properties и onecdev_set_property_by_path. Принимает канонический путь подсистемы: Подсистема.Продажи.Розница.',
     schemaKeys: { path: false, configuration: true, add: true, remove: true },
   },
   {
-    name: 'v8vscedit_edit_command_interface',
+    name: 'onecdev_edit_command_interface',
     title: 'Изменить командный интерфейс',
     description: 'Редактирует CommandInterface.xml подсистемы: hide/show/place/order/subsystem-order/group-order. Принимает канонический путь подсистемы: Подсистема.Продажи.Розница. CommandInterface.xml ищется рядом с её XML; createIfMissing создаёт его, если отсутствует.',
     schemaKeys: { path: false, configuration: true, createIfMissing: true, operations: false },
   },
   {
-    name: 'v8vscedit_validate_command_interface',
+    name: 'onecdev_validate_command_interface',
     title: 'Валидировать командный интерфейс',
     description: 'Проверяет CommandInterface.xml: разделы, порядок, ссылки команд, дубли и форматы списков. Принимает канонический путь подсистемы: Подсистема.Продажи.Розница.',
     schemaKeys: { path: false, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_role_info',
+    name: 'onecdev_role_info',
     title: 'Информация о правах роли',
     description: 'Возвращает разрешённые/запрещённые права, RLS и шаблоны ограничений из Rights.xml. Принимает канонический путь роли: Роли.БазовыеПрава.',
     schemaKeys: { path: false, configuration: true, showDenied: true, limit: true, offset: true },
   },
   {
-    name: 'v8vscedit_validate_role',
+    name: 'onecdev_validate_role',
     title: 'Валидировать роль',
     description: 'Проверяет Rights.xml роли: XML, глобальные флаги, права объектов, RLS, шаблоны и регистрацию в Configuration.xml. Принимает канонический путь роли: Роли.БазовыеПрава.',
     schemaKeys: { path: false, configuration: true, detailed: true, maxErrors: true },
   },
   {
-    name: 'v8vscedit_compile_role',
+    name: 'onecdev_compile_role',
     title: 'Создать роль из DSL',
     description: 'Создаёт Roles/<Имя>.xml и Roles/<Имя>/Ext/Rights.xml из JSON DSL и регистрирует роль в Configuration.xml через ChildObjects. DefaultRoles не затрагивается. parentPath — канонический путь корня: Конфигурация (по умолчанию) или Расширение.',
     schemaKeys: { parentPath: true, configuration: true, definition: false },
   },
   {
-    name: 'v8vscedit_edit_role',
+    name: 'onecdev_edit_role',
     title: 'Точечное редактирование прав роли',
     description: 'Применяет операции к Rights.xml роли. Объекты задаются именами 1С с типами (Catalog.Контрагенты или Справочник.Контрагенты). Поддерживаются операции: grant/revoke/setRls/setFlags/addTemplate/removeTemplate. Принимает канонический путь роли: Роли.БазовыеПрава.',
     schemaKeys: { path: false, configuration: true, operations: false },
   },
   {
-    name: 'v8vscedit_list_default_roles',
+    name: 'onecdev_list_default_roles',
     title: 'Список ролей по умолчанию',
     description: 'Возвращает текущий список <DefaultRoles> из Configuration.xml. Принимает канонический путь корня: Конфигурация или Расширение.',
     schemaKeys: { path: false, configuration: true },
   },
   {
-    name: 'v8vscedit_add_default_role',
+    name: 'onecdev_add_default_role',
     title: 'Добавить роль в DefaultRoles',
     description: 'Добавляет роль в <DefaultRoles> Configuration.xml. role — имя роли (БазовыеПрава) или полная ссылка (Role.БазовыеПрава). Принимает канонический путь корня: Конфигурация или Расширение.',
     schemaKeys: { path: false, configuration: true, role: false },
   },
   {
-    name: 'v8vscedit_remove_default_role',
+    name: 'onecdev_remove_default_role',
     title: 'Удалить роль из DefaultRoles',
     description: 'Убирает роль из <DefaultRoles> Configuration.xml. role — имя роли (БазовыеПрава) или полная ссылка (Role.БазовыеПрава). Принимает канонический путь корня: Конфигурация или Расширение.',
     schemaKeys: { path: false, configuration: true, role: false },
   },
   {
-    name: 'v8vscedit_set_default_roles',
+    name: 'onecdev_set_default_roles',
     title: 'Задать список DefaultRoles',
     description: 'Полностью заменяет список <DefaultRoles> в Configuration.xml. Каждое имя нормализуется в форму Role.<Имя>. Принимает канонический путь корня: Конфигурация или Расширение.',
     schemaKeys: { path: false, configuration: true, roles: false },
   },
   {
-    name: 'v8vscedit_create_configuration',
+    name: 'onecdev_create_configuration',
     title: 'Создать пустую конфигурацию',
     description: 'Создаёт scaffold CF: Configuration.xml и Languages/Русский.xml.',
     schemaKeys: {
@@ -506,7 +506,7 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
     },
   },
   {
-    name: 'v8vscedit_create_extension',
+    name: 'onecdev_create_extension',
     title: 'Создать расширение',
     description: 'Создаёт scaffold CFE: Configuration.xml, язык и опциональную основную роль.',
     schemaKeys: {
@@ -515,57 +515,57 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
     },
   },
   {
-    name: 'v8vscedit_dump_cf',
+    name: 'onecdev_dump_cf',
     title: 'Выгрузить конфигурацию в CF-файл',
-    description: 'Выгружает конфигурацию базы в бинарный файл через пакетный Конфигуратор: основную конфигурацию в .cf, расширение — в .cfe (если задан extensionName). Файл появляется на целевом пути только при успешном завершении; overwrite разрешает заменить существующий файл. Для выгрузки ВСЕХ расширений базы одной операцией используйте v8vscedit_dump_all_cfe — этот инструмент работает с одним объектом за вызов.',
+    description: 'Выгружает конфигурацию базы в бинарный файл через пакетный Конфигуратор: основную конфигурацию в .cf, расширение — в .cfe (если задан extensionName). Файл появляется на целевом пути только при успешном завершении; overwrite разрешает заменить существующий файл. Для выгрузки ВСЕХ расширений базы одной операцией используйте onecdev_dump_all_cfe — этот инструмент работает с одним объектом за вызов.',
     schemaKeys: { outputFile: false, extensionName: true, overwrite: true },
   },
   {
-    name: 'v8vscedit_load_cf',
+    name: 'onecdev_load_cf',
     title: 'Загрузить конфигурацию из CF-файла',
     description: 'Загружает конфигурацию из бинарного файла в базу через пакетный Конфигуратор: .cf — в основную конфигурацию, .cfe — в расширение (если задан extensionName; несуществующее расширение при этом создаётся в базе). Операция необратима и требует confirm: true. Конфигурация БАЗЫ при загрузке не обновляется — примените изменения отдельно через applyToDatabase: true. XML-выгрузка проекта после загрузки перестаёт соответствовать базе: выполните импорт конфигураций.',
     schemaKeys: { inputFile: false, extensionName: true, confirm: false, applyToDatabase: true },
   },
   {
-    name: 'v8vscedit_dump_all_cfe',
+    name: 'onecdev_dump_all_cfe',
     title: 'Выгрузить все расширения базы в CFE-файлы',
     description: 'Выгружает КАЖДОЕ подключённое к базе расширение в отдельный .cfe-файл каталога outputDir. Список расширений берётся у самой базы; рядом с файлами пишется манифест cfe-dump.json, по которому загрузка восстанавливает исходные имена расширений (имя файла санитизируется необратимо). Отказ по отдельному расширению не останавливает операцию: такие расширения возвращаются в failed, их прежние файлы остаются нетронутыми. overwrite разрешает заменять уже существующие файлы каталога.',
     schemaKeys: { outputDir: false, overwrite: true },
   },
   {
-    name: 'v8vscedit_load_all_cfe',
+    name: 'onecdev_load_all_cfe',
     title: 'Загрузить все расширения базы из CFE-файлов',
     description: 'Загружает в базу КАЖДОЕ расширение из .cfe-файлов каталога inputDir (имена восстанавливаются по манифесту cfe-dump.json). Операция необратима и требует confirm: true. При отказе на любом расширении загрузка ОСТАНАВЛИВАЕТСЯ: состояние сбойного расширения в базе неопределённо, остальные не трогаются. createMissing разрешает создавать в базе расширения, которых в ней ещё нет. Конфигурация БАЗЫ при загрузке не обновляется — примените изменения отдельно через applyToDatabase: true. XML-выгрузка проекта после загрузки перестаёт соответствовать базе: выполните импорт конфигураций.',
     schemaKeys: { inputDir: false, confirm: false, createMissing: true, applyToDatabase: true },
   },
   {
-    name: 'v8vscedit_get_properties',
+    name: 'onecdev_get_properties',
     title: 'Свойства объекта по пути',
     description: 'Возвращает ВСЕ свойства узла, включая readonly, со всеми допустимыми enum/multiEnum-значениями. Каждый контракт содержит propertyKey, title, kind, currentValue, supportedBySetProperty и notes. Свойства с kind= "metadataType" (Type/Source/CommandParameterType) сами список значений не несут — в notes указано, какой tool вызывать для смены и получения списка доступных типов.',
     schemaKeys: { path: false, configuration: true },
   },
   {
-    name: 'v8vscedit_set_property_by_path',
+    name: 'onecdev_set_property_by_path',
     title: 'Изменить свойство по пути',
-    description: 'Меняет простое свойство объекта по каноническому пути с проверками enum/boolean/readonly. Корневые свойства доступны по path="Конфигурация" или "Расширение". Для DefaultRoles удобнее v8vscedit_add_default_role / set_default_roles.',
+    description: 'Меняет простое свойство объекта по каноническому пути с проверками enum/boolean/readonly. Корневые свойства доступны по path="Конфигурация" или "Расширение". Для DefaultRoles удобнее onecdev_add_default_role / set_default_roles.',
     schemaKeys: { path: false, configuration: true, propertyKey: false, value: false },
   },
   {
-    name: 'v8vscedit_set_properties',
+    name: 'onecdev_set_properties',
     title: 'Пакетная смена свойств по пути',
-    description: 'Меняет несколько простых свойств объекта за один вызов. properties — объект вида { propertyKey: value, ... }, ключи — английские имена свойств из v8vscedit_get_properties. Применяет последовательно, в отчёте показывает результат каждой пары. Для типов (Type/Source/CommandParameterType) используй v8vscedit_set_type — set_properties их пропустит.',
+    description: 'Меняет несколько простых свойств объекта за один вызов. properties — объект вида { propertyKey: value, ... }, ключи — английские имена свойств из onecdev_get_properties. Применяет последовательно, в отчёте показывает результат каждой пары. Для типов (Type/Source/CommandParameterType) используй onecdev_set_type — set_properties их пропустит.',
     schemaKeys: { path: false, configuration: true, properties: false },
   },
   {
-    name: 'v8vscedit_list_available_types',
+    name: 'onecdev_list_available_types',
     title: 'Доступные типы 1С',
     description: 'Возвращает стандартные и конфигурационные типы для свойства Тип / Источник / Тип параметра команды. Для CFE показывает только собственные и заимствованные объекты текущего расширения. Используй русское поле value при вызове set_type.',
     schemaKeys: { path: true, configuration: true, propertyKey: true },
   },
   {
-    name: 'v8vscedit_set_type',
+    name: 'onecdev_set_type',
     title: 'Изменить тип объекта',
-    description: 'Меняет свойство Тип / Источник / Тип параметра команды по каноническому пути. Перед ссылочным типом вызови v8vscedit_list_available_types для того же path. Принимает русские имена типов и квалификаторы (длина/точность).',
+    description: 'Меняет свойство Тип / Источник / Тип параметра команды по каноническому пути. Перед ссылочным типом вызови onecdev_list_available_types для того же path. Принимает русские имена типов и квалификаторы (длина/точность).',
     schemaKeys: {
       path: false, configuration: true, propertyKey: true, value: true, type: true, items: true,
       length: true, allowedLength: true, digits: true, fractionDigits: true, precision: true,
@@ -573,19 +573,19 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
     },
   },
   {
-    name: 'v8vscedit_rename_metadata',
+    name: 'onecdev_rename_metadata',
     title: 'Переименовать метаданные',
     description: 'Переименовывает объект или дочерний элемент по каноническому пути. Для корневого объекта обновляет файл, каталог, ChildObjects и ссылки. Принимает канонический путь: Справочники.Контрагенты.',
     schemaKeys: { path: false, configuration: true, newName: false },
   },
   {
-    name: 'v8vscedit_remove_metadata',
+    name: 'onecdev_remove_metadata',
     title: 'Удалить метаданные',
     description: 'Удаляет объект или дочерний элемент по каноническому пути через общий сервис удаления (используется и UI). Не удаляй XML/каталоги вручную. Принимает канонический путь: Справочники.Контрагенты или Справочники.X.ИНН.',
     schemaKeys: { path: false, configuration: true, keepFiles: true },
   },
   {
-    name: 'v8vscedit_cfe_borrow',
+    name: 'onecdev_cfe_borrow',
     title: 'Заимствовать объект в расширение',
     description: 'Заимствует объект, форму или дочерний элемент из CF в CFE через CfeBorrowService.',
     schemaKeys: {
@@ -594,19 +594,19 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
     },
   },
   {
-    name: 'v8vscedit_cfe_patch_method',
+    name: 'onecdev_cfe_patch_method',
     title: 'Добавить перехватчик метода CFE',
     description: 'Создаёт или дописывает BSL-модуль расширения перехватчиком &Перед/&После/&ИзменениеИКонтроль. path — канонический путь модуля расширения: Справочники.X.МодульОбъекта, Справочники.X.Форма.Y.МодульФормы, ОбщиеМодули.X. Модуль может пока отсутствовать.',
     schemaKeys: { extensionPath: false, path: false, methodName: false, interceptorType: false, context: true, isFunction: true },
   },
   {
-    name: 'v8vscedit_cfe_diff',
+    name: 'onecdev_cfe_diff',
     title: 'Анализ расширения CFE',
     description: 'Возвращает состав расширения, заимствованные объекты, BSL-перехватчики и опционально проверку переноса #Вставка.',
     schemaKeys: { extensionPath: false, configPath: true, mode: true },
   },
   {
-    name: 'v8vscedit_execute_command',
+    name: 'onecdev_execute_command',
     title: 'Выполнить команду расширения',
     description: 'Безопасный мост только для явно разрешённых команд расширения: refresh, importConfigurations, updateChangedConfigurations. Ответ: command, outcome (done|no-changes|no-targets|cancelled|busy|failed), result (true при done/no-changes), heldBy при busy — выполняющаяся операция, completed/stoppedAt/error при done/failed. importConfigurations и updateChangedConfigurations при нескольких конфигурациях ждут выбора пользователя.',
     schemaKeys: { command: false },
@@ -723,7 +723,7 @@ function buildEmptyConfigXml(): string {
     '    <Properties>',
     '      <Name>ТестоваяКонфигурация</Name>',
     '      <Synonym/>',
-    // <DefaultRoles/> нужен v8vscedit_set_default_roles/add_default_role: без
+    // <DefaultRoles/> нужен onecdev_set_default_roles/add_default_role: без
     // него ConfigurationXmlEditor.updateDefaultRoles возвращает success:false
     // («В Configuration.xml отсутствует блок <DefaultRoles>») ещё до попытки
     // реальной записи ролей.
@@ -740,8 +740,8 @@ function mkTmpDir(prefix: string): string {
 }
 
 suite('V8McpServer — единый post-mutation гейт на репрезентативных доменах дробления', () => {
-  test('домен «метаданные»: v8vscedit_remove_metadata — success:true запускает гейт, success:false — нет', async () => {
-    const configRoot = mkTmpDir('v8vscedit-catalog-remove-');
+  test('домен «метаданные»: onecdev_remove_metadata — success:true запускает гейт, success:false — нет', async () => {
+    const configRoot = mkTmpDir('onecdev-catalog-remove-');
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Контрагенты' }).success, true);
@@ -759,8 +759,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [missingNode] }),
     }));
-    const removeToolFail = toolsFail.get('v8vscedit_remove_metadata');
-    assert.ok(removeToolFail, 'v8vscedit_remove_metadata должен быть зарегистрирован');
+    const removeToolFail = toolsFail.get('onecdev_remove_metadata');
+    assert.ok(removeToolFail, 'onecdev_remove_metadata должен быть зарегистрирован');
     const failResult = await Promise.resolve(removeToolFail.handler({ path: 'Справочники.НетТакого' }));
     assert.ok(!isErrorResult(failResult), `удаление несуществующего объекта не должно бросать исключение верхнего уровня: ${extractText(failResult)}`);
     const failParsed = JSON.parse(extractText(failResult)) as { success: boolean };
@@ -772,7 +772,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [node] }),
     }));
-    const removeToolOk = toolsOk.get('v8vscedit_remove_metadata');
+    const removeToolOk = toolsOk.get('onecdev_remove_metadata');
     assert.ok(removeToolOk);
     const okResult = await Promise.resolve(removeToolOk.handler({ path: 'Справочники.Контрагенты' }));
     assert.ok(!isErrorResult(okResult), `удаление существующего справочника не должно падать: ${extractText(okResult)}`);
@@ -784,8 +784,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(configRoot, { recursive: true, force: true });
   });
 
-  test('домен «метаданные»: v8vscedit_set_type — success:true запускает гейт, success:false — нет', async () => {
-    const root = mkTmpDir('v8vscedit-catalog-settype-');
+  test('домен «метаданные»: onecdev_set_type — success:true запускает гейт, success:false — нет', async () => {
+    const root = mkTmpDir('onecdev-catalog-settype-');
     const xmlPath = path.join(root, 'Параметр.xml');
     fs.writeFileSync(xmlPath, [
       '<?xml version="1.0" encoding="utf-8"?>',
@@ -809,8 +809,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [node] }),
     }));
-    const setTypeOk = toolsOk.get('v8vscedit_set_type');
-    assert.ok(setTypeOk, 'v8vscedit_set_type должен быть зарегистрирован');
+    const setTypeOk = toolsOk.get('onecdev_set_type');
+    assert.ok(setTypeOk, 'onecdev_set_type должен быть зарегистрирован');
     const okResult = await Promise.resolve(setTypeOk.handler({
       path: 'ПараметрыСеанса.Параметр',
       value: 'Число',
@@ -831,7 +831,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [node] }),
     }));
-    const setTypeFail = toolsFail.get('v8vscedit_set_type');
+    const setTypeFail = toolsFail.get('onecdev_set_type');
     assert.ok(setTypeFail);
     const failResult = await Promise.resolve(setTypeFail.handler({
       path: 'ПараметрыСеанса.Параметр',
@@ -847,8 +847,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(root, { recursive: true, force: true });
   });
 
-  test('домен «метаданные»: v8vscedit_rename_metadata — success:true запускает гейт, success:false — нет', async () => {
-    const configRoot = mkTmpDir('v8vscedit-catalog-rename-');
+  test('домен «метаданные»: onecdev_rename_metadata — success:true запускает гейт, success:false — нет', async () => {
+    const configRoot = mkTmpDir('onecdev-catalog-rename-');
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Партнёры' }).success, true);
@@ -861,8 +861,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [node] }),
     }));
-    const renameFail = toolsFail.get('v8vscedit_rename_metadata');
-    assert.ok(renameFail, 'v8vscedit_rename_metadata должен быть зарегистрирован');
+    const renameFail = toolsFail.get('onecdev_rename_metadata');
+    assert.ok(renameFail, 'onecdev_rename_metadata должен быть зарегистрирован');
     const failResult = await Promise.resolve(renameFail.handler({ path: 'Справочники.Партнёры', newName: 'Невалидное Имя' }));
     assert.ok(!isErrorResult(failResult), `невалидное имя не должно приводить к исключению верхнего уровня: ${extractText(failResult)}`);
     const failParsed = JSON.parse(extractText(failResult)) as { success: boolean };
@@ -874,7 +874,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [node] }),
     }));
-    const renameOk = toolsOk.get('v8vscedit_rename_metadata');
+    const renameOk = toolsOk.get('onecdev_rename_metadata');
     assert.ok(renameOk);
     const okResult = await Promise.resolve(renameOk.handler({ path: 'Справочники.Партнёры', newName: 'Клиенты' }));
     assert.ok(!isErrorResult(okResult), `валидное переименование не должно падать: ${extractText(okResult)}`);
@@ -886,8 +886,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(configRoot, { recursive: true, force: true });
   });
 
-  test('домен «роли»: v8vscedit_set_default_roles — успешное изменение запускает гейт, ошибка конфигурации — нет', async () => {
-    const configRoot = mkTmpDir('v8vscedit-catalog-roles-');
+  test('домен «роли»: onecdev_set_default_roles — успешное изменение запускает гейт, ошибка конфигурации — нет', async () => {
+    const configRoot = mkTmpDir('onecdev-catalog-roles-');
     const configXmlPath = path.join(configRoot, 'Configuration.xml');
     fs.writeFileSync(configXmlPath, buildEmptyConfigXml(), 'utf-8');
     const configNode = new MetadataNode({ label: 'Конфигурация', nodeKind: 'configuration', xmlPath: configXmlPath }, vscode.TreeItemCollapsibleState.None);
@@ -902,8 +902,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail, {
       treeProvider: createNodeResolvingTreeProvider({ configurationNode: missingConfigNode }),
     }));
-    const setRolesFail = toolsFail.get('v8vscedit_set_default_roles');
-    assert.ok(setRolesFail, 'v8vscedit_set_default_roles должен быть зарегистрирован');
+    const setRolesFail = toolsFail.get('onecdev_set_default_roles');
+    assert.ok(setRolesFail, 'onecdev_set_default_roles должен быть зарегистрирован');
     const failResult = await Promise.resolve(setRolesFail.handler({ path: 'Конфигурация', roles: ['БазовыеПрава'] }));
     assert.ok(!isErrorResult(failResult), `отсутствие Configuration.xml не должно приводить к исключению верхнего уровня: ${extractText(failResult)}`);
     const failParsed = JSON.parse(extractText(failResult)) as { success: boolean };
@@ -915,7 +915,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk, {
       treeProvider: createNodeResolvingTreeProvider({ configurationNode: configNode }),
     }));
-    const setRolesOk = toolsOk.get('v8vscedit_set_default_roles');
+    const setRolesOk = toolsOk.get('onecdev_set_default_roles');
     assert.ok(setRolesOk);
     const okResult = await Promise.resolve(setRolesOk.handler({ path: 'Конфигурация', roles: ['БазовыеПрава'] }));
     assert.ok(!isErrorResult(okResult), `запись DefaultRoles не должна падать: ${extractText(okResult)}`);
@@ -927,8 +927,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(configRoot, { recursive: true, force: true });
   });
 
-  test('домен «формы»: v8vscedit_add_form — успех запускает гейт (happy-path через реальный FormToolsService)', async () => {
-    const configRoot = mkTmpDir('v8vscedit-catalog-addform-');
+  test('домен «формы»: onecdev_add_form — успех запускает гейт (happy-path через реальный FormToolsService)', async () => {
+    const configRoot = mkTmpDir('onecdev-catalog-addform-');
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Контрагенты' }).success, true);
@@ -939,8 +939,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools } = registerAllTools(withSpiedGate(spy, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [node] }),
     }));
-    const addForm = tools.get('v8vscedit_add_form');
-    assert.ok(addForm, 'v8vscedit_add_form должен быть зарегистрирован');
+    const addForm = tools.get('onecdev_add_form');
+    assert.ok(addForm, 'onecdev_add_form должен быть зарегистрирован');
     const result = await Promise.resolve(addForm.handler({ parentPath: 'Справочники.Контрагенты', name: 'ФормаСписка' }));
     assert.ok(!isErrorResult(result), `добавление формы не должно падать: ${extractText(result)}`);
     const parsed = JSON.parse(extractText(result)) as { changedFiles: string[] };
@@ -952,8 +952,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(configRoot, { recursive: true, force: true });
   });
 
-  test('домен «формы»: v8vscedit_edit_form — успех запускает гейт (happy-path через реальный FormEditService)', async () => {
-    const configRoot = mkTmpDir('v8vscedit-catalog-editform-');
+  test('домен «формы»: onecdev_edit_form — успех запускает гейт (happy-path через реальный FormEditService)', async () => {
+    const configRoot = mkTmpDir('onecdev-catalog-editform-');
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Контрагенты' }).success, true);
@@ -993,8 +993,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
         formsByOwner: [{ ownerNode: catalogNode, formNode }],
       }),
     }));
-    const editForm = tools.get('v8vscedit_edit_form');
-    assert.ok(editForm, 'v8vscedit_edit_form должен быть зарегистрирован');
+    const editForm = tools.get('onecdev_edit_form');
+    assert.ok(editForm, 'onecdev_edit_form должен быть зарегистрирован');
     const result = await Promise.resolve(editForm.handler({
       path: 'Справочники.Контрагенты.Форма.ФормаЭлемента',
       definition: { formEvents: [{ name: 'ПередЗакрытием', handler: 'ПередЗакрытием' }] },
@@ -1014,8 +1014,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(configRoot, { recursive: true, force: true });
   });
 
-  test('домен «подсистемы»: v8vscedit_edit_subsystem_content — успех запускает гейт, неизвестная ссылка — нет', async () => {
-    const configRoot = mkTmpDir('v8vscedit-catalog-subsystem-');
+  test('домен «подсистемы»: onecdev_edit_subsystem_content — успех запускает гейт, неизвестная ссылка — нет', async () => {
+    const configRoot = mkTmpDir('onecdev-catalog-subsystem-');
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' }).success, true);
@@ -1032,8 +1032,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [subsystemNode, catalogNode] }),
     }));
-    const editContentFail = toolsFail.get('v8vscedit_edit_subsystem_content');
-    assert.ok(editContentFail, 'v8vscedit_edit_subsystem_content должен быть зарегистрирован');
+    const editContentFail = toolsFail.get('onecdev_edit_subsystem_content');
+    assert.ok(editContentFail, 'onecdev_edit_subsystem_content должен быть зарегистрирован');
     const failResult = await Promise.resolve(editContentFail.handler({ path: 'Подсистема.Продажи', add: ['Справочники.НетТакого'] }));
     assert.strictEqual(isErrorResult(failResult), true, 'добавление неизвестной ссылки должно вернуть ошибку tool-а');
     assertGateNotFired(spyFail, 'edit_subsystem_content failure');
@@ -1043,7 +1043,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk, {
       treeProvider: createNodeResolvingTreeProvider({ objectNodes: [subsystemNode, catalogNode] }),
     }));
-    const editContentOk = toolsOk.get('v8vscedit_edit_subsystem_content');
+    const editContentOk = toolsOk.get('onecdev_edit_subsystem_content');
     assert.ok(editContentOk);
     const okResult = await Promise.resolve(editContentOk.handler({ path: 'Подсистема.Продажи', add: ['Справочники.Товары'] }));
     assert.ok(!isErrorResult(okResult), `добавление известной ссылки не должно падать: ${extractText(okResult)}`);
@@ -1054,12 +1054,12 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(configRoot, { recursive: true, force: true });
   });
 
-  test('домен «внешние объекты»: v8vscedit_create_epf — успех запускает гейт (happy-path)', async () => {
-    const outputDir = mkTmpDir('v8vscedit-catalog-epf-');
+  test('домен «внешние объекты»: onecdev_create_epf — успех запускает гейт (happy-path)', async () => {
+    const outputDir = mkTmpDir('onecdev-catalog-epf-');
     const spy = createSpy();
     const { tools } = registerAllTools(withSpiedGate(spy));
-    const createEpf = tools.get('v8vscedit_create_epf');
-    assert.ok(createEpf, 'v8vscedit_create_epf должен быть зарегистрирован');
+    const createEpf = tools.get('onecdev_create_epf');
+    assert.ok(createEpf, 'onecdev_create_epf должен быть зарегистрирован');
     const result = await Promise.resolve(createEpf.handler({ name: 'ТестоваяОбработка', outputDir }));
     assert.ok(!isErrorResult(result), `создание EPF не должно падать: ${extractText(result)}`);
     const parsed = JSON.parse(extractText(result)) as { changedFiles: string[] };
@@ -1069,12 +1069,12 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     fs.rmSync(outputDir, { recursive: true, force: true });
   });
 
-  test('домен «жизненный цикл»: v8vscedit_create_configuration — успех запускает гейт, конфликт с существующей — нет', async () => {
-    const outputDir = mkTmpDir('v8vscedit-catalog-createcfg-');
+  test('домен «жизненный цикл»: onecdev_create_configuration — успех запускает гейт, конфликт с существующей — нет', async () => {
+    const outputDir = mkTmpDir('onecdev-catalog-createcfg-');
     const spyOk = createSpy();
     const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk));
-    const createCfgOk = toolsOk.get('v8vscedit_create_configuration');
-    assert.ok(createCfgOk, 'v8vscedit_create_configuration должен быть зарегистрирован');
+    const createCfgOk = toolsOk.get('onecdev_create_configuration');
+    assert.ok(createCfgOk, 'onecdev_create_configuration должен быть зарегистрирован');
     const okResult = await Promise.resolve(createCfgOk.handler({ name: 'ТестоваяКонфигурация', outputDir }));
     assert.ok(!isErrorResult(okResult), `создание конфигурации не должно падать: ${extractText(okResult)}`);
     const okParsed = JSON.parse(extractText(okResult)) as { changedFiles: string[] };
@@ -1085,7 +1085,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     // исключение (перехват в wrap), гейт не должен сработать.
     const spyFail = createSpy();
     const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail));
-    const createCfgFail = toolsFail.get('v8vscedit_create_configuration');
+    const createCfgFail = toolsFail.get('onecdev_create_configuration');
     assert.ok(createCfgFail);
     const failResult = await Promise.resolve(createCfgFail.handler({ name: 'ТестоваяКонфигурация2', outputDir }));
     assert.strictEqual(isErrorResult(failResult), true, 'повторное создание конфигурации в занятом каталоге должно вернуть ошибку');
@@ -1116,7 +1116,7 @@ function createNodeResolvingTreeProvider(options: {
   readonly formsByOwner?: readonly { readonly ownerNode: MetadataNode; readonly formNode: MetadataNode }[];
   readonly configurationNode?: MetadataNode;
 }): MetadataTreeProvider {
-  const configRoot = '/tmp/v8vscedit-fixture';
+  const configRoot = '/tmp/onecdev-fixture';
   const objectNodes = options.objectNodes ?? [];
   const formsByOwnerNode = new Map<MetadataNode, MetadataNode[]>();
   for (const { ownerNode, formNode } of options.formsByOwner ?? []) {

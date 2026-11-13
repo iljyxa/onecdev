@@ -13,7 +13,7 @@ export function registerAddMetadataCommand(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.addMetadata', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.addMetadata', async (node: MetadataNode | undefined) => {
       await addMetadata(node, services);
     })
   );

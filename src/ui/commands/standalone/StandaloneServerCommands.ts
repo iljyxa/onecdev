@@ -9,32 +9,32 @@ export function registerStandaloneServerCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.standalone.configure', () => {
+    vscode.commands.registerCommand('onecdev.standalone.configure', () => {
       services.standaloneServerViewProvider.show();
     }),
 
-    vscode.commands.registerCommand('v8vscedit.standalone.start', async () => {
+    vscode.commands.registerCommand('onecdev.standalone.start', async () => {
       const status = await runServerOperation(services, 'Запуск автономного сервера', () =>
         services.standaloneServerService.start()
       );
       showStatusMessage(status);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.standalone.restart', async () => {
+    vscode.commands.registerCommand('onecdev.standalone.restart', async () => {
       const status = await runServerOperation(services, 'Перезапуск автономного сервера', () =>
         services.standaloneServerService.restart()
       );
       showStatusMessage(status);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.standalone.stop', async () => {
+    vscode.commands.registerCommand('onecdev.standalone.stop', async () => {
       const status = await runServerOperation(services, 'Остановка автономного сервера', () =>
         services.standaloneServerService.stop()
       );
       showStatusMessage(status);
     }),
 
-    vscode.commands.registerCommand('v8vscedit.standalone.openWebClient', async () => {
+    vscode.commands.registerCommand('onecdev.standalone.openWebClient', async () => {
       const result = await runServerOperation(services, 'Открытие веб-клиента', () =>
         prepareWebClient(services)
       );
@@ -58,7 +58,7 @@ export function registerStandaloneServerCommands(
       }
     }),
 
-    vscode.commands.registerCommand('v8vscedit.standalone.showLog', async () => {
+    vscode.commands.registerCommand('onecdev.standalone.showLog', async () => {
       const logPath = services.standaloneServerService.getLogPath();
       if (!fs.existsSync(logPath)) {
         await vscode.window.showInformationMessage('Лог автономного сервера ещё не создан.');

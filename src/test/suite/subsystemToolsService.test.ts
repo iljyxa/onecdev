@@ -11,7 +11,7 @@ import {
 
 suite('SubsystemToolsService и CommandInterfaceService', () => {
   test('создаёт, читает и валидирует подсистему', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-subsystem-tools-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-subsystem-tools-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Конфигурация', outputDir: root });
     new MetadataXmlCreator().addRootObject({ configRoot: root, kind: 'Catalog', name: 'Товары' });
 
@@ -41,7 +41,7 @@ suite('SubsystemToolsService и CommandInterfaceService', () => {
   });
 
   test('редактирует и валидирует CommandInterface.xml', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-ci-tools-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-ci-tools-'));
     new ConfigurationScaffoldService().createConfiguration({ name: 'Конфигурация', outputDir: root });
     const subsystem = new SubsystemToolsService().compile({
       outputDir: root,
@@ -85,7 +85,7 @@ suite('SubsystemToolsService и CommandInterfaceService', () => {
     ] as const;
 
     function createSubsystemHome(): string {
-      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-ci-idempotent-'));
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-ci-idempotent-'));
       new ConfigurationScaffoldService().createConfiguration({ name: 'Конфигурация', outputDir: root });
       const subsystem = new SubsystemToolsService().compile({
         outputDir: root,

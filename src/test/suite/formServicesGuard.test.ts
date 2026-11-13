@@ -74,7 +74,7 @@ suite('FormEditService / FormInfoService — guard корня и отсутст�
     suite(service.name, () => {
       for (const content of NON_FORM_CONTENTS) {
         test(`файл Form.xml с содержимым «${content.name}» → бросок, файл не тронут`, () => {
-          const root = mkTmp('v8vscedit-guard-');
+          const root = mkTmp('onecdev-guard-');
           try {
             const target = writeFakeFormBody(root, content.text);
             const before = snapshotTree(root);
@@ -171,7 +171,7 @@ suite('FormValidateService — корень проверяется по перв
   const service = new FormValidateService();
 
   test('XML объекта под именем Form.xml с <Form>ФормаСписка</Form> в ChildObjects → ровно одна ошибка, без лавины ложных', () => {
-    const root = mkTmp('v8vscedit-validate-guard-');
+    const root = mkTmp('onecdev-validate-guard-');
     try {
       // Подстрока `<Form` в этом XML есть (регистрация формы в ChildObjects), но корень — MetaDataObject:
       // старая проверка проходила и выдавала пачку ложных ошибок вроде «AutoCommandBar element missing».
@@ -189,7 +189,7 @@ suite('FormValidateService — корень проверяется по перв
 
   for (const content of NON_FORM_CONTENTS) {
     test(`не выбрасывает, а сообщает об ошибке корня: ${content.name}`, () => {
-      const root = mkTmp('v8vscedit-validate-guard-');
+      const root = mkTmp('onecdev-validate-guard-');
       try {
         const target = writeFakeFormBody(root, content.text);
         const before = snapshotTree(root);
@@ -205,8 +205,8 @@ suite('FormValidateService — корень проверяется по перв
 
   test('форма с XML-комментарием и BOM перед корнем валидна так же, как без комментария (guard не даёт ложных отказов)', () => {
     const fixture = createFormFixtureExport();
-    const rootPlain = mkTmp('v8vscedit-validate-plain-');
-    const rootCommented = mkTmp('v8vscedit-validate-commented-');
+    const rootPlain = mkTmp('onecdev-validate-plain-');
+    const rootCommented = mkTmp('onecdev-validate-commented-');
     try {
       const original = fs.readFileSync(fixture.catalogFormBody, 'utf-8');
       const withComment = original.replace(/^(\uFEFF?<\?xml[^?]*\?>\r?\n?)/, '$1<!-- служебный комментарий с <Form> внутри -->\n');
@@ -245,7 +245,7 @@ suite('FormCompileService — отказ перезаписывать не-Form 
 
   for (const content of NON_FORM_CONTENTS) {
     test(`существующий Form.xml с содержимым «${content.name}» → отказ, всё нетронуто`, () => {
-      const root = mkTmp('v8vscedit-compile-guard-');
+      const root = mkTmp('onecdev-compile-guard-');
       try {
         const target = writeFakeFormBody(root, content.text);
         const before = snapshotTree(root);
@@ -277,7 +277,7 @@ suite('FormCompileService — отказ перезаписывать не-Form 
   });
 
   test('файла ещё нет → guard не применяется, тело формы создаётся (штатное создание)', () => {
-    const root = mkTmp('v8vscedit-compile-new-');
+    const root = mkTmp('onecdev-compile-new-');
     try {
       const target = path.join(root, 'НоваяФорма', 'Ext', 'Form.xml');
       const result = service.compile({ outputPath: target, definition });

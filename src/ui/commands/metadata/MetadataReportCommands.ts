@@ -7,10 +7,10 @@ export function registerMetadataReportCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.metadata.info', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.metadata.info', async (node: MetadataNode | undefined) => {
       await showMetadataInfo(node, services);
     }),
-    vscode.commands.registerCommand('v8vscedit.metadata.validate', async (node: MetadataNode | undefined) => {
+    vscode.commands.registerCommand('onecdev.metadata.validate', async (node: MetadataNode | undefined) => {
       await validateMetadata(node, services);
     })
   );

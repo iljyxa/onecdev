@@ -2,7 +2,7 @@
 
 ## Назначение
 
-Webview-панель `v8vsceditChanges` в контейнере активности `v8vscedit`, показывающая `git status`
+Webview-панель `onecdevChanges` в контейнере активности `onecdev`, показывающая `git status`
 рабочей копии не построчно по файлам, а в терминах объектов метаданных 1С и их частей («Свойства»,
 «МодульОбъекта», «Форма.ФормаЭлемента» и т.п.), с полноценными git-операциями —
 stage/unstage/discard/commit/diff, как в штатном SCM VS Code. Дополняет (а не заменяет) существующие
@@ -13,7 +13,7 @@ git-декорации навигатора (`infra/git/GitMetadataStatusService
 Презентация — **webview, а не нативный `TreeView`**: панель переиспользует тот же Vue-компонент дерева,
 что и основной навигатор (`UniversalPanelViewProvider`), и добавляет собственную SCM-шапку (сообщение
 коммита, кнопки «Закоммитить»/«Обновить»/«Проиндексировать всё»). Итерация 1 этого представления была
-нативным `TreeDataProvider` — он полностью удалён вместе с шестью командами `v8vscedit.changes.*` и
+нативным `TreeDataProvider` — он полностью удалён вместе с шестью командами `onecdev.changes.*` и
 меню `package.json → contributes.menus`; текущая архитектура их не имеет и не нуждается в них.
 
 Итерация 2 заменила ПЛОСКОЕ дерево «секция → объект → части» на **навигаторную иерархию**: секции
@@ -89,7 +89,7 @@ git-декорации навигатора (`infra/git/GitMetadataStatusService
   (`ui/views/history/`). Благодаря этому helper'у `MetadataChangesViewProvider` не разрастается логикой
   графа — полное описание в [git-history-graph.md](./git-history-graph.md#uiviewschangeschangeshistorysectionts--новый-чистый-helper-состояние-графа-истории).
 
-- **`MetadataChangesViewProvider.ts`** — `vscode.WebviewViewProvider` (`viewType = 'v8vsceditChanges'`).
+- **`MetadataChangesViewProvider.ts`** — `vscode.WebviewViewProvider` (`viewType = 'onecdevChanges'`).
   Конструктору необходим `treeProvider: MetadataTreeProvider` (передаётся через `Container` вместе с
   `gitRoot`/`getConfigRoots` в `MetadataChangesViewServices`) — источник навигаторной иерархии, которую
   повторяет дерево панели. Модель `ChangesModel` вычисляется ЛЕНИВО: при первом `resolveWebviewView`,
@@ -185,7 +185,7 @@ commit-ish. Эта панель по-прежнему передаёт толь�
 него ссылку через `MetadataChangesViewServices.treeProvider`) и ДО `wireMetadataChangesView()`:
 
 1. `changesGitRoot` — реальный toplevel git-репозитория (`resolveGitRoot`, может быть ВЫШЕ workspace-папки), с фолбэком на саму папку воркспейса, если git недоступен.
-2. `vscode.window.registerWebviewViewProvider('v8vsceditChanges', metadataChangesViewProvider, { webviewOptions: { retainContextWhenHidden: true } })`.
+2. `vscode.window.registerWebviewViewProvider('onecdevChanges', metadataChangesViewProvider, { webviewOptions: { retainContextWhenHidden: true } })`.
 3. `registerTextDocumentContentProvider(ONEC_GIT_SCHEME, onecGitContentProvider)`.
 4. `onDidChangeWorkspaceFolders(() => metadataChangesViewProvider.refresh())`.
 
@@ -196,7 +196,7 @@ commit-ish. Эта панель по-прежнему передаёт толь�
 
 ### Триггеры обновления панели и декораций: Git Extension API + fallback fs-вотчер
 
-И панель `v8vsceditChanges`, и git-декорации навигатора (`GitMetadataDecorationProvider`) должны
+И панель `onecdevChanges`, и git-декорации навигатора (`GitMetadataDecorationProvider`) должны
 пересчитываться на ЛЮБОЕ git-событие — включая внешние операции из терминала/другого клиента
 (stage/unstage/commit/push/pull/checkout/rebase), а не только на правку рабочих файлов выгрузки. Раньше
 единственным источником сигнала были fs-вотчеры на служебные файлы `.git/*`, которые ловят не все
@@ -237,13 +237,13 @@ commit-ish. Эта панель по-прежнему передаёт толь�
 debounce-пути двойное срабатывание (Git Extension API и fs-вотчер отреагировали на одно и то же событие)
 не даёт двойного пересчёта — таймер уже взведён первым сработавшим триггером.
 
-`package.json`: `viewsContainers.activitybar` → `v8vscedit` содержит `v8vsceditUniversal` и
-`v8vsceditChanges` — ОБА `type: "webview"`. Активация — через `onView:v8vsceditChanges` в
+`package.json`: `viewsContainers.activitybar` → `onecdev` содержит `onecdevUniversal` и
+`onecdevChanges` — ОБА `type: "webview"`. Активация — через `onView:onecdevChanges` в
 `activationEvents` (по правилу из
 [vscode-extension-best-practices.md](./vscode-extension-best-practices.md#1-активация-и-производительность)
 узкие `onView:*`/`onCommand:*`, дублирующие `contributes`, для VS Code ≥ 1.74 избыточны, но здесь
 оставлены явно для совместимости с более старыми клиентами `engines.vscode`). Команд
-`v8vscedit.changes.*` и меню `view/item/context`/`view/title` для этого view в `package.json` больше
+`onecdev.changes.*` и меню `view/item/context`/`view/title` для этого view в `package.json` больше
 нет — все действия идут через внутренний протокол webview, а не через палитру команд/контекстное меню
 VS Code.
 

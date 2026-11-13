@@ -7,7 +7,7 @@ import { MetadataXmlRemover } from '../../infra/xml/MetadataXmlRemover';
 
 suite('metadataXmlRemover', () => {
   test('блокирует удаление корневого объекта при найденных ссылках', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-remove-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-remove-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     fs.mkdirSync(path.join(configRoot, 'Documents'), { recursive: true });
     fs.writeFileSync(
@@ -28,7 +28,7 @@ suite('metadataXmlRemover', () => {
   });
 
   test('удаляет корневой объект, регистрацию и ссылки из подсистем', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-remove-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-remove-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     fs.mkdirSync(path.join(configRoot, 'Subsystems'), { recursive: true });
     const subsystemPath = path.join(configRoot, 'Subsystems', 'Продажи.xml');
@@ -52,7 +52,7 @@ suite('metadataXmlRemover', () => {
   });
 
   test('удаляет дочерний элемент и вспомогательные файлы формы', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-remove-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-remove-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' }).success, true);
@@ -71,7 +71,7 @@ suite('metadataXmlRemover', () => {
   });
 
   test('удаляет команду вместе с модулем команды', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-remove-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-remove-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' }).success, true);
@@ -90,7 +90,7 @@ suite('metadataXmlRemover', () => {
   });
 
   test('удаляет макет с простой регистрацией в ChildObjects', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-remove-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-remove-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' }).success, true);
@@ -112,7 +112,7 @@ suite('metadataXmlRemover', () => {
   });
 
   test('удаляет только выбранный реквизит из нескольких однотипных элементов', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-remove-cf-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-remove-cf-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildConfigXml(), 'utf-8');
     const creator = new MetadataXmlCreator();
     assert.strictEqual(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Товары' }).success, true);

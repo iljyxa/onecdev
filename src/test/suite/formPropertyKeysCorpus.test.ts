@@ -369,7 +369,7 @@ function xmlRootOfKind(kind: string): string {
 }
 
 function createTempConfigRoot(): string {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-form-keys-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-keys-'));
   fs.writeFileSync(
     path.join(configRoot, 'Configuration.xml'),
     '<?xml version="1.0" encoding="utf-8"?>\n'

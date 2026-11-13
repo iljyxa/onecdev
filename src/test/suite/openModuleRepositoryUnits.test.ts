@@ -18,7 +18,7 @@ import { MetadataNode } from '../../ui/tree/TreeNode';
  * редактируем, даже если владелец не захвачен, и наоборот.
  *
  * Команды регистрируются вручную с фейковым `context` — тестовый хост запущен
- * без workspace, реальное расширение `v8vscedit.*` не регистрирует (см.
+ * без workspace, реальное расширение `onecdev.*` не регистрирует (см.
  * configurationOperationGuardCommands.test.ts). Признак readonly — вызов
  * `workbench.action.files.setActiveEditorReadonlyInSession` из `setEditorReadonly`.
  * Фикстура — временная копия `example/2.21/src/cf`.
@@ -161,11 +161,11 @@ suite('Открытие BSL-модулей — хранилище по един�
     const h = requireHarness();
     lockObjectOnly(h, FORMA_ELEMENTA);
 
-    await open('v8vscedit.openFormModule', formNode(h));
+    await open('onecdev.openFormModule', formNode(h));
     assert.strictEqual(vscode.window.activeTextEditor?.document.uri.fsPath, formModulePath(h));
     assert.strictEqual(readonlyCalls, 0, 'модуль захваченной формы не должен открываться только для чтения');
 
-    await open('v8vscedit.openObjectModule', catalogNode(h));
+    await open('onecdev.openObjectModule', catalogNode(h));
     assert.strictEqual(readonlyCalls, 1, 'модуль незахваченного владельца — только чтение');
   });
 
@@ -174,10 +174,10 @@ suite('Открытие BSL-модулей — хранилище по един�
     const h = requireHarness();
     lockObjectOnly(h, OWNER);
 
-    await open('v8vscedit.openFormModule', formNode(h));
+    await open('onecdev.openFormModule', formNode(h));
     assert.strictEqual(readonlyCalls, 1, 'модуль незахваченной формы — только чтение');
 
-    await open('v8vscedit.openObjectModule', catalogNode(h));
+    await open('onecdev.openObjectModule', catalogNode(h));
     assert.strictEqual(readonlyCalls, 1, 'модуль захваченного владельца не должен открываться только для чтения');
   });
 
@@ -187,7 +187,7 @@ suite('Открытие BSL-модулей — хранилище по един�
     fs.rmSync(formModulePath(h));
     lockObjectOnly(h, FORMA_ELEMENTA);
 
-    await open('v8vscedit.openFormModule', formNode(h));
+    await open('onecdev.openFormModule', formNode(h));
 
     assert.deepStrictEqual(warnings, []);
     assert.ok(fs.existsSync(formModulePath(h)), 'модуль формы должен быть создан');
@@ -200,7 +200,7 @@ suite('Открытие BSL-модулей — хранилище по един�
     fs.rmSync(formModulePath(h));
     lockObjectOnly(h, OWNER);
 
-    await open('v8vscedit.openFormModule', formNode(h));
+    await open('onecdev.openFormModule', formNode(h));
 
     assert.deepStrictEqual(warnings, ['Нельзя создать файл модуля формы: объект заблокирован для редактирования.']);
     assert.ok(!fs.existsSync(formModulePath(h)), 'модуль формы не должен создаваться');
@@ -216,7 +216,7 @@ suite('Открытие BSL-модулей — хранилище по един�
     lockObjectOnly(h, 'Справочник.АвансовыйОтчетПрисоединенныеФайлы');
     currentServices = { repositoryService: h.repositoryService, supportService };
 
-    await open('v8vscedit.openObjectModule', { xmlPath, nodeKind: 'Catalog', label: 'АвансовыйОтчетПрисоединенныеФайлы' });
+    await open('onecdev.openObjectModule', { xmlPath, nodeKind: 'Catalog', label: 'АвансовыйОтчетПрисоединенныеФайлы' });
 
     assert.deepStrictEqual(warnings, ['Нельзя создать файл модуля объекта: объект заблокирован для редактирования.']);
     assert.ok(!fs.existsSync(path.join(h.configRoot, 'Catalogs', 'АвансовыйОтчетПрисоединенныеФайлы', 'Ext', 'ObjectModule.bsl')));
@@ -225,7 +225,7 @@ suite('Открытие BSL-модулей — хранилище по един�
   test('узел без xmlPath: блокировка не проверяется, путь модуля не определяется', async function () {
     this.timeout(20_000);
 
-    await open('v8vscedit.openObjectModule', { nodeKind: 'Catalog', label: 'Контрагенты' });
+    await open('onecdev.openObjectModule', { nodeKind: 'Catalog', label: 'Контрагенты' });
 
     assert.deepStrictEqual(warnings, ['Не удалось определить путь модуля объекта.']);
     assert.strictEqual(readonlyCalls, 0);
@@ -245,42 +245,42 @@ suite('Открытие BSL-модулей — хранилище по един�
   // Модулей записи и менеджера значения в выгрузке нет — команда создаёт их в копии.
   const SLOT_CASES: readonly SlotCase[] = [
     {
-      command: 'v8vscedit.openCommonModuleCode',
+      command: 'onecdev.openCommonModuleCode',
       node: (h) => ({ xmlPath: cf(h, 'CommonModules', 'GoogleПереводчик.xml'), nodeKind: 'CommonModule', label: 'GoogleПереводчик' }),
       modulePath: (h) => cf(h, 'CommonModules', 'GoogleПереводчик', 'Ext', 'Module.bsl'),
     },
     {
-      command: 'v8vscedit.openManagerModule',
+      command: 'onecdev.openManagerModule',
       node: (h) => catalogNode(h),
       modulePath: (h) => cf(h, 'Catalogs', 'Контрагенты', 'Ext', 'ManagerModule.bsl'),
     },
     {
-      command: 'v8vscedit.openRecordSetModule',
+      command: 'onecdev.openRecordSetModule',
       node: (h) => ({ xmlPath: cf(h, 'InformationRegisters', 'КурсыВалют.xml'), nodeKind: 'InformationRegister', label: 'КурсыВалют' }),
       modulePath: (h) => cf(h, 'InformationRegisters', 'КурсыВалют', 'Ext', 'RecordSetModule.bsl'),
     },
     {
-      command: 'v8vscedit.openConstantModule',
+      command: 'onecdev.openConstantModule',
       node: (h) => ({ xmlPath: cf(h, 'Constants', 'ИспользоватьВозвраты.xml'), nodeKind: 'Constant', label: 'ИспользоватьВозвраты' }),
       modulePath: (h) => cf(h, 'Constants', 'ИспользоватьВозвраты', 'Ext', 'ValueManagerModule.bsl'),
     },
     {
-      command: 'v8vscedit.openServiceModule',
+      command: 'onecdev.openServiceModule',
       node: (h) => ({ xmlPath: cf(h, 'HTTPServices', 'Chatbot.xml'), nodeKind: 'HTTPService', label: 'Chatbot' }),
       modulePath: (h) => cf(h, 'HTTPServices', 'Chatbot', 'Ext', 'Module.bsl'),
     },
     {
-      command: 'v8vscedit.openFormModule',
+      command: 'onecdev.openFormModule',
       node: (h) => ({ xmlPath: cf(h, 'CommonForms', 'АЛКОВводРеквизитовОП.xml'), nodeKind: 'CommonForm', label: 'АЛКОВводРеквизитовОП' }),
       modulePath: (h) => cf(h, 'CommonForms', 'АЛКОВводРеквизитовОП', 'Ext', 'Form', 'Module.bsl'),
     },
     {
-      command: 'v8vscedit.openCommandModule',
+      command: 'onecdev.openCommandModule',
       node: (h) => ({ xmlPath: cf(h, 'CommonCommands', 'ОткрытьПомощь.xml'), nodeKind: 'CommonCommand', label: 'ОткрытьПомощь' }),
       modulePath: (h) => cf(h, 'CommonCommands', 'ОткрытьПомощь', 'Ext', 'CommandModule.bsl'),
     },
     {
-      command: 'v8vscedit.openCommandModule',
+      command: 'onecdev.openCommandModule',
       node: (h) => ({ xmlPath: ownerXmlPath(h), nodeKind: 'Command', label: 'Покупатели' }),
       modulePath: (h) => cf(h, 'Catalogs', 'Контрагенты', 'Commands', 'Покупатели', 'Ext', 'CommandModule.bsl'),
       lockNode: (h) => catalogNode(h),

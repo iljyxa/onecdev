@@ -1,6 +1,6 @@
 /**
- * Тесты декомпозированных tools добавления (E8): `v8vscedit_add_<root>` и
- * `v8vscedit_add_<child>`. Проверяют:
+ * Тесты декомпозированных tools добавления (E8): `onecdev_add_<root>` и
+ * `onecdev_add_<child>`. Проверяют:
  *  - регистрацию ожидаемых tools через мок-McpServer;
  *  - happy-path добавления корневого справочника, реквизита и колонки ТЧ
  *    через реальный `MetadataXmlCreator` на временном configRoot;
@@ -79,51 +79,51 @@ suite('McpAddToolsRegistration', () => {
 
     // Точный список из требований E8 — проверяем, что каждый есть.
     const expectedRootTools = [
-      'v8vscedit_add_subsystem',
-      'v8vscedit_add_common_module',
-      'v8vscedit_add_session_parameter',
-      'v8vscedit_add_role',
-      'v8vscedit_add_common_attribute',
-      'v8vscedit_add_exchange_plan',
-      'v8vscedit_add_filter_criterion',
-      'v8vscedit_add_event_subscription',
-      'v8vscedit_add_scheduled_job',
-      'v8vscedit_add_functional_option',
-      'v8vscedit_add_functional_options_parameter',
-      'v8vscedit_add_defined_type',
-      'v8vscedit_add_settings_storage',
-      'v8vscedit_add_common_form',
-      'v8vscedit_add_common_command',
-      'v8vscedit_add_command_group',
-      'v8vscedit_add_common_template',
-      'v8vscedit_add_common_picture',
-      'v8vscedit_add_xdto_package',
-      'v8vscedit_add_web_service',
-      'v8vscedit_add_http_service',
-      'v8vscedit_add_ws_reference',
-      'v8vscedit_add_integration_service',
-      'v8vscedit_add_style_item',
-      'v8vscedit_add_style',
-      'v8vscedit_add_language',
-      'v8vscedit_add_constant',
-      'v8vscedit_add_catalog',
-      'v8vscedit_add_document',
-      'v8vscedit_add_document_journal',
-      'v8vscedit_add_document_numerator',
-      'v8vscedit_add_sequence',
-      'v8vscedit_add_enum',
-      'v8vscedit_add_report',
-      'v8vscedit_add_data_processor',
-      'v8vscedit_add_chart_of_characteristic_types',
-      'v8vscedit_add_chart_of_accounts',
-      'v8vscedit_add_chart_of_calculation_types',
-      'v8vscedit_add_information_register',
-      'v8vscedit_add_accumulation_register',
-      'v8vscedit_add_accounting_register',
-      'v8vscedit_add_calculation_register',
-      'v8vscedit_add_business_process',
-      'v8vscedit_add_task',
-      'v8vscedit_add_external_data_source',
+      'onecdev_add_subsystem',
+      'onecdev_add_common_module',
+      'onecdev_add_session_parameter',
+      'onecdev_add_role',
+      'onecdev_add_common_attribute',
+      'onecdev_add_exchange_plan',
+      'onecdev_add_filter_criterion',
+      'onecdev_add_event_subscription',
+      'onecdev_add_scheduled_job',
+      'onecdev_add_functional_option',
+      'onecdev_add_functional_options_parameter',
+      'onecdev_add_defined_type',
+      'onecdev_add_settings_storage',
+      'onecdev_add_common_form',
+      'onecdev_add_common_command',
+      'onecdev_add_command_group',
+      'onecdev_add_common_template',
+      'onecdev_add_common_picture',
+      'onecdev_add_xdto_package',
+      'onecdev_add_web_service',
+      'onecdev_add_http_service',
+      'onecdev_add_ws_reference',
+      'onecdev_add_integration_service',
+      'onecdev_add_style_item',
+      'onecdev_add_style',
+      'onecdev_add_language',
+      'onecdev_add_constant',
+      'onecdev_add_catalog',
+      'onecdev_add_document',
+      'onecdev_add_document_journal',
+      'onecdev_add_document_numerator',
+      'onecdev_add_sequence',
+      'onecdev_add_enum',
+      'onecdev_add_report',
+      'onecdev_add_data_processor',
+      'onecdev_add_chart_of_characteristic_types',
+      'onecdev_add_chart_of_accounts',
+      'onecdev_add_chart_of_calculation_types',
+      'onecdev_add_information_register',
+      'onecdev_add_accumulation_register',
+      'onecdev_add_accounting_register',
+      'onecdev_add_calculation_register',
+      'onecdev_add_business_process',
+      'onecdev_add_task',
+      'onecdev_add_external_data_source',
     ];
     for (const name of expectedRootTools) {
       assert.ok(server.tools.has(name), `должен быть зарегистрирован ${name}`);
@@ -136,17 +136,17 @@ suite('McpAddToolsRegistration', () => {
     registerAllAddTools(server as never, ctx);
 
     const expectedChildTools = [
-      'v8vscedit_add_attribute',
-      'v8vscedit_add_addressing_attribute',
-      'v8vscedit_add_tabular_section',
-      'v8vscedit_add_command',
-      'v8vscedit_add_template',
-      'v8vscedit_add_dimension',
-      'v8vscedit_add_resource',
-      'v8vscedit_add_enum_value',
-      'v8vscedit_add_column',
-      'v8vscedit_add_url_template',
-      'v8vscedit_add_method',
+      'onecdev_add_attribute',
+      'onecdev_add_addressing_attribute',
+      'onecdev_add_tabular_section',
+      'onecdev_add_command',
+      'onecdev_add_template',
+      'onecdev_add_dimension',
+      'onecdev_add_resource',
+      'onecdev_add_enum_value',
+      'onecdev_add_column',
+      'onecdev_add_url_template',
+      'onecdev_add_method',
     ];
     for (const name of expectedChildTools) {
       assert.ok(server.tools.has(name), `должен быть зарегистрирован ${name}`);
@@ -172,15 +172,15 @@ suite('McpAddToolsRegistration', () => {
     );
   });
 
-  test('v8vscedit_add_catalog добавляет справочник в configRoot', async () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-add-catalog-'));
+  test('onecdev_add_catalog добавляет справочник в configRoot', async () => {
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-add-catalog-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
 
     const server = createMockServer();
     const ctx = createRegistrationContext({ configRoot });
     registerAllAddTools(server as never, ctx);
 
-    const tool = server.tools.get('v8vscedit_add_catalog');
+    const tool = server.tools.get('onecdev_add_catalog');
     assert.ok(tool, 'add_catalog должен быть зарегистрирован');
     const result = await tool.handler({ name: 'Контрагенты' });
     const text = extractText(result);
@@ -196,8 +196,8 @@ suite('McpAddToolsRegistration', () => {
       `Configuration.xml должен содержать регистрацию <Catalog>Контрагенты</Catalog>; xml=${configXml.slice(0, 300)}`);
   });
 
-  test('v8vscedit_add_attribute добавляет реквизит к справочнику', async () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-add-attribute-'));
+  test('onecdev_add_attribute добавляет реквизит к справочнику', async () => {
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-add-attribute-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
 
     // Сначала создаём сам справочник напрямую через MetadataXmlCreator.
@@ -213,7 +213,7 @@ suite('McpAddToolsRegistration', () => {
     });
     registerAllAddTools(server as never, ctx);
 
-    const tool = server.tools.get('v8vscedit_add_attribute');
+    const tool = server.tools.get('onecdev_add_attribute');
     assert.ok(tool);
     const result = await tool.handler({ path: 'Справочники.Контрагенты', name: 'ИНН' });
     assertOk(result);
@@ -223,8 +223,8 @@ suite('McpAddToolsRegistration', () => {
     assert.ok(xml.includes('<Name>ИНН</Name>'), 'XML должен содержать <Name>ИНН</Name>');
   });
 
-  test('v8vscedit_add_column добавляет колонку в табличную часть', async () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-add-column-'));
+  test('onecdev_add_column добавляет колонку в табличную часть', async () => {
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-add-column-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -243,7 +243,7 @@ suite('McpAddToolsRegistration', () => {
     });
     registerAllAddTools(server as never, ctx);
 
-    const tool = server.tools.get('v8vscedit_add_column');
+    const tool = server.tools.get('onecdev_add_column');
     assert.ok(tool);
     const result = await tool.handler({
       path: 'Справочники.Контрагенты.КонтактныеЛица',
@@ -256,7 +256,7 @@ suite('McpAddToolsRegistration', () => {
       'XML справочника должен содержать колонку Должность в табличной части');
   });
 
-  test('v8vscedit_add_dimension в справочник → ошибка о несовместимом типе владельца', async () => {
+  test('onecdev_add_dimension в справочник → ошибка о несовместимом типе владельца', async () => {
     const catalogNode = createObjectNode('Контрагенты', 'Catalog', '/tmp/Catalogs/Контрагенты.xml');
     const server = createMockServer();
     const ctx = createRegistrationContext({
@@ -264,7 +264,7 @@ suite('McpAddToolsRegistration', () => {
     });
     registerAllAddTools(server as never, ctx);
 
-    const tool = server.tools.get('v8vscedit_add_dimension');
+    const tool = server.tools.get('onecdev_add_dimension');
     assert.ok(tool);
     const result = await tool.handler({ path: 'Справочники.Контрагенты', name: 'Валюта' });
     // Ожидаем ошибку: справочник не входит в allowedOwnerKinds для измерения.

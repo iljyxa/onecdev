@@ -38,12 +38,12 @@ suite('ConfigFinder', () => {
   });
 
   test('Сканирует только штатные корни src/cf и src/cfe/*', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-config-locator-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-config-locator-'));
     writeConfig(path.join(root, 'src', 'cf'), false);
     writeConfig(path.join(root, 'src', 'cfe', 'EVOLC'), true);
     writeConfig(path.join(root, 'src', 'cfe', 'EVOLC', 'nested-copy'), true);
     writeConfig(path.join(root, 'src', 'other', 'EVOLC'), true);
-    writeConfig(path.join(root, '.v8vscedit', 'agent', '0', 'workspace', 'cfe-EVOLC', 'cfe', 'EVOLC'), true);
+    writeConfig(path.join(root, '.onecdev', 'agent', '0', 'workspace', 'cfe-EVOLC', 'cfe', 'EVOLC'), true);
     writeConfig(path.join(root, 'docs', 'snapshot', 'cfe', 'EVOLC'), true);
 
     const entries = findConfigurations(root);

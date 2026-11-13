@@ -6,10 +6,10 @@
 ОБЪЕКТЫ метаданных 1С — полностью переиспользуя движок панели
 [«Изменения метаданных»](./git-metadata-changes.md). **Это НЕ отдельная вкладка редактора и не отдельный
 `WebviewViewProvider`** — граф является ВТОРЫМ сворачиваемым блоком («История») внутри уже существующей
-webview-панели `v8vsceditChanges` (провайдер `MetadataChangesViewProvider`), под первым блоком
+webview-панели `onecdevChanges` (провайдер `MetadataChangesViewProvider`), под первым блоком
 («Изменения»). Изначально спроектированная как самостоятельная вкладка (`vscode.WebviewPanel`, команда
-`v8vscedit.history.open`), фича была РЕДИЗАЙНЕНА: `HistoryGraphViewProvider`, эта команда, кнопка
-`view/title`, activation event `onCommand:v8vscedit.history.open`, vite-entry `history` и всё
+`onecdev.history.open`), фича была РЕДИЗАЙНЕНА: `HistoryGraphViewProvider`, эта команда, кнопка
+`view/title`, activation event `onCommand:onecdev.history.open`, vite-entry `history` и всё
 Vue-приложение `src-ui/apps/history/*` **удалены**. Ниже описана только актуальная модель.
 
 По умолчанию блок «История» свёрнут. Читать `git log` при открытии панели «Изменения метаданных» не
@@ -151,7 +151,7 @@ Git Graph/gitk.
 
 ### `MetadataChangesViewProvider.ts` — абсорбировал панель «История»
 
-Провайдер (`viewType = 'v8vsceditChanges'`) создаёт `private readonly history: ChangesHistorySection` в
+Провайдер (`viewType = 'onecdevChanges'`) создаёт `private readonly history: ChangesHistorySection` в
 конструкторе с теми же `gitRoot`/`getConfigRoots`, что и сам провайдер. Добавились:
 
 - **Команды протокола** (`handleMessage`, ветка `switch (message.command)`):
@@ -357,7 +357,7 @@ ChangesApp.vue (слот #details внутри CommitGraph) → UniversalTree (�
 
 ## Формат сообщений протокола
 
-История использует тот же транспорт, что и остальная панель `v8vsceditChanges` (`MessageBus`,
+История использует тот же транспорт, что и остальная панель `onecdevChanges` (`MessageBus`,
 `{ type: 'command', command, payload? }` от UI, единый `postMessage` от хоста) — полное описание базового
 протокола и команд секций «Изменения» см.
 [git-metadata-changes.md](./git-metadata-changes.md#формат-сообщений-протокола). Ниже — только
@@ -406,7 +406,7 @@ c той же схемой id; `resolveChangeAddress` (переиспользо�
   раскладка с курсором, если производительность станет проблемой на практике.
 - **Синхронное чтение `git log` в сайдбар-панели гасится только ленивостью первого раскрытия.**
   В отличие от прежней отдельной вкладки (где чтение графа было привязано к явному `open()`), блок
-  «История» теперь физически часть панели `v8vsceditChanges`; при неаккуратном изменении кода (например,
+  «История» теперь физически часть панели `onecdevChanges`; при неаккуратном изменении кода (например,
   вызове `history.load` из `resolveWebviewView` вместо реакции на команду `loadHistory`) синхронный
   `git log` попал бы на hot path открытия ЛЮБОЙ панели сайдбара, а не только графа. Единственная защита —
   дисциплина: `history.load`/`loadMore` вызываются ТОЛЬКО из `handleMessage` по явной команде, `refresh()`
@@ -430,7 +430,7 @@ c той же схемой id; `resolveChangeAddress` (переиспользо�
 
 ## Связанные документы
 
-- [git-metadata-changes.md](./git-metadata-changes.md) — панель `v8vsceditChanges` целиком: движок
+- [git-metadata-changes.md](./git-metadata-changes.md) — панель `onecdevChanges` целиком: движок
   (`ChangesModel`, `MetadataChangeAggregator`, `changesDtoBuilder`, `changesTreeAssembler`, общий
   Vue-компонент дерева), который блок «История» переиспользует; там же — исходное описание модели трёх
   деревьев git, канона путей и базового протокола панели.

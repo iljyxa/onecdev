@@ -23,7 +23,7 @@ function buildIdentity(overrides: Partial<McpServerIdentity> = {}): McpServerIde
     product: PRODUCT_ID,
     protocol: IDENTITY_PROTOCOL,
     pid: process.pid,
-    projectRoot: '/tmp/v8vscedit-probe-fixture',
+    projectRoot: '/tmp/onecdev-probe-fixture',
     version: '0.4.1-test',
     endpoint: `http://${HOST}:0/mcp`,
     ...overrides,
@@ -114,7 +114,7 @@ function canBind(port: number): Promise<boolean> {
 
 suite('infra/mcp/McpPortProbe — probeIdentity', () => {
   test('распознаёт валидный identity реального http-сервера', async () => {
-    const identity = buildIdentity({ projectRoot: '/tmp/v8vscedit-probe-a', pid: 4242 });
+    const identity = buildIdentity({ projectRoot: '/tmp/onecdev-probe-a', pid: 4242 });
     const server = startIdentityServer(identity);
     const port = await listen(server);
     try {

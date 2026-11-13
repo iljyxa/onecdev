@@ -1,8 +1,8 @@
 /**
- * MCP tools добавления HTTP-сервисной вложенности: `v8vscedit_add_url_template`
+ * MCP tools добавления HTTP-сервисной вложенности: `onecdev_add_url_template`
  * (childTag='URLTemplate', allowedOwnerKinds=['HTTPService']) и
- * `v8vscedit_add_method` (childTag='Method', владелец — узел URLTemplate,
- * флаг `inUrlTemplate` — аналог `inTabularSection` у `v8vscedit_add_column`).
+ * `onecdev_add_method` (childTag='Method', владелец — узел URLTemplate,
+ * флаг `inUrlTemplate` — аналог `inTabularSection` у `onecdev_add_column`).
  *
  * До реализации `CHILD_ADD_TOOLS` не содержит этих дескрипторов — соответствующие
  * tool-ы не регистрируются в `registerAllAddTools`, и `server.tools.get(...)`
@@ -43,12 +43,12 @@ function createMockServer(): MockMcpServer {
   };
 }
 
-suite('McpAddToolsRegistration — v8vscedit_add_url_template / v8vscedit_add_method', () => {
+suite('McpAddToolsRegistration — onecdev_add_url_template / onecdev_add_method', () => {
   test('CHILD_ADD_TOOLS содержит дескрипторы add_url_template (owner=HTTPService) и add_method (owner=URLTemplate, inUrlTemplate)', () => {
-    const urlTemplateDescriptor = CHILD_ADD_TOOLS.find((d) => d.toolName === 'v8vscedit_add_url_template');
-    const methodDescriptor = CHILD_ADD_TOOLS.find((d) => d.toolName === 'v8vscedit_add_method');
+    const urlTemplateDescriptor = CHILD_ADD_TOOLS.find((d) => d.toolName === 'onecdev_add_url_template');
+    const methodDescriptor = CHILD_ADD_TOOLS.find((d) => d.toolName === 'onecdev_add_method');
 
-    assert.ok(urlTemplateDescriptor, 'должен быть дескриптор v8vscedit_add_url_template');
+    assert.ok(urlTemplateDescriptor, 'должен быть дескриптор onecdev_add_url_template');
     assert.strictEqual(urlTemplateDescriptor.childTag, 'URLTemplate');
     assert.ok(urlTemplateDescriptor.allowedOwnerKinds.includes('HTTPService'));
     assert.strictEqual(
@@ -57,7 +57,7 @@ suite('McpAddToolsRegistration — v8vscedit_add_url_template / v8vscedit_add_me
       'add_url_template работает на владельце-HTTPService, а не на владельце-URLTemplate'
     );
 
-    assert.ok(methodDescriptor, 'должен быть дескриптор v8vscedit_add_method');
+    assert.ok(methodDescriptor, 'должен быть дескриптор onecdev_add_method');
     assert.strictEqual(methodDescriptor.childTag, 'Method');
     assert.strictEqual(
       methodDescriptor.inUrlTemplate,
@@ -66,15 +66,15 @@ suite('McpAddToolsRegistration — v8vscedit_add_url_template / v8vscedit_add_me
     );
   });
 
-  test('registerAllAddTools регистрирует v8vscedit_add_url_template и v8vscedit_add_method', () => {
+  test('registerAllAddTools регистрирует onecdev_add_url_template и onecdev_add_method', () => {
     const server = createMockServer();
     registerAllAddTools(server as never, createRegistrationContext());
-    assert.ok(server.tools.has('v8vscedit_add_url_template'));
-    assert.ok(server.tools.has('v8vscedit_add_method'));
+    assert.ok(server.tools.has('onecdev_add_url_template'));
+    assert.ok(server.tools.has('onecdev_add_method'));
   });
 
-  test('v8vscedit_add_url_template добавляет URL-шаблон в HTTPService', async () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-add-url-template-'));
+  test('onecdev_add_url_template добавляет URL-шаблон в HTTPService', async () => {
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-add-url-template-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -91,8 +91,8 @@ suite('McpAddToolsRegistration — v8vscedit_add_url_template / v8vscedit_add_me
       nodes: { 'HTTPСервисы.ServiceEntry': serviceNode },
     }));
 
-    const tool = server.tools.get('v8vscedit_add_url_template');
-    assert.ok(tool, 'v8vscedit_add_url_template должен быть зарегистрирован');
+    const tool = server.tools.get('onecdev_add_url_template');
+    assert.ok(tool, 'onecdev_add_url_template должен быть зарегистрирован');
     const result = await tool.handler({ path: 'HTTPСервисы.ServiceEntry', name: 'PostEntries' });
     assertOk(result);
 
@@ -101,8 +101,8 @@ suite('McpAddToolsRegistration — v8vscedit_add_url_template / v8vscedit_add_me
     assert.ok(xml.includes('<Name>PostEntries</Name>'));
   });
 
-  test('v8vscedit_add_method добавляет метод внутрь конкретного URLTemplate (владелец — узел URLTemplate)', async () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-add-method-'));
+  test('onecdev_add_method добавляет метод внутрь конкретного URLTemplate (владелец — узел URLTemplate)', async () => {
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-add-method-'));
     fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), buildEmptyConfigXml(), 'utf-8');
 
     const creator = new MetadataXmlCreator();
@@ -114,7 +114,7 @@ suite('McpAddToolsRegistration — v8vscedit_add_url_template / v8vscedit_add_me
       name: 'PostEntries',
     });
 
-    // Узел URLTemplate — аналог узла TabularSection для v8vscedit_add_column:
+    // Узел URLTemplate — аналог узла TabularSection для onecdev_add_column:
     // metaContext.urlTemplateName задаёт имя контейнера-владельца.
     const urlTemplateNode = new MetadataNode(
       {
@@ -136,8 +136,8 @@ suite('McpAddToolsRegistration — v8vscedit_add_url_template / v8vscedit_add_me
       nodes: { 'HTTPСервисы.ServiceEntry.URLШаблон.PostEntries': urlTemplateNode },
     }));
 
-    const tool = server.tools.get('v8vscedit_add_method');
-    assert.ok(tool, 'v8vscedit_add_method должен быть зарегистрирован');
+    const tool = server.tools.get('onecdev_add_method');
+    assert.ok(tool, 'onecdev_add_method должен быть зарегистрирован');
     const result = await tool.handler({
       path: 'HTTPСервисы.ServiceEntry.URLШаблон.PostEntries',
       name: 'POST',

@@ -166,7 +166,7 @@ export async function confirmRollbackModal(summary: RollbackSummary): Promise<bo
 }
 
 export function isFileSyncOnLockUnlockEnabled(): boolean {
-  return vscode.workspace.getConfiguration('v8vscedit.repository').get<boolean>('syncFilesOnLockUnlock', true);
+  return vscode.workspace.getConfiguration('onecdev.repository').get<boolean>('syncFilesOnLockUnlock', true);
 }
 
 /** Несохранённые редакторы: такой файл нельзя молча перезаписать версией хранилища. */

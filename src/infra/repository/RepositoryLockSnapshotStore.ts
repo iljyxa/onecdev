@@ -24,7 +24,7 @@ import { readDirOrEmpty } from './RepositoryTempCleanup';
  * снимается только хеш-манифест: при отмене по нему определяются изменённые владельцы,
  * и выгружаются только они.
  *
- * Раскладка: `.v8vscedit/repository/snapshots/<scopeKey>/<sha1(fullName)>/{manifest.json,files/<rel>}`
+ * Раскладка: `.onecdev/repository/snapshots/<scopeKey>/<sha1(fullName)>/{manifest.json,files/<rel>}`
  * — совпадает с прежней, чтобы снимки, снятые до обновления, оставались читаемыми
  * (манифест v1 — `{files}` без хешей, v2 — с хешами). Манифест v3 хранит глубину
  * области и подчинённые единицы, известные на момент захвата; v1/v2 сняты со всего
@@ -304,7 +304,7 @@ export class RepositoryLockSnapshotStore {
 
   /** Каталог всех снимков цели — для сообщений о сбое и для `discardAll`. */
   resolveScopeDir(target: RepositoryTarget): string {
-    return path.join(this.workspaceRoot, '.v8vscedit', 'repository', 'snapshots', buildRepositoryScopeKey(target));
+    return path.join(this.workspaceRoot, '.onecdev', 'repository', 'snapshots', buildRepositoryScopeKey(target));
   }
 
   resolveSnapshotDir(target: RepositoryTarget, fullName: string): string {

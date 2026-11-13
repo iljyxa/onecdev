@@ -49,7 +49,7 @@ interface Fixture {
 function buildFixtureRepo(): Fixture {
   // realpathSync: см. комментарий в gitPorcelainReader.test.ts — иначе абсолютные
   // пути разойдутся с тем, что вернёт реальный git-процесс на macOS.
-  const workspaceRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-change-aggregator-')));
+  const workspaceRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-change-aggregator-')));
   const cfRoot = path.join(workspaceRoot, 'src', 'cf');
   const catalogsDir = path.join(cfRoot, 'Catalogs');
   fs.mkdirSync(catalogsDir, { recursive: true });
@@ -230,7 +230,7 @@ suite('MetadataChangeAggregator — агрегация изменений на �
   test('удаление, застейдженное в индекс (index=D) — часть объекта получает статус D в staged', () => {
     // Отдельный маленький репозиторий: `git rm --cached` застейдживает удаление
     // без изменения рабочего дерева, чего не происходит в общем suiteSetup-фикстуре.
-    const workspaceRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-change-aggregator-staged-del-')));
+    const workspaceRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-change-aggregator-staged-del-')));
     try {
       const cfRoot = path.join(workspaceRoot, 'src', 'cf');
       const catalogsDir = path.join(cfRoot, 'Catalogs');

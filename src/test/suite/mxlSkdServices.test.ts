@@ -9,7 +9,7 @@ import {
 
 suite('MxlTemplateService и DataCompositionSchemaService', () => {
   test('компилирует, анализирует, декомпилирует и валидирует MXL', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-mxl-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mxl-'));
     const templatePath = path.join(root, 'Печать', 'Ext', 'Template.xml');
     const service = new MxlTemplateService();
 
@@ -59,7 +59,7 @@ suite('MxlTemplateService и DataCompositionSchemaService', () => {
   });
 
   test('компилирует, редактирует, анализирует и валидирует СКД', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-skd-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-skd-'));
     const templatePath = path.join(root, 'ОсновнаяСхема', 'Ext', 'Template.xml');
     const service = new DataCompositionSchemaService();
 

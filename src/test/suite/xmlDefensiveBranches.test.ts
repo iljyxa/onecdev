@@ -78,7 +78,7 @@ suite('TypedFieldOwnerRules — категории типа и порядок', 
 
 suite('ObjectXmlReader.updateTypeInObject — объект без <Properties>', () => {
   test('нечего править: возвращает false и файл не меняется', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-noprops-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-noprops-'));
     try {
       const xmlPath = path.join(dir, 'SessionParam.xml');
       const xml = '<MetaDataObject><SessionParameter></SessionParameter></MetaDataObject>';

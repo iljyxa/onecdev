@@ -27,7 +27,7 @@ export function registerFormTools(server: McpServer, deps: McpRegistrationDeps):
   const { paths, services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_form_info',
+    'onecdev_form_info',
     {
       title: 'Информация о форме',
       description: [
@@ -50,7 +50,7 @@ export function registerFormTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_validate_form',
+    'onecdev_validate_form',
     {
       title: 'Валидировать форму',
       description: [
@@ -74,7 +74,7 @@ export function registerFormTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_add_form',
+    'onecdev_add_form',
     {
       title: 'Добавить форму',
       description: [
@@ -111,7 +111,7 @@ export function registerFormTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_remove_form',
+    'onecdev_remove_form',
     {
       title: 'Удалить форму',
       description: [
@@ -143,12 +143,12 @@ export function registerFormTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_compile_form',
+    'onecdev_compile_form',
     {
       title: 'Скомпилировать форму',
       description: [
         'Перезаписывает Form.xml из JSON DSL (целиком).',
-        'Для создания новой формы с регистрацией в объекте и Module.bsl используй v8vscedit_add_form.',
+        'Для создания новой формы с регистрацией в объекте и Module.bsl используй onecdev_add_form.',
         'Принимает канонический путь существующей формы: Справочники.X.Форма.Y или ОбщиеФормы.X.',
       ].join(' '),
       inputSchema: z.object({
@@ -175,7 +175,7 @@ export function registerFormTools(server: McpServer, deps: McpRegistrationDeps):
   );
 
   server.registerTool(
-    'v8vscedit_edit_form',
+    'onecdev_edit_form',
     {
       title: 'Изменить форму',
       description: [

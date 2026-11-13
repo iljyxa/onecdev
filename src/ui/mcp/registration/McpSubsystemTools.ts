@@ -45,7 +45,7 @@ export function registerSubsystemTools(server: McpServer, deps: McpRegistrationD
   const { paths, services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_compile_subsystem',
+    'onecdev_compile_subsystem',
     {
       title: 'Создать подсистему',
       description: [
@@ -96,13 +96,13 @@ export function registerSubsystemTools(server: McpServer, deps: McpRegistrationD
   );
 
   server.registerTool(
-    'v8vscedit_edit_subsystem_content',
+    'onecdev_edit_subsystem_content',
     {
       title: 'Изменить состав подсистемы',
       description: [
         'Добавляет и убирает объекты из Content подсистемы по каноническим путям',
         'или ссылкам вида Catalog.Товары. Свойства подсистемы — через',
-        'v8vscedit_get_properties и v8vscedit_set_property_by_path.',
+        'onecdev_get_properties и onecdev_set_property_by_path.',
         'Принимает канонический путь подсистемы: Подсистема.Продажи.Розница.',
       ].join(' '),
       inputSchema: z.object({
@@ -129,7 +129,7 @@ export function registerSubsystemTools(server: McpServer, deps: McpRegistrationD
   );
 
   server.registerTool(
-    'v8vscedit_edit_command_interface',
+    'onecdev_edit_command_interface',
     {
       title: 'Изменить командный интерфейс',
       description: [
@@ -158,7 +158,7 @@ export function registerSubsystemTools(server: McpServer, deps: McpRegistrationD
   );
 
   server.registerTool(
-    'v8vscedit_validate_command_interface',
+    'onecdev_validate_command_interface',
     {
       title: 'Валидировать командный интерфейс',
       description: [

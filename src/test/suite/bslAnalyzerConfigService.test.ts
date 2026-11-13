@@ -69,7 +69,7 @@ suite('BslAnalyzerConfigService', () => {
   });
 
   test('Создаёт файл в корне проекта', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-bsl-analyzer-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-bsl-analyzer-'));
     try {
       const service = new BslAnalyzerConfigService(root);
       service.ensureExists([path.join(root, 'src', 'cfe', 'EVOLC')]);

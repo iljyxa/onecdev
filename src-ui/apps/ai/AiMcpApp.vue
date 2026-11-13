@@ -243,7 +243,7 @@ function secretPlaceholder(isSet: boolean): string {
 
 function profileLabel(profile: AiMcpProfile): string {
   if (profile === 'extension') {
-    return 'v8vscedit';
+    return 'onecdev';
   }
   return profile;
 }

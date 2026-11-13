@@ -16,7 +16,7 @@ import {
 } from './support/mcpFormToolsHarness';
 
 /**
- * Команды навигатора `v8vscedit.form.*` на НАСТОЯЩЕЙ выгрузке и настоящем дереве.
+ * Команды навигатора `onecdev.form.*` на НАСТОЯЩЕЙ выгрузке и настоящем дереве.
  *
  * Тот же дефект, что чинился в MCP, жил и здесь: `node.xmlPath` у формы объекта — это XML
  * объекта-владельца, а команда принимала его за путь формы. «Форма: валидировать» разбирала
@@ -30,10 +30,10 @@ import {
  */
 
 const COMMAND = {
-  info: 'v8vscedit.form.info',
-  validate: 'v8vscedit.form.validate',
-  add: 'v8vscedit.form.add',
-  remove: 'v8vscedit.form.remove',
+  info: 'onecdev.form.info',
+  validate: 'onecdev.form.validate',
+  add: 'onecdev.form.add',
+  remove: 'onecdev.form.remove',
 } as const;
 
 // ── Подмена диалогов VS Code ──────────────────────────────────────────────

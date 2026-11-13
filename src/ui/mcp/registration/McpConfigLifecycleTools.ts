@@ -23,9 +23,9 @@ import { CONFIGURATION_OPERATION_BUSY_MESSAGE } from '../../commands/ext/configu
 import type { McpRegistrationDeps } from './McpRegistrationDeps';
 
 const ALLOWED_COMMANDS = [
-  'v8vscedit.refresh',
-  'v8vscedit.importConfigurations',
-  'v8vscedit.updateChangedConfigurations',
+  'onecdev.refresh',
+  'onecdev.importConfigurations',
+  'onecdev.updateChangedConfigurations',
 ] as const;
 
 type AllowedCommandId = (typeof ALLOWED_COMMANDS)[number];
@@ -36,7 +36,7 @@ type AllowedCommandId = (typeof ALLOWED_COMMANDS)[number];
  * защищала бы от захвата между проверкой и вызовом.
  */
 async function executeAllowedCommand(command: AllowedCommandId): Promise<ConfigurationCommandOutcome> {
-  if (command === 'v8vscedit.refresh') {
+  if (command === 'onecdev.refresh') {
     // Перечитывание дерева не работает с базой и не возвращает исход; его
     // завершение без исключения и есть успех.
     await vscode.commands.executeCommand(command);
@@ -57,7 +57,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   const { services, gate } = deps;
 
   server.registerTool(
-    'v8vscedit_create_configuration',
+    'onecdev_create_configuration',
     {
       title: 'Создать пустую конфигурацию',
       description: 'Создаёт scaffold CF: Configuration.xml и Languages/Русский.xml.',
@@ -82,7 +82,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_create_extension',
+    'onecdev_create_extension',
     {
       title: 'Создать расширение',
       description: 'Создаёт scaffold CFE: Configuration.xml, язык и опциональную основную роль.',
@@ -111,14 +111,14 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_dump_cf',
+    'onecdev_dump_cf',
     {
       title: 'Выгрузить конфигурацию в CF-файл',
       description: [
         'Выгружает конфигурацию базы в бинарный файл через пакетный Конфигуратор: основную конфигурацию в .cf,',
         'расширение — в .cfe (если задан extensionName).',
         'Файл появляется на целевом пути только при успешном завершении; overwrite разрешает заменить существующий файл.',
-        'Для выгрузки ВСЕХ расширений базы одной операцией используйте v8vscedit_dump_all_cfe — этот инструмент работает с одним объектом за вызов.',
+        'Для выгрузки ВСЕХ расширений базы одной операцией используйте onecdev_dump_all_cfe — этот инструмент работает с одним объектом за вызов.',
       ].join(' '),
       inputSchema: z.object({
         outputFile: z.string(),
@@ -148,7 +148,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_load_cf',
+    'onecdev_load_cf',
     {
       title: 'Загрузить конфигурацию из CF-файла',
       description: [
@@ -215,7 +215,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_dump_all_cfe',
+    'onecdev_dump_all_cfe',
     {
       title: 'Выгрузить все расширения базы в CFE-файлы',
       description: [
@@ -258,7 +258,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_load_all_cfe',
+    'onecdev_load_all_cfe',
     {
       title: 'Загрузить все расширения базы из CFE-файлов',
       description: [
@@ -347,7 +347,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_cfe_borrow',
+    'onecdev_cfe_borrow',
     {
       title: 'Заимствовать объект в расширение',
       description: 'Заимствует объект, форму или дочерний элемент из CF в CFE через CfeBorrowService.',
@@ -378,7 +378,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_cfe_patch_method',
+    'onecdev_cfe_patch_method',
     {
       title: 'Добавить перехватчик метода CFE',
       description: [
@@ -408,7 +408,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_cfe_diff',
+    'onecdev_cfe_diff',
     {
       title: 'Анализ расширения CFE',
       description: 'Возвращает состав расширения, заимствованные объекты, BSL-перехватчики и опционально проверку переноса #Вставка.',
@@ -422,7 +422,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
   );
 
   server.registerTool(
-    'v8vscedit_execute_command',
+    'onecdev_execute_command',
     {
       title: 'Выполнить команду расширения',
       description: 'Безопасный мост только для явно разрешённых команд расширения: refresh, importConfigurations, updateChangedConfigurations. '

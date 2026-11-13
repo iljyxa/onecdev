@@ -1,6 +1,6 @@
 /**
- * Тесты регистрации команд `v8vscedit.dumpAllExtensionsToCfe` /
- * `v8vscedit.loadAllExtensionsFromCfe` (`src/ui/commands/ext/CfeBatchCommands.ts`)
+ * Тесты регистрации команд `onecdev.dumpAllExtensionsToCfe` /
+ * `onecdev.loadAllExtensionsFromCfe` (`src/ui/commands/ext/CfeBatchCommands.ts`)
  * и их паритета с `package.json → contributes.commands`.
  *
  * Окружение — то же, что у `cfFileCommandsRegistration.test.ts`: реальное
@@ -27,8 +27,8 @@ import { ConfigurationOperationGuard } from '../../infra/process/ConfigurationOp
 
 const ROOT = path.resolve(__dirname, '../../..');
 
-const DUMP_COMMAND_ID = 'v8vscedit.dumpAllExtensionsToCfe';
-const LOAD_COMMAND_ID = 'v8vscedit.loadAllExtensionsFromCfe';
+const DUMP_COMMAND_ID = 'onecdev.dumpAllExtensionsToCfe';
+const LOAD_COMMAND_ID = 'onecdev.loadAllExtensionsFromCfe';
 const BATCH_COMMAND_IDS: readonly string[] = [DUMP_COMMAND_ID, LOAD_COMMAND_ID];
 
 interface DeclaredCommand {
@@ -92,7 +92,7 @@ suite('CfeBatchCommands — регистрация dumpAllExtensionsToCfe/loadAl
     }
   });
 
-  test('паритет с package.json, направление 1: обе команды объявлены с непустым title и enablement по !v8vscedit.isUpdatingConfigurations', () => {
+  test('паритет с package.json, направление 1: обе команды объявлены с непустым title и enablement по !onecdev.isUpdatingConfigurations', () => {
     const declared = readDeclaredCommands();
     for (const id of BATCH_COMMAND_IDS) {
       const entry = declared.find((item) => item.command === id);
@@ -102,8 +102,8 @@ suite('CfeBatchCommands — регистрация dumpAllExtensionsToCfe/loadAl
       // обновление: параллельный запуск повредил бы данные.
       assert.strictEqual(
         entry.enablement,
-        '!v8vscedit.isUpdatingConfigurations',
-        `enablement ${id} обязан быть "!v8vscedit.isUpdatingConfigurations": "${String(entry.enablement)}"`
+        '!onecdev.isUpdatingConfigurations',
+        `enablement ${id} обязан быть "!onecdev.isUpdatingConfigurations": "${String(entry.enablement)}"`
       );
     }
   });
@@ -111,7 +111,7 @@ suite('CfeBatchCommands — регистрация dumpAllExtensionsToCfe/loadAl
   test('паритет с package.json, направление 2: каждая объявленная пакетная команда реально регистрируется, а каждая зарегистрированная — объявлена', async () => {
     const declaredBatch = readDeclaredCommands()
       .map((item) => item.command)
-      .filter((id): id is string => typeof id === 'string' && /^v8vscedit\.(dump|load)AllExtensions/.test(id));
+      .filter((id): id is string => typeof id === 'string' && /^onecdev\.(dump|load)AllExtensions/.test(id));
 
     const before = new Set(await vscode.commands.getCommands(true));
     const context = createFakeContext();
@@ -126,11 +126,11 @@ suite('CfeBatchCommands — регистрация dumpAllExtensionsToCfe/loadAl
   });
 
   test('ни пакетная команда, ни её объявление не пересекаются с одиночными dump/load CF (разные id)', () => {
-    assert.ok(!BATCH_COMMAND_IDS.includes('v8vscedit.dumpConfigurationToCf'));
-    assert.ok(!BATCH_COMMAND_IDS.includes('v8vscedit.loadConfigurationFromCf'));
+    assert.ok(!BATCH_COMMAND_IDS.includes('onecdev.dumpConfigurationToCf'));
+    assert.ok(!BATCH_COMMAND_IDS.includes('onecdev.loadConfigurationFromCf'));
     const declared = readDeclaredCommands().map((item) => item.command);
-    assert.ok(declared.includes('v8vscedit.dumpConfigurationToCf'), 'одиночные команды остаются объявленными');
-    assert.ok(declared.includes('v8vscedit.loadConfigurationFromCf'), 'одиночные команды остаются объявленными');
+    assert.ok(declared.includes('onecdev.dumpConfigurationToCf'), 'одиночные команды остаются объявленными');
+    assert.ok(declared.includes('onecdev.loadConfigurationFromCf'), 'одиночные команды остаются объявленными');
   });
 
   /** Guard, уже занятый чужой операцией, и заглушка `services`, в которой есть только он. */

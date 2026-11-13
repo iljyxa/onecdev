@@ -49,7 +49,7 @@ suite('EditorReadonlyController — issue #1: readonly-переходы уже �
   let filePathA: string;
 
   setup(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-editor-readonly-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-editor-readonly-'));
     filePathA = path.join(tmpDir, 'Module.bsl');
     fs.writeFileSync(filePathA, 'Процедура Тест()\nКонецПроцедуры\n', 'utf-8');
   });
@@ -152,7 +152,7 @@ suite('EditorReadonlyController — issue #1: readonly-переходы уже �
 
   test('файл вне configRoot события не трогается', async function () {
     this.timeout(10_000);
-    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-editor-readonly-outside-'));
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-editor-readonly-outside-'));
     const outsideFile = path.join(outsideDir, 'Другой.bsl');
     fs.writeFileSync(outsideFile, 'Процедура X() КонецПроцедуры', 'utf-8');
     try {
@@ -210,7 +210,7 @@ suite('EditorReadonlyController — issue #1: readonly-переходы уже �
     this.timeout(10_000);
     // Левая сторона — вне configRoot: иначе (issue #63) она тоже получила бы переход
     // как файл объекта, а тест проверяет только правую сторону.
-    const originalDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-editor-readonly-original-'));
+    const originalDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-editor-readonly-original-'));
     const originalPath = path.join(originalDir, 'Original.bsl');
     fs.writeFileSync(originalPath, 'старое', 'utf-8');
     const modifiedUri = vscode.Uri.file(filePathA);
@@ -448,7 +448,7 @@ suite('BslReadonlyGuard — forget(uri)', () => {
   let tmpDir: string;
 
   setup(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-guard-forget-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-guard-forget-'));
   });
 
   teardown(async () => {
@@ -516,7 +516,7 @@ suite('EditorReadonlyController — публичные onActiveEditorChanged/onD
   let filePathB: string;
 
   setup(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-editor-readonly-public-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-editor-readonly-public-'));
     filePathA = path.join(tmpDir, 'А.bsl');
     filePathB = path.join(tmpDir, 'Б.bsl');
     fs.writeFileSync(filePathA, 'Процедура А() КонецПроцедуры\n', 'utf-8');
@@ -646,7 +646,7 @@ suite('EditorReadonlyController — цепочка единиц (issue #1, ра�
   let formModulePath: string;
 
   setup(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-editor-readonly-chain-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-editor-readonly-chain-'));
     ownerModulePath = path.join(tmpDir, 'Catalogs', 'Тест', 'Ext', 'ObjectModule.bsl');
     formModulePath = path.join(tmpDir, 'Catalogs', 'Тест', 'Forms', 'Форма', 'Ext', 'Form', 'Module.bsl');
     fs.mkdirSync(path.dirname(ownerModulePath), { recursive: true });
@@ -761,8 +761,8 @@ suite('EditorReadonlyController — файл проекта слева в сра
   let settle: (() => Promise<void>) | undefined;
 
   setup(() => {
-    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-readonly-left-'));
-    copyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-readonly-left-copy-'));
+    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-readonly-left-'));
+    copyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-readonly-left-copy-'));
     const projectPath = path.join(configRoot, 'ObjectModule.bsl');
     const copyPath = path.join(copyDir, 'ObjectModule.bsl');
     fs.writeFileSync(projectPath, 'Процедура Проект()\nКонецПроцедуры\n', 'utf-8');
@@ -870,7 +870,7 @@ suite('EditorReadonlyController — файл проекта слева в сра
   test('скрытое сравнение → переход применяется сразу, без активации пользователем; активная вкладка группы — прежняя', async function () {
     this.timeout(15_000);
     await openDiff();
-    const otherDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-readonly-left-other-'));
+    const otherDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-readonly-left-other-'));
     try {
       const otherUri = vscode.Uri.file(path.join(otherDir, 'Другой.bsl'));
       fs.writeFileSync(otherUri.fsPath, 'другой', 'utf-8');
@@ -954,11 +954,11 @@ suite('EditorReadonlyController — файл проекта слева в сра
     assert.strictEqual(textTabsOf(copyUri).length, 0);
   });
 
-  // Issue #79: при configRoot = корню рабочей области служебный `.v8vscedit/` лежит внутри
+  // Issue #79: при configRoot = корню рабочей области служебный `.onecdev/` лежит внутри
   // него, но это не файлы конфигурации — бэкап слева в сравнении не переключается.
-  test('бэкап слияния из .v8vscedit/ слева в сравнении → readonly-команды нет, временной вкладки нет; файл проекта переключён', async function () {
+  test('бэкап слияния из .onecdev/ слева в сравнении → readonly-команды нет, временной вкладки нет; файл проекта переключён', async function () {
     this.timeout(15_000);
-    const scopeDir = path.join(configRoot, '.v8vscedit', 'repository', 'merge', 'scope', '2024-06-01T12-00-00-000Z-keep-local');
+    const scopeDir = path.join(configRoot, '.onecdev', 'repository', 'merge', 'scope', '2024-06-01T12-00-00-000Z-keep-local');
     fs.mkdirSync(scopeDir, { recursive: true });
     const backupUri = vscode.Uri.file(path.join(scopeDir, 'ObjectModule.bsl'));
     fs.writeFileSync(backupUri.fsPath, 'резервная копия', 'utf-8');
@@ -993,7 +993,7 @@ suite('EditorReadonlyController — несохранённые правки пр
   let disposable: vscode.Disposable | undefined;
 
   setup(() => {
-    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-readonly-dirty-'));
+    configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-readonly-dirty-'));
     uriA = vscode.Uri.file(path.join(configRoot, 'А.bsl'));
     uriB = vscode.Uri.file(path.join(configRoot, 'Б.bsl'));
     fs.writeFileSync(uriA.fsPath, 'Процедура А()\nКонецПроцедуры\n', 'utf-8');

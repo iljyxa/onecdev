@@ -35,7 +35,7 @@ import {
 //    процесс, не детерминируемый в CI).
 //
 // 3. `src/ui/commands/ext/ExtensionCommands.ts` — тело команды
-//    `v8vscedit.connectExtension` проверяется интеграционно в
+//    `onecdev.connectExtension` проверяется интеграционно в
 //    `configurationOperationGuardCommands.test.ts` (suite issue #38): запрос
 //    списка расширений и декомпиляция внедряются через `ExtensionCommandsDeps`,
 //    QuickPick подменяется, поэтому там проверяется судьба каталога
@@ -103,7 +103,7 @@ suite('readExtensionListFromDumpFile', () => {
   let tempDir: string;
 
   setup(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-ext-list-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-ext-list-'));
   });
 
   teardown(() => {

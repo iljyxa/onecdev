@@ -50,7 +50,7 @@ function configXml(version: string): string {
 }
 
 function newConfigRoot(version: string): string {
-  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-golden-creator-'));
+  const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-golden-creator-'));
   fs.writeFileSync(path.join(configRoot, 'Configuration.xml'), configXml(version), 'utf-8');
   return configRoot;
 }

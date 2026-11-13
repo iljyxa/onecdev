@@ -76,7 +76,7 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
     let file: string;
 
     setup(() => {
-      extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-nesting-'));
+      extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-nesting-'));
       fs.cpSync(EVOLC_DIR, extDir, { recursive: true });
       service = new CfeBorrowService();
       file = path.join(extDir, 'Catalogs', 'Контрагенты.xml');
@@ -197,7 +197,7 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
     let file: string;
 
     setup(() => {
-      extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-nesting-doc-'));
+      extDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-nesting-doc-'));
       fs.writeFileSync(path.join(extDir, 'Configuration.xml'), MINIMAL_EXT_CONFIGURATION_XML, 'utf-8');
       service = new CfeBorrowService();
       file = path.join(extDir, 'Documents', 'АвансовыйОтчет.xml');

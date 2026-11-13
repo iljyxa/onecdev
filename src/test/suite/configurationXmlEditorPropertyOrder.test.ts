@@ -57,7 +57,7 @@ const ROOT_PROPERTY_KINDS: readonly RootPropertyKind[] = ['scalar', 'localized',
 const tempDirs: string[] = [];
 
 function writeTemp(content: string, name = 'Configuration.xml'): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-config-order-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-config-order-'));
   tempDirs.push(dir);
   const target = path.join(dir, name);
   fs.writeFileSync(target, content, 'utf-8');
@@ -471,7 +471,7 @@ suite('ConfigurationXmlEditor.modifyConfigurationProperty — канон пор�
   });
 
   test('файла нет: отказ «Не найден файл», ничего не создаётся (прежнее поведение)', () => {
-    const missing = path.join(os.tmpdir(), 'v8vscedit-config-order-нет-такого', 'Configuration.xml');
+    const missing = path.join(os.tmpdir(), 'onecdev-config-order-нет-такого', 'Configuration.xml');
     const result = modify(missing, 'Version', '1', 'scalar');
     assert.strictEqual(result.success, false);
     assert.deepStrictEqual(result.errors, [`Не найден файл: ${missing}`]);

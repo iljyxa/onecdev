@@ -1,8 +1,8 @@
-# Канон путей и типов 1С для MCP-инструментов v8vscedit
+# Канон путей и типов 1С для MCP-инструментов onecdev
 
 Документ — единый и обязательный справочник правил именования путей метаданных
 и типов 1С, которые принимают и возвращают MCP-инструменты расширения
-`v8vscedit`. Целевая аудитория — ИИ-агенты, подключённые к локальному
+`onecdev`. Целевая аудитория — ИИ-агенты, подключённые к локальному
 MCP-серверу расширения, и разработчики этих агентов.
 
 Канон один: только русские формы, без английских алиасов, без legacy-форм
@@ -138,10 +138,10 @@ MCP-серверу расширения, и разработчики этих а
 | `Конфигурация` | Узел корня основной конфигурации, для свойств уровня конфигурации. |
 | `Расширение` | Узел корня расширения. |
 
-Псевдо-корни используются как путь для `v8vscedit_configuration_info`,
-`v8vscedit_validate_configuration`, `v8vscedit_get_properties`,
-`v8vscedit_set_property_by_path` и `parentPath` в `v8vscedit_compile_subsystem`
-и `v8vscedit_compile_role`.
+Псевдо-корни используются как путь для `onecdev_configuration_info`,
+`onecdev_validate_configuration`, `onecdev_get_properties`,
+`onecdev_set_property_by_path` и `parentPath` в `onecdev_compile_subsystem`
+и `onecdev_compile_role`.
 
 ### 2.3. Прямые дочерние сегменты — без префикса
 
@@ -331,9 +331,9 @@ HTTPСервисы.МойСервис.URLШаблон.Товары.Метод.П
 ## 3. Канон типов значений 1С
 
 Раздел соответствует главе 2 плана. Реестр типов выдаётся инструментом
-`v8vscedit_list_supported_types` (платформенные типы) и
-`v8vscedit_list_available_types` (с учётом конфигурации и контекста свойства).
-Имена, передаваемые в `v8vscedit_set_type`, — только русские из этого
+`onecdev_list_supported_types` (платформенные типы) и
+`onecdev_list_available_types` (с учётом конфигурации и контекста свойства).
+Имена, передаваемые в `onecdev_set_type`, — только русские из этого
 реестра.
 
 ### 3.1. Базовые платформенные типы (новинка: ключевая часть E2)
@@ -406,7 +406,7 @@ HTTPСервисы.МойСервис.URLШаблон.Товары.Метод.П
 
 **Контракт (не дефект): в расширении `set_type` допускает ссылки только на собственные и заимствованные
 объекты.** Ссылка на объект основной конфигурации, не заимствованный в CFE, отбивается — сначала
-`v8vscedit_cfe_borrow`. Основание — эталон `example/2.21/src/cfe/EVOLC`: все объекты основной
+`onecdev_cfe_borrow`. Основание — эталон `example/2.21/src/cfe/EVOLC`: все объекты основной
 конфигурации, на которые есть ссылки, присутствуют там как заимствованные заглушки, контрпримеров нет.
 Закреплено тестом «запрещает ссылочный тип CFE, если объект не заимствован в расширение»
 (`mcpPropertyService.test.ts`).
@@ -422,7 +422,7 @@ HTTPСервисы.МойСервис.URLШаблон.Товары.Метод.П
 
 ### 3.3. Квалификаторы типов
 
-Квалификаторы передаются в `v8vscedit_set_type` как отдельные поля
+Квалификаторы передаются в `onecdev_set_type` как отдельные поля
 (`length`, `digits`, `fractionDigits`, `dateFractions`, `allowedSign`,
 `allowedLength`).
 
@@ -496,19 +496,19 @@ MCP-инструменты принимают только канон. Люба�
 После рефакторинга E5 у всех инструментов, работающих с одним узлом, аргумент
 называется одинаково: `path`. Никаких `objectPath`, `formPath`, `templatePath`,
 `rightsPath`, `subsystemPath`, `ciPath` и `modulePath` больше нет. Если
-инструмент работает с несколькими путями сразу (`v8vscedit_validate_metadata`),
+инструмент работает с несколькими путями сразу (`onecdev_validate_metadata`),
 он принимает массив через `paths`.
 
 Парные инструменты, создающие новый объект внутри родителя
-(`v8vscedit_compile_subsystem`, `v8vscedit_compile_role`,
-`v8vscedit_add_form`), принимают `parentPath` — канонический путь
+(`onecdev_compile_subsystem`, `onecdev_compile_role`,
+`onecdev_add_form`), принимают `parentPath` — канонический путь
 родителя (`Конфигурация`, `Расширение`, `Подсистема.X.Y` или корневой
 объект).
 
-### 5.2. `v8vscedit_tree` для обзора
+### 5.2. `onecdev_tree` для обзора
 
 Перед любой массовой работой с конфигурацией удобно один раз получить плоский
-список канонических путей через `v8vscedit_tree`:
+список канонических путей через `onecdev_tree`:
 
 ```json
 {
@@ -529,10 +529,10 @@ MCP-инструменты принимают только канон. Люба�
 - `depth`: `roots` (только корни), `objects` (корни + объекты), `children`
   (корни + объекты + дочерние элементы первого уровня).
 
-### 5.3. `v8vscedit_resolve_path` для отладки
+### 5.3. `onecdev_resolve_path` для отладки
 
 Если непонятно, как выглядит канон для конкретного объекта в работе агента, —
-передай сомнительный вход в `v8vscedit_resolve_path` и посмотри `canonical`.
+передай сомнительный вход в `onecdev_resolve_path` и посмотри `canonical`.
 Инструмент нормализует путь и проверяет существование узла:
 
 ```json
@@ -553,9 +553,9 @@ MCP-инструменты принимают только канон. Люба�
 Если узла нет — `exists: false` без ошибки. Если форма не канон — ошибка с
 подсказкой канона.
 
-### 5.4. `v8vscedit_list_supported_types` для выбора типа
+### 5.4. `onecdev_list_supported_types` для выбора типа
 
-Полезен перед `v8vscedit_set_type`, особенно когда конфигурация большая и
+Полезен перед `onecdev_set_type`, особенно когда конфигурация большая и
 агент не знает, какие справочники там есть.
 
 ```json
@@ -580,69 +580,69 @@ MCP-инструменты принимают только канон. Люба�
 
 | Инструмент | Что делает | Формат `path` |
 |---|---|---|
-| `v8vscedit_workspace_overview` | Основная конфигурация, расширения, корни, счётчики объектов. | — |
-| `v8vscedit_search_metadata` | Поиск по части строки в путях метаданных. | — (поиск, не путь) |
-| `v8vscedit_list_metadata` | Список объектов группы или дочерних по пути. | `parentPath` в каноне |
-| `v8vscedit_tree` | Плоский массив канонических путей конфигурации. | — (см. §5.2) |
-| `v8vscedit_resolve_path` | Нормализует путь и проверяет существование узла. | любой канон |
-| `v8vscedit_list_supported_types` | Реестр платформенных типов по контексту. | — |
-| `v8vscedit_configuration_info` | Свойства и счётчики ChildObjects. | `Конфигурация` / `Расширение` |
-| `v8vscedit_validate_configuration` | Валидирует Configuration.xml и ChildObjects. | `Конфигурация` / `Расширение` |
-| `v8vscedit_metadata_info` | Структура объекта: реквизиты, ТЧ, формы, команды, макеты. | `Справочники.X`, `Документы.X`, … |
-| `v8vscedit_validate_metadata` | Валидирует XML объекта (поддерживает массив `paths`). | `Справочники.X` или массив |
-| `v8vscedit_subsystem_info` | Свойства подсистемы, состав, дерево, CommandInterface. | `Подсистема.X.Y` |
-| `v8vscedit_validate_subsystem` | Валидирует XML подсистемы и CommandInterface.xml. | `Подсистема.X.Y` |
-| `v8vscedit_mxl_info` | Сводка MXL: области, параметры, текст, статистика. | `Справочники.X.Макет.Y` / `ОбщиеМакеты.X` |
-| `v8vscedit_validate_mxl` | Валидирует Template.xml табличного документа. | как `mxl_info` |
-| `v8vscedit_compile_mxl` | Перезаписывает MXL из JSON DSL. | `Справочники.X.Макет.Y` |
-| `v8vscedit_decompile_mxl` | Возвращает JSON DSL по существующему MXL. | как `mxl_info` |
-| `v8vscedit_skd_info` | Сводка СКД: наборы, поля, итоги, параметры, варианты. | `Отчеты.X.Макет.ОсновнаяСхема` |
-| `v8vscedit_validate_skd` | Валидирует СКД Template.xml. | как `skd_info` |
-| `v8vscedit_compile_skd` | Перезаписывает СКД из JSON DSL. | как `skd_info` |
-| `v8vscedit_edit_skd` | Точечное редактирование СКД (поля, итоги, фильтры, …). | как `skd_info` |
-| `v8vscedit_add_help` | Создаёт Ext/Help.xml и Help/<lang>.html для объекта. | `Справочники.X`, `Документы.X` |
-| `v8vscedit_create_epf` | Создаёт XML-исходники внешней обработки EPF. | — (использует `outputDir`) |
-| `v8vscedit_create_erf` | Создаёт XML-исходники внешнего отчёта ERF. | — (использует `outputDir`) |
-| `v8vscedit_validate_external_object` | Валидирует EPF/ERF XML. | `objectPath` (FS) |
-| `v8vscedit_epf_bsp_init` | Добавляет регистрацию БСП в ObjectModule.bsl. | `objectPath` (FS) |
-| `v8vscedit_epf_bsp_add_command` | Добавляет команду в БСП-регистрацию. | `objectPath` (FS) |
-| `v8vscedit_form_info` | Структура управляемой формы: элементы, реквизиты, команды. | `Справочники.X.Форма.Y` / `ОбщиеФормы.X` |
-| `v8vscedit_validate_form` | Валидирует Form.xml: ID, DataPath, callType, типы. Возвращает ошибки И предупреждения; предупреждение на платформенной выгрузке возможно штатно (см. ниже). | как `form_info` |
-| `v8vscedit_add_form` | Создаёт форму объекта с регистрацией в ChildObjects. | `parentPath = Справочники.X`, `name` |
-| `v8vscedit_remove_form` | Удаляет форму и снимает регистрацию. | `Справочники.X.Форма.Y` |
-| `v8vscedit_compile_form` | Перезаписывает Form.xml из JSON DSL. | как `form_info` |
-| `v8vscedit_edit_form` | Точечное редактирование формы. | как `form_info` |
-| `v8vscedit_compile_subsystem` | Создаёт подсистему и регистрирует в родителе. | `parentPath = Конфигурация / Расширение / Подсистема.X` |
-| `v8vscedit_edit_subsystem_content` | Меняет Content подсистемы. | `Подсистема.X.Y` |
-| `v8vscedit_edit_command_interface` | Hide/show/place/order в CommandInterface.xml подсистемы. | `Подсистема.X.Y` |
-| `v8vscedit_validate_command_interface` | Валидирует CommandInterface.xml. | `Подсистема.X.Y` |
-| `v8vscedit_role_info` | Права, RLS и шаблоны из Rights.xml. | `Роли.X` |
-| `v8vscedit_validate_role` | Валидирует Rights.xml и регистрацию роли. | `Роли.X` |
-| `v8vscedit_compile_role` | Создаёт роль и регистрирует в Configuration.xml. | `parentPath = Конфигурация / Расширение` |
-| `v8vscedit_edit_role` | Точечное редактирование прав роли. | `Роли.X` |
-| `v8vscedit_list_default_roles` | Список `<DefaultRoles>` из Configuration.xml. | `Конфигурация` / `Расширение` |
-| `v8vscedit_add_default_role` | Добавляет роль в `<DefaultRoles>`. | `Конфигурация` / `Расширение` |
-| `v8vscedit_remove_default_role` | Удаляет роль из `<DefaultRoles>`. | `Конфигурация` / `Расширение` |
-| `v8vscedit_set_default_roles` | Полностью заменяет `<DefaultRoles>`. | `Конфигурация` / `Расширение` |
-| `v8vscedit_create_configuration` | Создаёт scaffold CF (Configuration.xml + язык). | — (использует `outputDir`) |
-| `v8vscedit_create_extension` | Создаёт scaffold CFE. | — (использует `outputDir`) |
-| `v8vscedit_dump_cf` | Выгружает конфигурацию/расширение базы в бинарный `.cf`/`.cfe`-файл через пакетный Конфигуратор. | — (`outputFile` FS, см. §6.2) |
-| `v8vscedit_load_cf` | Загружает `.cf`/`.cfe`-файл в конфигурацию/расширение базы; базу НЕ обновляет. | — (`inputFile` FS, см. §6.2) |
-| `v8vscedit_dump_all_cfe` | Выгружает ВСЕ расширения базы в каталог, по `.cfe` на расширение, плюс манифест `cfe-dump.json`. | — (`outputDir` FS, см. §6.2) |
-| `v8vscedit_load_all_cfe` | Загружает ВСЕ расширения из каталога `.cfe` в базу; базу НЕ обновляет без `applyToDatabase`. | — (`inputDir` FS, см. §6.2) |
-| `v8vscedit_get_properties` | ВСЕ свойства узла по пути: значения, readonly, enum/multiEnum-значения; для `metadataType` в `notes` — какой tool вызывать. | любой канон узла |
-| `v8vscedit_set_property_by_path` | Меняет одно простое свойство по пути. | любой канон узла |
-| `v8vscedit_set_properties` | Пакетная смена нескольких простых свойств одного узла за один вызов; типы — через `v8vscedit_set_type`. | любой канон узла |
-| `v8vscedit_list_available_types` | Стандартные и конфигурационные типы для свойства. | канон узла либо пусто |
-| `v8vscedit_set_type` | Меняет свойство Тип / Источник / параметра команды. | канон узла |
-| `v8vscedit_rename_metadata` | Переименовывает объект или дочерний элемент. | канон узла |
-| `v8vscedit_remove_metadata` | Удаляет объект или дочерний элемент. | канон узла |
-| `v8vscedit_add_*` (корни) | См. §6.3 — отдельный tool на каждый корневой тип метаданных. | — |
-| `v8vscedit_add_*` (дети) | См. §6.4 — отдельный tool на каждый дочерний тип. | `path` к объекту-владельцу |
-| `v8vscedit_cfe_borrow` | Заимствует объект, форму или дочерний элемент из CF в CFE. | — (FS-аргументы) |
-| `v8vscedit_cfe_patch_method` | BSL-перехватчик &Перед/&После/&ИзменениеИКонтроль в CFE. | `Справочники.X.МодульОбъекта`, … |
-| `v8vscedit_cfe_diff` | Состав расширения и проверка переноса #Вставка. | — (`extensionPath` FS) |
-| `v8vscedit_execute_command` | Allowlist команд расширения: `refresh`, `importConfigurations`, `updateChangedConfigurations`. Ответ — явный исход `outcome` (`done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`); при `busy` — `heldBy` с заголовком держащей операции. | — |
+| `onecdev_workspace_overview` | Основная конфигурация, расширения, корни, счётчики объектов. | — |
+| `onecdev_search_metadata` | Поиск по части строки в путях метаданных. | — (поиск, не путь) |
+| `onecdev_list_metadata` | Список объектов группы или дочерних по пути. | `parentPath` в каноне |
+| `onecdev_tree` | Плоский массив канонических путей конфигурации. | — (см. §5.2) |
+| `onecdev_resolve_path` | Нормализует путь и проверяет существование узла. | любой канон |
+| `onecdev_list_supported_types` | Реестр платформенных типов по контексту. | — |
+| `onecdev_configuration_info` | Свойства и счётчики ChildObjects. | `Конфигурация` / `Расширение` |
+| `onecdev_validate_configuration` | Валидирует Configuration.xml и ChildObjects. | `Конфигурация` / `Расширение` |
+| `onecdev_metadata_info` | Структура объекта: реквизиты, ТЧ, формы, команды, макеты. | `Справочники.X`, `Документы.X`, … |
+| `onecdev_validate_metadata` | Валидирует XML объекта (поддерживает массив `paths`). | `Справочники.X` или массив |
+| `onecdev_subsystem_info` | Свойства подсистемы, состав, дерево, CommandInterface. | `Подсистема.X.Y` |
+| `onecdev_validate_subsystem` | Валидирует XML подсистемы и CommandInterface.xml. | `Подсистема.X.Y` |
+| `onecdev_mxl_info` | Сводка MXL: области, параметры, текст, статистика. | `Справочники.X.Макет.Y` / `ОбщиеМакеты.X` |
+| `onecdev_validate_mxl` | Валидирует Template.xml табличного документа. | как `mxl_info` |
+| `onecdev_compile_mxl` | Перезаписывает MXL из JSON DSL. | `Справочники.X.Макет.Y` |
+| `onecdev_decompile_mxl` | Возвращает JSON DSL по существующему MXL. | как `mxl_info` |
+| `onecdev_skd_info` | Сводка СКД: наборы, поля, итоги, параметры, варианты. | `Отчеты.X.Макет.ОсновнаяСхема` |
+| `onecdev_validate_skd` | Валидирует СКД Template.xml. | как `skd_info` |
+| `onecdev_compile_skd` | Перезаписывает СКД из JSON DSL. | как `skd_info` |
+| `onecdev_edit_skd` | Точечное редактирование СКД (поля, итоги, фильтры, …). | как `skd_info` |
+| `onecdev_add_help` | Создаёт Ext/Help.xml и Help/<lang>.html для объекта. | `Справочники.X`, `Документы.X` |
+| `onecdev_create_epf` | Создаёт XML-исходники внешней обработки EPF. | — (использует `outputDir`) |
+| `onecdev_create_erf` | Создаёт XML-исходники внешнего отчёта ERF. | — (использует `outputDir`) |
+| `onecdev_validate_external_object` | Валидирует EPF/ERF XML. | `objectPath` (FS) |
+| `onecdev_epf_bsp_init` | Добавляет регистрацию БСП в ObjectModule.bsl. | `objectPath` (FS) |
+| `onecdev_epf_bsp_add_command` | Добавляет команду в БСП-регистрацию. | `objectPath` (FS) |
+| `onecdev_form_info` | Структура управляемой формы: элементы, реквизиты, команды. | `Справочники.X.Форма.Y` / `ОбщиеФормы.X` |
+| `onecdev_validate_form` | Валидирует Form.xml: ID, DataPath, callType, типы. Возвращает ошибки И предупреждения; предупреждение на платформенной выгрузке возможно штатно (см. ниже). | как `form_info` |
+| `onecdev_add_form` | Создаёт форму объекта с регистрацией в ChildObjects. | `parentPath = Справочники.X`, `name` |
+| `onecdev_remove_form` | Удаляет форму и снимает регистрацию. | `Справочники.X.Форма.Y` |
+| `onecdev_compile_form` | Перезаписывает Form.xml из JSON DSL. | как `form_info` |
+| `onecdev_edit_form` | Точечное редактирование формы. | как `form_info` |
+| `onecdev_compile_subsystem` | Создаёт подсистему и регистрирует в родителе. | `parentPath = Конфигурация / Расширение / Подсистема.X` |
+| `onecdev_edit_subsystem_content` | Меняет Content подсистемы. | `Подсистема.X.Y` |
+| `onecdev_edit_command_interface` | Hide/show/place/order в CommandInterface.xml подсистемы. | `Подсистема.X.Y` |
+| `onecdev_validate_command_interface` | Валидирует CommandInterface.xml. | `Подсистема.X.Y` |
+| `onecdev_role_info` | Права, RLS и шаблоны из Rights.xml. | `Роли.X` |
+| `onecdev_validate_role` | Валидирует Rights.xml и регистрацию роли. | `Роли.X` |
+| `onecdev_compile_role` | Создаёт роль и регистрирует в Configuration.xml. | `parentPath = Конфигурация / Расширение` |
+| `onecdev_edit_role` | Точечное редактирование прав роли. | `Роли.X` |
+| `onecdev_list_default_roles` | Список `<DefaultRoles>` из Configuration.xml. | `Конфигурация` / `Расширение` |
+| `onecdev_add_default_role` | Добавляет роль в `<DefaultRoles>`. | `Конфигурация` / `Расширение` |
+| `onecdev_remove_default_role` | Удаляет роль из `<DefaultRoles>`. | `Конфигурация` / `Расширение` |
+| `onecdev_set_default_roles` | Полностью заменяет `<DefaultRoles>`. | `Конфигурация` / `Расширение` |
+| `onecdev_create_configuration` | Создаёт scaffold CF (Configuration.xml + язык). | — (использует `outputDir`) |
+| `onecdev_create_extension` | Создаёт scaffold CFE. | — (использует `outputDir`) |
+| `onecdev_dump_cf` | Выгружает конфигурацию/расширение базы в бинарный `.cf`/`.cfe`-файл через пакетный Конфигуратор. | — (`outputFile` FS, см. §6.2) |
+| `onecdev_load_cf` | Загружает `.cf`/`.cfe`-файл в конфигурацию/расширение базы; базу НЕ обновляет. | — (`inputFile` FS, см. §6.2) |
+| `onecdev_dump_all_cfe` | Выгружает ВСЕ расширения базы в каталог, по `.cfe` на расширение, плюс манифест `cfe-dump.json`. | — (`outputDir` FS, см. §6.2) |
+| `onecdev_load_all_cfe` | Загружает ВСЕ расширения из каталога `.cfe` в базу; базу НЕ обновляет без `applyToDatabase`. | — (`inputDir` FS, см. §6.2) |
+| `onecdev_get_properties` | ВСЕ свойства узла по пути: значения, readonly, enum/multiEnum-значения; для `metadataType` в `notes` — какой tool вызывать. | любой канон узла |
+| `onecdev_set_property_by_path` | Меняет одно простое свойство по пути. | любой канон узла |
+| `onecdev_set_properties` | Пакетная смена нескольких простых свойств одного узла за один вызов; типы — через `onecdev_set_type`. | любой канон узла |
+| `onecdev_list_available_types` | Стандартные и конфигурационные типы для свойства. | канон узла либо пусто |
+| `onecdev_set_type` | Меняет свойство Тип / Источник / параметра команды. | канон узла |
+| `onecdev_rename_metadata` | Переименовывает объект или дочерний элемент. | канон узла |
+| `onecdev_remove_metadata` | Удаляет объект или дочерний элемент. | канон узла |
+| `onecdev_add_*` (корни) | См. §6.3 — отдельный tool на каждый корневой тип метаданных. | — |
+| `onecdev_add_*` (дети) | См. §6.4 — отдельный tool на каждый дочерний тип. | `path` к объекту-владельцу |
+| `onecdev_cfe_borrow` | Заимствует объект, форму или дочерний элемент из CF в CFE. | — (FS-аргументы) |
+| `onecdev_cfe_patch_method` | BSL-перехватчик &Перед/&После/&ИзменениеИКонтроль в CFE. | `Справочники.X.МодульОбъекта`, … |
+| `onecdev_cfe_diff` | Состав расширения и проверка переноса #Вставка. | — (`extensionPath` FS) |
+| `onecdev_execute_command` | Allowlist команд расширения: `refresh`, `importConfigurations`, `updateChangedConfigurations`. Ответ — явный исход `outcome` (`done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`); при `busy` — `heldBy` с заголовком держащей операции. | — |
 
 Несколько инструментов (`create_epf`/`create_erf`/`validate_external_object`/
 `epf_bsp_*`/`cfe_borrow`/`cfe_diff`) работают с EPF/ERF/CFE по обычному
@@ -652,7 +652,7 @@ MCP-инструменты принимают только канон. Люба�
 
 ### 6.2. Инструменты обмена CF/CFE через пакетный Конфигуратор
 
-У `v8vscedit_dump_cf` и `v8vscedit_load_cf` нет аргумента `path` в каноне,
+У `onecdev_dump_cf` и `onecdev_load_cf` нет аргумента `path` в каноне,
 хотя сама конфигурация/расширение узлом дерева являются, — потому что предмет
 операции здесь не узел, а файл на диске (куда выгрузить/откуда загрузить
 бинарник). `extensionName` — опциональное имя расширения (пусто = основная
@@ -666,8 +666,8 @@ MCP-инструменты принимают только канон. Люба�
 
 | Инструмент | Аргументы | `destructiveHint` | Особенности |
 |---|---|---|---|
-| `v8vscedit_dump_cf` | `outputFile` (FS), `extensionName?`, `overwrite?` | `false` | Пустой/отсутствующий `extensionName` — основная конфигурация; непустой — расширение (суффикс файла обязан совпасть: `.cf`/`.cfe`). Файл на целевом пути появляется только при успехе (staging-схема). |
-| `v8vscedit_load_cf` | `inputFile` (FS), `extensionName?`, `confirm` (обязательный), `applyToDatabase?` | `true` | `confirm: true` обязателен — операция необратима. `extensionName`, которого ещё нет в базе, создаёт новое расширение. Без `applyToDatabase: true` конфигурация базы НЕ обновляется; ответ инструмента содержит `projectSourcesOutdated: true` — сигнал агенту, что XML-выгрузка проекта рассинхронизирована с базой и нужен импорт. |
+| `onecdev_dump_cf` | `outputFile` (FS), `extensionName?`, `overwrite?` | `false` | Пустой/отсутствующий `extensionName` — основная конфигурация; непустой — расширение (суффикс файла обязан совпасть: `.cf`/`.cfe`). Файл на целевом пути появляется только при успехе (staging-схема). |
+| `onecdev_load_cf` | `inputFile` (FS), `extensionName?`, `confirm` (обязательный), `applyToDatabase?` | `true` | `confirm: true` обязателен — операция необратима. `extensionName`, которого ещё нет в базе, создаёт новое расширение. Без `applyToDatabase: true` конфигурация базы НЕ обновляется; ответ инструмента содержит `projectSourcesOutdated: true` — сигнал агенту, что XML-выгрузка проекта рассинхронизирована с базой и нужен импорт. |
 
 Оба инструмента запрещают `-AllExtensions` на уровне схемы входа (поля просто
 нет) и берут тот же общий замок операций над конфигурацией, что импорт/
@@ -679,87 +679,87 @@ MCP-инструменты принимают только канон. Люба�
 
 | Инструмент | Аргументы | `destructiveHint` | Особенности |
 |---|---|---|---|
-| `v8vscedit_dump_all_cfe` | `outputDir` (FS), `overwrite?` | `false` | Список расширений берётся у базы (цикл по `/DumpDBCfgList -AllExtensions`, а не ключ `/DumpCfg`). Ответ: `dumped[]`, `failed[]`, `manifestFile`. Частичный отказ — УСПЕХ со списком `failed` (базу выгрузка не меняет, остальные бэкапы ценны). Без `overwrite` существующие файлы плана — отказ до старта. |
-| `v8vscedit_load_all_cfe` | `inputDir` (FS), `confirm` (обязательный), `createMissing?`, `applyToDatabase?` | `true` | `confirm: true` обязателен. При сбое на любом расширении загрузка ОСТАНАВЛИВАЕТСЯ и инструмент бросает исключение: сбойное расширение в состоянии `stateUncertain`, следующие не трогались. Ответ при успехе: `loaded[]`, `applied[]`, `notInDirectory`, `ignoredFiles`, `restoredByFileName` (расширения, имя которых взято из имени файла, а не из манифеста — признак возможного чужого поколения бэкапа), `projectSourcesOutdated: true`. `applyToDatabase` — `/UpdateDBCfg -Extension` по одному на каждое загруженное расширение. |
+| `onecdev_dump_all_cfe` | `outputDir` (FS), `overwrite?` | `false` | Список расширений берётся у базы (цикл по `/DumpDBCfgList -AllExtensions`, а не ключ `/DumpCfg`). Ответ: `dumped[]`, `failed[]`, `manifestFile`. Частичный отказ — УСПЕХ со списком `failed` (базу выгрузка не меняет, остальные бэкапы ценны). Без `overwrite` существующие файлы плана — отказ до старта. |
+| `onecdev_load_all_cfe` | `inputDir` (FS), `confirm` (обязательный), `createMissing?`, `applyToDatabase?` | `true` | `confirm: true` обязателен. При сбое на любом расширении загрузка ОСТАНАВЛИВАЕТСЯ и инструмент бросает исключение: сбойное расширение в состоянии `stateUncertain`, следующие не трогались. Ответ при успехе: `loaded[]`, `applied[]`, `notInDirectory`, `ignoredFiles`, `restoredByFileName` (расширения, имя которых взято из имени файла, а не из манифеста — признак возможного чужого поколения бэкапа), `projectSourcesOutdated: true`. `applyToDatabase` — `/UpdateDBCfg -Extension` по одному на каждое загруженное расширение. |
 
 ### 6.3. Tools добавления корневых объектов
 
-Бывший общий `v8vscedit_add_metadata_by_path` декомпозирован на отдельные
+Бывший общий `onecdev_add_metadata_by_path` декомпозирован на отдельные
 инструменты — один на каждый корневой тип метаданных. Все принимают
-`name` (имя нового объекта) и опциональный `configuration`; `v8vscedit_add_common_template`
+`name` (имя нового объекта) и опциональный `configuration`; `onecdev_add_common_template`
 дополнительно принимает `templateType` (`Табличный документ`, `Текстовый документ`,
 `HTML`, `Двоичные данные`, `СКД`, `Графическая схема`, `Внешняя компонента`).
 
 | Инструмент | Создаёт |
 |---|---|
-| `v8vscedit_add_subsystem` | Подсистему первого уровня (вложенные — через `compile_subsystem`). |
-| `v8vscedit_add_common_module` | Общий модуль. |
-| `v8vscedit_add_session_parameter` | Параметр сеанса. |
-| `v8vscedit_add_role` | Роль с пустым Rights.xml. |
-| `v8vscedit_add_common_attribute` | Общий реквизит. |
-| `v8vscedit_add_exchange_plan` | План обмена. |
-| `v8vscedit_add_filter_criterion` | Критерий отбора. |
-| `v8vscedit_add_event_subscription` | Подписку на событие. |
-| `v8vscedit_add_scheduled_job` | Регламентное задание. |
-| `v8vscedit_add_functional_option` | Функциональную опцию. |
-| `v8vscedit_add_functional_options_parameter` | Параметр функциональных опций. |
-| `v8vscedit_add_defined_type` | Определяемый тип. |
-| `v8vscedit_add_settings_storage` | Хранилище настроек. |
-| `v8vscedit_add_common_form` | Общую форму (Form.xml + Module.bsl). |
-| `v8vscedit_add_common_command` | Общую команду. |
-| `v8vscedit_add_command_group` | Группу команд. |
-| `v8vscedit_add_common_template` | Общий макет (с `templateType`). |
-| `v8vscedit_add_common_picture` | Общую картинку. |
-| `v8vscedit_add_xdto_package` | XDTO-пакет. |
-| `v8vscedit_add_web_service` | Web-сервис (SOAP). |
-| `v8vscedit_add_http_service` | HTTP-сервис. |
-| `v8vscedit_add_ws_reference` | WS-ссылку. |
-| `v8vscedit_add_integration_service` | Сервис интеграции. |
-| `v8vscedit_add_style_item` | Элемент стиля. |
-| `v8vscedit_add_style` | Стиль. |
-| `v8vscedit_add_language` | Язык. |
-| `v8vscedit_add_constant` | Константу. |
-| `v8vscedit_add_catalog` | Справочник с базовыми обязательными свойствами. |
-| `v8vscedit_add_document` | Документ. |
-| `v8vscedit_add_document_journal` | Журнал документов. |
-| `v8vscedit_add_document_numerator` | Нумератор документов. |
-| `v8vscedit_add_sequence` | Последовательность документов. |
-| `v8vscedit_add_enum` | Перечисление. |
-| `v8vscedit_add_report` | Отчёт. |
-| `v8vscedit_add_data_processor` | Обработку. |
-| `v8vscedit_add_chart_of_characteristic_types` | План видов характеристик. |
-| `v8vscedit_add_chart_of_accounts` | План счетов. |
-| `v8vscedit_add_chart_of_calculation_types` | План видов расчёта. |
-| `v8vscedit_add_information_register` | Регистр сведений. |
-| `v8vscedit_add_accumulation_register` | Регистр накопления. |
-| `v8vscedit_add_accounting_register` | Регистр бухгалтерии. |
-| `v8vscedit_add_calculation_register` | Регистр расчёта. |
-| `v8vscedit_add_business_process` | Бизнес-процесс с пустым Flowchart.xml. |
-| `v8vscedit_add_task` | Задачу. |
-| `v8vscedit_add_external_data_source` | Внешний источник данных. |
+| `onecdev_add_subsystem` | Подсистему первого уровня (вложенные — через `compile_subsystem`). |
+| `onecdev_add_common_module` | Общий модуль. |
+| `onecdev_add_session_parameter` | Параметр сеанса. |
+| `onecdev_add_role` | Роль с пустым Rights.xml. |
+| `onecdev_add_common_attribute` | Общий реквизит. |
+| `onecdev_add_exchange_plan` | План обмена. |
+| `onecdev_add_filter_criterion` | Критерий отбора. |
+| `onecdev_add_event_subscription` | Подписку на событие. |
+| `onecdev_add_scheduled_job` | Регламентное задание. |
+| `onecdev_add_functional_option` | Функциональную опцию. |
+| `onecdev_add_functional_options_parameter` | Параметр функциональных опций. |
+| `onecdev_add_defined_type` | Определяемый тип. |
+| `onecdev_add_settings_storage` | Хранилище настроек. |
+| `onecdev_add_common_form` | Общую форму (Form.xml + Module.bsl). |
+| `onecdev_add_common_command` | Общую команду. |
+| `onecdev_add_command_group` | Группу команд. |
+| `onecdev_add_common_template` | Общий макет (с `templateType`). |
+| `onecdev_add_common_picture` | Общую картинку. |
+| `onecdev_add_xdto_package` | XDTO-пакет. |
+| `onecdev_add_web_service` | Web-сервис (SOAP). |
+| `onecdev_add_http_service` | HTTP-сервис. |
+| `onecdev_add_ws_reference` | WS-ссылку. |
+| `onecdev_add_integration_service` | Сервис интеграции. |
+| `onecdev_add_style_item` | Элемент стиля. |
+| `onecdev_add_style` | Стиль. |
+| `onecdev_add_language` | Язык. |
+| `onecdev_add_constant` | Константу. |
+| `onecdev_add_catalog` | Справочник с базовыми обязательными свойствами. |
+| `onecdev_add_document` | Документ. |
+| `onecdev_add_document_journal` | Журнал документов. |
+| `onecdev_add_document_numerator` | Нумератор документов. |
+| `onecdev_add_sequence` | Последовательность документов. |
+| `onecdev_add_enum` | Перечисление. |
+| `onecdev_add_report` | Отчёт. |
+| `onecdev_add_data_processor` | Обработку. |
+| `onecdev_add_chart_of_characteristic_types` | План видов характеристик. |
+| `onecdev_add_chart_of_accounts` | План счетов. |
+| `onecdev_add_chart_of_calculation_types` | План видов расчёта. |
+| `onecdev_add_information_register` | Регистр сведений. |
+| `onecdev_add_accumulation_register` | Регистр накопления. |
+| `onecdev_add_accounting_register` | Регистр бухгалтерии. |
+| `onecdev_add_calculation_register` | Регистр расчёта. |
+| `onecdev_add_business_process` | Бизнес-процесс с пустым Flowchart.xml. |
+| `onecdev_add_task` | Задачу. |
+| `onecdev_add_external_data_source` | Внешний источник данных. |
 
 ### 6.4. Tools добавления дочерних элементов
 
 Каждый инструмент принимает `path` (канонический путь объекта-владельца),
 `name` (имя нового элемента) и опциональный `configuration`. Резолвер
 проверяет, что тип владельца совместим с типом дочернего элемента: например,
-`v8vscedit_add_dimension` потребует регистр, а не справочник.
+`onecdev_add_dimension` потребует регистр, а не справочник.
 
 | Инструмент | Что добавляет | Куда |
 |---|---|---|
-| `v8vscedit_add_attribute` | Реквизит | Справочник, Документ, ПВХ, ПВР, ПС, БП, Задача, Отчёт, Обработка, ПланОбмена, регистры, общий реквизит. |
-| `v8vscedit_add_addressing_attribute` | Реквизит адресации | Только Задача. |
-| `v8vscedit_add_tabular_section` | Табличную часть | Справочник, Документ, ПВХ, ПВР, ПС, БП, Задача, Отчёт, Обработка, ПланОбмена. |
-| `v8vscedit_add_command` | Команду | Объекты с командами (справочники, документы, регистры, перечисления, журналы документов). |
-| `v8vscedit_add_template` | Макет | Объекты с макетами (`templateType` — тип содержимого). |
-| `v8vscedit_add_dimension` | Измерение | Только регистры сведений / накопления / бухгалтерии / расчёта. |
-| `v8vscedit_add_resource` | Ресурс | Только регистры. |
-| `v8vscedit_add_enum_value` | Значение перечисления | Только Перечисление. |
-| `v8vscedit_add_column` | Колонку (реквизит ТЧ) | `path` указывает на табличную часть (`Справочники.X.КонтактныеЛица`). |
-| `v8vscedit_add_url_template` | URL-шаблон | Только HTTPСервис; `path` = `HTTPСервисы.X`. |
-| `v8vscedit_add_method` | Метод | `path` указывает на URL-шаблон (`HTTPСервисы.X.URLШаблон.T`) — тот же приём, что у `v8vscedit_add_column` с табличной частью. |
+| `onecdev_add_attribute` | Реквизит | Справочник, Документ, ПВХ, ПВР, ПС, БП, Задача, Отчёт, Обработка, ПланОбмена, регистры, общий реквизит. |
+| `onecdev_add_addressing_attribute` | Реквизит адресации | Только Задача. |
+| `onecdev_add_tabular_section` | Табличную часть | Справочник, Документ, ПВХ, ПВР, ПС, БП, Задача, Отчёт, Обработка, ПланОбмена. |
+| `onecdev_add_command` | Команду | Объекты с командами (справочники, документы, регистры, перечисления, журналы документов). |
+| `onecdev_add_template` | Макет | Объекты с макетами (`templateType` — тип содержимого). |
+| `onecdev_add_dimension` | Измерение | Только регистры сведений / накопления / бухгалтерии / расчёта. |
+| `onecdev_add_resource` | Ресурс | Только регистры. |
+| `onecdev_add_enum_value` | Значение перечисления | Только Перечисление. |
+| `onecdev_add_column` | Колонку (реквизит ТЧ) | `path` указывает на табличную часть (`Справочники.X.КонтактныеЛица`). |
+| `onecdev_add_url_template` | URL-шаблон | Только HTTPСервис; `path` = `HTTPСервисы.X`. |
+| `onecdev_add_method` | Метод | `path` указывает на URL-шаблон (`HTTPСервисы.X.URLШаблон.T`) — тот же приём, что у `onecdev_add_column` с табличной частью. |
 
-Для добавления формы используется отдельный `v8vscedit_add_form` с
+Для добавления формы используется отдельный `onecdev_add_form` с
 аргументами `parentPath`/`name`/`purpose`/`autoFill` — он создаёт не только
 запись в ChildObjects, но и Form.xml, Module.bsl и регистрирует форму
 в `DefaultForm`/`DefaultObjectForm` при необходимости.
@@ -779,9 +779,9 @@ MCP-инструменты принимают только канон. Люба�
   допускает, EDT — обычно нет), резолвер примет такой узел, но в выдаче
   выделит его кавычками: `Справочники."Имя с пробелом"`. Это маркер опасности —
   такой объект лучше переименовать.
-- **Отложено (не реализовано):** read-only-инструмент `v8vscedit_list_database_extensions`
+- **Отложено (не реализовано):** read-only-инструмент `onecdev_list_database_extensions`
   — список расширений, подключённых к базе проекта (тот же источник, что
-  QuickPick команды `v8vscedit.connectExtension`), для ИИ-агентов, планирующих
+  QuickPick команды `onecdev.connectExtension`), для ИИ-агентов, планирующих
   подключение/выгрузку расширения без ручного опроса пользователя. Переиспользует
   готовую связку `ExtensionCommandRunner.listConnectedDatabaseExtensions` → CLI
   `list-db-extensions` → `infra/environment/ExtensionListParser.ts` (см.

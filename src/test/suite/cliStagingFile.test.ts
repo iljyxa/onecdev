@@ -21,7 +21,7 @@ suite('onecCommon — staging-файл выгрузки', () => {
   let tempDir: string;
 
   setup(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cli-staging-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cli-staging-'));
   });
 
   teardown(() => {
@@ -29,7 +29,7 @@ suite('onecCommon — staging-файл выгрузки', () => {
   });
 
   test('moveStagingToTarget: содержимое переносится байт-в-байт, staging-файла больше нет', () => {
-    const staging = path.join(tempDir, '.result.cf.1-2-3.v8vscedit.part');
+    const staging = path.join(tempDir, '.result.cf.1-2-3.onecdev.part');
     const target = path.join(tempDir, 'result.cf');
     const bytes = Buffer.from([0x00, 0xff, 0x10, 0x20]);
     fs.writeFileSync(staging, bytes);
@@ -41,7 +41,7 @@ suite('onecCommon — staging-файл выгрузки', () => {
   });
 
   test('moveStagingToTarget: существующая цель заменяется целиком (на Windows rename поверх файла падает — цель снимается явно)', () => {
-    const staging = path.join(tempDir, '.result.cf.1-2-3.v8vscedit.part');
+    const staging = path.join(tempDir, '.result.cf.1-2-3.onecdev.part');
     const target = path.join(tempDir, 'result.cf');
     fs.writeFileSync(target, 'СТАРЫЙ БЭКАП');
     fs.writeFileSync(staging, 'свежая выгрузка');
@@ -53,7 +53,7 @@ suite('onecCommon — staging-файл выгрузки', () => {
   });
 
   test('moveStagingToTarget: соседние файлы каталога не затрагиваются', () => {
-    const staging = path.join(tempDir, '.result.cf.1-2-3.v8vscedit.part');
+    const staging = path.join(tempDir, '.result.cf.1-2-3.onecdev.part');
     fs.writeFileSync(staging, 'свежая выгрузка');
     fs.writeFileSync(path.join(tempDir, 'notes.txt'), 'мои заметки');
 
@@ -70,7 +70,7 @@ suite('onecCommon — staging-файл выгрузки', () => {
   });
 
   test('safeRemoveFile: существующий файл удаляется, соседние остаются', () => {
-    const victim = path.join(tempDir, '.result.cf.1-2-3.v8vscedit.part');
+    const victim = path.join(tempDir, '.result.cf.1-2-3.onecdev.part');
     fs.writeFileSync(victim, '0123456789abcdef');
     fs.writeFileSync(path.join(tempDir, 'result.cf'), 'бэкап');
 

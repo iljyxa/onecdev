@@ -44,7 +44,7 @@ export function findAllFormXmlFiles(root: string): string[] {
  * как ожидает `resolveFormXmlPath`. Возвращает путь к записанному файлу.
  */
 export function writeFormCopy(xml: string, root?: string): string {
-  const base = root ?? fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-formids-'));
+  const base = root ?? fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-formids-'));
   const dir = path.join(base, 'Форма', 'Ext');
   fs.mkdirSync(dir, { recursive: true });
   const formPath = path.join(dir, 'Form.xml');

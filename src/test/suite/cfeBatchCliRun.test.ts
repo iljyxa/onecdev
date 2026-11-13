@@ -105,12 +105,12 @@ function assertDumpVector(ws: BatchWorkspace, argv: DesignerInvocation, extensio
   assert.deepStrictEqual(argv.slice(0, 5), expectedConnectionPrefix(ws));
   assert.strictEqual(argv[5], '/DumpCfg');
   // Выгрузка идёт в staging-файл рядом с целевым
-  // (`.<имя>.<pid>-<время>-<индекс>.v8vscedit.part`; хвост — маркер принадлежности,
+  // (`.<имя>.<pid>-<время>-<индекс>.onecdev.part`; хвост — маркер принадлежности,
   // по нему уборка отличает свой остаток от чужого файла пользователя):
   // при сбое платформа всё равно создаёт файл-мусор, и прямая запись в цель затёрла бы бэкап.
   assert.match(
     argv[6],
-    new RegExp(`^${escapeRegExp(path.join(ws.dataDir, `.${fileName}.`))}\\d+-\\d+-\\d+\\.v8vscedit\\.part$`),
+    new RegExp(`^${escapeRegExp(path.join(ws.dataDir, `.${fileName}.`))}\\d+-\\d+-\\d+\\.onecdev\\.part$`),
     `staging-путь ${argv[6]}`
   );
   assert.strictEqual(argv[7], '-Extension');
@@ -449,7 +449,7 @@ suite('CLI dump-cfe-all — цикл выгрузки на заглушке Ко
     // убрать здесь, он остаётся в каталоге бэкапов навсегда.
     const names = makeExtensionNames(2);
     setDbExtensions(ws, names);
-    const leftover = path.join(ws.dataDir, `.${names[0]}.cfe.999-1-0.v8vscedit.part`);
+    const leftover = path.join(ws.dataDir, `.${names[0]}.cfe.999-1-0.onecdev.part`);
     fs.writeFileSync(leftover, '0123456789abcdef');
     fs.writeFileSync(path.join(ws.dataDir, 'notes.txt'), 'мои заметки, не трогать');
     fs.writeFileSync(path.join(ws.dataDir, '.hidden.part'), 'не наш формат имени');

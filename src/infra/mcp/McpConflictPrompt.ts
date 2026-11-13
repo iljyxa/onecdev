@@ -30,7 +30,7 @@ export function buildMcpConflictPrompt(input: McpConflictInput, port: number): M
     };
   }
   return {
-    message: `Порт ${String(port)} занят другим процессом (не MCP v8vscedit).`,
+    message: `Порт ${String(port)} занят другим процессом (не MCP onecdev).`,
     actions: [CHANGE_PORT_LABEL],
   };
 }

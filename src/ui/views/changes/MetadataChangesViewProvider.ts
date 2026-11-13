@@ -73,7 +73,7 @@ const DISCARD_CONFIRM_LABEL = 'Отменить изменения';
  * пересчитывается ТОЛЬКО после мутаций и по явной команде `refresh` (запрет №11).
  */
 export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
-  static readonly viewType = 'v8vsceditChanges';
+  static readonly viewType = 'onecdevChanges';
 
   private view: vscode.WebviewView | undefined;
   private readonly htmlFactory: WebviewHtmlFactory;

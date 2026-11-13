@@ -51,7 +51,7 @@ function removeUrlTemplate(remover: MetadataXmlRemover, ownerObjectXmlPath: stri
 
 suite('E2E: полный жизненный цикл HTTP-сервиса (создать → URLTemplate → Method → правка → удаление)', () => {
   test('create → 2×addUrlTemplate → 2×addMethod → editHTTPMethod/Handler → removeMethod → removeUrlTemplate', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-http-e2e-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-http-e2e-'));
     fs.writeFileSync(
       path.join(configRoot, 'Configuration.xml'),
       [
@@ -200,7 +200,7 @@ suite('E2E: roundtrip донора ServiceEntry.xml', () => {
   const SERVICE_ENTRY_XML = path.resolve(__dirname, '../../../example/2.21/src/cf/HTTPServices/ServiceEntry.xml');
 
   function copyDonor(): string {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-http-roundtrip-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-http-roundtrip-'));
     const xmlPath = path.join(root, 'ServiceEntry.xml');
     fs.copyFileSync(SERVICE_ENTRY_XML, xmlPath);
     return xmlPath;

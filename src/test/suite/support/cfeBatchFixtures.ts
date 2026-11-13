@@ -1,6 +1,6 @@
 /**
  * Общая тестовая обвязка пакетной выгрузки/загрузки всех расширений базы
- * (`dump-cfe-all`/`load-cfe-all`, MCP `v8vscedit_dump_all_cfe`/`v8vscedit_load_all_cfe`).
+ * (`dump-cfe-all`/`load-cfe-all`, MCP `onecdev_dump_all_cfe`/`onecdev_load_all_cfe`).
  *
  * Единственный мок — POSIX-заглушка вместо `1cv8` (Конфигуратор 1С — внешняя
  * недоступная в CI система; приём уже узаконен в `mcpConfigLifecycleCfTools.test.ts`
@@ -126,7 +126,7 @@ export function createBatchWorkspace(): BatchWorkspace {
   // каталог. Раскрытие macOS-овского `/var/…` в `/private/var/…` журнальным
   // проверкам сегодня не мешает (`maskSensitiveCliArgs` не трогает аргументы с
   // разделителем пути после `/P`), но и пользы не даёт.
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-batch-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-batch-'));
   const binDir = path.join(root, 'bin');
   const dataDir = path.join(root, 'data');
   fs.mkdirSync(binDir);
@@ -162,7 +162,7 @@ export function createBatchWorkspace(): BatchWorkspace {
 
 /** Заведомо не существующий путь к платформе: CLI падает на `resolveConnection` ДО любого спавна. */
 export function absentV8Path(root: string): string {
-  return path.join(root, 'definitely', 'not', 'installed', 'v8vscedit-test-fixture', '1cv8');
+  return path.join(root, 'definitely', 'not', 'installed', 'onecdev-test-fixture', '1cv8');
 }
 
 // ─── Управление заглушкой ───

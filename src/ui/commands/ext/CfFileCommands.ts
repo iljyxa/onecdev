@@ -27,10 +27,10 @@ export function registerCfFileCommands(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.dumpConfigurationToCf', async (node?: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.dumpConfigurationToCf', async (node?: NodeArg) => {
       await dumpConfigurationToCf(services, node);
     }),
-    vscode.commands.registerCommand('v8vscedit.loadConfigurationFromCf', async (node?: NodeArg) => {
+    vscode.commands.registerCommand('onecdev.loadConfigurationFromCf', async (node?: NodeArg) => {
       await loadConfigurationFromCf(services, node);
     })
   );
@@ -174,7 +174,7 @@ async function offerPostLoadSteps(services: CommandServices, extensionName: stri
     'Позже'
   );
   if (importChoice === importAction) {
-    await vscode.commands.executeCommand('v8vscedit.importConfigurations');
+    await vscode.commands.executeCommand('onecdev.importConfigurations');
   }
 }
 

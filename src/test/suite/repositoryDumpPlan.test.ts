@@ -41,7 +41,7 @@ import type { RepositoryNodeRef } from '../../infra/repository/RepositoryService
 
 suite('RepositoryDumpPlan — resolveXmlPathByFullName', () => {
   test('находит файл объекта в hierarchical- и flat-структуре, null для неизвестного', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-dumpplan-resolve-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-dumpplan-resolve-'));
     try {
       fs.mkdirSync(path.join(configRoot, 'Catalogs'), { recursive: true });
       fs.writeFileSync(path.join(configRoot, 'Catalogs', 'Номенклатура.xml'), '<MetaDataObject/>', 'utf-8');
@@ -90,7 +90,7 @@ function buildSubsystemXml(name: string, refs: string[], childSubsystems: string
 
 suite('RepositoryDumpPlan — resolveSubsystemMemberFullNames', () => {
   test('раскрывает Content с переводом типа в русский fullName, рекурсивно по дочерним подсистемам', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-dumpplan-subsystem-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-dumpplan-subsystem-'));
     try {
       fs.mkdirSync(path.join(configRoot, 'Subsystems', 'Продажи', 'Subsystems', 'Розница'), { recursive: true });
 
@@ -124,7 +124,7 @@ suite('RepositoryDumpPlan — resolveSubsystemMemberFullNames', () => {
   });
 
   test('несуществующий XML подсистемы — пустой результат, без исключения', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-dumpplan-subsystem-missing-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-dumpplan-subsystem-missing-'));
     try {
       const missingPath = path.join(configRoot, 'Subsystems', 'НетТакой.xml');
       assert.deepStrictEqual(resolveSubsystemMemberFullNames(missingPath, true), []);
@@ -134,7 +134,7 @@ suite('RepositoryDumpPlan — resolveSubsystemMemberFullNames', () => {
   });
 
   test('повреждённый (нечитаемый) XML подсистемы — пустой результат, ветка пропускается без исключения', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-dumpplan-subsystem-broken-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-dumpplan-subsystem-broken-'));
     try {
       // fs.existsSync() для каталога тоже true — readFileSync внутри readSubsystem
       // бросит EISDIR, попав ровно в защитную ветку catch (не связано с содержимым XML).
@@ -147,7 +147,7 @@ suite('RepositoryDumpPlan — resolveSubsystemMemberFullNames', () => {
   });
 
   test('дочерняя подсистема во ПЛОСКОЙ раскладке (Subsystems/Родитель/Subsystems/Ребёнок.xml, без вложенного каталога)', () => {
-    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-dumpplan-subsystem-flat-child-'));
+    const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-dumpplan-subsystem-flat-child-'));
     try {
       fs.mkdirSync(path.join(configRoot, 'Subsystems', 'Опт', 'Subsystems'), { recursive: true });
       fs.writeFileSync(
@@ -208,7 +208,7 @@ suite('RepositoryDumpPlan — buildRepositoryDumpPlan (issue #1, раздел 10
   });
 
   test('рекурсивный узел Subsystem С xmlPath → expansion:"subsystem", fullNames раскрыты по составу подсистемы', () => {
-    const configRootSubsystem = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-dumpplan-buildplan-subsystem-'));
+    const configRootSubsystem = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-dumpplan-buildplan-subsystem-'));
     try {
       fs.mkdirSync(path.join(configRootSubsystem, 'Subsystems'), { recursive: true });
       fs.writeFileSync(

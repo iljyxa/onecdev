@@ -9,7 +9,7 @@ import {
 
 suite('metadataInfoValidationService', () => {
   test('читает структуру объекта из каталога объекта', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-info-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-info-'));
     const catalogDir = path.join(root, 'Catalogs');
     const objectDir = path.join(catalogDir, 'Товары');
     fs.mkdirSync(objectDir, { recursive: true });
@@ -32,7 +32,7 @@ suite('metadataInfoValidationService', () => {
   });
 
   test('валидирует корректный объект без ошибок', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-validate-ok-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-validate-ok-'));
     fs.mkdirSync(path.join(root, 'Catalogs'), { recursive: true });
     const xmlPath = path.join(root, 'Catalogs', 'Товары.xml');
     fs.writeFileSync(xmlPath, buildCatalogXml(), 'utf-8');
@@ -46,7 +46,7 @@ suite('metadataInfoValidationService', () => {
   });
 
   test('находит ошибки имени, uuid и дублей дочерних элементов', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-validate-bad-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-validate-bad-'));
     fs.mkdirSync(path.join(root, 'Catalogs'), { recursive: true });
     const xmlPath = path.join(root, 'Catalogs', 'Плохой.xml');
     fs.writeFileSync(xmlPath, buildInvalidCatalogXml(), 'utf-8');
@@ -60,7 +60,7 @@ suite('metadataInfoValidationService', () => {
   });
 
   test('ограничивает количество ошибок maxErrors', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-validate-limit-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-validate-limit-'));
     fs.mkdirSync(path.join(root, 'Catalogs'), { recursive: true });
     const xmlPath = path.join(root, 'Catalogs', 'Плохой.xml');
     fs.writeFileSync(xmlPath, buildInvalidCatalogXml(), 'utf-8');
@@ -79,7 +79,7 @@ suite('metadataInfoValidationService', () => {
   });
 
   test('поддерживает пакетную проверку путей через pipe', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-meta-validate-batch-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-meta-validate-batch-'));
     fs.mkdirSync(path.join(root, 'Catalogs'), { recursive: true });
     const first = path.join(root, 'Catalogs', 'Товары.xml');
     const second = path.join(root, 'Catalogs', 'Услуги.xml');

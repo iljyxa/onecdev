@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import type { ConfigEntry } from './domain/Configuration';
 import { findConfigurations } from './infra/fs/ConfigLocator';
+import { runLegacyServiceDirMigration } from './infra/fs/LegacyServiceDirMigration';
 import {
   type ChangedConfiguration,
   ConfigurationChangeDetector,
@@ -363,7 +364,13 @@ export class Container {
 
   /** Создаёт контейнер и выполняет регистрацию всех подсистем */
   static bootstrap(context: vscode.ExtensionContext, folder: vscode.WorkspaceFolder): Container {
+    // Перенос служебного каталога v8vscedit → onecdev — ДО создания сервисов: они читают
+    // кэши и состояние хранилища уже из `.onecdev/`.
+    const migrationLog = runLegacyServiceDirMigration(folder.uri.fsPath);
     const c = new Container(context, folder);
+    for (const line of migrationLog) {
+      c.outputChannel.appendLine(line);
+    }
     c.wireUniversalPanelView();
     c.wireSupportWatcher();
     c.wireConfigurationWatcher();
@@ -433,7 +440,7 @@ export class Container {
     this.restartLspOnRootsChange(entries);
     this.refreshChangedConfigurationState();
     const hasCfe = entries.some((e) => e.kind === 'cfe');
-    void vscode.commands.executeCommand('setContext', 'v8vscedit.hasCfeEntries', hasCfe);
+    void vscode.commands.executeCommand('setContext', 'onecdev.hasCfeEntries', hasCfe);
     this.outputChannel.appendLine(`[init] Найдено конфигураций: ${String(entries.length)}`);
     this.outputChannel.appendLine(formatPerfLine('перечитывание конфигураций, итого', performance.now() - startedAt));
   }
@@ -507,7 +514,7 @@ export class Container {
     const subscription = this.configurationOperationGuard.onDidChangeBusy((busy) => {
       // Отказ setContext асинхронный — onListenerError guard'а его не увидит,
       // поэтому логируем здесь, иначе рассинхрон enablement остался бы немым.
-      vscode.commands.executeCommand('setContext', 'v8vscedit.isUpdatingConfigurations', busy).then(
+      vscode.commands.executeCommand('setContext', 'onecdev.isUpdatingConfigurations', busy).then(
         undefined,
         (error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -850,7 +857,7 @@ export class Container {
     this.changedConfigurations = changed;
     void vscode.commands.executeCommand(
       'setContext',
-      'v8vscedit.hasChangedConfigurations',
+      'onecdev.hasChangedConfigurations',
       changed.length > 0
     );
   }
@@ -904,7 +911,7 @@ export class Container {
     );
     void vscode.commands.executeCommand(
       'setContext',
-      'v8vscedit.hasChangedConfigurations',
+      'onecdev.hasChangedConfigurations',
       this.changedConfigurations.length > 0
     );
   }
@@ -937,7 +944,7 @@ export class Container {
       });
     }
 
-    void vscode.commands.executeCommand('setContext', 'v8vscedit.hasChangedConfigurations', true);
+    void vscode.commands.executeCommand('setContext', 'onecdev.hasChangedConfigurations', true);
   }
 
   private suppressConfigurationReloadForFiles(filePaths: string[]): void {
@@ -1012,10 +1019,10 @@ export class Container {
   private wireMcpConfigurationWatcher(): void {
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
-        if (!event.affectsConfiguration('v8vscedit.mcp') && !event.affectsConfiguration('v8vscedit.aiMcp')) {
+        if (!event.affectsConfiguration('onecdev.mcp') && !event.affectsConfiguration('onecdev.aiMcp')) {
           return;
         }
-        if (event.affectsConfiguration('v8vscedit.mcp')) {
+        if (event.affectsConfiguration('onecdev.mcp')) {
           this.mcpServer
             .stop()
             .then(() => this.startMcpServer())
@@ -1028,7 +1035,7 @@ export class Container {
               );
             });
         }
-        if (event.affectsConfiguration('v8vscedit.aiMcp')) {
+        if (event.affectsConfiguration('onecdev.aiMcp')) {
           this.startBslAnalyzerMcpServers();
         }
         this.aiMcpViewProvider.refresh();
@@ -1037,9 +1044,9 @@ export class Container {
   }
 
   private startMcpServer(force = false): void {
-    const config = vscode.workspace.getConfiguration('v8vscedit');
+    const config = vscode.workspace.getConfiguration('onecdev');
     if (!force && !config.get<boolean>('mcp.enabled', true)) {
-      this.outputChannel.appendLine('[mcp] Автозапуск отключён настройкой v8vscedit.mcp.enabled');
+      this.outputChannel.appendLine('[mcp] Автозапуск отключён настройкой onecdev.mcp.enabled');
       return;
     }
 
@@ -1080,7 +1087,7 @@ export class Container {
       return;
     }
     if (action === 'change-port') {
-      await vscode.commands.executeCommand('workbench.action.openSettings', 'v8vscedit.mcp.port');
+      await vscode.commands.executeCommand('workbench.action.openSettings', 'onecdev.mcp.port');
     }
     /* c8 ignore stop */
   }
@@ -1121,11 +1128,11 @@ function isPathInside(filePath: string, rootPath: string): boolean {
 
 function isServicePath(filePath: string, workspaceRoot: string): boolean {
   const relative = path.relative(workspaceRoot, filePath).replace(/\\/g, '/');
-  if (relative === '.v8vscedit' || relative.startsWith('.v8vscedit/')) {
+  if (relative === '.onecdev' || relative.startsWith('.onecdev/')) {
     return true;
   }
 
-  return relative.split('/').some((part) => /^\..+\.v8vscedit-backup-\d+-\d+$/.test(part));
+  return relative.split('/').some((part) => /^\..+\.onecdev-backup-\d+-\d+$/.test(part));
 }
 
 function getExtensionRootPaths(entries: ConfigEntry[]): string[] {
@@ -1141,3 +1148,4 @@ function isDirectory(directoryPath: string): boolean {
     return false;
   }
 }
+

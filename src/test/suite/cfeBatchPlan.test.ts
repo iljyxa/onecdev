@@ -44,7 +44,7 @@ suite('CfeBatchPlan.validateCfeDumpDirectory — каталог выгрузки
   let dir: string;
 
   setup(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-plan-dump-'));
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-plan-dump-'));
   });
 
   teardown(() => {
@@ -127,7 +127,7 @@ suite('CfeBatchPlan.planCfeLoad — план загрузки', () => {
   let dir: string;
 
   setup(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-cfe-plan-load-'));
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-cfe-plan-load-'));
   });
 
   teardown(() => {
@@ -209,12 +209,12 @@ suite('CfeBatchPlan.planCfeLoad — план загрузки', () => {
     put('Ext01.cfe.bak');
     put('noextension');
     put('Empty.cfe', '');
-    put('.Ext09.cfe.1-2-3.v8vscedit.part');
+    put('.Ext09.cfe.1-2-3.onecdev.part');
     const plan = planCfeLoad(readDirEntries(dir), undefined, ['Ext01', 'Empty'], { createMissing: false });
     assert.deepStrictEqual(plan.items.map((item) => item.extensionName), ['Ext01']);
     assert.deepStrictEqual(
       [...plan.ignoredFiles].sort(),
-      ['.Ext09.cfe.1-2-3.v8vscedit.part', 'Empty.cfe', 'Ext01.cfe.bak', 'Main.cf', 'noextension', 'notes.txt'].sort()
+      ['.Ext09.cfe.1-2-3.onecdev.part', 'Empty.cfe', 'Ext01.cfe.bak', 'Main.cf', 'noextension', 'notes.txt'].sort()
     );
     assert.deepStrictEqual(plan.notInDirectory, ['Empty'], 'у пустого файла нет годного .cfe — расширение "без файла"');
   });

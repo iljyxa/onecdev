@@ -7,7 +7,7 @@ export function registerOpenXmlCommand(
   services: CommandServices
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('v8vscedit.openXmlFile', async (
+    vscode.commands.registerCommand('onecdev.openXmlFile', async (
       node: { xmlPath?: string },
       options?: { preserveFocus?: boolean }
     ) => {

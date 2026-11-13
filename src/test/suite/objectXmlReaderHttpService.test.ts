@@ -66,7 +66,7 @@ suite('ObjectXmlReader.parse — HTTPService → URLTemplate → Method (дон�
   });
 
   test('HTTPService без URLTemplate (пустой ChildObjects) — пустой список детей', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'v8vscedit-http-empty-'));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-http-empty-'));
     const xmlPath = path.join(root, 'Пустой.xml');
     fs.writeFileSync(
       xmlPath,
