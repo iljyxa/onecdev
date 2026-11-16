@@ -10,8 +10,8 @@ const EXAMPLE_CF_221 = path.resolve(__dirname, '../../../example/2.21/src/cf');
 // Реальная фикстура из выгрузки: отчёт "Запасы" содержит одновременно dataSetLink,
 // несколько settingsVariant и DataSetUnion. Используется только чтобы задокументировать
 // форму реальных СКД-выгрузок 1С: dataSetLink здесь хранит связь как sourceExpression/
-// destinationExpression НАПРЯМУЮ, без обёртки <field> (в отличие от того, что генерирует
-// buildDataSetLinkXml нашего сервиса — см. следующий тест). Сами мутаторы работают с
+// destinationExpression НАПРЯМУЮ, без обёртки <field> (так же её строит и buildDataSetLinkXml,
+// эталон — dataCompositionSchemaDataSetLink.test.ts). Сами мутаторы работают с
 // "плоским" форматом, который генерирует compile(), поэтому для операций edit() ниже
 // строим схему через service.compile(), как это уже делает mxlSkdServices.test.ts.
 const REAL_SKD_WITH_UNION_AND_VARIANTS = path.join(

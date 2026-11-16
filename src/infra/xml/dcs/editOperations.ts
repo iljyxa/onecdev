@@ -116,11 +116,11 @@ export function buildDataSetLinkXml(value: string): string {
     '\t<dataSetLink>',
     `\t\t<sourceDataSet>${escapeXmlText(match[1].trim())}</sourceDataSet>`,
     `\t\t<destinationDataSet>${escapeXmlText(match[2].trim())}</destinationDataSet>`,
-    '\t\t<field>',
-    `\t\t\t<sourceExpression>${escapeXmlText(match[3].trim())}</sourceExpression>`,
-    `\t\t\t<destinationExpression>${escapeXmlText(match[4].trim())}</destinationExpression>`,
-    match[5] ? `\t\t\t<parameter>${escapeXmlText(match[5].trim())}</parameter>` : '',
-    '\t\t</field>',
+    // Выражения и параметр — прямые дети dataSetLink: обёртку <field> платформа не знает и
+    // отбивает импорт всей конфигурации ошибкой XDTO (#33).
+    `\t\t<sourceExpression>${escapeXmlText(match[3].trim())}</sourceExpression>`,
+    `\t\t<destinationExpression>${escapeXmlText(match[4].trim())}</destinationExpression>`,
+    match[5] ? `\t\t<parameter>${escapeXmlText(match[5].trim())}</parameter>` : '',
     '\t</dataSetLink>',
   ].filter(Boolean).join('\n');
 }
