@@ -75,7 +75,13 @@ src/
 │   │                                  # методы CrsDepot/CrsStatistic/CrsUsers/CrsHistory; XML —
 │   │                                  # infra/xml/crs/) — см. docs/repository-crs.md и
 │   │                                  # docs/repository-file-sync.md; OneCBracketText — общий
-│   │                                  # скобочный разборщик crs и 1CD
+│   │                                  # скобочный разборщик crs и 1CD; crs/CrsVersionRetry —
+│   │                                  # общий повтор по версии сервера (статусы захвата и история)
+│   │   └── history/                  # история хранилища по crs (issue #117, без vscode):
+│   │                                  # RepositoryHistoryModel (чистая модель), Loader (страницы,
+│   │                                  # курсор beforeVersion), Session (привязка цели → адрес и
+│   │                                  # auth), Service (состояние, поколения, query() для MCP),
+│   │                                  # View (DTO панели), Target (узел → область и uuid единицы)
 │   ├── git/                          # статус Git для узлов метаданных (GitMetadataStatusService,
 │   │                                  # декорации) + представление «Изменения метаданных»
 │   │                                  # (GitPorcelainReader, MetadataChangeResolver,
@@ -123,13 +129,17 @@ src/
 │   │   ├── history/                  # ТОЛЬКО чистые модули (без vscode): historyGraphDtoBuilder/
 │   │   │                              # historyGraphController — read-only переиспользование движка
 │   │   │                              # changes/; см. docs/git-history-graph.md
+│   │   ├── repositoryHistory/        # панель «История хранилища»: RepositoryHistoryViewProvider
+│   │   │                              # (singleton в области редактора) + разбор сообщений webview;
+│   │   │                              # данные — infra/repository/history/
 │   │   └── subsystem|search|repository|environment|standalone|…
 │   ├── commands/                     # CommandRegistry.registerAll + подпапки по доменам
 │   ├── git/                          # OnecGitContentProvider — схема onec-git для diff HEAD/индекс
 │   ├── mcp/                          # V8McpServer (тонкий HTTP-фасад: транспорт MCP, служебные
 │   │                                  # эндпоинты /identity+/shutdown — не MCP-инструменты,
 │   │                                  # см. docs/mcp-server-lifecycle.md), McpNodeRegistry,
-│   │                                  # McpPropertyService
+│   │                                  # McpPropertyService; registration/McpRepositoryTools —
+│   │                                  # onecdev_repository_history (read-only)
 │   └── readonly/                     # BslReadonlyGuard, EditorReadonlyController (readonly открытых
 │                                      # вкладок по захвату), sessionReadonly.ts + readonlyTabSelection.ts
 │                                      # (readonly-команда VS Code действует только на правую сторону
@@ -156,4 +166,4 @@ src/
 
 ## Webview (`src-ui/`)
 
-Vue-приложения (сборка `vite.webview.config.ts`, проверка типов `vue-tsc`/`tsconfig.ui.json`). `src-ui/apps/*` — отдельные панели (`universal`, `dynamic-panel`, `environment`, `subsystem`, `repository-*`, `standalone`, `ai`, `tree-search`, `changes` — панель «Изменения метаданных»: ДВА сворачиваемых блока — «Изменения» (SCM-шапка + дерево, повторяющее навигаторную иерархию, обрезанную по изменениям) и «История» (граф git-коммитов `CommitGraph.vue` с inline-раскрытием коммита: детали + дерево изменений через общий `UniversalTree`, read-only, ленивая загрузка при первом раскрытии, см. `docs/git-history-graph.md`); отдельного приложения `apps/history` больше нет — граф целиком часть `apps/changes`). `src-ui/shared/` — общий код: `protocol/` (контракт сообщений webview ↔ расширение), `state/`, `components/` (в т.ч. `components/tree/UniversalTree*.vue` — дерево, общее для навигатора и панели изменений, включая её блок истории), `api/`. При изменении взаимодействия панели и расширения правьте обе стороны протокола.
+Vue-приложения (сборка `vite.webview.config.ts`, проверка типов `vue-tsc`/`tsconfig.ui.json`). `src-ui/apps/*` — отдельные панели (`universal`, `dynamic-panel`, `environment`, `subsystem`, `repository-*` (в т.ч. `repository-history` — «История хранилища»; зеркало DTO — `shared/types/repositoryHistory.ts`, форматирование и тексты готовит расширение, во Vue логики нет), `standalone`, `ai`, `tree-search`, `changes` — панель «Изменения метаданных»: ДВА сворачиваемых блока — «Изменения» (SCM-шапка + дерево, повторяющее навигаторную иерархию, обрезанную по изменениям) и «История» (граф git-коммитов `CommitGraph.vue` с inline-раскрытием коммита: детали + дерево изменений через общий `UniversalTree`, read-only, ленивая загрузка при первом раскрытии, см. `docs/git-history-graph.md`); отдельного приложения `apps/history` больше нет — граф целиком часть `apps/changes`). `src-ui/shared/` — общий код: `protocol/` (контракт сообщений webview ↔ расширение), `state/`, `components/` (в т.ч. `components/tree/UniversalTree*.vue` — дерево, общее для навигатора и панели изменений, включая её блок истории), `api/`. При изменении взаимодействия панели и расширения правьте обе стороны протокола.

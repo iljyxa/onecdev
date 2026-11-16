@@ -353,6 +353,28 @@
     изменений (см. пункт выше «Новая часть объекта в панели «Изменения метаданных»»), т.к.
     `buildCommitChangesSection` вызывает те же `buildObjectNode`/`buildPartNode`/`synthesizeAncestors` —
     отдельного реестра для блока истории не заводится.
+- **Новая возможность панели «История хранилища»** (отдельная webview в области редактора по протоколу crs, НЕ
+  блок «История» git; устройство — [repository-crs.md](./repository-crs.md#сервисная-часть-117), пользовательская
+  сторона — [repository-file-sync.md](./repository-file-sync.md#история-хранилища)), по слоям:
+  - данные и состояние — `infra/repository/history/`: чистая модель/сборка (`RepositoryHistoryModel.ts`), загрузка
+    страниц (`RepositoryHistoryLoader.ts`), состояние и отмена (`RepositoryHistoryService.ts`; фоновая загрузка —
+    только через поколения + `AbortSignal`, не `await` в слушателях). Без `vscode`; метод протокола — по рецепту
+    «Новый метод протокола crs»;
+  - представление — готовые тексты и DTO строит `RepositoryHistoryView.ts` (`buildRepositoryHistoryViewDto`):
+    форматирование дат, подсказки, сообщения об отказах, лимит изменений;
+  - DTO → зеркало `src-ui/shared/types/repositoryHistory.ts` (обе стороны правятся вместе) →
+    `src-ui/apps/repository-history/RepositoryHistoryApp.vue`; **логики во Vue нет** — только отрисовка DTO и
+    отправка команд;
+  - новая команда webview → расширение — `RepositoryHistoryUiMessage` в зеркале и `repositoryHistoryMessages.ts`
+    (`parseRepositoryHistoryUiMessage` принимает `unknown`) → ветка в `RepositoryHistoryViewProvider`;
+  - новая точка входа (команда меню) — `ui/commands/repository/RepositoryHistoryCommands.ts` + `package.json`
+    (`commandPalette when: false`) + пункт в `UniversalPanelViewProvider`; вход определяет
+    `resolveRepositoryHistoryTarget`/`canShowRepositoryHistory` (`RepositoryHistoryTarget.ts`);
+  - новый вид метаданных появляется в заголовках изменений одной записью `META_TYPES.repositoryClassId` — отдельной
+    таблицы classID заводить нельзя;
+  - MCP-вход — `ui/mcp/registration/McpRepositoryTools.ts` через тот же `RepositoryHistoryService` (`query()`).
+  Операции только читают: guard и post-mutation путь не нужны. Секреты (хеш пароля, 40-hex хеши версий) в DTO, лог и
+  вывод MCP не попадают.
 - **Декомпозиция God-класса (косметика, без изменения поведения):** characterization/байт-golden-тест ДО дробления (фиксирует текущий выход) → вынос по доменам/ответственности в подпапку того же слоя (`ui/mcp/registration/`, `infra/xml/<область>/`) через `git mv`/перенос функций без изменения публичного API фасада → диспетчер-`switch` → таблица (данные в `META_TYPES`/спец-реестр infra, поведение — функции поверх) → эталоны golden при этом НЕ редактируются: их правка означает регресс поведения, а не косметику. Для XML-генераторов (`MetadataXmlCreator`, `FormBuilders`) байт-golden обязателен как входное условие (см. `CLAUDE.md`, запрет №17).
 
 ## Перенос новой функции из скилов в расширение

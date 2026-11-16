@@ -19,6 +19,7 @@ import { registerSubsystemTools } from './registration/McpSubsystemTools';
 import { registerRoleTools } from './registration/McpRoleTools';
 import { registerConfigLifecycleTools } from './registration/McpConfigLifecycleTools';
 import { registerPropertyTools } from './registration/McpPropertyTools';
+import { registerRepositoryTools } from './registration/McpRepositoryTools';
 import { McpMetadataPathService } from './McpMetadataPathService';
 import { McpPropertyService } from './McpPropertyService';
 import { probeIdentity, reclaimPort } from '../../infra/mcp/McpPortProbe';
@@ -185,6 +186,7 @@ export class V8McpServer implements vscode.Disposable {
     registerRoleTools(server, deps);
     registerConfigLifecycleTools(server, deps);
     registerPropertyTools(server, deps);
+    registerRepositoryTools(server, deps);
 
     // Декомпозированные tools добавления (E8): отдельный tool на каждый корневой
     // MetaKind и каждый дочерний ChildTag. Бывший общий `onecdev_add_metadata_by_path`

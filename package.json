@@ -503,6 +503,16 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "onecdev.repository.history",
+        "title": "История хранилища",
+        "icon": "$(history)"
+      },
+      {
+        "command": "onecdev.repository.objectHistory",
+        "title": "История в хранилище",
+        "icon": "$(history)"
+      },
+      {
         "command": "onecdev.repository.setLabel",
         "title": "Установить метку версии",
         "icon": "$(tag)"
@@ -548,6 +558,14 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "onecdev.repository.history",
+          "when": "false"
+        },
+        {
+          "command": "onecdev.repository.objectHistory",
+          "when": "false"
+        },
         {
           "command": "onecdev.bsl.surround.if",
           "when": "false"

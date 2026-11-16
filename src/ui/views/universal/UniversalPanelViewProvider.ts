@@ -7,6 +7,7 @@ import type {
 } from '../../../infra/git/GitMetadataStatusService';
 import type { StandaloneServerStatus } from '../../../infra/standalone';
 import { META_TYPES } from '../../../domain/MetaTypes';
+import { canShowRepositoryHistory } from '../../../infra/repository/history/RepositoryHistoryTarget';
 import { getIconUris } from '../../tree/presentation/icon';
 import { WebviewHtmlFactory } from '../webview/WebviewHtmlFactory';
 import { resolveWebviewLocalResourceRoots } from '../webview/webviewResourceRoots';
@@ -854,6 +855,9 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       add('onecdev.repository.commit', 'Поместить в хранилище', codicon('cloud-upload'));
       add('onecdev.repository.update', 'Получить из хранилища', codicon('cloud-download'));
       add('onecdev.repository.updateToVersion', 'Получить версию из хранилища…', codicon('history'));
+      if (!/^(configuration|extension)-/.test(ctxValue) && canShowRepositoryHistory(node)) {
+        add('onecdev.repository.objectHistory', 'История в хранилище', codicon('history'));
+      }
     }
     return actions;
   }
@@ -921,6 +925,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     add('onecdev.repository.create', 'Создать хранилище', codicon('database'));
     if (!ctxValue.includes('-repoConnected')) {return;}
     add('onecdev.repository.refreshLocks', 'Обновить статусы захватов', codicon('refresh'));
+    add('onecdev.repository.history', 'История хранилища', codicon('history'));
     add('onecdev.repository.disconnect', 'Отключить от хранилища', codicon('debug-disconnect'));
     add('onecdev.repository.addUser', 'Добавить пользователя хранилища', codicon('person-add'));
     add('onecdev.repository.copyUsers', 'Скопировать пользователей', codicon('organization'));

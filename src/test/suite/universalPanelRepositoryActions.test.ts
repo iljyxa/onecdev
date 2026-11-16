@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import { MetadataNode } from '../../ui/tree/TreeNode';
+import type { NodeKind } from '../../ui/tree/TreeNodeModel';
 import { UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
 
 /**
@@ -112,4 +113,39 @@ suite('UniversalPanelViewProvider — статусы захватов (issue #6)
     assert.deepStrictEqual(icons('Catalog-hasXml-repoConnected-repoUnlocked', title)[0], { title, icon: { kind: 'codicon', name: 'unlock' } });
     assert.strictEqual(icons('Catalog-hasXml-repoConnected-repoUnlocked')[0].title, 'Не захвачено в хранилище');
   });
+});
+
+/**
+ * Issue #117: «История хранилища» у корня cf/cfe и «История в хранилище» у самостоятельных единиц
+ * хранилища (объект, форма) — только при подключении; у реквизита, групп и узла расширений — нет.
+ */
+suite('UniversalPanelViewProvider — история хранилища (issue #117)', () => {
+  const owner = { rootMetaKind: 'Catalog' as NodeKind, ownerObjectXmlPath: CATALOG_XML };
+  function node(nodeKind: NodeKind, contextValue: string, metaContext?: typeof owner): MetadataNode {
+    const item = new MetadataNode({ label: 'Узел', nodeKind, xmlPath: CATALOG_XML, ...(metaContext ? { metaContext } : {}) }, vscode.TreeItemCollapsibleState.None);
+    item.contextValue = contextValue;
+    return item;
+  }
+
+  type Expected = 'history' | 'objectHistory' | 'none';
+  const cases: readonly [string, NodeKind, string, typeof owner | undefined, Expected][] = [
+    ['корень cf', 'configuration', 'configuration-hasXml', undefined, 'history'],
+    ['корень cfe', 'extension', 'extension-hasXml', undefined, 'history'],
+    ['справочник', 'Catalog', 'Catalog-hasXml', undefined, 'objectHistory'],
+    ['форма справочника', 'Form', 'Form-hasXml', owner, 'objectHistory'],
+    ['реквизит', 'Attribute', 'Attribute-hasXml', owner, 'none'],
+    ['группа «Общие»', 'group-common', 'group-common', undefined, 'none'],
+    ['узел расширений', 'extensions-root', 'extensions-root', undefined, 'none'],
+  ];
+  for (const [name, kind, base, metaContext, expected] of cases) {
+    for (const connected of [true, false]) {
+      const want = connected ? expected : 'none';
+      test(`${name}, ${connected ? 'подключено' : 'не подключено'} → ${want}`, () => {
+        const ctx = connected ? `${base}-repoConnected-repoUnlocked` : `${base}-repoDisconnected`;
+        const commands = createProvider().getNodeActions(node(kind, ctx, metaContext)).map((action) => action.command);
+        const actual = ['history', 'objectHistory'].filter((c) => commands.includes(`onecdev.repository.${c}`));
+        assert.deepStrictEqual(actual, want === 'none' ? [] : [want], commands.join(', '));
+      });
+    }
+  }
 });

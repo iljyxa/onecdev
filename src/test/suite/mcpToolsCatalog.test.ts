@@ -12,12 +12,13 @@
  * провалить именно этот тест.
  *
  * Зафиксировано:
- *  1) Полный каталог из 61 tool, регистрируемых НЕПОСРЕДСТВЕННО телом
+ *  1) Полный каталог из 62 tool, регистрируемых НЕПОСРЕДСТВЕННО телом
  *     `registerTools` (`server.registerTool(...)` прямо в V8McpServer.ts).
  *     Для каждого — имя, title, description (построчно, дословно) и набор
  *     ключей inputSchema с их опциональностью. Было 59 на момент снятия эталона;
  *     +2 — пакетные onecdev_dump_all_cfe/onecdev_load_all_cfe (новая
- *     функциональность, а не дробление: см. cfeBatch*.test.ts).
+ *     функциональность, а не дробление: см. cfeBatch*.test.ts); +1 —
+ *     onecdev_repository_history (#117, см. mcpRepositoryTools.test.ts).
  *     Отдельно вызываемые `registerAllAddTools` (45 root + 11 child = 56 tools)
  *     сюда не входят — они уже застрахованы `mcpAddTools.test.ts` как
  *     самостоятельный декомпозированный модуль.
@@ -145,6 +146,8 @@ function createBaselineServices(overrides: Partial<CommandServices> = {}): Comma
     projectSecretStorage: notImplemented('projectSecretStorage') as never,
     repositoryConnectionViewProvider: notImplemented('repositoryConnectionViewProvider') as never,
     repositoryCommitViewProvider: notImplemented('repositoryCommitViewProvider') as never,
+    repositoryHistoryService: notImplemented('repositoryHistoryService') as never,
+    repositoryHistoryViewProvider: notImplemented('repositoryHistoryViewProvider') as never,
     bslAnalyzerConfigService: notImplemented('bslAnalyzerConfigService') as never,
     projectEnvironmentViewProvider: notImplemented('projectEnvironmentViewProvider') as never,
     aiMcpViewProvider: undefined,
@@ -611,24 +614,30 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
     description: 'Безопасный мост только для явно разрешённых команд расширения: refresh, importConfigurations, updateChangedConfigurations. Ответ: command, outcome (done|no-changes|no-targets|cancelled|busy|failed), result (true при done/no-changes), heldBy при busy — выполняющаяся операция, completed/stoppedAt/error при done/failed. importConfigurations и updateChangedConfigurations при нескольких конфигурациях ждут выбора пользователя.',
     schemaKeys: { command: false },
   },
+  {
+    name: 'onecdev_repository_history',
+    title: 'История хранилища',
+    description: 'Версии хранилища конфигурации по протоколу сервера: номер, автор, дата, комментарий, метка и изменённые объекты. Принимает канонический путь: Конфигурация или Расширение — вся история; объект (Справочники.Контрагенты), его форма или макет (Справочники.X.Форма.Y, Справочники.X.Макет.Y), ОбщиеФормы.X, Подсистема.X.Y — история этого объекта. Более ранние версии — повторный вызов с beforeVersion = nextBeforeVersion. Только чтение.',
+    schemaKeys: { path: false, configuration: true, limit: true, beforeVersion: true, maxChangesPerVersion: true },
+  },
 ];
 
 suite('V8McpServer.registerTools — golden-каталог перед декомпозицией (характеризационный)', () => {
-  test('регистрирует ровно 61 прямой tool (без учёта registerAllAddTools)', () => {
+  test('регистрирует ровно 62 прямых tool (без учёта registerAllAddTools)', () => {
     const { tools } = registerAllTools(createBaselineServices());
     // registerAllAddTools добавляет ещё 45 root + 11 child = 56 tool-ов поверх
-    // этих 61 — их каталог отдельно застрахован mcpAddTools.test.ts. Здесь
+    // этих 62 — их каталог отдельно застрахован mcpAddTools.test.ts. Здесь
     // фиксируем именно прямые регистрации, чтобы дробление не потеряло и не
     // задвоило ни одну из них.
     assert.strictEqual(tools.size, EXPECTED_TOOLS.length + 56,
-      `фактический размер каталога (${String(tools.size)}) разошёлся с ожидаемым (61 прямой + 56 add-tools)`);
+      `фактический размер каталога (${String(tools.size)}) разошёлся с ожидаемым (62 прямых + 56 add-tools)`);
     for (const expected of EXPECTED_TOOLS) {
       assert.ok(tools.has(expected.name), `должен быть зарегистрирован tool "${expected.name}"`);
     }
   });
 
-  test('ровно 61 прямой tool описан в эталоне EXPECTED_TOOLS (защита от рассинхронизации самого теста)', () => {
-    assert.strictEqual(EXPECTED_TOOLS.length, 61);
+  test('ровно 62 прямых tool описаны в эталоне EXPECTED_TOOLS (защита от рассинхронизации самого теста)', () => {
+    assert.strictEqual(EXPECTED_TOOLS.length, 62);
     const uniqueNames = new Set(EXPECTED_TOOLS.map((tool) => tool.name));
     assert.strictEqual(uniqueNames.size, EXPECTED_TOOLS.length, 'имена tools в эталоне не должны повторяться');
   });
