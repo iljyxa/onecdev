@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import {
   LanguageClient, type LanguageClientOptions, type ServerOptions,
-  ErrorAction, CloseAction, Trace, State,
+  ErrorAction, CloseAction, RevealOutputChannelOn, Trace, State,
   DocumentFormattingRequest,
   DocumentRangeFormattingRequest,
   type TextEdit as LspTextEdit,
@@ -20,8 +20,14 @@ const BSL_DOCUMENT_SELECTOR: { scheme: string; language: string }[] = [
  * и следит за файлами сам, поэтому события клиента — лишний JSON-RPC-трафик на каждую
  * выгрузку во временный каталог операции.
  */
-export function buildBslAnalyzerDocumentOptions(): Pick<LanguageClientOptions, 'documentSelector' | 'synchronize'> {
-  return { documentSelector: BSL_DOCUMENT_SELECTOR };
+export function buildBslAnalyzerDocumentOptions(): Pick<LanguageClientOptions, 'documentSelector' | 'synchronize' | 'revealOutputChannelOn'> {
+  return {
+    documentSelector: BSL_DOCUMENT_SELECTOR,
+    // По умолчанию (Error) клиент показывает уведомление на КАЖДЫЙ неудачный запрос, а фоновые
+    // (documentHighlight, hover, semanticTokens) идут на каждое движение курсора: при рассинхроне
+    // текста у сервера это поток всплывающих окон (#105). Ошибки остаются в канале «BSL Analyzer».
+    revealOutputChannelOn: RevealOutputChannelOn.Never,
+  };
 }
 
 /**
