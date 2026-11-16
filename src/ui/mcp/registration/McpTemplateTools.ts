@@ -201,7 +201,6 @@ export function registerTemplateTools(server: McpServer, deps: McpRegistrationDe
           'add-dataSet',
           'add-variant',
           'add-conditionalAppearance',
-          'add-drilldown',
           'set-query',
           'patch-query',
           'set-outputParameter',

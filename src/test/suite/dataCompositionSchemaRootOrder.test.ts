@@ -50,7 +50,6 @@ const CASES: readonly Case[] = [
   { operation: 'add-calculated-field', value: 'Выч31: decimal(15,2) = 1', tag: 'calculatedField', anchor: '\t<parameter>', expectedTags: tagsWith(4, 'calculatedField') },
   { operation: 'add-total', value: 'КоличествоОстаток: Сумма', tag: 'totalField', anchor: '\t<parameter>', expectedTags: tagsWith(4, 'totalField') },
   { operation: 'add-parameter', value: 'Тест31: string', tag: 'parameter', anchor: '\t<settingsVariant>', expectedTags: tagsWith(7, 'parameter') },
-  { operation: 'add-drilldown', value: 'Номенклатура', tag: 'template', anchor: '\t<settingsVariant>', expectedTags: tagsWith(7, 'template') },
 ];
 
 suite('DataCompositionSchemaService.edit — add-* соблюдают порядок корня схемы (#31)', () => {
