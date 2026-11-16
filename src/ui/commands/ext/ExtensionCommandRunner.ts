@@ -26,6 +26,7 @@ import { readExtensionListFromDumpFile, resolveDbPassword, type ProjectSecretSto
 import { createImportTempDir as createWorkspaceTempDir } from '../../../infra/fs/WorkspaceTempDir';
 import { describeFsError, removePathWithRetries } from '../../../infra/fs/PathRemoval';
 import { classifyPartialLoadRefusal, describeRepositoryLoadRefusal } from '../../../infra/process/PartialLoadRefusal';
+import { syncDirectorySnapshot } from '../../../infra/agent/DirectorySnapshot';
 
 type NodeArg = MetadataNode | { xmlPath?: string; nodeKind?: string; label?: string };
 
@@ -1451,73 +1452,6 @@ function showSpinnerStatus(title: string, message: string): void {
   }
 }
 
-function syncDirectorySnapshot(sourceDir: string, targetDir: string): void {
-  if (!fs.existsSync(sourceDir)) {
-    throw new Error(`Временный каталог выгрузки не найден: ${sourceDir}`);
-  }
-
-  if (replaceDirectorySnapshot(sourceDir, targetDir)) {
-    return;
-  }
-
-  fs.mkdirSync(targetDir, { recursive: true });
-  deleteMissingEntries(sourceDir, targetDir);
-  copyAllEntries(sourceDir, targetDir);
-}
-
-function replaceDirectorySnapshot(sourceDir: string, targetDir: string): boolean {
-  const targetParent = path.dirname(targetDir);
-  fs.mkdirSync(targetParent, { recursive: true });
-
-  const backupDir = path.join(
-    targetParent,
-    `.${path.basename(targetDir)}.onecdev-backup-${String(process.pid)}-${String(Date.now())}`
-  );
-  let targetMoved = false;
-
-  try {
-    if (fs.existsSync(targetDir)) {
-      fs.renameSync(targetDir, backupDir);
-      targetMoved = true;
-    }
-
-    fs.renameSync(sourceDir, targetDir);
-    if (targetMoved) {
-      removeDirectoryInBackground(backupDir);
-    }
-    return true;
-  } catch (error) {
-    if (targetMoved && !fs.existsSync(targetDir) && fs.existsSync(backupDir)) {
-      try {
-        fs.renameSync(backupDir, targetDir);
-      } catch {
-        // если откат не удался — это редкий случай Windows-блокировок,
-        // оставим резервную копию и пробросим исходную ошибку
-      }
-    }
-
-    if (isRenameFallbackError(error)) {
-      return false;
-    }
-
-    throw error;
-  }
-}
-
-function removeDirectoryInBackground(directoryPath: string): void {
-  fs.rm(directoryPath, { recursive: true, force: true }, () => undefined);
-}
-
-function isRenameFallbackError(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null || !('code' in error)) {
-    return false;
-  }
-  // EXDEV — rename между томами; EPERM/EACCES/EBUSY — типичная ошибка Windows,
-  // когда внутри каталога удерживается дескриптор (file watcher, антивирус).
-  const code = (error as { code?: unknown }).code;
-  return code === 'EXDEV' || code === 'EPERM' || code === 'EACCES' || code === 'EBUSY';
-}
-
 function collectSnapshotProjectFiles(sourceDir: string, targetDir: string): string[] {
   const result = new Set<string>();
   collectSourceProjectFiles(sourceDir, targetDir, result);
@@ -1590,32 +1524,6 @@ function addSuppressedProjectFile(filePath: string, result: Set<string>): void {
   }
 }
 
-function deleteMissingEntries(sourceDir: string, targetDir: string): void {
-  for (const entry of fs.readdirSync(targetDir, { withFileTypes: true })) {
-    const targetPath = path.join(targetDir, entry.name);
-    const sourcePath = path.join(sourceDir, entry.name);
-    if (!fs.existsSync(sourcePath)) {
-      fs.rmSync(targetPath, { recursive: true, force: true });
-      continue;
-    }
-    if (entry.isDirectory()) {
-      deleteMissingEntries(sourcePath, targetPath);
-    }
-  }
-}
-
-function copyAllEntries(sourceDir: string, targetDir: string): void {
-  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-    const sourcePath = path.join(sourceDir, entry.name);
-    const targetPath = path.join(targetDir, entry.name);
-    if (entry.isDirectory()) {
-      fs.mkdirSync(targetPath, { recursive: true });
-      copyAllEntries(sourcePath, targetPath);
-      continue;
-    }
-    fs.copyFileSync(sourcePath, targetPath);
-  }
-}
 
 /**
  * Повторы — потому что на Windows каталог держит watcher bsl-analyzer или антивирус

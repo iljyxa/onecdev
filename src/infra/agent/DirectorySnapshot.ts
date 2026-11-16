@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { removePathWithRetries } from '../fs/PathRemoval';
+import { buildSnapshotBackupDirName } from '../fs/WorkspaceTempDir';
 
 export function syncDirectorySnapshot(sourceDir: string, targetDir: string): void {
   if (!fs.existsSync(sourceDir)) {
@@ -97,10 +99,7 @@ function replaceDirectorySnapshot(sourceDir: string, targetDir: string): boolean
   const targetParent = path.dirname(targetDir);
   fs.mkdirSync(targetParent, { recursive: true });
 
-  const backupDir = path.join(
-    targetParent,
-    `.${path.basename(targetDir)}.onecdev-backup-${String(process.pid)}-${String(Date.now())}`
-  );
+  const backupDir = path.join(targetParent, buildSnapshotBackupDirName(path.basename(targetDir), process.pid, Date.now()));
   let targetMoved = false;
 
   try {
@@ -226,7 +225,8 @@ function deleteMissingEntries(sourceDir: string, targetDir: string): void {
     const targetPath = path.join(targetDir, entry.name);
     const sourcePath = path.join(sourceDir, entry.name);
     if (!fs.existsSync(sourcePath)) {
-      fs.rmSync(targetPath, { recursive: true, force: true });
+      // Каталог проекта под watcher'ами: на Windows удаление упирается в чужие дескрипторы (#111).
+      removePathWithRetries(targetPath);
       continue;
     }
     if (entry.isDirectory()) {
