@@ -289,8 +289,8 @@ Petrov — версии 2 и 3 и только их изменённые объ�
 
 ### Http (2026-09-30, iljyxa/vscode-1c-repository-tools#89; дополнено 2026-10-01, #83)
 
-История объекта повторена через публикацию `.1ccr`: `node fixtures/tools/capture-history-probes.mjs
---transport=http` исходного проекта (список `HTTP_PROBES`: пробы истории объекта, `devdepotversions*` и все `page-*`),
+История объекта повторена через публикацию `.1ccr`: `node example/tools/crs/capture-history-probes.mjs
+--transport=http` (список `HTTP_PROBES`: пробы истории объекта, `devdepotversions*` и все `page-*`),
 каталоги `example/crs/8.5.1/http/probe-history-*`, сводка — `http/history-probes-summary.json`. Состав ответов тот же,
 что по tcp: версии, `depotVersions` только отобранных объектов, повторы версий у каждого объекта, пустой ответ
 для неизвестного uuid и пустой `<crs:versions/>`. Побайтно ответы tcp и http не равны: сборки хранилища

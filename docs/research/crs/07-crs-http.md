@@ -1,13 +1,13 @@
 > Исследование перенесено из проекта [vscode-1c-repository-tools](https://github.com/iljyxa/vscode-1c-repository-tools)
 > (коммит `8391ab0`, `docs/research/07-crs-http.md`) без изменения выводов; текст датирован. Номера
-> `iljyxa/vscode-1c-repository-tools#N` относятся к исходному проекту; скрипты `fixtures/tools/*.mjs` остались там же
-> (перенос — iljyxa/onecdev#118). Клиент http в onecdev — `src/infra/repository/crs/CrsHttpTransport.ts`;
+> `iljyxa/vscode-1c-repository-tools#N` относятся к исходному проекту; скрипты съёмки перенесены в `example/tools/crs/`
+> (iljyxa/onecdev#118). Клиент http в onecdev — `src/infra/repository/crs/CrsHttpTransport.ts`;
 > решения — [repository-crs.md](../../repository-crs.md).
 
 # Протокол `crs` по http (публикация `.1ccr`)
 
 Дата: 2026-09-29. Платформа 8.5.1.1529, apache 2.4 с `wsap24.so`. Источник — трафик Конфигуратора и пробы
-публикации, снятые `node fixtures/tools/capture-locks.mjs --transport=http` исходного проекта; кадры лежат в
+публикации, снятые `node example/tools/crs/capture-locks.mjs --transport=http`; кадры лежат в
 `example/crs/8.5.1/http/` (описание — [example/crs/README.md](../../../example/crs/README.md)). Сравнение — с tcp
 из [04-crs-protocol.md](04-crs-protocol.md) и `example/crs/8.5.1/tcp/`.
 
@@ -90,7 +90,7 @@
 
 Платформа 8.5.1.1529, тот же стенд. Пробы `http/probe-*` сохраняли тело ответа уже раскодированным (границы
 chunk терялись), а версию и alias по http не проверяли. Поэтому пробы повторены сырым запросом через `net`:
-`node fixtures/tools/capture-http-raw.mjs` исходного проекта, результат — `example/crs/8.5.1/http-raw/<проба>/`
+`node example/tools/crs/capture-http-raw.mjs`, результат — `example/crs/8.5.1/http-raw/<проба>/`
 (`request.bin`, `response.bin` — байты целиком, `result.json`; описание — [example/crs/README.md](../../../example/crs/README.md)).
 Основа запроса — тело `openDevDepot` из `tcp-raw/wrong-password`, заголовки — как в `http/probe-valid`.
 Ответ читается до закрытия соединения сервером (`Connection: close`).

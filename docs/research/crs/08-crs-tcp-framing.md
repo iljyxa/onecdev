@@ -1,13 +1,13 @@
 > Исследование перенесено из проекта [vscode-1c-repository-tools](https://github.com/iljyxa/vscode-1c-repository-tools)
 > (коммит `8391ab0`, `docs/research/08-crs-tcp-framing.md`) без изменения выводов; текст датирован. Скрипт
-> `capture-tcp-raw.mjs` остался в исходном проекте (перенос — iljyxa/onecdev#118). Клиент tcp в onecdev —
+> `capture-tcp-raw.mjs` перенесён в `example/tools/crs/` (iljyxa/onecdev#118). Клиент tcp в onecdev —
 > `src/infra/repository/crs/CrsTcpFraming.ts` и `CrsTcpTransport.ts`; решения — [repository-crs.md](../../repository-crs.md)
 > (там же отличия от следствий ниже: терминатор ответа не проверяется, соединение закрывает клиент после вызова).
 
 # Протокол `crs` по tcp: кадрирование и рукопожатие
 
 Дата: 2026-09-29. Платформа 8.5.1.1529 (`crserver`, `1cv8`). Источник — сырые потоки, снятые
-`node fixtures/tools/capture-tcp-raw.mjs` исходного проекта в `example/crs/8.5.1/tcp-raw/` (описание —
+`node example/tools/crs/capture-tcp-raw.mjs` в `example/crs/8.5.1/tcp-raw/` (описание —
 [example/crs/README.md](../../../example/crs/README.md)). Байты в файлах не правлены; каждый факт ниже
 указан с файлом, в котором его можно проверить (`xxd <файл>`). Пути даны относительно `tcp-raw/`.
 

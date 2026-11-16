@@ -276,10 +276,24 @@
   со снятой фикстурой + строка таблицы в `NetworkRepositoryLockStatusSource.ts` (если метод идёт через адаптер)
   → `bind` для чтения не вызывать → **тест**: побайтное совпадение построенного запроса с запросом из корпуса
   `example/crs/8.5.1` и разбор настоящего ответа через `src/test/suite/support/crsRecordedTransport.ts`
-  (синтетические ответы запрещены; нужного кадра нет — расширить корпус скриптом съёмки, пока он в исходном
-  проекте — iljyxa/onecdev#118). **Запрет:** содержимое объектов (`crs:snapshots`, `commitObjects`,
+  (синтетические ответы запрещены; нужного кадра нет — расширить корпус скриптом съёмки
+  `example/tools/crs/capture-*.mjs`, порядок и ограничения — `example/crs/README.md`, раздел «Пересборка»).
+  **Запрет:** содержимое объектов (`crs:snapshots`, `commitObjects`,
   `updateObjects`, `11223344`) не читать и не писать; `crs:data` и base64 — только в `CrsHistory.ts`
-  (sanity-проверки `qa-gate.sh`).
+  (sanity-проверки `qa-gate.sh`). Новый кадр в корпусе меняет счётчики в
+  `src/test/suite/support/crsFixtures.ts` (`CORPUS_SIZE`, число обменов, тел `call_exception`,
+  `HTTP_CORPUS_MESSAGES`) — правятся вместе с корпусом.
+- **Интеграционный тест с настоящим crserver** (устройство стенда — [repository-crs.md](./repository-crs.md#стенд-и-интеграционные-тесты)):
+  файл `src/test/suite/crs<Область>.crserver.test.ts` поверх support-модулей `crsLocalServer.ts` (пустой
+  `crserver`), `crsApache.ts` (публикация http), `crsTestDepot.ts` (хранилище из `example/2.21/src/cf`) →
+  pending **только** по отсутствию файлов платформы/apache (сбой сборки при наличии платформы — красный тест) →
+  хранилище собирается один раз в родительском suite файла (около 17 с), вложенные suite tcp/http используют его
+  → стенд запускается только дочерним процессом, `import()` `stand.mjs` в extension host запрещён → ожидаемый
+  состав хранилища считается из `Configuration.xml`/`ConfigDumpInfo.xml` (оракулы `configRootId`/`depotUnitIds`),
+  не числами → в `example/` не писать, рабочие каталоги — `mkdtemp`. Конфигурация публикации apache
+  (`httpd.conf`) продублирована в `crsApache.ts` и `stand.mjs` (`startApache`) — меняется в обоих местах.
+  Новая выгрузка в `example/` попадает в сквозные обходы `EXAMPLE_ROOT` (`formPropertyKeysCorpus.test.ts` —
+  опорные числа замера, `formValidateCorpus.test.ts`): их ожидания обновляются в той же задаче.
 - **Новая операция, запускающая Конфигуратор для полного импорта/обновления/применения конфигурации к
   базе** (аналог `importConfigurations`/`updateChangedConfigurations`/`runPostRepositorySync`): захват —
   через `services.configurationOperationGuard` (`runExclusive(title, op)` для одной атомарной цепочки

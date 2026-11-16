@@ -232,13 +232,48 @@ XML (`objectVersions`, `depotVersions`) — он читается **только
 - Таймаут простоя соединения на сервере, pipelining, мусорное приветствие клиента
   ([08-crs-tcp-framing.md](./research/crs/08-crs-tcp-framing.md), «Не проверено»).
 
+## Стенд и интеграционные тесты
+
+Корпус `example/crs/8.5.1` — записанный трафик; кроме него тесты гоняются на настоящем `crserver`. Стенд
+(`example/tools/crs/stand.mjs`: базы, `crserver`, пользователи, записывающий прокси) общий для скриптов съёмки
+`capture-*.mjs` и для хранилища тестов (`test-depot.mjs`). Пересборка корпуса — раздел «Пересборка» в
+[`example/crs/README.md`](../example/crs/README.md).
+
+Тестовые support-модули (`src/test/suite/support/`):
+
+- `crsLocalServer.ts` — пустой `crserver` на свободных портах (транспортные пробы), гарантированная остановка;
+- `crsApache.ts` — свой apache с `wsap24.so` и публикацией `repo.1ccr` поверх порта `crserver`;
+- `crsTestDepot.ts` — `startTestDepot()`: дочерний процесс `test-depot.mjs` собирает хранилище из
+  `example/2.21/src/cf` (Admin без пароля, Petrov `LockObjects`/123, Reader `ReadOnly`/789), печатает строку
+  готовности и держит `crserver` до закрытия stdin.
+
+Suite `crs{TcpTransport,Depot,Client,ReadMethods}.crserver.test.ts`. Хранилище собирается один раз на файл
+(около 17 с): в `crsReadMethods.crserver.test.ts` — в родительском suite, вложенные suite tcp и http работают с
+ним же. Оракулы состава хранилища — `configRootId` и `depotUnitIds`, считаются из `Configuration.xml` и
+`ConfigDumpInfo.xml` той же выгрузки, а не зашиты числами.
+
+Условия:
+
+- **pending**, а не падение, только по отсутствию файлов: `crserver` (`CRS_TEST_CRSERVER`, по умолчанию
+  `/opt/1cv8/x86_64/8.5.1.1529/crserver`), `ibcmd` и `1cv8` рядом с ним, `xvfb-run` в `PATH`; для http ещё
+  apache (`CRS_TEST_APACHE`), его модули (`CRS_TEST_APACHE_MODULES`) и `wsap24.so` рядом с `crserver`.
+  Принудительно отключить — `CRS_TEST_CRSERVER=/nonexistent`.
+- Платформа есть, а сборка хранилища упала (нет лицензии, сломан стенд) — **красный тест** с хвостом stderr
+  скрипта, не pending: иначе дефект стенда остался бы незамеченным.
+- Стенд запускается только дочерним процессом (`process.execPath` с `ELECTRON_RUN_AS_NODE=1`). `import()`
+  `stand.mjs` в extension host запрещён: он вешает `process.exit` на SIGINT/SIGTERM/SIGHUP и роняет прогон.
+- Тесты не пишут в `example/`: рабочие каталоги — `fs.mkdtempSync` в `os.tmpdir()`.
+
+Рецепт — «Интеграционный тест с настоящим crserver» в [change-recipes.md](./change-recipes.md).
+
 ## План этапов
 
 1. **Этап 1 (iljyxa/onecdev#116)** — этот клиент, корпус `example/crs`, источник статусов на новом клиенте.
 2. **Этап 2 (#117, сделан)** — история версий и пользователи: сервис по требованию, панель, постраничная
    загрузка, `classID` → вид объекта (`META_TYPES.repositoryClassId`), MCP-инструмент.
-3. **Этап 3 (#118, #119)** — перенос скриптов съёмки и стенда с настоящим `crserver` в `example/tools`; прочие
-   операции протокола (захват/отпуск) — по результатам этапа 2.
+3. **Этап 3 (#118, сделан)** — скрипты съёмки и стенд с настоящим `crserver` перенесены в `example/tools/crs`,
+   добавлены интеграционные тесты протокола. Прочие операции протокола (захват/отпуск) — #119, по результатам
+   этапа 2.
 
 Параметры подключения (адрес/пользователь/пароль, профили запуска) — iljyxa/onecdev#120
 ([09-repository-settings.md](./research/crs/09-repository-settings.md)).
