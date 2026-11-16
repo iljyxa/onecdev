@@ -1,0 +1,8 @@
+POST /repo/repo.1ccr HTTP/1.1
+Host: 127.0.0.1:37763
+Content-Type: application/xml
+Accept: application/xml
+Content-Length: 239
+Connection: close
+
+﻿<?xml version="1.0" encoding="UTF-8"?><crs:call xmlns:crs="http://v8.1c.ru/8.2/crs" alias="exp" name="DevDepotAdmin_openDevDepot" version="0.0.0.0"><crs:params><crs:alias value="exp"/><crs:convert value="false"/></crs:params></crs:call>

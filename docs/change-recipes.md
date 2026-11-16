@@ -258,13 +258,28 @@
   (`mapServerLocksToUnits`/`ConfigDumpInfo.xml`) и UI (дерево, меню, команда `refreshLocks`) новый источник
   не трогает — вся зависимость от вида хранилища заперта в самом источнике и в `classifyRepositoryLocation`.
   Разбор бинарного/XML-формата ответа — отдельный чистый модуль без `vscode` (образец —
-  `onecd/OneCdFile.ts`+`OneCdTable.ts` для 1CD, `crs/CrsClient.ts`+`infra/xml/CrsMessageXml.ts` для
-  crserver), а не встроенный парсинг внутри класса источника. Тест — на реальных байтах/файлах,
+  `onecd/OneCdFile.ts`+`OneCdTable.ts` для 1CD, `crs/CrsClient.ts`+`infra/xml/crs/CrsEnvelope.ts` для
+  crserver; общий скобочный разборщик — `OneCBracketText.ts`), а не встроенный парсинг внутри класса источника.
+  Для crserver таблицы «вид ошибки протокола → `RepositoryLockStatusErrorCode`» — в
+  `NetworkRepositoryLockStatusSource.ts`; новый метод протокола — рецепт ниже. Тест — на реальных байтах/файлах,
   снятых с платформы (генератор `example/tools/build-repository-locks.mjs`), синтетика недопустима —
   формат недокументирован платформой. После `connect`/`create` (без `-NoBind`) опрос вызывается не из
   самой команды, а из `ui/commands/repository/RepositoryBindFlow.ts` (`completeRepositoryBind`) через тот
   же `syncTarget` — новый источник не требует отдельной интеграции для этого пути (issue #106, см.
   [repository-file-sync.md](./repository-file-sync.md#статусы-захватов-с-сервера)).
+- **Новый метод протокола crs** (сервер хранилища; устройство — [repository-crs.md](./repository-crs.md)):
+  функция в `infra/repository/crs/Crs<Область>.ts` над `CrsClient` без состояния (образец — `CrsStatistic.ts`)
+  → параметры запроса только через `crsValue`/`CrsElement` (конверт собирает `CrsEnvelope.ts`, строк XML вручную
+  не клеить) → ответ декодируется строгими читателями `CrsResponseReaders.ts` внутри `decodeReturn` (нет
+  обязательного элемента = `malformed-response`) → модели без хешей паролей, хешей версий и содержимого
+  → новый вид отказа — значение `CrsCallErrorKind` (`CrsErrors.ts`) + строка классификатора в `CrsException.ts`
+  со снятой фикстурой + строка таблицы в `NetworkRepositoryLockStatusSource.ts` (если метод идёт через адаптер)
+  → `bind` для чтения не вызывать → **тест**: побайтное совпадение построенного запроса с запросом из корпуса
+  `example/crs/8.5.1` и разбор настоящего ответа через `src/test/suite/support/crsRecordedTransport.ts`
+  (синтетические ответы запрещены; нужного кадра нет — расширить корпус скриптом съёмки, пока он в исходном
+  проекте — iljyxa/onecdev#118). **Запрет:** содержимое объектов (`crs:snapshots`, `commitObjects`,
+  `updateObjects`, `11223344`) не читать и не писать; `crs:data` и base64 — только в `CrsHistory.ts`
+  (sanity-проверки `qa-gate.sh`).
 - **Новая операция, запускающая Конфигуратор для полного импорта/обновления/применения конфигурации к
   базе** (аналог `importConfigurations`/`updateChangedConfigurations`/`runPostRepositorySync`): захват —
   через `services.configurationOperationGuard` (`runExclusive(title, op)` для одной атомарной цепочки

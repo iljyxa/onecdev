@@ -1,0 +1,58 @@
+{
+  "probe-statistic-own-bind": {
+    "method": "DevDepot_devObjectsStatistic",
+    "response": "call_return"
+  },
+  "probe-statistic-no-bind": {
+    "method": "DevDepot_devObjectsStatistic",
+    "response": "call_return"
+  },
+  "probe-statistic-random-bind": {
+    "method": "DevDepot_devObjectsStatistic",
+    "response": "call_return"
+  },
+  "probe-statistic-reader-no-bind": {
+    "method": "DevDepot_devObjectsStatistic",
+    "response": "call_return"
+  },
+  "probe-statistic-wrong-password": {
+    "method": "DevDepot_devObjectsStatistic",
+    "response": "call_exception"
+  },
+  "probe-history-no-bind": {
+    "method": "DevDepot_devDepotReport",
+    "response": "call_return"
+  },
+  "probe-history-random-bind": {
+    "method": "DevDepot_devDepotReport",
+    "response": "call_return"
+  },
+  "probe-history-reader-no-bind": {
+    "method": "DevDepot_devDepotReport",
+    "response": "call_return"
+  },
+  "probe-history-wrong-password": {
+    "method": "DevDepot_devDepotReport",
+    "response": "call_exception"
+  },
+  "probe-depot-users-no-bind": {
+    "method": "UserManager_depotUsers",
+    "response": "call_return"
+  },
+  "probe-depot-users-reader-no-bind": {
+    "method": "UserManager_depotUsers",
+    "response": "call_return"
+  },
+  "probe-bind-unknown-existing": {
+    "method": "DevDepot_bind",
+    "response": "call_exception"
+  },
+  "probe-bind-new": {
+    "method": "DevDepot_bind",
+    "response": "call_exception"
+  },
+  "probe-statistic-after-bind-new": {
+    "method": "DevDepot_devObjectsStatistic",
+    "response": "call_return"
+  }
+}

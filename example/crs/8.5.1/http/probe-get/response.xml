@@ -1,0 +1,2 @@
+﻿<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="/e1csys/vrscore/exception.xslt?sysver=8.5.1.1529"?><exception xmlns="http://v8.1c.ru/8.2/virtual-resource-system" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Exception" clsid="580392e6-ba49-4280-ac67-fcd6f2180121" reason="406"><descr xmlns="http://v8.1c.ru/8.1/data/core">HTTP: Not acceptable
+Ошибка при выполнении запроса GET к ресурсу :</descr></exception>

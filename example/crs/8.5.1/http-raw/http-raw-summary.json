@@ -1,0 +1,50 @@
+{
+  "probe-valid": {
+    "requestBytes": 394,
+    "responseBytes": 597,
+    "status": 200,
+    "chunked": false
+  },
+  "probe-wrong-path": {
+    "requestBytes": 397,
+    "responseBytes": 1287,
+    "status": 404,
+    "chunked": true
+  },
+  "probe-malformed-body": {
+    "requestBytes": 158,
+    "responseBytes": 1518,
+    "status": 400,
+    "chunked": false
+  },
+  "probe-unknown-method": {
+    "requestBytes": 389,
+    "responseBytes": 160,
+    "status": 200,
+    "chunked": false
+  },
+  "probe-wrong-alias": {
+    "requestBytes": 397,
+    "responseBytes": 1605,
+    "status": 200,
+    "chunked": false
+  },
+  "probe-version-zero": {
+    "requestBytes": 391,
+    "responseBytes": 1345,
+    "status": 200,
+    "chunked": false
+  },
+  "probe-version-zero-wrong-alias": {
+    "requestBytes": 394,
+    "responseBytes": 1345,
+    "status": 200,
+    "chunked": false
+  },
+  "probe-version-other": {
+    "requestBytes": 395,
+    "responseBytes": 1353,
+    "status": 200,
+    "chunked": false
+  }
+}

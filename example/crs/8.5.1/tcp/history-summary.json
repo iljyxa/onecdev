@@ -1,0 +1,52 @@
+{
+  "history-all": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-range": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-by-object": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-by-comment": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-only-labels": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-no-labels": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-by-date": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-by-date-future": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-empty-comment": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  },
+  "history-special-comment": {
+    "status": 0,
+    "output": "Отчет успешно построен",
+    "frames": 14
+  }
+}

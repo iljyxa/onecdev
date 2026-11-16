@@ -1,0 +1,1 @@
+﻿<?xml version="1.0" encoding="UTF-8"?><crs:call xmlns:crs="http://v8.1c.ru/8.2/crs" alias="exp" name="DevDepot_devObjectsStatistic" version="8.5.1.1529"><crs:auth user="Admin" password="d41d8cd98f00b204e9800998ecf8427e"/><crs:bind bindID="48cc1648-350c-4979-accb-19723b11fb00"/><crs:params><crs:objRefs/><crs:removed value="true"/></crs:params></crs:call>

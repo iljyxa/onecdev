@@ -1,0 +1,6 @@
+[
+  {"dir":"s2c","bytes":5},
+  {"dir":"c2s","bytes":386},
+  {"dir":"s2c","bytes":1004},
+  {"dir":"c2s","end":true}
+]

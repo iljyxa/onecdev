@@ -1,0 +1,6 @@
+POST /repo/repo.1ccr HTTP/1.1
+Host: 127.0.0.1:33899
+Content-Type: application/xml
+Accept: application/xml
+Content-Length: 245
+Connection: close

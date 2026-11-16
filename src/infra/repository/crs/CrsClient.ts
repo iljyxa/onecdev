@@ -1,116 +1,154 @@
-import * as crypto from 'crypto';
-import { parseBracketText, type BracketNode } from '../OneCBracketText';
-import { RepositoryLockStatusError } from '../RepositoryLockStatusSource';
-import { buildCrsCallBody, parseCrsResponse, type CrsCallReturn } from '../../xml/CrsMessageXml';
-import type { CrsAddress } from './CrsAddress';
+// Клиент протокола crs поверх любого транспорта: рукопожатие по версии, сборка конверта и перевод
+// ответов и отказов в CrsCallError. crserver принимает только конверт с точной версией своей
+// платформы (8.3.27.2342 против 8.5.1.1529 — отказ), а версию сообщает в исключении на чужую.
+import {
+  buildCallBody,
+  type CrsAuth,
+  type CrsCallSpec,
+  type CrsElement,
+  type CrsResponse,
+  crsValue,
+  parseCallResponse,
+  parseVrsException,
+} from '../../xml/crs/CrsEnvelope';
+import { CrsCallError, type CrsCallErrorDetails, type CrsCallErrorKind, type CrsFormatError } from './CrsErrors';
+import { classifyServerException, classifyVrsException } from './CrsException';
+import { type CrsCallOptions, type CrsTransport, CrsTransportError } from './CrsTransport';
+import type { CrsXmlElement } from '../../xml/crs/CrsXmlReader';
 
-/**
- * Вызов метода сервера хранилища: аутентификация хешем пароля, разбор исключений и
- * рукопожатие по версии. Атрибут `version` конверта должен совпасть с версией сервера,
- * иначе сервер отвечает исключением «несоответствие версий» с собственной версией внутри —
- * поэтому не больше двух вызовов: с подсказкой и с версией из исключения.
- */
+/** Заведомо чужая версия: сервер отвечает исключением со своей версией в тексте. */
+export const CRS_VERSION_PROBE = '0.0.0.0';
 
-/** md5 от пароля в UTF-16LE, нижний hex (так пароль хранит и сверяет сервер). */
-export function hashCrsPassword(password: string): string {
-  return crypto.createHash('md5').update(Buffer.from(password, 'utf16le')).digest('hex');
+const VERSION_FORMAT = /^\d+\.\d+\.\d+\.\d+$/;
+
+/** Версия сервера хранилища вида N.N.N.N (`8.5.1.1529`); подсказка иной формы рукопожатие не пропускает. */
+export function isCrsServerVersion(value: string): boolean {
+  return VERSION_FORMAT.test(value);
 }
 
-export interface CrsException {
-  readonly clsid: string;
-  readonly message: string;
-  /** Код ошибки сервера (второе поле корня нагрузки): 4 — аутентификация, 17 — версия, 1 — хранилище не найдено. */
-  readonly code?: string;
-  readonly serverVersion?: string;
+const OPEN_DEV_DEPOT = 'DevDepotAdmin_openDevDepot';
+
+export interface CrsClientOptions {
+  readonly alias: string;
+  /** Известная версия сервера: рукопожатие пропускается. Не вида N.N.N.N — RangeError. */
+  readonly version?: string;
 }
 
-/** Вложенная структура исключения несоответствия версий: `{9f06d311-…, "", {…}, "<версия сервера>"}`. */
-const VERSION_INFO_CLSID = '9f06d311-1431-4a54-bd6f-fa93c4d4c471';
-const VERSION_RE = /^\d+\.\d+\.\d+\.\d+$/;
-const AUTH_FAILED_CODE = '4';
-
-/** base64 → UTF-8 (BOM) → скобочный формат; message — текст ошибки, serverVersion — из вложенной структуры. */
-export function decodeCrsException(clsid: string, base64Payload: string): CrsException {
-  let nodes: BracketNode[];
-  try {
-    nodes = parseBracketText(Buffer.from(base64Payload, 'base64').toString('utf-8'));
-  } catch (error) {
-    throw new RepositoryLockStatusError('protocol', `Некорректное исключение сервера хранилища ${clsid}: ${(error as Error).message}`);
-  }
-  const root = nodes[0];
-  const message = at(at(root, 0), 1);
-  const code = at(root, 1);
-  return {
-    clsid,
-    message: typeof message === 'string' ? message : `Сервер хранилища вернул исключение ${clsid}.`,
-    code: typeof code === 'string' ? code : undefined,
-    serverVersion: findServerVersion(root),
-  };
-}
-
-export interface CrsCallRequest {
+export interface CrsInvocation {
   readonly method: string;
-  readonly paramsXml: string;
-  readonly user: string;
-  readonly password: string;
-  readonly versionHint: string;
+  readonly auth?: CrsAuth;
+  readonly bindId?: string;
+  readonly params?: readonly CrsElement[];
 }
 
-export type CrsSender = (address: CrsAddress, body: Buffer) => Promise<Buffer>;
+export class CrsClient {
+  // Кэшируется только успех: после отказа следующий вызов снова пробует рукопожатие.
+  private version: string | undefined;
 
-/** Не больше двух вызовов: второй — только при несоответствии версий с известной версией сервера. */
-export async function callCrs(address: CrsAddress, request: CrsCallRequest, send: CrsSender): Promise<{ response: CrsCallReturn; serverVersion: string }> {
-  const passwordHash = hashCrsPassword(request.password);
-  const call = async (version: string): Promise<CrsCallReturn | CrsException> => {
-    const body = buildCrsCallBody({ alias: address.alias, method: request.method, version, user: request.user, passwordHash, paramsXml: request.paramsXml });
-    const response = parseCrsResponse(await send(address, body));
-    return response.kind === 'return' ? response.value : decodeCrsException(response.clsid, response.payload);
-  };
-  const first = await call(request.versionHint);
-  if (!isException(first)) {
-    return { response: first, serverVersion: request.versionHint };
-  }
-  if (first.serverVersion === undefined) {
-    throw toStatusError(first);
-  }
-  const serverVersion = first.serverVersion;
-  const second = await call(serverVersion);
-  if (!isException(second)) {
-    return { response: second, serverVersion };
-  }
-  // После повтора с версией сервера возможна обычная ошибка (например, пароль) — её и показываем.
-  throw second.serverVersion === undefined
-    ? toStatusError(second)
-    : new RepositoryLockStatusError('version-mismatch', `${second.message} (повтор с версией сервера ${serverVersion} не помог)`);
-}
-
-function isException(value: CrsCallReturn | CrsException): value is CrsException {
-  return 'clsid' in value;
-}
-
-function toStatusError(exception: CrsException): RepositoryLockStatusError {
-  return exception.code === AUTH_FAILED_CODE
-    ? new RepositoryLockStatusError('auth-failed', `${exception.message} Проверьте пользователя и пароль хранилища в «Подключить к хранилищу».`)
-    : new RepositoryLockStatusError('server-error', exception.message);
-}
-
-function at(node: BracketNode | undefined, index: number): BracketNode | undefined {
-  return Array.isArray(node) ? node[index] : undefined;
-}
-
-function findServerVersion(node: BracketNode | undefined): string | undefined {
-  if (!Array.isArray(node)) {
-    return undefined;
-  }
-  const last = node[node.length - 1];
-  if (node[0] === VERSION_INFO_CLSID && typeof last === 'string' && VERSION_RE.test(last)) {
-    return last;
-  }
-  for (const child of node) {
-    const found = findServerVersion(child);
-    if (found) {
-      return found;
+  constructor(
+    private readonly transport: CrsTransport,
+    private readonly options: CrsClientOptions,
+  ) {
+    if (options.version !== undefined && !isCrsServerVersion(options.version)) {
+      throw new RangeError(`версия сервера хранилища должна быть вида N.N.N.N, получено «${options.version}»`);
     }
+    this.version = options.version;
   }
-  return undefined;
+
+  /** Alias хранилища из адреса: его же openDevDepot передаёт параметром crs:alias (tcp/lock-one/01). */
+  get alias(): string {
+    return this.options.alias;
+  }
+
+  /**
+   * openDevDepot с версией 0.0.0.0 → версия из version-mismatch. call_return → CrsCallError('version-mismatch')
+   * без serverVersion; прочие отказы пробрасываются.
+   */
+  async serverVersion(options?: CrsCallOptions): Promise<string> {
+    this.version ??= await this.handshake(options);
+    return this.version;
+  }
+
+  /**
+   * Корень crs:call_return. exception → классифицированная CrsCallError; пустое тело → 'unknown-method';
+   * тело не crs → 'malformed-response'; статус с телом VRS → 'bad-request' | 'rejected'; прочие
+   * CrsTransportError — как есть. version-mismatch сбрасывает кэш версии, автоповтора нет.
+   */
+  async call(invocation: CrsInvocation, options?: CrsCallOptions): Promise<CrsXmlElement> {
+    const version = await this.serverVersion(options);
+    return this.invoke({ ...invocation, alias: this.options.alias, version }, options);
+  }
+
+  private async handshake(options: CrsCallOptions | undefined): Promise<string> {
+    // openDevDepot — частный вызов рукопожатия; публичный метод открытия хранилища живёт выше.
+    const params = [crsValue('alias', this.options.alias), crsValue('convert', false)];
+    try {
+      await this.invoke({ alias: this.options.alias, method: OPEN_DEV_DEPOT, version: CRS_VERSION_PROBE, params }, options);
+    } catch (e) {
+      if (e instanceof CrsCallError && e.details.serverVersion !== undefined) {
+        return e.details.serverVersion;
+      }
+      throw e;
+    }
+    throw new CrsCallError('version-mismatch', `${OPEN_DEV_DEPOT}: сервер принял версию ${CRS_VERSION_PROBE} и не сообщил свою`, {
+      method: OPEN_DEV_DEPOT,
+    });
+  }
+
+  private async invoke(spec: CrsCallSpec, options: CrsCallOptions | undefined): Promise<CrsXmlElement> {
+    const method = spec.method;
+    let body: Buffer;
+    try {
+      body = await this.transport.call(buildCallBody(spec), options);
+    } catch (e) {
+      throw fromTransport(e, method);
+    }
+    let response: CrsResponse;
+    try {
+      response = parseCallResponse(body);
+    } catch (e) {
+      // parseCallResponse отказывает только CrsFormatError.
+      throw new CrsCallError('malformed-response', `${method}: ответ сервера не похож на ответ crserver`, {
+        method,
+        cause: e as CrsFormatError,
+      });
+    }
+    if (response.kind === 'return') {
+      return response.element;
+    }
+    if (response.kind === 'empty') {
+      throw new CrsCallError('unknown-method', `${method}: пустой ответ — сервер не знает такого метода`, { method });
+    }
+    const { clsid, code, messages } = response.exception;
+    const { kind, serverVersion } = classifyServerException(response.exception);
+    if (kind === 'version-mismatch') {
+      this.version = undefined;
+    }
+    throw callError(kind, method, messages, { clsid, code, serverVersion });
+  }
+}
+
+function callError(
+  kind: CrsCallErrorKind,
+  method: string,
+  messages: readonly string[],
+  details: Omit<CrsCallErrorDetails, 'method' | 'messages'>,
+): CrsCallError {
+  // В сообщении — только метод и тексты сервера: тело запроса несёт хеш пароля.
+  return new CrsCallError(kind, `${method}: ${messages.join(' ')}`, { method, messages, ...details });
+}
+
+/** Статус с телом исключения VRS — отказ сервера, а не транспорта; остальное пробрасывается как есть. */
+function fromTransport(e: unknown, method: string): unknown {
+  const body = e instanceof CrsTransportError && e.kind === 'status' ? e.details.body : undefined;
+  const vrs = body === undefined ? undefined : parseVrsException(body);
+  if (vrs === undefined) {
+    return e;
+  }
+  const error = e as CrsTransportError;
+  return callError(classifyVrsException(vrs), method, [vrs.description], {
+    clsid: vrs.clsid,
+    status: error.details.status,
+    cause: error,
+  });
 }

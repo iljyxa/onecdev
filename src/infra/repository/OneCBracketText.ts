@@ -1,63 +1,89 @@
-/**
- * Скобочный формат 1С (`{"текст",1,{…}}`) — внутренний формат платформы: в нём записаны
- * описания таблиц файла 1CD и полезная нагрузка исключений сервера хранилища. Общий
- * токенизатор для обоих, чтобы разбор строк с удвоенными кавычками жил в одном месте.
- */
+// Скобочный текст 1С (`{uuid,"текст",{...},4,...}`) — внутренний формат платформы: в нём записаны описания
+// таблиц файла 1CD и полезная нагрузка исключений сервера хранилища. Один разборщик для обоих, поэтому
+// ошибка нейтральная (BracketFormatError): потребитель сам переводит её в ошибку своего уровня.
+// Разбор итеративный (стек в массиве) по таблице переходов: любой токен не на своём месте — одна и та же
+// ошибка формата, без отдельных веток на каждый случай. Корень ровно один: хвост после него — ошибка.
 
-/** Узел скобочного формата 1С: строка/токен или вложенный список `{…}`. */
-export type BracketNode = string | BracketNode[];
+/** Строка в кавычках; удвоенные кавычки внутри раскрыты. */
+export interface BracketString {
+  readonly quoted: string;
+}
+/** Голый атом (uuid, число) — строка как есть. */
+export type BracketValue = string | BracketString | BracketList;
+export type BracketList = readonly BracketValue[];
 
-/** Снимает BOM; строки в кавычках раскавычиваются (`""` → `"`), прочие токены — как есть. */
-export function parseBracketText(text: string): BracketNode[] {
-  const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-  const root: BracketNode[] = [];
-  const stack: BracketNode[][] = [root];
-  let token = '';
-  const flush = (): void => {
-    if (token) {
-      stack[stack.length - 1].push(token);
-      token = '';
-    }
-  };
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    if (char === '"') {
-      const end = findStringEnd(source, index + 1);
-      stack[stack.length - 1].push(source.slice(index + 1, end).replace(/""/g, '"'));
-      index = end;
-    } else if (char === '{') {
-      flush();
-      const list: BracketNode[] = [];
-      stack[stack.length - 1].push(list);
-      stack.push(list);
-    } else if (char === '}') {
-      flush();
-      if (stack.length === 1) {
-        throw new Error('Ошибка скобочного формата 1С: лишняя закрывающая скобка.');
-      }
-      stack.pop();
-    } else if (char === ',') {
-      flush();
-    } else if (!/\s/.test(char)) {
-      token += char;
-    }
+/** Нарушение скобочного формата; сообщение — причина и смещение, без содержимого (в нём бывают пути и имена). */
+export class BracketFormatError extends Error {
+  constructor(
+    message: string,
+    readonly offset: number,
+  ) {
+    super(message);
+    this.name = 'BracketFormatError';
   }
-  if (stack.length !== 1) {
-    throw new Error('Ошибка скобочного формата 1С: не закрыта скобка.');
-  }
-  flush();
-  return root;
 }
 
-/** Индекс закрывающей кавычки строки, начинающейся с `start`; `""` внутри — экранированная кавычка. */
-function findStringEnd(source: string, start: number): number {
-  for (let index = start; index < source.length; index += 1) {
-    if (source[index] === '"') {
-      if (source[index + 1] !== '"') {
-        return index;
-      }
-      index += 1;
+type Token = 'open' | 'close' | 'comma' | 'value';
+type State = 'start' | 'afterOpen' | 'afterValue' | 'afterComma' | 'done';
+
+const TRANSITIONS: Readonly<Record<State, Partial<Record<Token, State>>>> = {
+  start: { open: 'afterOpen' },
+  afterOpen: { open: 'afterOpen', close: 'afterValue', value: 'afterValue' },
+  afterValue: { comma: 'afterComma', close: 'afterValue' },
+  afterComma: { open: 'afterOpen', value: 'afterValue' },
+  done: {},
+};
+
+const TOKEN = /\s*("(?:[^"]|"")*"|[{},]|[^\s{},"]+)/y;
+const PUNCTUATION: ReadonlyMap<string, Token> = new Map([
+  ['{', 'open'],
+  ['}', 'close'],
+  [',', 'comma'],
+]);
+
+export function parseBracketText(text: string): BracketList {
+  const s = text.replace(/^\uFEFF/, '').trimEnd();
+  // Держатель корня внизу стека: у любого открываемого списка есть куда себя положить.
+  const holder: BracketValue[] = [];
+  const stack: BracketValue[][] = [holder];
+  let state: State = 'start';
+  let pos = 0;
+  while (pos < s.length) {
+    TOKEN.lastIndex = pos;
+    const match = TOKEN.exec(s);
+    if (match === null) {
+      throw new BracketFormatError('скобочный текст: незавершённая строка или недопустимый символ', pos);
+    }
+    const token = match[1];
+    const kind = PUNCTUATION.get(token) ?? 'value';
+    const next: State | undefined = TRANSITIONS[state][kind];
+    if (next === undefined) {
+      throw new BracketFormatError(`скобочный текст: неожиданный токен после ${state}`, pos);
+    }
+    pos = TOKEN.lastIndex;
+    state = next;
+    const current = stack[stack.length - 1];
+    if (kind === 'open') {
+      const list: BracketValue[] = [];
+      current.push(list);
+      stack.push(list);
+    } else if (kind === 'close') {
+      stack.pop();
+      state = stack.length === 1 ? 'done' : state;
+    } else if (kind === 'value') {
+      current.push(token.startsWith('"') ? { quoted: token.slice(1, -1).replace(/""/g, '"') } : token);
     }
   }
-  throw new Error('Ошибка скобочного формата 1С: не закрыта строка.');
+  if (state !== 'done') {
+    throw new BracketFormatError('скобочный текст: не завершён', s.length);
+  }
+  return holder[0] as BracketList;
+}
+
+/** Строка в кавычках или атом — как текст; список или отсутствие элемента — undefined. */
+export function bracketScalar(value: BracketValue | undefined): string | undefined {
+  if (typeof value === 'string') {
+    return value;
+  }
+  return value === undefined || Array.isArray(value) ? undefined : (value as BracketString).quoted;
 }

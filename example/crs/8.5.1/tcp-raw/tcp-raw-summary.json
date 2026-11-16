@@ -1,0 +1,67 @@
+{
+  "wrong-password": {
+    "status": 1,
+    "output": "Проверьте правильность введенного имени пользователя и пароля. | Соединение с хранилищем конфигурации не установлено | Ошибка захвата объектов в хранилище",
+    "connections": 4
+  },
+  "wrong-password-rerun": {
+    "status": 1,
+    "output": "Проверьте правильность введенного имени пользователя и пароля. | Соединение с хранилищем конфигурации не установлено | Ошибка захвата объектов в хранилище",
+    "connections": 4
+  },
+  "probe-open": {
+    "requestBytes": 361,
+    "responseBytes": 518,
+    "serverClosed": false
+  },
+  "probe-two-frames": {
+    "requestBytes": 702,
+    "responseBytes": 1031,
+    "serverClosed": false
+  },
+  "probe-no-terminator": {
+    "requestBytes": 357,
+    "responseBytes": 5,
+    "serverClosed": false
+  },
+  "probe-late-terminator": {
+    "requestBytes": 361,
+    "responseBytes": 518,
+    "serverClosed": false
+  },
+  "probe-malformed-body": {
+    "requestBytes": 125,
+    "responseBytes": 1439,
+    "serverClosed": false
+  },
+  "probe-unknown-method": {
+    "requestBytes": 356,
+    "responseBytes": 81,
+    "serverClosed": false
+  },
+  "probe-no-hello": {
+    "requestBytes": 341,
+    "responseBytes": 518,
+    "serverClosed": false
+  },
+  "probe-version-zero": {
+    "requestBytes": 358,
+    "responseBytes": 1266,
+    "serverClosed": false
+  },
+  "probe-version-zero-wrong-alias": {
+    "requestBytes": 361,
+    "responseBytes": 1266,
+    "serverClosed": false
+  },
+  "probe-version-other": {
+    "requestBytes": 362,
+    "responseBytes": 1274,
+    "serverClosed": false
+  },
+  "probe-wrong-alias": {
+    "requestBytes": 364,
+    "responseBytes": 1526,
+    "serverClosed": false
+  }
+}

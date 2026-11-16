@@ -376,10 +376,12 @@ Issue #6. `RepositoryLockStatusService.syncTarget(target)` (`infra/repository/Re
   `8.3.8.0`; захваченность объекта — `USERS × OBJECTS` по `REVISED = true`, держатель — `USERS.NAME` по
   `REVISORID`, время — `REVISEDATE` (локальное, без зоны).
 - **Сетевое хранилище** (`tcp://`, `http://`, `https://`, схема без учёта регистра) — метод
-  `DevDepot_devObjectsStatistic` протокола crserver (`infra/repository/crs/` + `infra/xml/CrsMessageXml.ts`),
-  без запуска платформы и без `<crs:bind>` (запрос только читает статистику, `<crs:objRefs/>` — все
-  объекты). Адресация: для http(s) alias — сегмент пути после `.1ccr`, по умолчанию `maincr`
-  (`parseCrsAddress`, `CrsAddress.ts`); для tcp alias — весь путь после хоста без крайних слэшей
+  `DevDepot_devObjectsStatistic` протокола crserver (`infra/repository/crs/` + `infra/xml/crs/`; устройство и
+  решения — [repository-crs.md](./repository-crs.md)), без запуска платформы и без `<crs:bind>` (запрос только
+  читает статистику, `<crs:objRefs/>` — все объекты). Адаптер — `NetworkRepositoryLockStatusSource.ts`.
+  Адресация: для http(s) alias — сегмент пути после `.1ccr`, по умолчанию `maincr`
+  (`parseCrsAddress`, `CrsAddress.ts`, `CRS_DEFAULT_ALIAS`; userinfo/query/fragment/пустой сегмент/порт 0
+  отклоняются); для tcp alias — весь путь после хоста без крайних слэшей
   (`tcp://host/a/b` → alias `a/b` — так его передаёт сам Конфигуратор, проверено снятым запросом).
 
 В обоих случаях OBJID/uuid объекта на сервере сопоставляется с полным именем через `ConfigDumpInfo.xml`
@@ -390,11 +392,15 @@ Issue #6. `RepositoryLockStatusService.syncTarget(target)` (`infra/repository/Re
 сервера последнего успешного опроса (`lockSync.serverVersion`) → `--v8version`/`--path` из кэша `env.json`
 (`RepositoryBindingStore.readPlatformVersionHint()`) → константа `DEFAULT_CRS_VERSION_HINT`. При
 `call_exception` «несоответствие версий» — ровно один повтор с версией сервера из исключения
-(`CrsClient.callCrs`, не больше двух вызовов). Общий таймаут — 60 с (подключение + ответ), лимит размера
+(адаптер источника, не больше двух вызовов; версия сервера берётся из исключения структурно — запись с clsid
+`9f06d311-…`, текст сообщения только запасной путь; подсказка не вида `N.N.N.N` → рукопожатие `0.0.0.0`).
+Приветствие сервера tcp проверяется только по длине (5 байт), байты не сверяются. Общий таймаут — 60 с (подключение + ответ), лимит размера
 ответа — 128 МиБ, проверяется и по `Content-Length`, и по фактически принятым байтам
 (`CrsTransport.ts`). Ошибки crs (неверный пароль, неверный alias, TLS, обрыв кадрирования tcp,
 превышение лимита и т.д.) не бросают исключение наружу — `syncTarget` всегда возвращает
-`{status:'failed', code, reason}`.
+`{status:'failed', code, reason}`: таблицы видов ошибок транспорта и вызова → `RepositoryLockStatusErrorCode`
+живут в адаптере (TLS — по кодам; tcp статус ≠ 200 и VRS `rejected` → server-error; http «socket hang up» и
+VRS `bad-request` → protocol).
 
 **Опрос при старте.** `Container.bootstrap()` после `reloadEntries()` вызывает
 `syncRepositoryLockStatusesOnStartup` (`void`, без ожидания) по всем подключённым целям — **только если
@@ -634,8 +640,8 @@ readonly файла проекта в обе стороны (issue #78): `writab
   так же, как при обычном захвате с `-revised`.
 - Сетевой обмен со crserver **8.3.27** вживую не проверен: байты приветствия/кадрирования/ответа сняты
   только с 8.5.1 (сервер 8.3.27 в момент разработки не был установлен), клиентское приветствие
-  (`CRS_TCP_CLIENT_HELLO`) и терминатор кадра — константы этой съёмки; байты приветствия сервера не
-  валидируются. Фикстур для 8.3.27 в `example/repository/2.21-locks/8.3.27/{tcp,http}` нет — только 1CD и
+  и терминатор кадра — константы этой съёмки; байты приветствия сервера не сверяются (только длина — именно
+  из-за этой непроверенности, [repository-crs.md](./repository-crs.md)). Фикстур для 8.3.27 в `example/repository/2.21-locks/8.3.27/{tcp,http}` нет — только 1CD и
   `lock-refused.out.txt`. Если реальный обмен 8.3.27 будет снят, тесты сети параметризуются и по нему; до
   этого расхождение (если оно есть) проявится как отказ рукопожатия/кадрирования, а не молча (issue #6).
 - Формат 1CD версии, отличной от `8.3.8.0` (в т.ч. старый `8.2.14`), не поддерживается —
@@ -662,7 +668,8 @@ readonly файла проекта в обе стороны (issue #78): `writab
 отказа захвата (`lock-refused.out.txt`) и (для 8.5.1) снятые байты обменов с crserver (`tcp/`, `http/`,
 `designer-devObjectsStatistic.request.bin`) — собирает `example/tools/build-repository-locks.mjs` (по
 образцу `build-supported-cf.mjs`, см. выше); полное описание шагов, использования и формата — в шапке
-скрипта. `example/repository/tls/localhost.{crt,key}` (самоподписанный сертификат для теста https-
+скрипта. Снятый трафик crserver 8.5.1 для тестов клиента — корпус `example/crs/8.5.1` ([README](../example/crs/README.md)).
+`example/repository/tls/localhost.{crt,key}` (самоподписанный сертификат для теста https-
 транспорта) регенерируется отдельно, флагом `--tls`. Ожидаемые захваты и отказы сверяются с
 `example/2.21/src/cf/ConfigDumpInfo.xml` по uuid — при пересборке `example/2.21` с новыми uuid эту
 фикстуру нужно пересобрать тоже (обычным запуском без `--tls`), иначе тесты статусов захвата ссылаются на
