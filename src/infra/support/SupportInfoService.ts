@@ -168,12 +168,14 @@ export class SupportInfoService {
       if (data.changesForbidden) { return SupportMode.Locked; }
 
       // Служебные XML в Ext/ (Form.xml, Template.xml, Rights.xml, Help.xml, CommandInterface.xml)
-      // не несут uuid: режим у них — режим владельца, как у BSL-модуля (#59).
-      const ownedByObject = filePath.toLowerCase().endsWith('.bsl')
-        || normFilePath.slice(data.normalizedRoot.length + 1).split('/').indexOf('ext') >= 2;
-      const xmlPath = ownedByObject
-        ? this.resolveOwnerXml(filePath, data.normalizedRoot, data.originalRoot)
-        : filePath;
+      // не несут uuid: режим у них — режим владельца, как у BSL-модуля (#59). Владелец файлов
+      // корневого Ext/ (модули приложения, Help.xml, интерфейс) — Configuration.xml корня (#126).
+      const extIdx = normFilePath.slice(data.normalizedRoot.length + 1).split('/').indexOf('ext');
+      const xmlPath = extIdx === 0
+        ? path.join(data.originalRoot, 'Configuration.xml')
+        : filePath.toLowerCase().endsWith('.bsl') || extIdx >= 2
+          ? this.resolveOwnerXml(filePath, data.normalizedRoot, data.originalRoot)
+          : filePath;
 
       if (!xmlPath) {
         this.log.appendLine(`[support] не удалось определить XML для: ${path.basename(filePath)}`);
