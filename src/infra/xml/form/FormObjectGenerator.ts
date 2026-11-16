@@ -9,6 +9,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ObjectXmlReader } from '../ObjectXmlReader';
+import { findNestingAwareElementRange } from '../XmlUtils';
 import { resolveObjectLocation } from './FormShared';
 import type {
   FormAttributeDefinition,
@@ -105,9 +106,18 @@ function parseObjectMeta(objectXmlPath: string): ObjectMeta | undefined {
   if (!obj) {return undefined;}
   const xml = fs.readFileSync(loc.xmlPath, 'utf-8');
   const propsBlock = extractInnerBlock(xml, 'Properties') ?? '';
-  const childObjects = extractInnerBlock(xml, 'ChildObjects') ?? '';
+  // Блок объекта берётся с учётом вложенности: у табличной части свой <ChildObjects>, и
+  // нежадный поиск обрывал блок на нём — ТЧ терялась, а её колонки уходили в реквизиты.
+  const childRange = findNestingAwareElementRange(xml, 'ChildObjects');
+  // Платформа и MetadataXmlCreator пишут <ChildObjects> всегда (пустой — самозакрытым, это даёт
+  // пустой диапазон), поэтому отсутствие тега — только защита от рукописного XML.
+  /* c8 ignore next */
+  const childObjects = childRange ? xml.slice(childRange.openEnd, childRange.closeStart) : '';
 
-  const attributes = extractFields(childObjects, 'Attribute');
+  // Колонки табличной части выгружаются тем же тегом <Attribute> внутри <TabularSection>:
+  // без исключения они попадали в форму как реквизиты объекта («Список.Сумма»), и платформа
+  // отклоняла импорт конфигурации с «Неверный путь к данным».
+  const attributes = extractFields(childObjects.replace(/<TabularSection\b[\s\S]*?<\/TabularSection>/g, ''), 'Attribute');
   const tabularSections: { name: string; columns: AttrMeta[] }[] = [];
   for (const ts of extractTabularSections(childObjects)) {
     tabularSections.push(ts);
