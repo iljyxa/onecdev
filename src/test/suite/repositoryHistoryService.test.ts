@@ -573,6 +573,29 @@ suite('RepositoryHistoryService.query — запрос без состояния
 });
 
 suite('RepositoryHistoryService по http без подмены клиента (#117)', () => {
+  test('размер страницы по умолчанию (100): вся история 1–7 одной страницей', async () => {
+    const list = bodyProbe('http', 'probe-history-devdepotversions');
+    const page = bodyProbe('http', 'probe-history-page-1-7');
+    const bodies = [list.response, page.response, USERS];
+    const server = await startHttpReplayServer((_request, index) => ({ status: 200, body: bodies[index] }));
+    try {
+      const session = sessionOf({ address: parseCrsAddress(`http://127.0.0.1:${String(server.port)}/repo/repo.1ccr/exp`) });
+      const service = new RepositoryHistoryService({
+        resolveSession: () => Promise.resolve({ kind: 'session', session }),
+        onError: (e) => assert.fail(String(e)),
+      });
+      service.setScope(ROOT_SCOPE);
+      await service.refresh();
+      const history = readyHistory(service.view.state);
+      assert.deepStrictEqual(history.versions.map((v) => v.verNum), [7, 6, 5, 4, 3, 2, 1]);
+      assert.deepStrictEqual(history.pending, []);
+      assert.deepStrictEqual(server.received[1].body, page.request);
+      service.dispose();
+    } finally {
+      await server.close();
+    }
+  });
+
   test('фабрика клиента по умолчанию: настоящий http-транспорт до loopback-публикации', async () => {
     const probe = (name: string): { request: Buffer; response: Buffer } => bodyProbe('http', name);
     const list = probe('probe-history-devdepotversions');

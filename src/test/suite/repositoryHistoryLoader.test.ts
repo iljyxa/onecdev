@@ -78,6 +78,20 @@ for (const transport of ['tcp', 'http'] as const) {
       assert.strictEqual(recorded.requests.length, 7);
     });
 
+    test('догрузка без параметров — страница по умолчанию забирает весь остаток (1–1)', async () => {
+      const pages = ['5-7', '2-4', '1-1'].map((p) => probe(`probe-history-page-${p}`));
+      const { client, transport: recorded } = recordedClient([
+        LIST_ALL.response, pages[0].response, users, pages[1].response, users, pages[2].response, users,
+      ]);
+      const first = await loadRepositoryHistory(client, AUTH, {}, { pageSize: 3 });
+      const second = await loadMoreRepositoryHistory(client, AUTH, {}, first, { pageSize: 3 });
+      const rest = await loadMoreRepositoryHistory(client, AUTH, {}, second);
+      assert.deepStrictEqual(rest.pending, []);
+      assert.deepStrictEqual(rest.versions.map((v) => v.verNum), [7, 6, 5, 4, 3, 2, 1]);
+      assert.deepStrictEqual(recorded.requests[5].body, pages[2].request);
+      assert.ok(recorded.exhausted);
+    });
+
     test('история справочника с подчинёнными, pageSize=2: страницы 3–6 и 1–2 (objRefs, recursive, mask 4/5)', async () => {
       const list = probe('probe-history-devdepotversions-object-catalog-recursive');
       const page36 = probe('probe-history-page-object-catalog-recursive-3-6');
