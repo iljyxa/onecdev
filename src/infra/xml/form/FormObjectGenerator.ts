@@ -494,7 +494,13 @@ function generateAccumRegisterDsl(meta: ObjectMeta, _purpose: FormPurpose, title
 
 function generateRegisterListDsl(meta: ObjectMeta, title: string, hasRecorder: boolean, hasPeriod: boolean, kind: string): FormDefinition {
   const columns: FormElementDefinition[] = [];
-  if (hasPeriod) {columns.push({ labelField: 'Период', path: 'Список.Period' });}
+  // У регистра расчёта стандартного реквизита Period нет — период регистрации
+  // (RegistrationPeriod); колонка Список.Period ломала импорт конфигурации (#128).
+  if (hasPeriod) {
+    columns.push(kind === 'CalculationRegister'
+      ? { labelField: 'ПериодРегистрации', path: 'Список.RegistrationPeriod' }
+      : { labelField: 'Период', path: 'Список.Period' });
+  }
   if (hasRecorder) {
     columns.push({ labelField: 'Регистратор', path: 'Список.Recorder' });
     columns.push({ labelField: 'НомерСтроки', path: 'Список.LineNumber' });
