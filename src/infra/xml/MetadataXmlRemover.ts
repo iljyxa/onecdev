@@ -3,6 +3,7 @@ import * as path from 'path';
 import type { ChildTag } from '../../domain/ChildTag';
 import { getMetaFolder, type MetaKind } from '../../domain/MetaTypes';
 import { getObjectLocationFromXml } from '../fs/ObjectLocation';
+import { pathKey } from '../fs/PathKey';
 import { ConfigurationXmlEditor, type EditResult } from './ConfigurationXmlEditor';
 import { escapeRegExp, writeTextFilePreservingBomAndEol } from './XmlUtils';
 
@@ -180,14 +181,14 @@ export class MetadataXmlRemover {
   }): MetadataReference[] {
     const patterns = this.buildReferencePatterns(options.kind, options.name, options.folder);
     const references: MetadataReference[] = [];
-    const excludedXml = new Set(options.xmlPaths.map((item) => path.resolve(item).toLowerCase()));
-    const excludedDir = options.objectDir ? path.resolve(options.objectDir).toLowerCase() : undefined;
+    const excludedXml = new Set(options.xmlPaths.map((item) => pathKey(item)));
+    const excludedDir = options.objectDir ? pathKey(options.objectDir) : undefined;
 
     for (const filePath of this.walkFiles(options.configRoot)) {
       if (!/\.(xml|bsl)$/i.test(filePath)) {
         continue;
       }
-      const normalized = path.resolve(filePath).toLowerCase();
+      const normalized = pathKey(filePath);
       if (excludedXml.has(normalized) || (excludedDir && isPathInsideOrEqual(normalized, excludedDir))) {
         continue;
       }
@@ -301,7 +302,7 @@ export class MetadataXmlRemover {
   }
 
   private isInsideOrEqual(targetPath: string, rootPath: string): boolean {
-    return isPathInsideOrEqual(path.resolve(targetPath).toLowerCase(), path.resolve(rootPath).toLowerCase());
+    return isPathInsideOrEqual(pathKey(targetPath), pathKey(rootPath));
   }
 }
 
@@ -426,7 +427,7 @@ function uniquePaths(items: string[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
   for (const item of items) {
-    const key = path.resolve(item).toLowerCase();
+    const key = pathKey(item);
     if (!seen.has(key)) {
       seen.add(key);
       result.push(item);

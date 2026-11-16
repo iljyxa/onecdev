@@ -1,4 +1,4 @@
-import * as path from 'path';
+import { pathKey } from '../../infra/fs/PathKey';
 
 /**
  * Роль вкладки относительно файла: обычный редактор, правая (изменяемая) или левая
@@ -35,18 +35,6 @@ export function isImmediatelyApplicable(tab: Pick<ReadonlyTabCandidate, 'role' |
 }
 
 /**
- * ФС по умолчанию регистронезависимы только на Windows (NTFS) и macOS (APFS/HFS+). На Linux
- * `ObjectModule.bsl` и `objectmodule.bsl` — разные файлы, и вкладку одного нельзя
- * активировать вместо другого.
- */
-const CASE_INSENSITIVE_PLATFORMS: ReadonlySet<NodeJS.Platform> = new Set<NodeJS.Platform>(['win32', 'darwin']);
-
-function normalizeKey(filePath: string, platform: NodeJS.Platform): string {
-  const resolved = path.resolve(filePath);
-  return CASE_INSENSITIVE_PLATFORMS.has(platform) ? resolved.toLowerCase() : resolved;
-}
-
-/**
  * Видимая основная вкладка активируется без побочных эффектов, поэтому она важнее
  * временной вкладки для левой стороны сравнения; скрытая основная без левой
  * стороны ждёт собственной активации. `platform` задаёт регистрочувствительность
@@ -57,8 +45,8 @@ export function selectReadonlyApplyRoute<T extends ReadonlyTabCandidate>(
   filePath: string,
   platform: NodeJS.Platform = process.platform
 ): ReadonlyApplyRoute<T> | undefined {
-  const key = normalizeKey(filePath, platform);
-  const matches = tabs.filter((tab) => normalizeKey(tab.path, platform) === key);
+  const key = pathKey(filePath, platform);
+  const matches = tabs.filter((tab) => pathKey(tab.path, platform) === key);
   const primary = matches.filter((tab) => tab.role !== 'diff-original');
   const visiblePrimary = primary.find((tab) => tab.visible);
   if (visiblePrimary) {
