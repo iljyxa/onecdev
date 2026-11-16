@@ -26,7 +26,10 @@ VS Code Extension Process (dist/extension.js)
 `LspManager` читает настройку `onecdev.lsp.mode`. Клиент подписывается на `.bsl`-документы
 без `synchronize.fileEvents` (`buildBslAnalyzerDocumentOptions`, `lsp/LspManager.ts`): сервер не
 обрабатывает `workspace/didChangeWatchedFiles` и следит за файлами сам, поэтому события клиента —
-лишний трафик на каждую выгрузку во временный каталог операции.
+лишний трафик на каждую выгрузку во временный каталог операции. Там же
+`revealOutputChannelOn: Never`: сбой запроса (например, `-32603` на `documentHighlight` при
+рассинхроне текста у сервера) пишется в канал «BSL Analyzer», но не всплывает уведомлением —
+иначе фоновые запросы на каждое движение курсора давали поток окон (#105).
 
 Допустимые значения:
 
