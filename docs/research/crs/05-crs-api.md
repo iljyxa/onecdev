@@ -2,7 +2,7 @@
 > (коммит `8391ab0`, `docs/research/05-crs-api.md`) без изменения выводов; текст датирован. Номера `iljyxa/vscode-1c-repository-tools#N`
 > относятся к исходному проекту. Принятые для onecdev решения — [repository-crs.md](../../repository-crs.md);
 > снятый трафик — `example/crs/` ([README](../../../example/crs/README.md)); `fixtures/crs` исходника = `example/crs`
-> здесь, скрипты съёмки `fixtures/tools/*.mjs` остались в исходном проекте (перенос — iljyxa/onecdev#118).
+> здесь, скрипты съёмки `fixtures/tools/*.mjs` исходника перенесены в `example/tools/crs/` (iljyxa/onecdev#118).
 
 # Библиотека crs-api: что она знает о протоколе
 

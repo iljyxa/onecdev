@@ -1,8 +1,8 @@
 > Исследование перенесено из проекта [vscode-1c-repository-tools](https://github.com/iljyxa/vscode-1c-repository-tools)
 > (коммит `8391ab0`, `docs/research/04-crs-protocol.md`) без изменения выводов; текст датирован и описывает
 > состояние на дату эксперимента. Принятые для onecdev решения — [repository-crs.md](../../repository-crs.md);
-> снятый трафик — `example/crs/` ([README](../../../example/crs/README.md)). Скрипты съёмки остались в исходном
-> проекте, их перенос — iljyxa/onecdev#118.
+> снятый трафик — `example/crs/` ([README](../../../example/crs/README.md)). Скрипты съёмки перенесены в
+> `example/tools/crs/` (iljyxa/onecdev#118); скрипты самого эксперимента (`research/crs-capture/`) остались в исходном проекте.
 
 # Протокол сервера хранилища: эксперимент с помещением и получением
 
