@@ -1,4 +1,4 @@
-import { parseBracketText, type BracketNode } from '../OneCBracketText';
+import { bracketScalar, parseBracketText, type BracketList, type BracketValue } from '../OneCBracketText';
 import { OneCdFormatError, type OneCdFile } from './OneCdFile';
 
 /**
@@ -45,28 +45,28 @@ const FIELD_SIZES: Readonly<Record<OneCdFieldType, (field: Pick<OneCdField, 'len
 const MIN_RECORD_SIZE = 5;
 
 export function parseTableDescription(text: string): OneCdTableDescription {
-  let nodes: BracketNode[];
+  let table: BracketList;
   try {
-    nodes = parseBracketText(text);
+    table = parseBracketText(text);
   } catch (error) {
-    // Токенизатор бросает только Error с описанием места разбора.
+    // Разборщик бросает только BracketFormatError с описанием места разбора.
     throw corrupted((error as Error).message);
   }
-  const table = nodes[0];
-  if (!Array.isArray(table) || typeof table[0] !== 'string') {
+  const name = bracketScalar(table[0]);
+  if (name === undefined) {
     throw corrupted('описание таблицы без имени');
   }
-  const section = (name: string): BracketNode[] | undefined =>
-    table.find((node): node is BracketNode[] => Array.isArray(node) && node[0] === name);
+  const section = (title: string): BracketList | undefined =>
+    table.find((node): node is BracketList => Array.isArray(node) && bracketScalar((node as BracketList)[0]) === title);
   const fields = section('Fields');
   const files = section('Files');
   if (!fields || !files) {
-    throw corrupted(`в описании таблицы ${table[0]} нет Fields/Files`);
+    throw corrupted(`в описании таблицы ${name} нет Fields/Files`);
   }
   return {
-    name: table[0],
+    name,
     fields: fields.slice(1).map(parseField),
-    recordLock: section('Recordlock')?.[1] !== '0',
+    recordLock: bracketScalar(section('Recordlock')?.[1]) !== '0',
     dataPage: toCount(files[1]),
     blobPage: toCount(files[2]),
     indexPage: toCount(files[3]),
@@ -163,11 +163,12 @@ function decodeBcdNumber(value: Buffer, field: OneCdField): number {
   return (sign * Number(digits.slice(1, 1 + field.length))) / 10 ** field.precision;
 }
 
-function parseField(node: BracketNode): OneCdField {
-  if (!Array.isArray(node) || node.length < 5 || node.slice(0, 5).some((item) => typeof item !== 'string')) {
+function parseField(node: BracketValue): OneCdField {
+  const items = Array.isArray(node) ? (node as BracketList).slice(0, 5).map(bracketScalar) : [];
+  if (items.length < 5 || items.some((item) => item === undefined)) {
     throw corrupted(`описание поля ${JSON.stringify(node)}`);
   }
-  const [name, type, nullable, length, precision] = node as string[];
+  const [name, type, nullable, length, precision] = items as string[];
   /* c8 ignore start -- набор типов полей хранилища 8.3.27/8.5.1 закрыт (инвентаризация
      генератора фикстуры); незнакомый тип — формат будущей версии, размер записи не вычислить */
   if (!Object.prototype.hasOwnProperty.call(FIELD_SIZES, type)) {
@@ -177,8 +178,8 @@ function parseField(node: BracketNode): OneCdField {
   return { name, type: type as OneCdFieldType, nullable: nullable === '1', length: toCount(length), precision: toCount(precision) };
 }
 
-function toCount(value: BracketNode | undefined): number {
-  const count = Number(value);
+function toCount(value: BracketValue | undefined): number {
+  const count = Number(bracketScalar(value));
   if (!Number.isInteger(count) || count < 0) {
     throw corrupted(`ожидалось целое число, получено ${JSON.stringify(value)}`);
   }

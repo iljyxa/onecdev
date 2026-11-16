@@ -172,11 +172,22 @@ suite('OneCdTable — разбор и граничные случаи', () => {
       ['номер страницы — не число', (text) => text.replace(/\{"Files",\d+/, '{"Files","x"')],
       ['поле короче пяти элементов', (text) => text.replace('{"NAME","NVC",0,256,0,"CI"}', '{"NAME","NVC"}')],
       ['поле — не список', (text) => text.replace('{"NAME","NVC",0,256,0,"CI"}', '"NAME"')],
+      ['элемент поля — список', (text) => text.replace('{"NAME","NVC",0,256,0,"CI"}', '{"NAME",{"NVC"},0,256,0,"CI"}')],
+      ['хвост после корня', (text) => `${text},{}`],
     ];
     for (const [title, mutate] of cases) {
       test(title, () => {
         assertCorrupted(() => parseTableDescription(mutate(usersText)));
       });
     }
+  });
+});
+
+suite('OneCdTable — раздел Recordlock необязателен', () => {
+  test('без раздела Recordlock блокировка записей считается включённой', async () => {
+    const texts = await withFile('8.5.1', (file) => file.readTableDescriptions());
+    const users = must(texts.find((text) => text.startsWith('{"USERS"')), 'USERS');
+    assert.match(users, /\{"Recordlock","0"\}/);
+    assert.strictEqual(parseTableDescription(users.replace(/\{"Recordlock","0"\},\s*/, '')).recordLock, true);
   });
 });
