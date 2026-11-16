@@ -11,6 +11,8 @@ export interface FakeWebviewPanel {
   readonly panel: vscode.WebviewPanel;
   /** Все значения, присвоенные `webview.html`, по порядку. */
   readonly htmlHistory: string[];
+  /** Все сообщения, отправленные провайдером в webview через `postMessage`, по порядку. */
+  readonly posted: unknown[];
   readonly isDisposed: () => boolean;
   readonly revealCount: () => number;
   /** Доставляет провайдеру сообщение так, как его прислал бы webview. */
@@ -33,10 +35,11 @@ export function readInitialState(html: string): unknown {
   return (JSON.parse(match[1]) as { state: unknown }).state;
 }
 
-function createFakePanel(onHtml: (panel: FakeWebviewPanel) => void): FakeWebviewPanel {
+function createFakePanel(title: string, onHtml: (panel: FakeWebviewPanel) => void): FakeWebviewPanel {
   const messages = new vscode.EventEmitter<unknown>();
   const disposeEmitter = new vscode.EventEmitter<void>();
   const htmlHistory: string[] = [];
+  const posted: unknown[] = [];
   let disposed = false;
   let reveals = 0;
 
@@ -51,11 +54,15 @@ function createFakePanel(onHtml: (panel: FakeWebviewPanel) => void): FakeWebview
       onHtml(fake);
     },
     onDidReceiveMessage: messages.event,
-    postMessage: () => Promise.resolve(true),
+    postMessage: (message: unknown) => {
+      posted.push(message);
+      return Promise.resolve(true);
+    },
     asWebviewUri: (uri: vscode.Uri) => uri,
   } as unknown as vscode.Webview;
 
   const panel = {
+    title,
     webview,
     onDidDispose: disposeEmitter.event,
     reveal: () => { reveals += 1; },
@@ -71,6 +78,7 @@ function createFakePanel(onHtml: (panel: FakeWebviewPanel) => void): FakeWebview
   const fake: FakeWebviewPanel = {
     panel,
     htmlHistory,
+    posted,
     isDisposed: () => disposed,
     revealCount: () => reveals,
     receive: (message) => messages.fire(message),
@@ -87,8 +95,8 @@ export function installFakeWebviewPanels(): FakeWebviewPanelFactory {
     onHtml: () => undefined,
     restore: () => { windowRef.createWebviewPanel = original; },
   };
-  windowRef.createWebviewPanel = () => {
-    const fake = createFakePanel((panel) => factory.onHtml(panel));
+  windowRef.createWebviewPanel = (_viewType: string, title: string) => {
+    const fake = createFakePanel(title, (panel) => factory.onHtml(panel));
     factory.panels.push(fake);
     return fake.panel;
   };

@@ -46,6 +46,8 @@ import { CfePatchMethodService } from './infra/cfe/CfePatchMethodService';
 import { RoleRightsService } from './infra/role';
 import { SubsystemXmlService } from './infra/xml/SubsystemXmlService';
 import { RepositoryService } from './infra/repository/RepositoryService';
+import { RepositoryHistoryService } from './infra/repository/history/RepositoryHistoryService';
+import { repositoryHistorySessionDepsFrom, resolveRepositoryHistorySession } from './infra/repository/history/RepositoryHistorySession';
 import { ensureEnvJson } from './infra/repository/envJsonTemplate';
 import { GitMetadataStatusService } from './infra/git/GitMetadataStatusService';
 import { resolveGitRoot } from './infra/git/GitStatusReader';
@@ -60,6 +62,7 @@ import { EditorReadonlyController } from './ui/readonly/EditorReadonlyController
 import { registerSupportWatcher } from './ui/support/SupportWatcher';
 import { RepositoryCommitViewProvider } from './ui/views/RepositoryCommitViewProvider';
 import { RepositoryConnectionViewProvider } from './ui/views/RepositoryConnectionViewProvider';
+import { RepositoryHistoryViewProvider } from './ui/views/repositoryHistory/RepositoryHistoryViewProvider';
 import { updateMetadataCacheAfterRename } from './infra/cache/MetadataCache';
 import {
   BslAnalyzerConfigService,
@@ -111,6 +114,8 @@ export class Container {
   private changesConfigRoots: readonly ConfigEntry[] = [];
   readonly repositoryConnectionViewProvider: RepositoryConnectionViewProvider;
   readonly repositoryCommitViewProvider: RepositoryCommitViewProvider;
+  readonly repositoryHistoryService: RepositoryHistoryService;
+  readonly repositoryHistoryViewProvider: RepositoryHistoryViewProvider;
   readonly bslAnalyzerConfigService: BslAnalyzerConfigService;
   readonly projectEnvironmentService: ProjectEnvironmentService;
   readonly projectEnvironmentViewProvider: ProjectEnvironmentViewProvider;
@@ -192,6 +197,12 @@ export class Container {
     // только через внедрённое хранилище секретов (env.json больше не хранит пароль).
     setProjectSecretStorage(this.projectSecretStorage);
     this.repositoryService = new RepositoryService(workspaceFolder.uri.fsPath, this.projectSecretStorage);
+    const historySessionDeps = repositoryHistorySessionDepsFrom(this.repositoryService, workspaceFolder.uri.fsPath);
+    this.repositoryHistoryService = new RepositoryHistoryService({
+      resolveSession: (target) => resolveRepositoryHistorySession(target, historySessionDeps),
+      onError: (error) => this.outputChannel.appendLine(`[repository][history][error] ${String(error)}`),
+    });
+    context.subscriptions.push(this.repositoryHistoryService);
     this.bslAnalyzerConfigService = new BslAnalyzerConfigService(workspaceFolder.uri.fsPath);
     this.projectEnvironmentService = new ProjectEnvironmentService(workspaceFolder.uri.fsPath, this.projectSecretStorage);
     this.standaloneServerService = new StandaloneServerService(workspaceFolder.uri.fsPath, this.outputChannel);
@@ -273,6 +284,8 @@ export class Container {
     );
     this.repositoryConnectionViewProvider = new RepositoryConnectionViewProvider(context.extensionUri);
     this.repositoryCommitViewProvider = new RepositoryCommitViewProvider(context.extensionUri);
+    this.repositoryHistoryViewProvider = new RepositoryHistoryViewProvider(context.extensionUri, this.repositoryHistoryService);
+    context.subscriptions.push(this.repositoryHistoryViewProvider);
     this.projectEnvironmentViewProvider = new ProjectEnvironmentViewProvider(
       this.projectEnvironmentService,
       this.outputChannel,
@@ -577,6 +590,8 @@ export class Container {
       projectSecretStorage: this.projectSecretStorage,
       repositoryConnectionViewProvider: this.repositoryConnectionViewProvider,
       repositoryCommitViewProvider: this.repositoryCommitViewProvider,
+      repositoryHistoryService: this.repositoryHistoryService,
+      repositoryHistoryViewProvider: this.repositoryHistoryViewProvider,
       bslAnalyzerConfigService: this.bslAnalyzerConfigService,
       projectEnvironmentViewProvider: this.projectEnvironmentViewProvider,
       standaloneServerService: this.standaloneServerService,

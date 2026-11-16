@@ -20,6 +20,7 @@ import { registerShowPropertiesCommand } from './properties/ShowPropertiesComman
 import { registerInitializeProjectCommand } from './project/InitializeProjectCommand';
 import { registerRepositoryCommands } from './repository/RepositoryCommands';
 import { registerRepositoryLockStatusCommands } from './repository/RepositoryLockStatusCommands';
+import { registerRepositoryHistoryCommands } from './repository/RepositoryHistoryCommands';
 import { registerRoleRightsCommands } from './role/RoleRightsCommands';
 import { registerTreeSearchCommands } from './search/TreeSearchCommands';
 import { registerInstallAiSkillsCommand } from './skills/InstallAiSkillsCommand';
@@ -66,4 +67,5 @@ export function registerCommands(
   registerCfeBatchCommands(context, services);
   registerRepositoryCommands(context, services);
   registerRepositoryLockStatusCommands(context, services);
+  registerRepositoryHistoryCommands(context, services);
 }

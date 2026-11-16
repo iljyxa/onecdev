@@ -117,6 +117,8 @@ function createServices(overrides: Partial<CommandServices>): CommandServices {
     projectSecretStorage: notImplemented('projectSecretStorage') as never,
     repositoryConnectionViewProvider: notImplemented('repositoryConnectionViewProvider') as never,
     repositoryCommitViewProvider: notImplemented('repositoryCommitViewProvider') as never,
+    repositoryHistoryService: notImplemented('repositoryHistoryService') as never,
+    repositoryHistoryViewProvider: notImplemented('repositoryHistoryViewProvider') as never,
     bslAnalyzerConfigService: notImplemented('bslAnalyzerConfigService') as never,
     projectEnvironmentViewProvider: notImplemented('projectEnvironmentViewProvider') as never,
     aiMcpViewProvider: undefined,
