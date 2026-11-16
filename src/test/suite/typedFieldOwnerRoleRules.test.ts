@@ -152,7 +152,6 @@ suite('typedFieldOwnerRoleRules — GOLDEN A: идемпотентность н�
     assert.ok(fields.length >= CORPUS_TYPED_FIELDS, `корпус пуст или почти пуст: ${String(fields.length)} полей`);
 
     let checked = 0;
-    const adoptedNonIdempotent: string[] = [];
     for (const field of fields) {
       const normalizedFieldXml = field.fieldXml.replace(/\r\n/g, '\n');
       const typeInner = extractOwnTypeInner(normalizedFieldXml);
@@ -165,10 +164,6 @@ suite('typedFieldOwnerRoleRules — GOLDEN A: идемпотентность н�
         typeInner,
         field.ownerKind
       );
-      if (result !== normalizedFieldXml && field.propertyKeys.includes('ObjectBelonging')) {
-        adoptedNonIdempotent.push(`${path.relative(EXAMPLE_GENERATIONS.cf21, field.filePath)}.${field.name}`);
-        continue;
-      }
       if (result !== normalizedFieldXml) {
         const diffAt = firstDiffIndex(result, normalizedFieldXml);
         assert.fail(
@@ -180,11 +175,9 @@ suite('typedFieldOwnerRoleRules — GOLDEN A: идемпотентность н�
       }
       checked += 1;
     }
-    // Известный дефект (iljyxa/onecdev#114): нормализация дописывает заимствованному полю
-    // расширения (ObjectBelonging=Adopted) полный owner×role-состав. Пин снимается вместе с
-    // исправлением; новое неидемпотентное заимствованное поле уронит тест.
-    assert.deepStrictEqual(adoptedNonIdempotent, ['../cfe/EVOLC/Catalogs/Контрагенты.xml.КПП']);
-    assert.ok(checked + adoptedNonIdempotent.length >= CORPUS_TYPED_FIELDS, `слишком мало полей с <Type> прошло проверку: ${String(checked)}`);
+    // Заимствованные поля расширения (ObjectBelonging=Adopted, EVOLC) проверяются наравне с
+    // остальными: их усечённый состав нормализация не перестраивает (#114).
+    assert.ok(checked >= CORPUS_TYPED_FIELDS, `слишком мало полей с <Type> прошло проверку: ${String(checked)}`);
   });
 
   test('normalizeTypedFieldPropertiesAfterTypeChange идемпотентна для Constant/CommonAttribute (self-owning роль)', () => {
@@ -574,6 +567,27 @@ suite('typedFieldOwnerRoleRules — GOLDEN B: реальная смена тип
       assert.ok(afterBlock.includes(preserved), `реквизит должен сохранить ${preserved} при смене string→reference`);
     }
     assertStructuralRoundTrip(beforeBlock, afterBlock, ['Type'], 'Контрагенты.ИНН string→reference');
+  });
+
+  test('EVOLC Catalogs/Контрагенты.КПП (заимствованный реквизит расширения): меняется только <Type>, owner-свойства не дописываются (#114)', () => {
+    // Платформа выгружает заимствованное поле усечённо (ObjectBelonging/Name/Comment/
+    // ExtendedConfigurationObject/Type); полный owner×role-состав ему не положен.
+    const xmlPath = copyExampleObjectToTmp(path.join(EXAMPLE_GENERATIONS.cf21, '../cfe/EVOLC/Catalogs/Контрагенты.xml'), 'Catalogs');
+    const before = fs.readFileSync(xmlPath, 'utf-8');
+    const oldType = /<Name>КПП<\/Name>[\s\S]*?<Type>(\r?\n)([\s\S]*?)\r?\n(\t*)<\/Type>/.exec(before);
+    assert.ok(oldType, 'в фикстуре ожидается реквизит КПП с развёрнутым <Type>');
+    assert.ok(before.slice(0, oldType.index).includes('<ObjectBelonging>Adopted</ObjectBelonging>'), 'КПП — заимствованное поле');
+
+    const changed = new ObjectXmlReader().updateTypeInObject(xmlPath, {
+      targetKind: 'Attribute',
+      targetName: 'КПП',
+      typeInnerXml: NUMBER_TYPE,
+    });
+    assert.strictEqual(changed, true);
+
+    const typeStart = oldType.index + oldType[0].indexOf('<Type>') + '<Type>'.length + oldType[1].length;
+    const expected = `${before.slice(0, typeStart)}${oldType[3]}\t${NUMBER_TYPE}${before.slice(typeStart + oldType[2].length)}`;
+    assert.strictEqual(fs.readFileSync(xmlPath, 'utf-8'), expected);
   });
 
   test('Catalogs/Контрагенты.Регион (реквизит верхнего уровня): reference→number меняет только <Type>, свойства выбора и Use сохраняются', () => {
