@@ -1,13 +1,14 @@
 # Снятый трафик crserver
 
 > Корпус перенесён без изменений байтов из проекта [vscode-1c-repository-tools](https://github.com/iljyxa/vscode-1c-repository-tools)
-> (коммит `8391ab0`, каталог `fixtures/crs/8.5.1`). Скрипты съёмки (`fixtures/tools/*.mjs`) и стенд с настоящим
-> `crserver` пока остались в исходном проекте — их перенос: issue #118. Номера issues ниже (`issue #N`) относятся
+> (коммит `8391ab0`, каталог `fixtures/crs/8.5.1`). Скрипты съёмки и стенд с настоящим `crserver` перенесены в
+> `example/tools/crs/` (issue #118), исходная конфигурация корпуса — в `example/crs/config`. Как пересобрать —
+> раздел «[Пересборка](#пересборка)». Номера issues ниже (`issue #N`) относятся
 > к исходному проекту. Тесты в `example/` не пишут.
 
 
 Настоящие кадры обмена Конфигуратора с `crserver` (тела `crs:call` / `crs:call_return` /
-`crs:call_exception`), снятые записывающим tcp-прокси стенда `fixtures/tools/`. Байты не правятся:
+`crs:call_exception`), снятые записывающим tcp-прокси стенда `example/tools/crs/`. Байты не правятся:
 нужен другой сценарий — дописывается скрипт и каталог пересобирается.
 
 Раскладка: `<версия платформы>/tcp/<сценарий>/NN-conn-CC-<c2s|s2c>-<метод>.xml`, где `CC` — номер
@@ -18,8 +19,8 @@
 
 ## Захват и отпуск (`tcp/`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#9)
 
-Сборка: `node fixtures/tools/capture-locks.mjs` (около минуты; нужны платформа с `crserver` и `xvfb-run`).
-Объекты — `fixtures/config`; пользователи `Petrov`, `Sidorov` (`LockObjects`) и `Reader` (`ReadOnly`)
+Сборка: `node example/tools/crs/capture-locks.mjs` (около минуты; нужны платформа с `crserver` и `xvfb-run`).
+Объекты — `example/crs/config`; пользователи `Petrov`, `Sidorov` (`LockObjects`) и `Reader` (`ReadOnly`)
 привязаны каждый к своей базе.
 
 | Сценарий | Что происходит | Итог |
@@ -36,7 +37,7 @@
 
 ## История версий (`tcp/history-*`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#10)
 
-Сборка: `node fixtures/tools/capture-history.mjs`. В хранилище помещаются версии 2–6 (версия 1 — создание):
+Сборка: `node example/tools/crs/capture-history.mjs`. В хранилище помещаются версии 2–6 (версия 1 — создание):
 две от Petrov (в третьей — два объекта), одна от Admin с комментарием из двух строк; метки — на версиях 2
 и 4; затем от Admin версия 5 без комментария (ключ `-comment` не передаётся) и версия 6 с комментарием
 `Спецсимволы: <тег> & 'апостроф' > конец` (issue iljyxa/vscode-1c-repository-tools#21; двойную кавычку командная строка Конфигуратора
@@ -63,7 +64,7 @@
 
 ### История со всей тестовой конфигурацией (`history-full-config`, issue iljyxa/vscode-1c-repository-tools#84)
 
-Сборка: `node fixtures/tools/capture-history-classes.mjs`. Хранилище создаётся из `fixtures/config` (объект
+Сборка: `node example/tools/crs/capture-history-classes.mjs`. Хранилище создаётся из `example/crs/config` (объект
 каждого вида, issue iljyxa/vscode-1c-repository-tools#49) без дополнительных версий, снимается отчёт версии 1: все 57 объектов с их `classID`.
 Имена объектов (`Тест<Вид>`) задают вид, а `report.txt` — русское название класса, по которому сверяется
 таблица `classID` → вид. Дочерние элементы (измерения, ресурсы) отдельными объектами в истории не приходят:
@@ -72,7 +73,7 @@
 
 ## Http (`http/`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#11)
 
-Сборка: `node fixtures/tools/capture-locks.mjs --transport=http` — те же девять сценариев захвата и отпуска,
+Сборка: `node example/tools/crs/capture-locks.mjs --transport=http` — те же девять сценариев захвата и отпуска,
 что и по tcp (одни и те же имена каталогов), но Конфигуратор ходит на `http://127.0.0.1:<порт>/repo/repo.1ccr/exp`
 через записывающий прокси на собственный apache с `wsap24.so`; нужен `/usr/sbin/apache2`. Разница с tcp —
 [07-crs-http.md](../../docs/research/crs/07-crs-http.md).
@@ -82,15 +83,15 @@
 собран стендом, ответ настоящий (`request.{headers.txt,xml}`, `response.{headers.txt,xml}`); сюда попали
 корректный запрос, запрос без BOM, неверный путь, GET, не-XML, несуществующий alias и метод (заголовки проб записаны такими, какими стенд их отправил, `Connection: close`). `locks-summary.json` — сводка.
 
-История версий по http (issue iljyxa/vscode-1c-repository-tools#82): `node fixtures/tools/capture-history.mjs --transport=http` — те же десять
+История версий по http (issue iljyxa/vscode-1c-repository-tools#82): `node example/tools/crs/capture-history.mjs --transport=http` — те же десять
 сценариев `history-*` и то же хранилище, что по tcp (подготовка идёт по tcp), но Конфигуратор ходит через
 апач; в каждом сценарии, как и по tcp, есть `devDepotReport` и `depotUsers`. Хранилище собирается из
-сегодняшней `fixtures/config`, поэтому версия 1 содержит все объекты (issue iljyxa/vscode-1c-repository-tools#49), в отличие от снятых ранее
+сегодняшней `example/crs/config`, поэтому версия 1 содержит все объекты (issue iljyxa/vscode-1c-repository-tools#49), в отличие от снятых ранее
 по tcp сценариев; ответы по tcp и http поэтому побайтно не сравниваются. Сводка — `history-summary.json`.
 
 ## Сырые пробы http (`http-raw/`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#15)
 
-Сборка: `node fixtures/tools/capture-http-raw.mjs` (нужны платформа с `crserver`, `xvfb-run` и apache с
+Сборка: `node example/tools/crs/capture-http-raw.mjs` (нужны платформа с `crserver`, `xvfb-run` и apache с
 `wsap24.so`). В отличие от `http/`, ответы лежат побайтно: с границами chunk и заголовками, без замен.
 Стенд (`stand.httpRawProbe`) шлёт сырой запрос через `net` на порт apache и читает ответ до закрытия
 соединения сервером (запрос с `Connection: close`); потоки проверяются `assertRawClean`. Основа запроса —
@@ -107,7 +108,7 @@
 
 ## Сырые tcp-потоки и пробы транспорта (`tcp-raw/`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#46)
 
-Сборка: `node fixtures/tools/capture-tcp-raw.mjs` (около минуты). Здесь, в отличие от `tcp/`, потоки
+Сборка: `node example/tools/crs/capture-tcp-raw.mjs` (около минуты). Здесь, в отличие от `tcp/`, потоки
 лежат побайтно, без нарезки на кадры и без замен: имя машины и путь рабочего каталога стенд не
 подменяет (замена сломала бы `Content-Length`), а при их появлении в потоке падает. Поэтому сценарии
 выбраны без `DevDepot_bind` — в нём есть имя машины. Разбор байт — [08-crs-tcp-framing.md](../../docs/research/crs/08-crs-tcp-framing.md).
@@ -151,7 +152,7 @@
 
 ## Пробы методов чтения (`tcp/probe-*`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#14)
 
-Сборка: `node fixtures/tools/capture-read-probes.mjs` (около минуты). Пробы снимаются на уровне тел, а не
+Сборка: `node example/tools/crs/capture-read-probes.mjs` (около минуты). Пробы снимаются на уровне тел, а не
 сырым потоком, как в `tcp-raw/`: в ответах `bindInfos` есть `bindString` с именем машины, а сырой режим при
 его появлении падает. Помощник `stand.tcpBodyProbe` шлёт кадр (приветствие и заголовок берутся из
 подготовительного шага), читает ответ по `Content-Length`, прогоняет тело через `scrub` и пишет
@@ -184,7 +185,7 @@ Sidorov, Reader привязаны к своим базам. Тела `devDepotR
 
 ## Пробы фильтров истории (`tcp/probe-history-*`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#39)
 
-Сборка: `node fixtures/tools/capture-history-probes.mjs` (несколько минут). Хранилище — те же версии 1–6, что
+Сборка: `node example/tools/crs/capture-history-probes.mjs` (несколько минут). Хранилище — те же версии 1–6, что
 у `capture-history.mjs` (общий модуль `history-repository.mjs`), и версия 7 от Admin со свойством «Версия»
 конфигурации `1.0.0.2` (помещён только корень). Пробы — как в разделе выше (`stand.tcpBodyProbe`): тело —
 снятый `devDepotReport` Admin без `crs:bind`, в нём подстановкой меняются только поля фильтра. uuid авторов,
@@ -207,7 +208,7 @@ Sidorov, Reader привязаны к своим базам. Тела `devDepotR
 привязки истории (`probe-history-no-bind` и др.) — за `capture-read-probes.mjs`. Выводы —
 [06-crs-history.md](../../docs/research/crs/06-crs-history.md), раздел «Фильтры истории».
 
-Режим `--transport=http` (issue iljyxa/vscode-1c-repository-tools#89): `node fixtures/tools/capture-history-probes.mjs --transport=http` снимает
+Режим `--transport=http` (issue iljyxa/vscode-1c-repository-tools#89): `node example/tools/crs/capture-history-probes.mjs --transport=http` снимает
 через публикацию `.1ccr` только пробы истории объекта и постраничной загрузки (`HTTP_PROBES`):
 `http/probe-history-filter-none`, `-object-catalog`, `-object-catalog-recursive`, `-object-two`, `-object-unknown`,
 `-devdepotversions`, `-devdepotversions-object-two`, `-devdepotversions-object-catalog-recursive`,
@@ -215,3 +216,40 @@ Sidorov, Reader привязаны к своим базам. Тела `devDepotR
 объекты, повторы версий, пустой список) совпадает с tcp; побайтно они не равны: tcp и http снимаются отдельными
 сборками хранилища, поэтому uuid и даты разные. Нужны apache с `wsap24.so` (как для `capture-locks.mjs --transport=http`). Скрипт пересобирает
 только свои каталоги `probe-history-*` в `http/`.
+
+## Пересборка
+
+Требования: платформа 8.5.1 (каталог — переменная `V8`, по умолчанию `/opt/1cv8/x86_64/8.5.1.1529`) и `xvfb-run`;
+для http — apache (`/usr/sbin/apache2`) с `wsap24.so` из каталога платформы. Каждый скрипт принимает
+необязательный рабочий каталог (по умолчанию `/tmp/crs-stand/work`; стенд очищает его при запуске). Исходная
+конфигурация — `example/crs/config`, байт-копия той, с которой снят корпус.
+
+| Что снимает | Команда | Время |
+|---|---|---|
+| захват и отпуск | `node example/tools/crs/capture-locks.mjs [--transport=http]` | tcp — около минуты |
+| история версий | `node example/tools/crs/capture-history.mjs [--transport=http]` | не замерялось |
+| история, объект каждого вида | `node example/tools/crs/capture-history-classes.mjs` | не замерялось |
+| пробы фильтров истории | `node example/tools/crs/capture-history-probes.mjs [--transport=http]` | несколько минут |
+| пробы методов чтения | `node example/tools/crs/capture-read-probes.mjs` | около минуты |
+| сырые tcp-потоки | `node example/tools/crs/capture-tcp-raw.mjs` | около 47 с |
+| сырые http-потоки | `node example/tools/crs/capture-http-raw.mjs` | не замерялось |
+
+Порядок. `capture-http-raw.mjs` читает из корпуса свои входы: `tcp-raw/wrong-password/conn-01.c2s.bin`
+(его даёт `capture-tcp-raw.mjs`) и `http/probe-valid/request.headers.txt` (его даёт `capture-locks.mjs --transport=http`), поэтому запускается после того,
+как они сняты. Остальные скрипты артефакты друг друга не читают.
+
+Пробная съёмка, не трогающая закоммиченный корпус: `CRS_CORPUS_ROOT=<каталог>` подменяет корень `example/crs`,
+артефакты ложатся в `$CRS_CORPUS_ROOT/8.5.1/…`. Входы `capture-http-raw.mjs` при этом берутся из того же
+подменённого корня.
+
+Пересборка меняет uuid и даты, а у `tcp/history-*` — и состав. После неё сверяются:
+
+- счётчики в `src/test/suite/support/crsFixtures.ts`: `CORPUS_SIZE` (tcp 290, http 276), число обменов (283),
+  тел `call_exception` (21), `HTTP_CORPUS_MESSAGES` (98), соединений Конфигуратора в `tcp-raw` (8);
+- ожидания `src/test/suite/metaTypesRepositoryClass.test.ts`: корень `ТестовоеХранилище` и 57 изменений в
+  `history-full-config`.
+
+Пересъёмка закоммиченного корпуса — отдельной задачей.
+
+Проверено при переносе (#118): пробно запускался только `capture-tcp-raw.mjs` — набор файлов и размеры совпали
+с закоммиченными. Остальные скрипты перенесены без прогона.
