@@ -404,7 +404,9 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
   private buildRoots(): void {
     this.parentByNode = new WeakMap<MetadataNode, MetadataNode>();
     if (this.supportService) {
-      for (const entry of this.entries) {
+      // У расширения (CFE) режима поддержки нет, ParentConfigurations.bin не бывает: загрузка
+      // писала бы в лог ложное «поддержка отсутствует» (#60).
+      for (const entry of this.entries.filter((item) => item.kind === 'cf')) {
         this.supportService.loadConfig(entry.rootPath);
       }
     }
