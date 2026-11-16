@@ -14,14 +14,29 @@ import {
   resolveType,
 } from './dcsShared';
 import { parseVariantInfo } from './settingsVariant';
+import { findDirectElementRanges, findNestingAwareElementRange } from '../XmlUtils';
+
+/**
+ * Прямые дети `tag` первого элемента `parentTag`. Поиск по всему документу ловил вложенные
+ * одноимённые элементы: `<parameter>` связи наборов считался параметром схемы (#133), поля
+ * вложенных наборов объединения — полями самого объединения, и validate видел дубли (#134).
+ */
+function directChildBlocks(xml: string, parentTag: string, tag: string): string[] {
+  const range = findNestingAwareElementRange(xml, parentTag);
+  if (!range) {
+    return [];
+  }
+  const inner = xml.slice(range.openEnd, range.closeStart);
+  return findDirectElementRanges(inner, tag).map((item) => inner.slice(item.start, item.end));
+}
 
 export function parseSchema(xml: string): Omit<SkdInfoResult, 'templatePath' | 'lines'> {
   return {
-    dataSets: matchBlocks(xml, 'dataSet').map((block) => ({
+    dataSets: directChildBlocks(xml, 'DataCompositionSchema', 'dataSet').map((block) => ({
       name: readText(block, 'name'),
       type: block.includes('DataSetQuery') ? 'Query' : block.includes('DataSetObject') ? 'Object' : block.includes('DataSetUnion') ? 'Union' : 'Unknown',
       query: readText(block, 'query'),
-      fields: matchBlocks(block, 'field').map((field) => ({
+      fields: directChildBlocks(block, 'dataSet', 'field').map((field) => ({
         dataPath: readText(field, 'dataPath'),
         field: readText(field, 'field'),
         title: readMlText(field, 'title'),
@@ -35,7 +50,7 @@ export function parseSchema(xml: string): Omit<SkdInfoResult, 'templatePath' | '
       type: readValueType(block),
     })),
     totalFields: matchBlocks(xml, 'totalField').map((block) => ({ dataPath: readText(block, 'dataPath'), expression: readText(block, 'expression') })),
-    parameters: matchBlocks(xml, 'parameter').map((block) => ({
+    parameters: directChildBlocks(xml, 'DataCompositionSchema', 'parameter').map((block) => ({
       name: readText(block, 'name'),
       title: readMlText(block, 'title'),
       type: readValueType(block),
