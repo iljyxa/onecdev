@@ -26,8 +26,15 @@ export function isInsideWorkspaceServiceDir(workspaceRoot: string, filePath: str
  * Каталог-бэкап атомарной замены снимка: `replaceDirectorySnapshot` переименовывает
  * заменяемый каталог в `.<имя>.onecdev-backup-<pid>-<время>` рядом с ним и удаляет
  * после замены. Пока он существует, в нём лежит прежняя копия конфигурации.
+ * Имя строится и распознаётся из одной метки: при расхождении формата watcher'ы
+ * `Container` молча приняли бы события из бэкапа за правки конфигурации (#124).
  */
-const SNAPSHOT_BACKUP_DIR_NAME = /^\..+\.onecdev-backup-\d+-\d+$/;
+const SNAPSHOT_BACKUP_MARKER = '.onecdev-backup-';
+const SNAPSHOT_BACKUP_DIR_NAME = new RegExp(`^\\..+${SNAPSHOT_BACKUP_MARKER.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')}\\d+-\\d+$`);
+
+export function buildSnapshotBackupDirName(targetName: string, pid: number, timestamp: number): string {
+  return `.${targetName}${SNAPSHOT_BACKUP_MARKER}${String(pid)}-${String(timestamp)}`;
+}
 
 /**
  * Служебный путь рабочей области: события watcher'ов по нему — не правки конфигурации.
