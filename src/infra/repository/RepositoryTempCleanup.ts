@@ -51,16 +51,32 @@ export function readDirOrEmpty(dir: string): fs.Dirent[] {
 }
 
 /**
- * Удаляет все `*.xml` из каталога `objects/`. Файлы создаются только внутри аренды
- * общего guard'а хранилища, поэтому в начале аренды любой из них — хвост прерванной
- * операции, а не файл работающего Конфигуратора.
+ * Возраст, после которого `objects/*.xml` считается хвостом прерванной операции. Заведомо
+ * больше любой операции хранилища: свежий файл свой владелец удаляет сам.
  */
-export function pruneRepositoryObjectsFiles(workspaceRoot: string): string[] {
+export const OBJECTS_FILE_MAX_AGE_MS = 60 * 60 * 1000;
+
+/** Метка времени в имени файла — формат `writeObjectsFile`: `<scope>-<Date.now()>.xml`. */
+const OBJECTS_FILE_TIMESTAMP = /-(\d+)\.xml$/i;
+
+/**
+ * Удаляет из `objects/` только `*.xml` старше `maxAgeMs`. Guard хранилища действует лишь внутри
+ * одного extension host: ту же папку может держать открытой второй хост (VS Code и Cursor), и
+ * свежий файл — это `-ObjectsFile` его работающего Конфигуратора (#77). Возраст — по метке в
+ * имени, без неё — по mtime.
+ */
+export function pruneRepositoryObjectsFiles(workspaceRoot: string, now: Date, maxAgeMs = OBJECTS_FILE_MAX_AGE_MS): string[] {
   const dir = getRepositoryObjectsDir(workspaceRoot);
+  const nowMs = now.getTime();
   const removed: string[] = [];
   for (const entry of readDirOrEmpty(dir)) {
     if (entry.isFile() && entry.name.toLowerCase().endsWith('.xml')) {
       const filePath = path.join(dir, entry.name);
+      const stamp = OBJECTS_FILE_TIMESTAMP.exec(entry.name)?.[1];
+      const createdMs = stamp ? Number(stamp) : fs.statSync(filePath).mtimeMs;
+      if (nowMs - createdMs <= maxAgeMs) {
+        continue;
+      }
       removePathWithRetries(filePath);
       removed.push(filePath);
     }
