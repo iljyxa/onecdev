@@ -11,10 +11,21 @@ import type { IconDto } from '../universal/_types';
 import { getIconUris } from '../../tree/presentation/icon';
 import type { NodeKind } from '../../tree/TreeNode';
 
-/** Сообщения от Vue-приложения редактора подсистем. */
-type SubsystemMessage =
+/** Команды редактора подсистем, меняющие состав. */
+type SubsystemCommand =
   | { readonly type: 'command'; readonly command: 'addContent'; readonly payload: { readonly ref: string } }
   | { readonly type: 'command'; readonly command: 'removeContent'; readonly payload: { readonly ref: string } };
+
+/**
+ * Сообщения от Vue-приложения редактора подсистем. Кроме команд webview шлёт служебные
+ * сообщения (`ready` после монтирования и т.п.) — они не должны доходить до проверки блокировки.
+ */
+type SubsystemMessage = SubsystemCommand | { readonly type: string; readonly command?: string };
+
+function isSubsystemCommand(message: SubsystemMessage): message is SubsystemCommand {
+  return message.type === 'command'
+    && (message.command === 'addContent' || message.command === 'removeContent');
+}
 
 interface TreeNodeActionDto {
   readonly id: string;
@@ -254,6 +265,9 @@ export class SubsystemEditorViewProvider implements vscode.Disposable {
   }
 
   private async handleMessage(message: SubsystemMessage): Promise<void> {
+    if (!isSubsystemCommand(message)) {
+      return;
+    }
     const xmlPath = this.currentXmlPath;
     if (!xmlPath || !this.panel) {
       return;
