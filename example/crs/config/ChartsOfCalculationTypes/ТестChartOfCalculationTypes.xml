@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.21">
+	<ChartOfCalculationTypes uuid="62faebbf-80cb-40c6-9bd2-de364ba9b4e2">
+		<InternalInfo>
+			<xr:GeneratedType name="ChartOfCalculationTypesObject.ТестChartOfCalculationTypes" category="Object">
+				<xr:TypeId>d3664c34-3917-4f91-92a8-a89792887822</xr:TypeId>
+				<xr:ValueId>604b4354-932b-406d-afb3-3e3c16a0dc22</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesRef.ТестChartOfCalculationTypes" category="Ref">
+				<xr:TypeId>aee62891-3e51-421d-bf83-0e122f243824</xr:TypeId>
+				<xr:ValueId>dc90ba36-88e5-4e33-9f11-0e9a7b2e4cd6</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesSelection.ТестChartOfCalculationTypes" category="Selection">
+				<xr:TypeId>20869d64-5fc7-4618-9bab-7304a0360b38</xr:TypeId>
+				<xr:ValueId>b305365b-a819-404b-9c46-94308d1094a6</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesList.ТестChartOfCalculationTypes" category="List">
+				<xr:TypeId>3d707963-ec7c-43ae-90c0-13e59ca1a25f</xr:TypeId>
+				<xr:ValueId>540f64c8-09d2-4f84-8220-8bc194cb5fdf</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesManager.ТестChartOfCalculationTypes" category="Manager">
+				<xr:TypeId>62633213-da5f-4063-8ea5-fb0f8ed44fb1</xr:TypeId>
+				<xr:ValueId>1e13b34a-5d4d-49f3-8d19-ee4595af0ece</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DisplacingCalculationTypes.ТестChartOfCalculationTypes" category="DisplacingCalculationTypes">
+				<xr:TypeId>9152fffc-8ba2-43ea-b324-15a9c4afb55d</xr:TypeId>
+				<xr:ValueId>407498a8-c73a-4743-83e9-7c98f1be0710</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DisplacingCalculationTypesRow.ТестChartOfCalculationTypes" category="DisplacingCalculationTypesRow">
+				<xr:TypeId>7c778e01-4d3c-427e-84db-db7fc689fad3</xr:TypeId>
+				<xr:ValueId>793ddf62-779c-4aa4-b8f0-866cdb251ea5</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="BaseCalculationTypes.ТестChartOfCalculationTypes" category="BaseCalculationTypes">
+				<xr:TypeId>205e5b46-5e40-4404-a1ce-7c4287dee8c2</xr:TypeId>
+				<xr:ValueId>1ca3050a-b2b8-470f-ac5c-7e03d8dfb3c5</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="BaseCalculationTypesRow.ТестChartOfCalculationTypes" category="BaseCalculationTypesRow">
+				<xr:TypeId>64b5f8f2-0cd6-4ee8-a40f-f64fce1c10c3</xr:TypeId>
+				<xr:ValueId>0f4243dc-4da8-4ecb-bcde-61f096ee0ff3</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="LeadingCalculationTypes.ТестChartOfCalculationTypes" category="LeadingCalculationTypes">
+				<xr:TypeId>070e9e45-80fe-4fd4-b071-20ed0b321996</xr:TypeId>
+				<xr:ValueId>e7b26356-5ee6-4390-8e70-d8a38152e12a</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="LeadingCalculationTypesRow.ТестChartOfCalculationTypes" category="LeadingCalculationTypesRow">
+				<xr:TypeId>98ccd447-be62-45a3-abad-2b73e2f95c9f</xr:TypeId>
+				<xr:ValueId>e6364f7f-657d-43c1-9ad3-22acbb310e81</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<Name>ТестChartOfCalculationTypes</Name>
+			<Synonym/>
+			<Comment/>
+			<UseStandardCommands>true</UseStandardCommands>
+			<CodeLength>9</CodeLength>
+			<DescriptionLength>40</DescriptionLength>
+			<CodeType>String</CodeType>
+			<CodeAllowedLength>Variable</CodeAllowedLength>
+			<DefaultPresentation>AsDescription</DefaultPresentation>
+			<EditType>InDialog</EditType>
+			<QuickChoice>false</QuickChoice>
+			<ChoiceMode>BothWays</ChoiceMode>
+			<InputByString>
+				<xr:Field>ChartOfCalculationTypes.ТестChartOfCalculationTypes.StandardAttribute.Description</xr:Field>
+				<xr:Field>ChartOfCalculationTypes.ТестChartOfCalculationTypes.StandardAttribute.Code</xr:Field>
+			</InputByString>
+			<SearchStringModeOnInputByString>Begin</SearchStringModeOnInputByString>
+			<FullTextSearchOnInputByString>DontUse</FullTextSearchOnInputByString>
+			<ChoiceDataGetModeOnInputByString>Directly</ChoiceDataGetModeOnInputByString>
+			<CreateOnInput>DontUse</CreateOnInput>
+			<ChoiceHistoryOnInput>Auto</ChoiceHistoryOnInput>
+			<DefaultObjectForm/>
+			<DefaultListForm/>
+			<DefaultChoiceForm/>
+			<AuxiliaryObjectForm/>
+			<AuxiliaryListForm/>
+			<AuxiliaryChoiceForm/>
+			<BasedOn/>
+			<DependenceOnCalculationTypes>DontUse</DependenceOnCalculationTypes>
+			<BaseCalculationTypes/>
+			<ActionPeriodUse>false</ActionPeriodUse>
+			<Characteristics/>
+			<PredefinedDataUpdate>Auto</PredefinedDataUpdate>
+			<IncludeHelpInContents>false</IncludeHelpInContents>
+			<DataLockFields/>
+			<DataLockControlMode>Managed</DataLockControlMode>
+			<FullTextSearch>Use</FullTextSearch>
+			<ObjectPresentation/>
+			<ExtendedObjectPresentation/>
+			<ListPresentation/>
+			<ExtendedListPresentation/>
+			<Explanation/>
+			<DataHistory>DontUse</DataHistory>
+			<UpdateDataHistoryImmediatelyAfterWrite>false</UpdateDataHistoryImmediatelyAfterWrite>
+			<ExecuteAfterWriteDataHistoryVersionProcessing>false</ExecuteAfterWriteDataHistoryVersionProcessing>
+		</Properties>
+		<ChildObjects/>
+	</ChartOfCalculationTypes>
+</MetaDataObject>

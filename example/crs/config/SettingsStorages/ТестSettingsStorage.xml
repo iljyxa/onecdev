@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.21">
+	<SettingsStorage uuid="0fc2ea8c-f4f6-4387-acfa-17af62c7e3e1">
+		<InternalInfo>
+			<xr:GeneratedType name="SettingsStorageManager.ТестSettingsStorage" category="Manager">
+				<xr:TypeId>611e04cf-5090-4e6b-bf3c-64f991cf6cc2</xr:TypeId>
+				<xr:ValueId>47fd373d-8c44-49c8-92eb-4429f006febd</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<Name>ТестSettingsStorage</Name>
+			<Synonym/>
+			<Comment/>
+			<DefaultSaveForm/>
+			<DefaultLoadForm/>
+			<AuxiliarySaveForm/>
+			<AuxiliaryLoadForm/>
+		</Properties>
+		<ChildObjects/>
+	</SettingsStorage>
+</MetaDataObject>
