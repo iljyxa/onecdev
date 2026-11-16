@@ -504,12 +504,9 @@ suite('DataCompositionSchemaService — байт-golden характеризац
     assert.strictEqual(afterAddField, expectedAfterAddField);
 
     // Шаг 2: modify-field заменяет поле "Пользователь" на новый shorthand с одним
-    // valueType. Реальный эффект replaceFieldBlock на multi-<v8:Type> поле: regex
-    // matchBlocks находит блок только ДО первого валидного </field>, поэтому
-    // подстановка захватывает не весь исходный блок — "хвост" старого <title>/
-    // <valueType> остаётся в документе как осиротевший фрагмент. Это существующее
-    // поведение сервиса ДО дробления, и golden обязан зафиксировать именно его,
-    // а не "исправленный" ожидаемый вид — так работает byte-характеризация.
+    // valueType. Блок поля ищется с учётом вложенного <field>Пользователь</field> и
+    // заменяется целиком на своём месте (#130): раньше замена обрывалась на внутреннем
+    // </field>, и «хвост» старого <title>/<valueType> оставался осиротевшим фрагментом.
     const editModifyField = service.edit({
       templatePath,
       operation: 'modify-field',
@@ -529,7 +526,7 @@ suite('DataCompositionSchemaService — байт-golden характеризац
       + '\t</dataSource>' + '\r\n'
       + '\t<dataSet xsi:type="DataSetQuery">' + '\r\n'
       + '\t\t<name>НаборДанных1</name>' + '\r\n'
-      + '\t\t\t\t<field xsi:type="DataSetFieldField">' + '\r\n'
+      + '\t\t<field xsi:type="DataSetFieldField">' + '\r\n'
       + '\t\t\t<dataPath>Пользователь</dataPath>' + '\r\n'
       + '\t\t\t<field>Пользователь</field>' + '\r\n'
       + '\t\t\t<title xsi:type="v8:LocalStringType">' + '\r\n'
@@ -537,18 +534,6 @@ suite('DataCompositionSchemaService — байт-golden характеризац
       + '\t\t\t</title>' + '\r\n'
       + '\t\t\t<valueType>' + '\r\n'
       + '\t\t\t\t<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/enterprise/current-config">d5p1:CatalogRef.Пользователи</v8:Type>' + '\r\n'
-      + '\t\t\t</valueType>' + '\r\n'
-      + '\t\t</field>' + '\r\n'
-      + '\t\t\t<title xsi:type="v8:LocalStringType">' + '\r\n'
-      + '\t\t\t\t<v8:item>' + '\r\n'
-      + '\t\t\t\t\t<v8:lang>ru</v8:lang>' + '\r\n'
-      + '\t\t\t\t\t<v8:content>Пользователь</v8:content>' + '\r\n'
-      + '\t\t\t\t</v8:item>' + '\r\n'
-      + '\t\t\t</title>' + '\r\n'
-      + '\t\t\t<valueType>' + '\r\n'
-      + '\t\t\t\t<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/enterprise/current-config">d5p1:CatalogRef.Пользователи</v8:Type>' + '\r\n'
-      + '\t\t\t\t<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/enterprise/current-config">d5p1:CatalogRef.Контрагенты</v8:Type>' + '\r\n'
-      + '\t\t\t\t<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/enterprise/current-config">d5p1:CatalogRef.Организации</v8:Type>' + '\r\n'
       + '\t\t\t</valueType>' + '\r\n'
       + '\t\t</field>' + '\r\n'
       + '\t\t<dataSource>ИсточникДанных1</dataSource>' + '\r\n'
