@@ -197,6 +197,21 @@ suite('SupportInfoService — реальная фикстура (230 запис�
           expected: SupportMode.Editable,
         },
         {
+          label: 'Form.xml формы таблицы (Форма.ФормаСписка locked, таблица editable) → Locked по XML формы (#59)',
+          relPath: [...source, 'Tables', 'Заказы', 'Forms', 'ФормаСписка', 'Ext', 'Form.xml'],
+          expected: SupportMode.Locked,
+        },
+        {
+          label: 'Template.xml макета заблокированного отчёта → Locked по XML макета (#59)',
+          relPath: ['Reports', 'Запасы', 'Templates', 'ОсновнаяСхемаКомпоновкиДанных', 'Ext', 'Template.xml'],
+          expected: SupportMode.Locked,
+        },
+        {
+          label: 'Rights.xml заблокированной роли → Locked по XML роли (#59)',
+          relPath: ['Roles', 'Кладовщик', 'Ext', 'Rights.xml'],
+          expected: SupportMode.Locked,
+        },
+        {
           label: 'XML родительской подсистемы Продажи → Locked',
           relPath: ['Subsystems', 'Продажи.xml'],
           expected: SupportMode.Locked,
@@ -299,7 +314,7 @@ suite('SupportInfoService — изменения запрещены (реаль�
 });
 
 /**
- * `SupportInfoService.resolveObjectXmlForBsl` раньше искал XML
+ * `SupportInfoService.resolveOwnerXml` раньше искал XML
  * объекта только в глубокой раскладке (`<Тип>/<Имя>/<Имя>.xml`), поэтому
  * плоская выгрузка (`<Тип>/<Имя>.xml`) и общие модули без вложенного XML не
  * давали режим поддержки — платформа 1С кладёт `Ext/<Модуль>.bsl` рядом с

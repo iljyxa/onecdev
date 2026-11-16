@@ -107,8 +107,10 @@ Readonly для модулей под замком поддержки или х�
 `ParentConfigurations.bin` и формат файла подробно описаны в
 [architecture.md](./architecture.md#режим-поддержки-поставщика-parentconfigurationsbin)) хранится по
 UUID объекта, а UUID нужно взять из XML — модуль сам по себе его не содержит.
-`SupportInfoService.resolveObjectXmlForBsl` (`infra/support/SupportInfoService.ts`) находит нужный XML
-по пути к `.bsl`-файлу:
+`SupportInfoService.resolveOwnerXml` (`infra/support/SupportInfoService.ts`) находит нужный XML
+по пути к `.bsl`-файлу. Тем же путём режим получают служебные XML внутри `Ext/` (`Form.xml`,
+`Template.xml`, `Rights.xml`, `Help.xml`, `CommandInterface.xml`): атрибута `uuid` у них нет, и без
+резолва к владельцу вкладка такого файла объекта «не редактируется» считалась бы свободной:
 
 - модуль подчинённого со своим XML (`.../<Папка>/<Имя>/…/Ext/...`, где `<Папка>` — один из подкаталогов
   `SUBORDINATE_OBJECT_FOLDERS` из [`infra/fs/SubordinateObjectLayout.ts`](../src/infra/fs/SubordinateObjectLayout.ts):

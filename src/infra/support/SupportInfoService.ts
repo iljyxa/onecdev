@@ -142,7 +142,9 @@ export class SupportInfoService {
 
   /**
    * Возвращает режим поддержки по пути к файлу объекта.
-   * Для BSL-модулей режим берётся по XML объекта-владельца, который лежит либо в
+   * Для BSL-модулей и служебных XML в `Ext/` (`Form.xml`, `Template.xml`, `Rights.xml`,
+   * `Help.xml`, `CommandInterface.xml` — своего uuid у них нет) режим берётся по XML
+   * объекта-владельца, который лежит либо в
    * глубокой (`<Тип>/<Имя>/<Имя>.xml`), либо в плоской (`<Тип>/<Имя>.xml`)
    * раскладке выгрузки: модуль всегда в `<Тип>/<Имя>/Ext/`, а XML объекта при
    * плоской выгрузке — уровнем выше. Модули подчинённых со своим XML (формы,
@@ -165,9 +167,12 @@ export class SupportInfoService {
       if (!normFilePath.startsWith(data.normalizedRoot + '/')) { continue; }
       if (data.changesForbidden) { return SupportMode.Locked; }
 
-      const isBsl = filePath.toLowerCase().endsWith('.bsl');
-      const xmlPath = isBsl
-        ? this.resolveObjectXmlForBsl(filePath, data.normalizedRoot, data.originalRoot)
+      // Служебные XML в Ext/ (Form.xml, Template.xml, Rights.xml, Help.xml, CommandInterface.xml)
+      // не несут uuid: режим у них — режим владельца, как у BSL-модуля (#59).
+      const ownedByObject = filePath.toLowerCase().endsWith('.bsl')
+        || normFilePath.slice(data.normalizedRoot.length + 1).split('/').indexOf('ext') >= 2;
+      const xmlPath = ownedByObject
+        ? this.resolveOwnerXml(filePath, data.normalizedRoot, data.originalRoot)
         : filePath;
 
       if (!xmlPath) {
@@ -290,7 +295,8 @@ export class SupportInfoService {
   }
 
   /**
-   * По пути к BSL-модулю находит XML-файл, по uuid которого определяется режим:
+   * По пути к файлу в `Ext/` (BSL-модулю или служебному XML) находит XML-файл, по uuid
+   * которого определяется режим:
    *   - модуль подчинённого со своим XML — `Тип/Имя/Папка/Имя/…/Ext/…` (пар
    *     «Папка/Имя» одна и более, каждая `Папка` — из {@link isSubordinateObjectFolder})
    *     → XML самого глубокого
@@ -301,7 +307,7 @@ export class SupportInfoService {
    * Папка типа берётся из пути, а не из реестра типов: так режим определяется и
    * для папок, которых реестр не знает.
    */
-  private resolveObjectXmlForBsl(
+  private resolveOwnerXml(
     bslPath: string,
     normalizedRoot: string,
     originalRoot: string

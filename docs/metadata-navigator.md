@@ -226,7 +226,7 @@ MCP-инструментов `onecdev_add_url_template`/`onecdev_add_method` —
 поэтому ей может пользоваться и код, не привязанный к реестру типов. Её вызывают:
 `MetaPathResolver.resolveXml` (резолвинг XML объекта по типу и имени), `RepositoryService.
 resolveOwnerObjectXmlPath` (поиск владельца для проверки захвата хранилища), `SupportInfoService.
-resolveObjectXmlForBsl` (поиск владельца для режима поддержки BSL-модуля, см.
+resolveOwnerXml` (поиск владельца для режима поддержки BSL-модуля, см.
 [bsl-language-support.md](./bsl-language-support.md#определение-режима-поддержки-bsl-модуля)),
 `MetadataCache` и `SubsystemXmlService` (XML корневых подсистем в `Subsystems/` и вложенных — в
 `Subsystems/` «дома» родителя) и `ConfigurationValidationService` (проверка, что у каждого объекта
