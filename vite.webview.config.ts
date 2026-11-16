@@ -13,6 +13,7 @@ const entries = {
   changes: 'src-ui/apps/changes/main.ts',
   'repository-connection': 'src-ui/apps/repository-connection/main.ts',
   'repository-commit': 'src-ui/apps/repository-commit/main.ts',
+  'repository-history': 'src-ui/apps/repository-history/main.ts',
   subsystem: 'src-ui/apps/subsystem/main.ts',
   universal: 'src-ui/apps/universal/main.ts',
   'dynamic-panel': 'src-ui/apps/dynamic-panel/main.ts',
