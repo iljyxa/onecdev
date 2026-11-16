@@ -10,7 +10,7 @@
 1. **Навигатор метаданных** — дерево объектов из XML-выгрузки (CF и CFE), свойства, чтение/создание/редактирование метаданных, открытие BSL-модулей.
 2. **Языковая поддержка BSL** — LSP-клиент для внешнего `bsl-analyzer`.
 
-Подробная документация — в `./docs` (`architecture.md`, `metadata-navigator.md`, `metadata-parser.md`, `bsl-language-support.md`, `mcp-paths.md`, `mcp-server-lifecycle.md`, `xml-format-rulesets.md`, `agentic-pipeline.md`, `vscode-extension-best-practices.md`, `git-metadata-changes.md`, `git-history-graph.md`, `repository-file-sync.md`). Справочники, вынесенные из этого файла ради экономии контекста агентов: **[change-recipes.md](./docs/change-recipes.md)** — какие файлы трогать по сценарию, [project-layout.md](./docs/project-layout.md) — подробная раскладка `src/`, [tech-debt.md](./docs/tech-debt.md) — известные технические долги.
+Подробная документация — в `./docs` (`architecture.md`, `metadata-navigator.md`, `metadata-parser.md`, `bsl-language-support.md`, `mcp-paths.md`, `mcp-server-lifecycle.md`, `xml-format-rulesets.md`, `agentic-pipeline.md`, `vscode-extension-best-practices.md`, `git-metadata-changes.md`, `git-history-graph.md`, `repository-file-sync.md`, `repository-crs.md`). Справочники, вынесенные из этого файла ради экономии контекста агентов: **[change-recipes.md](./docs/change-recipes.md)** — какие файлы трогать по сценарию, [project-layout.md](./docs/project-layout.md) — подробная раскладка `src/`, [tech-debt.md](./docs/tech-debt.md) — известные технические долги.
 
 ## Язык общения
 
@@ -306,6 +306,9 @@ Vue-приложения (сборка `vite.webview.config.ts`, проверк�
 6. `rg "from ['\"].*cli|from ['\"].*/cli" src/domain src/infra` — 0.
 7. `rg "require\(|readFileSync" src/domain` — 0.
 8. `rg "FOLDER_MAP|FOLDER_RU" src` — 0.
+9. `rg "crs:snapshots|commitObjects|updateObjects|11223344" src --glob '!src/test/**'` — 0 (протокол crs не читает содержимое объектов, [repository-crs.md](./docs/repository-crs.md)).
+10. `rg "crs:data" src --glob '!src/test/**' --glob '!src/infra/repository/crs/CrsHistory.ts'` — 0.
+11. `rg "base64|atob\(" src/infra/repository/crs/CrsHistory.ts` — 0.
 
 ## Известные технические долги
 

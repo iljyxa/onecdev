@@ -143,7 +143,7 @@
 
 Пробы версии и alias подставляются в снятый кадр `openDevDepot` функцией `substitute` скрипта: она бросает
 ошибку, если образец замены встретился не ровно один раз. На них построены рукопожатие и классификация
-отказов `core/crs/` ([05-crs-api.md](../../docs/research/crs/05-crs-api.md), решение 7 в [decisions.md](../../docs/repository-crs.md)).
+отказов `src/infra/repository/crs/` ([05-crs-api.md](../../docs/research/crs/05-crs-api.md), решение 7 в [repository-crs.md](../../docs/repository-crs.md)).
 
 `tcp-raw-summary.json` — сводка. От пересборки к пересборке меняются только UUID клиента (16 байт после
 `224855b5`), `depotID`/`rootID` хранилища и `crs:date` в ответе `openDevDepot`; размеры потоков и
@@ -180,7 +180,7 @@ Sidorov, Reader привязаны к своим базам. Тела `devDepotR
 `probe-bind-new` меняет состояние стенда, поэтому в порядке снятия идёт предпоследней (за ней — только
 проверочная статистика). `read-probes-summary.json` — сводка. Скрипт пересобирает только свои каталоги
 `probe-*` в `tcp/`. Выводы — [05-crs-api.md](../../docs/research/crs/05-crs-api.md), решение 8 в
-[decisions.md](../../docs/repository-crs.md).
+[repository-crs.md](../../docs/repository-crs.md).
 
 ## Пробы фильтров истории (`tcp/probe-history-*`, платформа 8.5.1, issue iljyxa/vscode-1c-repository-tools#39)
 

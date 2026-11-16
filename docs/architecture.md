@@ -35,7 +35,9 @@ src/
 │   │                                  # области файлов), RepositoryDumpPlan/RepositoryDumpRounds (план и
 │   │                                  # раунды выгрузки), RepositoryMergePlanner/Applier (трёхстороннее
 │   │                                  # слияние), ConfigDumpInfoDiff, ConfigurationChildObjectsSync,
-│   │                                  # RepositoryBindingStore — см. docs/repository-file-sync.md
+│   │                                  # RepositoryBindingStore — см. docs/repository-file-sync.md;
+│   │                                  # crs/ — клиент протокола crserver (tcp/http, XML-слой в
+│   │                                  # infra/xml/crs/), см. docs/repository-crs.md
 │   ├── fs/AtomicFileWriter.ts        # единственная реализация атомарной записи (temp+rename),
 │   │                                  # см. «Атомарная запись файлов выгрузки» ниже
 │   ├── mcp/                          # McpServerIdentity/McpStartDecision/McpPortProbe/
@@ -787,4 +789,5 @@ extension.ts
 - [Изменения метаданных](./git-metadata-changes.md) — семантический git по объектам 1С, представление `onecdevChanges`.
 - [История изменений](./git-history-graph.md) — граф git-коммитов по объектам 1С, сворачиваемый блок панели `onecdevChanges`.
 - [Синхронизация с хранилищем](./repository-file-sync.md) — файлы проекта при захвате/получении/отмене захвата/помещении, единицы хранилища, слияние, снимки, readonly.
+- [Клиент протокола crs](./repository-crs.md) — сервер хранилища по tcp/http без платформы: модули, решения, адаптации, непроверенное; исследования — `docs/research/crs/`.
 - [Жизненный цикл MCP-сервера](./mcp-server-lifecycle.md) — старт/остановка, освобождение порта, обнаружение и разрешение конфликта порта; канон путей MCP-инструментов — отдельно, в [mcp-paths.md](./mcp-paths.md).

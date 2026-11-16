@@ -33,8 +33,10 @@ src/
 │   │   ├── properties/               # канон порядка <Properties> КОРНЕВОГО объекта (docs/xml-format-rulesets.md)
 │   │   │   ├── PropertyOrder.ts      # ДАННЫЕ: ROOT_PROPERTY_ORDER (по MetaKind), rootPropertyRank, hasRootPropertyOrderRule
 │   │   │   └── PropertyInsert.ts     # МЕХАНИКА: insertPropertyBlockInOrder — не знает ни одного вида метаданных
-│   │   ├── CrsMessageXml.ts          # конверт crs:call/crs:call_return/crs:call_exception —
-│   │   │                              # протокол crserver (см. ниже, infra/repository/crs/)
+│   │   ├── crs/                      # XML протокола crserver (docs/repository-crs.md):
+│   │   │   ├── CrsXmlReader.ts       # узкий ридер (пространства имён, 5 сущностей)
+│   │   │   ├── CrsEnvelope.ts        # конверт crs:call, разбор ответа, VRS-исключения, maskCrsSecrets
+│   │   │   └── CrsResponseReaders.ts # строгие читатели ответа, decodeReturn
 │   │   └── format/                   # ruleset формата сериализации (см. docs/xml-format-rulesets.md)
 │   │       ├── FormatRuleset.ts      # интерфейс правил генерации одного поколения формата
 │   │       ├── baselineRuleset.ts    # правила текущего формата (2.21)
@@ -68,9 +70,12 @@ src/
 │   │                                  # см. docs/repository-file-sync.md#статусы-захватов-с-сервера) —
 │   │                                  # RepositoryLockStatusService/Source, два источника:
 │   │                                  # onecd/ (OneCdFile/OneCdTable — read-only формат 1cv8ddb.1CD) и
-│   │                                  # crs/ (CrsAddress/CrsTransport/CrsClient — протокол crserver
-│   │                                  # поверх tcp/http(s), тело — infra/xml/CrsMessageXml.ts) —
-│   │                                  # см. docs/repository-file-sync.md
+│   │                                  # crs/ (протокол crserver: Crs{Tcp,Http}{Framing,Transport},
+│   │                                  # CrsAddress/CrsConnect/CrsClient, CrsErrors/CrsException,
+│   │                                  # методы CrsDepot/CrsStatistic/CrsUsers/CrsHistory; XML —
+│   │                                  # infra/xml/crs/) — см. docs/repository-crs.md и
+│   │                                  # docs/repository-file-sync.md; OneCBracketText — общий
+│   │                                  # скобочный разборщик crs и 1CD
 │   ├── git/                          # статус Git для узлов метаданных (GitMetadataStatusService,
 │   │                                  # декорации) + представление «Изменения метаданных»
 │   │                                  # (GitPorcelainReader, MetadataChangeResolver,
