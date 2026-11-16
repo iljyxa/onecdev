@@ -2,7 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { XMLValidator } from 'fast-xml-parser';
 import { hasRealChange, writeTextFilePreservingBomAndEol } from './XmlUtils';
-import { resolveTemplateContentPath } from './dcs/dcsShared';
+import { matchBlocks, resolveTemplateContentPath } from './dcs/dcsShared';
+import { hasPlatformSettings } from './dcs/settingsVariant';
 import { buildSchemaXml } from './dcs/schemaBuilders';
 import { applyEdit } from './dcs/editOperations';
 import { buildInfoLines, parseSchema } from './dcs/schemaParse';
@@ -303,6 +304,13 @@ export class DataCompositionSchemaService {
     pushDuplicates('Параметр', info.parameters.map((parameter) => parameter.name), issues);
     pushDuplicates('Вычисляемое поле', info.calculatedFields.map((field) => field.dataPath), issues);
     pushDuplicates('Вариант настроек', info.variants.map((variant) => variant.name), issues);
+    // Прежний compile писал вариант без dcsset:settings; платформа такой Template.xml не
+    // загружает, а edit его не правит — validate обязан это показать, а не молчать.
+    matchBlocks(xml, 'settingsVariant').forEach((block, index) => {
+      if (!hasPlatformSettings(block)) {
+        push('error', `Вариант настроек №${String(index + 1)} не содержит dcsset:settings: платформа такой вариант не загрузит.`);
+      }
+    });
     return buildValidationResult(templatePath, issues, maxErrors);
   }
 }

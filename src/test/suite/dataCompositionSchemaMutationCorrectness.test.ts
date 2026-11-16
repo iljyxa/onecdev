@@ -11,9 +11,9 @@ const EXAMPLE_CF_221 = path.resolve(__dirname, '../../../example/2.21/src/cf');
 // несколько settingsVariant и DataSetUnion. Используется только чтобы задокументировать
 // форму реальных СКД-выгрузок 1С: dataSetLink здесь хранит связь как sourceExpression/
 // destinationExpression НАПРЯМУЮ, без обёртки <field> (так же её строит и buildDataSetLinkXml,
-// эталон — dataCompositionSchemaDataSetLink.test.ts). Сами мутаторы работают с
-// "плоским" форматом, который генерирует compile(), поэтому для операций edit() ниже
-// строим схему через service.compile(), как это уже делает mxlSkdServices.test.ts.
+// эталон — dataCompositionSchemaDataSetLink.test.ts). Схемы для операций edit() ниже
+// строятся через service.compile(): варианты настроек он пишет в том же формате платформы
+// (dcsset:/dcscor:, #131), что и в реальной выгрузке, — нужны лишь управляемые дубликаты.
 const REAL_SKD_WITH_UNION_AND_VARIANTS = path.join(
   EXAMPLE_CF_221,
   'Reports',
@@ -105,11 +105,11 @@ suite('DataCompositionSchemaService — корректность мутатор�
     const variants = [...xml.matchAll(/<settingsVariant>[\s\S]*?<\/settingsVariant>/g)].map((match) => match[0]);
     assert.strictEqual(variants.length, 2);
 
-    const first = variants.find((block) => block.includes('<name>Первый</name>')) ?? '';
-    const second = variants.find((block) => block.includes('<name>Второй</name>')) ?? '';
+    const first = variants.find((block) => block.includes('<dcsset:name>Первый</dcsset:name>')) ?? '';
+    const second = variants.find((block) => block.includes('<dcsset:name>Второй</dcsset:name>')) ?? '';
 
-    assert.ok(!first.includes('<right>'), 'первый вариант не должен получить значение фильтра');
-    assert.ok(second.includes('<right>Иванов</right>'), 'второй вариант должен получить изменённое значение фильтра');
+    assert.ok(!first.includes('<dcsset:right'), 'первый вариант не должен получить значение фильтра');
+    assert.ok(second.includes('<dcsset:right xsi:type="xs:string">Иванов</dcsset:right>'), 'второй вариант должен получить изменённое значение фильтра');
   });
 });
 
@@ -157,8 +157,8 @@ suite('DataCompositionSchemaService — rename-parameter должен быть �
     assert.ok(fieldBlock.includes('<field>Товар</field>'), 'field поля набора данных не должен измениться при rename-parameter');
 
     // Значение фильтра варианта настроек — тоже не параметр, а обычное значение поля.
-    const filterBlock = /<filter>[\s\S]*?<\/filter>/.exec(xml)?.[0] ?? '';
-    assert.ok(filterBlock.includes('<left>Товар</left>'), 'поле фильтра не должно измениться при rename-parameter');
+    const filterBlock = /<dcsset:filter>[\s\S]*?<\/dcsset:filter>/.exec(xml)?.[0] ?? '';
+    assert.ok(filterBlock.includes('<dcsset:left xsi:type="dcscor:Field">Товар</dcsset:left>'), 'поле фильтра не должно измениться при rename-parameter');
 
     // Ссылка на параметр в тексте запроса (`&amp;Товар`) ДОЛЖНА быть переименована —
     // это ключевая часть ТЗ M3, ломавшаяся на кириллице из-за `\b`.

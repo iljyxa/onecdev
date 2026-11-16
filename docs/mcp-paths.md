@@ -597,9 +597,9 @@ MCP-инструменты принимают только канон. Люба�
 | `onecdev_compile_mxl` | Перезаписывает MXL из JSON DSL. | `Справочники.X.Макет.Y` |
 | `onecdev_decompile_mxl` | Возвращает JSON DSL по существующему MXL. | как `mxl_info` |
 | `onecdev_skd_info` | Сводка СКД: наборы, поля, итоги, параметры, варианты. | `Отчеты.X.Макет.ОсновнаяСхема` |
-| `onecdev_validate_skd` | Валидирует СКД Template.xml. | как `skd_info` |
+| `onecdev_validate_skd` | Валидирует СКД Template.xml; вариант без `dcsset:settings` — ошибка. | как `skd_info` |
 | `onecdev_compile_skd` | Перезаписывает СКД из JSON DSL. | как `skd_info` |
-| `onecdev_edit_skd` | Точечное редактирование СКД (поля, итоги, фильтры, …). | как `skd_info` |
+| `onecdev_edit_skd` | Точечное редактирование СКД (поля, итоги, фильтры, …). Операции варианта работают с форматом платформы (`dcsset:settings`); нет варианта или нет `dcsset:settings` (старый формат) — предупреждение без правки. Группы отбора (`FilterItemGroup`) не обходятся: `remove-filter` работает только с прямыми сравнениями; `modify-filter` заменяет первый элемент секции; `set-outputParameter` — upsert; `add/modify-dataParameter` при дубле дают предупреждение. | как `skd_info` |
 | `onecdev_add_help` | Создаёт Ext/Help.xml и Help/<lang>.html для объекта. | `Справочники.X`, `Документы.X` |
 | `onecdev_create_epf` | Создаёт XML-исходники внешней обработки EPF. | — (использует `outputDir`) |
 | `onecdev_create_erf` | Создаёт XML-исходники внешнего отчёта ERF. | — (использует `outputDir`) |
