@@ -25,6 +25,8 @@ import type { SecretStore } from '../../infra/ai/AiSecretStorage';
 import { SupportInfoService, SupportMode } from '../../infra/support/SupportInfoService';
 import type { Logger } from '../../infra/support/Logger';
 import { McpMutationGate } from '../../ui/mcp/registration/McpMutationGate';
+import { CfePatchMethodService } from '../../infra/cfe/CfePatchMethodService';
+import { cfeModuleOwnerCanonical } from '../../ui/mcp/McpPathResolvers';
 
 /**
  * Issue #46: MCP-мутации над Form/Template обязаны блокироваться по захвату
@@ -36,6 +38,7 @@ import { McpMutationGate } from '../../ui/mcp/registration/McpMutationGate';
  */
 
 const EXAMPLE_CF_21 = path.resolve(__dirname, '../../../example/2.21/src/cf');
+const EXAMPLE_CFE_EVOLC = path.resolve(__dirname, '../../../example/2.21/src/cfe/EVOLC');
 const EXTENSION_ROOT = path.resolve(__dirname, '../../../');
 
 function createFakeSecretStore(): SecretStore {
@@ -79,6 +82,8 @@ interface Harness {
   treeProvider: MetadataTreeProvider;
   tools: Map<string, RegisteredTool>;
   cacheRoot: string;
+  /** Каталог расширения EVOLC — только у стенда `createHarness({ withExtension: true })`. */
+  extensionRoot: string;
   dispose(): void;
 }
 
@@ -139,11 +144,15 @@ function createServices(overrides: Partial<CommandServices>): CommandServices {
   return { ...base, ...overrides };
 }
 
-function createHarness(): Harness {
+function createHarness(options: { withExtension?: boolean } = {}): Harness {
   const workspaceRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'v8-mcp-repo-units-')));
   const configRoot = path.join(workspaceRoot, 'src', 'cf');
   fs.mkdirSync(path.dirname(configRoot), { recursive: true });
   fs.cpSync(EXAMPLE_CF_21, configRoot, { recursive: true });
+  const extensionRoot = path.join(workspaceRoot, 'src', 'cfe', 'EVOLC');
+  if (options.withExtension) {
+    fs.cpSync(EXAMPLE_CFE_EVOLC, extensionRoot, { recursive: true });
+  }
 
   const repositoryService = new RepositoryService(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
   const entries = findConfigurations(workspaceRoot);
@@ -152,7 +161,7 @@ function createHarness(): Harness {
   const treeProvider = new MetadataTreeProvider(entries, vscode.Uri.file(EXTENSION_ROOT), cacheRoot, undefined, undefined, repositoryService);
   const target: RepositoryTarget = { configRoot, configKind: 'cf', displayName: 'ТорговыйУчет' };
 
-  const services = createServices({ treeProvider, repositoryService });
+  const services = createServices({ treeProvider, repositoryService, cfePatchMethodService: new CfePatchMethodService() });
   const server = new V8McpServer(services, new ConfigurationXmlEditor(), workspaceRoot, '0.0.0-test');
   const mock = createMockServer();
   (server as unknown as { registerTools(mcp: unknown): void }).registerTools(mock);
@@ -165,6 +174,7 @@ function createHarness(): Harness {
     treeProvider,
     tools: mock.tools,
     cacheRoot,
+    extensionRoot,
     dispose: () => {
       treeProvider.dispose();
       fs.rmSync(workspaceRoot, { recursive: true, force: true });
@@ -549,5 +559,65 @@ suite('MCP: свойства корня «Конфигурация» требу�
     } finally {
       harness.dispose();
     }
+  });
+});
+
+suite('MCP: onecdev_cfe_patch_method проходит шлюз поддержки и хранилища (issue #54)', () => {
+  const OBJECT_MODULE = 'Справочники.Контрагенты.МодульОбъекта';
+
+  function patchArgs(harness: Harness, canonical: string): Record<string, unknown> {
+    return { extensionPath: harness.extensionRoot, path: canonical, methodName: 'ПередЗаписью', interceptorType: 'Before' };
+  }
+
+  function extensionTarget(harness: Harness): RepositoryTarget {
+    return { configRoot: harness.extensionRoot, configKind: 'cfe', extensionName: 'EVOLC', displayName: 'EVOLC' };
+  }
+
+  test('хранилище расширения подключено, объект не захвачен → isError, модуль не создан; после захвата — модуль создан', async () => {
+    const harness = createHarness({ withExtension: true });
+    try {
+      const target = extensionTarget(harness);
+      await harness.repositoryService.saveBinding(target, { repoPath: '\\\\repo\\ext', repoUser: 'tester', repoPassword: 'secret' });
+      harness.repositoryService.setConnected(target, true);
+      const moduleFile = path.join(harness.extensionRoot, 'Catalogs', 'Контрагенты', 'Ext', 'ObjectModule.bsl');
+      assert.ok(!fs.existsSync(moduleFile), 'фикстура: модуля объекта у заимствованного справочника нет');
+
+      const denied = callTool(harness, 'onecdev_cfe_patch_method', patchArgs(harness, OBJECT_MODULE));
+      assert.strictEqual(isErrorResult(denied), true, `ожидалась блокировка, получено: ${extractText(denied)}`);
+      assert.ok(extractText(denied).includes('не захвачен в хранилище'), extractText(denied));
+      assert.ok(!fs.existsSync(moduleFile), 'заблокированный вызов не должен создавать модуль');
+
+      harness.repositoryService.setLocked(target, ['Справочник.Контрагенты'], true);
+      const allowed = callTool(harness, 'onecdev_cfe_patch_method', patchArgs(harness, OBJECT_MODULE));
+      assert.strictEqual(isErrorResult(allowed), false, `ожидался успех, получено: ${extractText(allowed)}`);
+      assert.ok(fs.readFileSync(moduleFile, 'utf-8').includes('ПередЗаписью'));
+    } finally {
+      harness.dispose();
+    }
+  });
+
+  test('расширение, не загруженное в проект, или отсутствующая в нём форма → isError, файлы не созданы', () => {
+    const harness = createHarness({ withExtension: true });
+    try {
+      const strayExtension = path.join(harness.workspaceRoot, 'stray');
+      fs.cpSync(EXAMPLE_CFE_EVOLC, strayExtension, { recursive: true });
+      const stray = callTool(harness, 'onecdev_cfe_patch_method', { ...patchArgs(harness, OBJECT_MODULE), extensionPath: strayExtension });
+      assert.strictEqual(isErrorResult(stray), true, extractText(stray));
+      assert.ok(!fs.existsSync(path.join(strayExtension, 'Catalogs', 'Контрагенты', 'Ext', 'ObjectModule.bsl')));
+
+      const noForm = callTool(harness, 'onecdev_cfe_patch_method', patchArgs(harness, 'Справочники.Контрагенты.Форма.НетТакой.МодульФормы'));
+      assert.strictEqual(isErrorResult(noForm), true, extractText(noForm));
+      assert.ok(!fs.existsSync(path.join(harness.extensionRoot, 'Catalogs', 'Контрагенты', 'Forms')));
+    } finally {
+      harness.dispose();
+    }
+  });
+
+  test('cfeModuleOwnerCanonical: модуль объекта → объект, модуль формы → форма, общий модуль → он сам', () => {
+    assert.strictEqual(cfeModuleOwnerCanonical(OBJECT_MODULE), 'Справочники.Контрагенты');
+    assert.strictEqual(cfeModuleOwnerCanonical('Документы.Заказ.МодульМенеджера'), 'Документы.Заказ');
+    assert.strictEqual(cfeModuleOwnerCanonical('Справочники.Контрагенты.Форма.ФормаЭлемента.МодульФормы'), 'Справочники.Контрагенты.Форма.ФормаЭлемента');
+    assert.strictEqual(cfeModuleOwnerCanonical('ОбщиеМодули.ОбщегоНазначения'), 'ОбщиеМодули.ОбщегоНазначения');
+    assert.throws(() => cfeModuleOwnerCanonical('Справочники.Контрагенты'), /должен указывать на модуль объекта или формы/);
   });
 });

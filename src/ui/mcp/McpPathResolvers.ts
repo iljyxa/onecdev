@@ -1,5 +1,7 @@
 import * as path from 'path';
 import {
+  canonicalChildPath,
+  canonicalRootPath,
   parseCanonicalPath,
   type ParsedCanonicalPath,
 } from '../../domain/CanonicalNames';
@@ -199,6 +201,23 @@ export function resolveConfigurationRootDirByCanonical(
 export function canonicalToLegacyModulePath(canonical: string): string {
   const parsed = parseCanonicalPath(canonical);
   return buildLegacyModulePath(parsed, canonical);
+}
+
+/**
+ * Канонический путь единицы, которой принадлежит модуль расширения CFE: форма — для
+ * модуля формы (в хранилище она захватывается отдельно от владельца), иначе — объект.
+ * По этой единице MCP-шлюз проверяет поддержку и захват перед записью модуля.
+ */
+export function cfeModuleOwnerCanonical(canonical: string): string {
+  const parsed = parseCanonicalPath(canonical);
+  // Та же валидация формы пути, что и у записи модуля: неподдерживаемый путь отбивается до резолва узла.
+  buildLegacyModulePath(parsed, canonical);
+  if (parsed.kind !== 'module') {
+    return canonical;
+  }
+  return parsed.subPath
+    ? canonicalChildPath({ rootKind: parsed.rootKind, rootName: parsed.rootName, childTag: 'Form', childName: parsed.subPath.name })
+    : canonicalRootPath(parsed.rootKind, parsed.rootName);
 }
 
 function buildLegacyModulePath(parsed: ParsedCanonicalPath, original: string): string {
