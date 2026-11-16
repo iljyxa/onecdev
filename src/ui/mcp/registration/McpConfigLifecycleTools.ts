@@ -12,7 +12,7 @@ import {
   type ConfigurationCommandOutcome,
   isConfigurationCommandSucceeded,
 } from '../../commands/ext/configurationCommandOutcome';
-import { canonicalToLegacyModulePath } from '../McpPathResolvers';
+import { canonicalToLegacyModulePath, cfeModuleOwnerCanonical } from '../McpPathResolvers';
 import { runDumpConfigurationToCf, runLoadConfigurationFromCf } from '../../commands/ext/CfFileCommandRunner';
 import { runDumpAllExtensionsToCfe, runLoadAllExtensionsFromCfe } from '../../commands/ext/CfeBatchCommandRunner';
 import { CFE_MANIFEST_FILE_NAME, type CfeBatchReport } from '../../../infra/cfFile';
@@ -54,7 +54,7 @@ function toExecuteCommandResponse(
 }
 
 export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistrationDeps): void {
-  const { services, gate } = deps;
+  const { services, gate, paths } = deps;
 
   server.registerTool(
     'onecdev_create_configuration',
@@ -400,6 +400,9 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
     },
     ({ path: canonical, ...rest }) => gate.wrap(() => {
       const modulePath = canonicalToLegacyModulePath(canonical);
+      // Модуль пишется в расширение, загруженное в проект: единица (объект или форма) обязана
+      // быть в его дереве и проходить ту же проверку поддержки и захвата, что и UI (#54).
+      gate.assertNodeContentEditable(paths.resolveNode(cfeModuleOwnerCanonical(canonical), rest.extensionPath));
       const result = services.cfePatchMethodService.addMethodInterceptor({ ...rest, modulePath });
       // Сервис бросает исключение при провале (перехват в wrap); дошли сюда — успех.
       gate.afterMutationIfSucceeded(result.changedFiles);
