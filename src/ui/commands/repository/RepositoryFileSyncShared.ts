@@ -201,7 +201,7 @@ export function sweepRepositoryTempArtifacts(
 ): void {
   const workspaceRoot = services.workspaceFolder.uri.fsPath;
   const steps: readonly (() => string[])[] = [
-    () => pruneRepositoryObjectsFiles(workspaceRoot),
+    () => pruneRepositoryObjectsFiles(workspaceRoot, now),
     () => pruneMergeBackups(workspaceRoot, now),
   ];
   let removed = 0;

@@ -13,6 +13,7 @@ import {
   getRepositoryMergeRoot,
   getRepositoryObjectsDir,
   pruneMergeBackups,
+  OBJECTS_FILE_MAX_AGE_MS,
   pruneRepositoryObjectsFiles,
   readDirOrEmpty,
 } from '../../infra/repository/RepositoryTempCleanup';
@@ -94,7 +95,7 @@ suite('RepositoryTempCleanup — раскладка каталогов (issue #6
 
 suite('RepositoryTempCleanup — pruneRepositoryObjectsFiles', () => {
   test('каталога objects/ нет — пустой результат', () => {
-    assert.deepStrictEqual(pruneRepositoryObjectsFiles(makeWorkspace()), []);
+    assert.deepStrictEqual(pruneRepositoryObjectsFiles(makeWorkspace(), NOW), []);
   });
 
   test('удаляются только обычные *.xml: note.txt и подкаталог с именем *.xml остаются', () => {
@@ -107,16 +108,45 @@ suite('RepositoryTempCleanup — pruneRepositoryObjectsFiles', () => {
     writeFile(path.join(dir, 'note.txt'), 'заметка');
     fs.mkdirSync(path.join(dir, 'x.xml'));
 
-    const removed = pruneRepositoryObjectsFiles(workspaceRoot);
+    const removed = pruneRepositoryObjectsFiles(workspaceRoot, NOW);
 
     assert.deepStrictEqual([...removed].sort(), [first, second].sort());
     assert.deepStrictEqual(fs.readdirSync(dir).sort(), ['note.txt', 'x.xml']);
   });
 
+  test('свежие файлы (метка в имени младше часа) остаются — их Конфигуратор может работать в другом хосте (#77)', () => {
+    const workspaceRoot = makeWorkspace();
+    const dir = getRepositoryObjectsDir(workspaceRoot);
+    const nowMs = NOW.getTime();
+    const stale = path.join(dir, `scope-${String(nowMs - OBJECTS_FILE_MAX_AGE_MS - 1)}.xml`);
+    const boundary = path.join(dir, `scope-${String(nowMs - OBJECTS_FILE_MAX_AGE_MS)}.xml`);
+    const fresh = path.join(dir, `scope-${String(nowMs - 1000)}.xml`);
+    for (const filePath of [stale, boundary, fresh]) {
+      writeFile(filePath, '<Objects/>');
+    }
+
+    assert.deepStrictEqual(pruneRepositoryObjectsFiles(workspaceRoot, NOW), [stale]);
+    assert.deepStrictEqual(fs.readdirSync(dir).sort(), [path.basename(boundary), path.basename(fresh)].sort());
+  });
+
+  test('файл без метки времени в имени — возраст по mtime', () => {
+    const workspaceRoot = makeWorkspace();
+    const dir = getRepositoryObjectsDir(workspaceRoot);
+    const old = path.join(dir, 'old.xml');
+    const recent = path.join(dir, 'recent.xml');
+    writeFile(old, '<Objects/>');
+    writeFile(recent, '<Objects/>');
+    const nowSeconds = NOW.getTime() / 1000;
+    fs.utimesSync(old, nowSeconds - 2 * 3600, nowSeconds - 2 * 3600);
+    fs.utimesSync(recent, nowSeconds - 60, nowSeconds - 60);
+
+    assert.deepStrictEqual(pruneRepositoryObjectsFiles(workspaceRoot, NOW), [old]);
+  });
+
   test('objects — обычный файл: ошибка чтения каталога пробрасывается', () => {
     const workspaceRoot = makeWorkspace();
     writeFile(getRepositoryObjectsDir(workspaceRoot), 'не каталог');
-    assert.throws(() => pruneRepositoryObjectsFiles(workspaceRoot), /ENOTDIR/);
+    assert.throws(() => pruneRepositoryObjectsFiles(workspaceRoot, NOW), /ENOTDIR/);
   });
 });
 
