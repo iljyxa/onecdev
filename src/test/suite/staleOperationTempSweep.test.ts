@@ -15,6 +15,7 @@ import {
   getImportTempRoot,
   isInsideWorkspaceServiceDir,
   isStale,
+  isWorkspaceServicePath,
   pruneStaleImportTempDirs,
   readMtimeMs,
 } from '../../infra/fs/WorkspaceTempDir';
@@ -95,6 +96,31 @@ suite('WorkspaceTempDir — isInsideWorkspaceServiceDir (issue #79)', () => {
   for (const { name, filePath, expected } of cases) {
     test(`${name} → ${String(expected)}`, () => {
       assert.strictEqual(isInsideWorkspaceServiceDir(root, filePath), expected);
+    });
+  }
+});
+
+/**
+ * Issue #85: служебные пути рабочей области для watcher'ов Container — `.onecdev/` и
+ * каталоги-бэкапы атомарной замены снимка (`.<имя>.onecdev-backup-<pid>-<время>`, их
+ * создаёт `replaceDirectorySnapshot` рядом с заменяемым каталогом).
+ */
+suite('WorkspaceTempDir — isWorkspaceServicePath (issue #85)', () => {
+  const root = path.join(path.sep, 'ws');
+  const cases: readonly { name: string; filePath: string; expected: boolean }[] = [
+    { name: 'файл в служебном каталоге', filePath: path.join(root, '.onecdev', 'repository', 'merge', 'Configuration.xml'), expected: true },
+    { name: 'сам служебный каталог', filePath: path.join(root, '.onecdev'), expected: true },
+    { name: 'файл в бэкапе снимка', filePath: path.join(root, 'src', '.cf.onecdev-backup-4242-1763300000000', 'Configuration.xml'), expected: true },
+    { name: 'вложенный файл в бэкапе снимка', filePath: path.join(root, 'src', '.cf.onecdev-backup-1-2', 'Catalogs', 'А', 'Ext', 'ObjectModule.bsl'), expected: true },
+    { name: 'файл конфигурации', filePath: path.join(root, 'src', 'cf', 'Configuration.xml'), expected: false },
+    { name: 'бэкап без метки времени', filePath: path.join(root, 'src', '.cf.onecdev-backup-4242', 'Configuration.xml'), expected: false },
+    { name: 'бэкап без имени каталога', filePath: path.join(root, 'src', '.onecdev-backup-1-2', 'Configuration.xml'), expected: false },
+    { name: 'каталог с похожим именем', filePath: path.join(root, '.onecdev-backup', 'x.bsl'), expected: false },
+    { name: 'служебный каталог другой рабочей области', filePath: path.join(path.sep, 'other', '.onecdev', 'x.bsl'), expected: false },
+  ];
+  for (const { name, filePath, expected } of cases) {
+    test(`${name} → ${String(expected)}`, () => {
+      assert.strictEqual(isWorkspaceServicePath(root, filePath), expected);
     });
   }
 });

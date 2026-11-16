@@ -11,6 +11,7 @@ import {
 } from './infra/fs/ConfigurationChangeDetector';
 import { formatPerfLine, measurePerfPhase } from './infra/support/PerfLog';
 import { ConfigurationCleanWindow } from './infra/fs/ConfigurationCleanWindow';
+import { isWorkspaceServicePath } from './infra/fs/WorkspaceTempDir';
 import { ConfigurationOperationGuard } from './infra/process/ConfigurationOperationGuard';
 import { sweepStaleOperationTemp } from './infra/process/StaleOperationTempSweep';
 import { MetadataTreeProvider } from './ui/tree/MetadataTreeProvider';
@@ -620,7 +621,7 @@ export class Container {
     );
 
     const onConfigChange = (uri: vscode.Uri) => {
-      if (isServicePath(uri.fsPath, this.workspaceFolder.uri.fsPath)) {
+      if (isWorkspaceServicePath(this.workspaceFolder.uri.fsPath, uri.fsPath)) {
         return;
       }
       if (this.consumeSuppressedConfigurationReload(uri.fsPath)) {
@@ -696,7 +697,7 @@ export class Container {
     );
 
     const onSourceChange = (uri: vscode.Uri) => {
-      if (isServicePath(uri.fsPath, this.workspaceFolder.uri.fsPath)) {
+      if (isWorkspaceServicePath(this.workspaceFolder.uri.fsPath, uri.fsPath)) {
         return;
       }
       this.scheduleChangedConfigurationStateRefresh(uri);
@@ -1139,15 +1140,6 @@ function isPathInside(filePath: string, rootPath: string): boolean {
   const normalizedRootPath = path.resolve(rootPath).toLowerCase();
   const relative = path.relative(normalizedRootPath, normalizedFilePath);
   return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
-}
-
-function isServicePath(filePath: string, workspaceRoot: string): boolean {
-  const relative = path.relative(workspaceRoot, filePath).replace(/\\/g, '/');
-  if (relative === '.onecdev' || relative.startsWith('.onecdev/')) {
-    return true;
-  }
-
-  return relative.split('/').some((part) => /^\..+\.onecdev-backup-\d+-\d+$/.test(part));
 }
 
 function getExtensionRootPaths(entries: ConfigEntry[]): string[] {
