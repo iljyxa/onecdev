@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { pathKey } from '../../infra/fs/PathKey';
 
 /**
  * Чистое планирование readonly-переходов открытых вкладок после изменения захватов
@@ -17,6 +18,8 @@ export interface ReadonlyTransitionInput {
   ownerChainOf: (filePath: string) => readonly string[];
   /** Желаемое состояние: `true` — редактирование запрещено поддержкой или хранилищем. */
   isRestricted: (filePath: string) => boolean;
+  /** Регистрочувствительность путей; по умолчанию — текущая ОС (параметр — для тестов). */
+  platform?: NodeJS.Platform;
 }
 
 export interface ReadonlyTransition {
@@ -34,12 +37,8 @@ export interface ReadonlyTransitionPlan {
   afterSave: ReadonlyTransition[];
 }
 
-function normalizeKey(filePath: string): string {
-  return path.resolve(filePath).toLowerCase();
-}
-
-function isInsideRoot(filePath: string, configRoot: string): boolean {
-  const relative = path.relative(normalizeKey(configRoot), normalizeKey(filePath));
+function isInsideRoot(filePath: string, configRoot: string, platform: NodeJS.Platform | undefined): boolean {
+  const relative = path.relative(pathKey(configRoot, platform), pathKey(filePath, platform));
   return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
@@ -54,13 +53,13 @@ export function planReadonlyTransitions(input: ReadonlyTransitionInput): Readonl
   const affectedOwners = new Set([...input.changedOwnerFullNames, ...input.allObjects]);
   const byKey = new Map<string, { path: string; visible: boolean; dirty: boolean }>();
   for (const file of input.openFiles) {
-    if (!isInsideRoot(file.path, input.configRoot)) {
+    if (!isInsideRoot(file.path, input.configRoot, input.platform)) {
       continue;
     }
     if (!input.ownerChainOf(file.path).some((owner) => affectedOwners.has(owner))) {
       continue;
     }
-    const key = normalizeKey(file.path);
+    const key = pathKey(file.path, input.platform);
     const known = byKey.get(key);
     byKey.set(key, {
       path: known?.path ?? file.path,
