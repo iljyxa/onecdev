@@ -25,6 +25,7 @@ import {
 import { readExtensionListFromDumpFile, resolveDbPassword, type ProjectSecretStorage } from '../../../infra/environment';
 import { createImportTempDir as createWorkspaceTempDir } from '../../../infra/fs/WorkspaceTempDir';
 import { describeFsError, removePathWithRetries } from '../../../infra/fs/PathRemoval';
+import { classifyPartialLoadRefusal, describeRepositoryLoadRefusal } from '../../../infra/process/PartialLoadRefusal';
 
 type NodeArg = MetadataNode | { xmlPath?: string; nodeKind?: string; label?: string };
 
@@ -660,9 +661,35 @@ async function runBatchApplyDatabaseConfiguration(
 
 const FULL_SYNC_CONFIRM_BUTTON = 'Выполнить полную загрузку';
 
-function isConfigurationIdMismatchReason(reason: string): boolean {
-  return /идентификатор[\s\S]*загружаемой конфигурации[\s\S]*отличается[\s\S]*сохраненной/i.test(reason)
-    || /ошибка частичной загрузки/i.test(reason);
+/**
+ * Решает, переходить ли к полной загрузке после отказа частичной. Отказ хранилища (объект не
+ * захвачен, конфигурация помещена в хранилище) полной загрузкой не обойти — платформа отклонит
+ * и её: показывается истинная причина, без модального предложения (#113).
+ */
+async function resolveFullSyncFallback(
+  targetLabel: string,
+  failureReason: string,
+  outputChannel: vscode.OutputChannel
+): Promise<boolean> {
+  const refusal = classifyPartialLoadRefusal(failureReason);
+  const repositoryMessage = describeRepositoryLoadRefusal(refusal, targetLabel);
+  if (repositoryMessage) {
+    outputChannel.appendLine(`[update-configuration] ${repositoryMessage}`);
+    void vscode.window.showErrorMessage(repositoryMessage, 'Открыть журнал').then((action) => {
+      if (action === 'Открыть журнал') {
+        outputChannel.show(true);
+      }
+    });
+    return false;
+  }
+  outputChannel.appendLine(
+    `[update-configuration] Частичная загрузка ${targetLabel} недоступна, запрашиваю подтверждение полной загрузки.`
+  );
+  const confirmed = await confirmFullSyncFallback(targetLabel, failureReason, outputChannel);
+  if (!confirmed) {
+    outputChannel.appendLine('[update-configuration] Полная загрузка отклонена пользователем.');
+  }
+  return confirmed;
 }
 
 async function confirmFullSyncFallback(
@@ -670,7 +697,7 @@ async function confirmFullSyncFallback(
   failureReason: string,
   outputChannel: vscode.OutputChannel
 ): Promise<boolean> {
-  const isMismatch = isConfigurationIdMismatchReason(failureReason);
+  const isMismatch = classifyPartialLoadRefusal(failureReason).kind === 'configuration-id-mismatch';
   const detail = isMismatch
     ? `Идентификатор конфигурации в файлах не совпадает с идентификатором базы — частичная загрузка платформой запрещена. Это типично для первой синхронизации с базой или после её пересоздания.\n\nПолная загрузка перезапишет конфигурацию базы исходниками из ${targetLabel}.`
     : `Причина:\n${failureReason}\n\nПолная загрузка перезапишет конфигурацию базы исходниками из ${targetLabel}.`;
@@ -770,16 +797,7 @@ async function runBatchUpdateExtension(
     outputChannel
   );
   if (!imported) {
-    outputChannel.appendLine(
-      '[update-configuration] Частичная загрузка по хеш-кэшу недоступна, запрашиваю подтверждение полной загрузки.'
-    );
-    const confirmed = await confirmFullSyncFallback(
-      `расширения "${extensionName}"`,
-      importFailureReason,
-      outputChannel
-    );
-    if (!confirmed) {
-      outputChannel.appendLine('[update-configuration] Полная загрузка отклонена пользователем.');
+    if (!await resolveFullSyncFallback(`расширения "${extensionName}"`, importFailureReason, outputChannel)) {
       return false;
     }
     const fallbackArgs = [
@@ -873,16 +891,7 @@ async function runBatchUpdateMainConfiguration(
     outputChannel
   );
   if (!imported) {
-    outputChannel.appendLine(
-      '[update-configuration] Частичная загрузка основной конфигурации недоступна, запрашиваю подтверждение полной загрузки.'
-    );
-    const confirmed = await confirmFullSyncFallback(
-      `конфигурации "${configName}"`,
-      importFailureReason,
-      outputChannel
-    );
-    if (!confirmed) {
-      outputChannel.appendLine('[update-configuration] Полная загрузка отклонена пользователем.');
+    if (!await resolveFullSyncFallback(`конфигурации "${configName}"`, importFailureReason, outputChannel)) {
       return false;
     }
     const fallbackArgs = [
