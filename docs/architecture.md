@@ -100,7 +100,16 @@ src/
   (`externalObjectShared`, `externalObjectXml`, `bspRegistration`,
   `externalObjectFiles`, `externalObjectValidation`) — работа с EPF/ERF.
 - `infra/xml/DataCompositionSchemaService.ts` (фасад) + `infra/xml/dcs/*`
-  (`dcsShared`, `schemaParse`, `schemaBuilders`, `editOperations`) — СКД.
+  (`dcsShared`, `schemaParse`, `schemaBuilders`, `editOperations`, `settingsVariant`) — СКД.
+  `settingsVariant` — вариант настроек в формате платформы (`dcsset:`/`dcscor:`): порядок секций
+  `dcsset:settings` (selection, filter, dataParameters, order, conditionalAppearance,
+  outputParameters, затем `dcsset:item` структуры) снят с платформы; билдеры варианта/секций/элементов,
+  детерминированный `userSettingID` (`stableUserSettingId`, GUID v5 от затравки вариант/секция/имя),
+  редактор секций по диапазонам, `parseVariantInfo`, `readDirectChildText`. Каноническая форма
+  подтверждена round-trip через 8.5.1/8.3.27: `dataParameters` с `<dcscor:value xsi:nil="true"/>`,
+  элемент `conditionalAppearance` всегда с `selection`/`filter` (пустые — самозакрытые). Эталон —
+  `src/test/fixtures/dcs-settings-variant/zapasy-variant-roundtrip-8.5.1.xml`. Билдеры и парсер
+  правятся вместе; `xmlns:pal` на `dcsset:settings` 8.3.27 при выгрузке не пишет (косметика).
 - `infra/xml/form/FormBuilders.ts` (реэкспорт-барель) + `infra/xml/form/builders/*`
   (`formBuilderShared`, `formElements`, `formAttributes`, `formCommands`,
   `formDocument`) — построение XML управляемых форм.

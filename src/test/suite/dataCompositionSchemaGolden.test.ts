@@ -21,8 +21,9 @@ import { skipWithoutCorpus } from './support/corpus';
  * EOL неизменённых строк через writeTextFilePreservingBomAndEol/preserveBomAndEol
  * (LineEndings.ts) — оба пути детерминированы, поэтому весь текст (включая переводы
  * строк, отступы, самозакрытие тегов, BOM) сравнивается буквально без нормализации
- * и без плейсхолдеров: во всех сценариях ниже нет uuid/даты, генерируемых сервисом
- * заново при каждом прогоне.
+ * и без плейсхолдеров: во всех сценариях ниже нет даты, генерируемой сервисом заново
+ * при каждом прогоне, а userSettingID варианта настроек детерминирован (sha1 от
+ * «вариант/секция/имя», stableUserSettingId) — поэтому стоит литералом.
  */
 suite('DataCompositionSchemaService — байт-golden характеризация (предусловие дробления на infra/xml/dcs/*)', () => {
   test('compile: полный байтовый эталон XML схемы из репрезентативного SkdDefinition (dataSource/dataSet+calc+total/parameters c @autoDates/variant c selection+filter+order+structure)', () => {
@@ -79,15 +80,10 @@ suite('DataCompositionSchemaService — байт-golden характеризац
     assert.strictEqual(result.dataSets.length, 1);
     assert.strictEqual(result.dataSets[0], 'Продажи');
     // @autoDates разворачивает "Период" в три параметра (Период, НачалоПериода,
-    // КонецПериода) + объектный параметр "Организация". compile.parameters читает
-    // их через info().parameters, а parseSchema матчит ЛЮБОЙ тег <parameter> в
-    // документе нерекурсивным regex'ом matchBlocks — в т.ч. вложенные
-    // <item><parameter>Период</parameter></item> внутри <dataParameters> варианта
-    // настроек (dataParameters:'auto' генерирует такие ссылки на Период/Организацию).
-    // У этих вложенных совпадений нет дочернего <name>, поэтому readText возвращает
-    // '' — отсюда два пустых имени в хвосте. Это задокументированное реальное
-    // поведение сервиса ДО дробления, а не то, что "должно" быть.
-    assert.deepStrictEqual(result.parameters, ['Период', 'НачалоПериода', 'КонецПериода', 'Организация', '', '']);
+    // КонецПериода) + объектный параметр "Организация". Ссылки dataParameters варианта
+    // теперь в формате платформы (<dcscor:parameter>, #131) и параметрами схемы не
+    // считаются — пустых имён в хвосте больше нет.
+    assert.deepStrictEqual(result.parameters, ['Период', 'НачалоПериода', 'КонецПериода', 'Организация']);
 
     const xml = fs.readFileSync(templatePath, 'utf-8');
     const expectedXml =
@@ -184,37 +180,66 @@ suite('DataCompositionSchemaService — байт-golden характеризац
       + '\t\t<use>Always</use>\n'
       + '\t</parameter>\n'
       + '\t<settingsVariant>\n'
-      + '\t\t<name>Основной</name>\n'
-      + '\t\t<title xsi:type="v8:LocalStringType">\n'
-      + '\t\t\t<v8:item><v8:lang>ru</v8:lang><v8:content>Основной вариант</v8:content></v8:item>\n'
-      + '\t\t</title>\n'
-      + '\t\t<settings>\n'
-      + '\t\t\t<selection>\n'
-      + '\t\t\t\t<item xsi:type="dcsset:SelectedItemField"><field>Номенклатура</field></item>\n'
-      + '\t\t\t\t<item xsi:type="dcsset:SelectedItemField"><field>Количество</field></item>\n'
-      + '\t\t\t</selection>\n'
-      + '\t\t\t<filter>\n'
-      + '\t\t\t\t<item xsi:type="dcsset:FilterItemComparison">\n'
-      + '\t\t\t\t\t<left>Количество</left>\n'
-      + '\t\t\t\t\t<comparisonType>Greater</comparisonType>\n'
-      + '\t\t\t\t\t<right>0</right>\n'
-      + '\t\t\t\t</item>\n'
-      + '\t\t\t</filter>\n'
-      + '\t\t\t<order><item><field>Номенклатура</field><orderType>Asc</orderType></item></order>\n'
-      + '\t\t\t<dataParameters>\n'
-      + '\t\t\t\t<item><parameter>Период</parameter><userSettingID>Период</userSettingID></item>\n'
-      + '\t\t\t\t<item><parameter>Организация</parameter><userSettingID>Организация</userSettingID></item>\n'
-      + '\t\t\t</dataParameters>\n'
-      + '\t\t\t<structure>\n'
-      + '\t\t\t\t<item xsi:type="dcsset:StructureItemGroup">\n'
-      + '\t\t\t\t\t<name>Группировка</name>\n'
-      + '\t\t\t\t\t<groupItems><item><field>Номенклатура</field><groupType>Items</groupType></item></groupItems>\n'
-      + '\t\t\t\t\t<selection>\n'
-      + '\t\t\t\t\t\t<item xsi:type="dcsset:SelectedItemAuto"/>\n'
-      + '\t\t\t\t\t</selection>\n'
-      + '\t\t\t\t</item>\n'
-      + '\t\t\t</structure>\n'
-      + '\t\t</settings>\n'
+      + '\t\t<dcsset:name>Основной</dcsset:name>\n'
+      + '\t\t<dcsset:presentation xsi:type="v8:LocalStringType">\n'
+      + '\t\t\t<v8:item>\n'
+      + '\t\t\t\t<v8:lang>ru</v8:lang>\n'
+      + '\t\t\t\t<v8:content>Основной вариант</v8:content>\n'
+      + '\t\t\t</v8:item>\n'
+      + '\t\t</dcsset:presentation>\n'
+      + '\t\t<dcsset:settings xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows">\n'
+      + '\t\t\t<dcsset:selection>\n'
+      + '\t\t\t\t<dcsset:item xsi:type="dcsset:SelectedItemField">\n'
+      + '\t\t\t\t\t<dcsset:field>Номенклатура</dcsset:field>\n'
+      + '\t\t\t\t</dcsset:item>\n'
+      + '\t\t\t\t<dcsset:item xsi:type="dcsset:SelectedItemField">\n'
+      + '\t\t\t\t\t<dcsset:field>Количество</dcsset:field>\n'
+      + '\t\t\t\t</dcsset:item>\n'
+      + '\t\t\t</dcsset:selection>\n'
+      + '\t\t\t<dcsset:filter>\n'
+      + '\t\t\t\t<dcsset:item xsi:type="dcsset:FilterItemComparison">\n'
+      + '\t\t\t\t\t<dcsset:left xsi:type="dcscor:Field">Количество</dcsset:left>\n'
+      + '\t\t\t\t\t<dcsset:comparisonType>Greater</dcsset:comparisonType>\n'
+      + '\t\t\t\t\t<dcsset:right xsi:type="xs:decimal">0</dcsset:right>\n'
+      + '\t\t\t\t</dcsset:item>\n'
+      + '\t\t\t</dcsset:filter>\n'
+      + '\t\t\t<dcsset:dataParameters>\n'
+      + '\t\t\t\t<dcscor:item xsi:type="dcsset:SettingsParameterValue">\n'
+      + '\t\t\t\t\t<dcscor:parameter>Период</dcscor:parameter>\n'
+      + '\t\t\t\t\t<dcscor:value xsi:nil="true"/>\n'
+      + '\t\t\t\t\t<dcsset:userSettingID>455615a1-8db4-5784-b63f-403185206ddf</dcsset:userSettingID>\n'
+      + '\t\t\t\t</dcscor:item>\n'
+      + '\t\t\t\t<dcscor:item xsi:type="dcsset:SettingsParameterValue">\n'
+      + '\t\t\t\t\t<dcscor:parameter>Организация</dcscor:parameter>\n'
+      + '\t\t\t\t\t<dcscor:value xsi:nil="true"/>\n'
+      + '\t\t\t\t\t<dcsset:userSettingID>d60b99fd-fd9e-5c45-ad5d-d36d26a04363</dcsset:userSettingID>\n'
+      + '\t\t\t\t</dcscor:item>\n'
+      + '\t\t\t</dcsset:dataParameters>\n'
+      + '\t\t\t<dcsset:order>\n'
+      + '\t\t\t\t<dcsset:item xsi:type="dcsset:OrderItemField">\n'
+      + '\t\t\t\t\t<dcsset:field>Номенклатура</dcsset:field>\n'
+      + '\t\t\t\t\t<dcsset:orderType>Asc</dcsset:orderType>\n'
+      + '\t\t\t\t</dcsset:item>\n'
+      + '\t\t\t</dcsset:order>\n'
+      + '\t\t\t<dcsset:item xsi:type="dcsset:StructureItemGroup">\n'
+      + '\t\t\t\t<dcsset:name>Группировка</dcsset:name>\n'
+      + '\t\t\t\t<dcsset:groupItems>\n'
+      + '\t\t\t\t\t<dcsset:item xsi:type="dcsset:GroupItemField">\n'
+      + '\t\t\t\t\t\t<dcsset:field>Номенклатура</dcsset:field>\n'
+      + '\t\t\t\t\t\t<dcsset:groupType>Items</dcsset:groupType>\n'
+      + '\t\t\t\t\t\t<dcsset:periodAdditionType>None</dcsset:periodAdditionType>\n'
+      + '\t\t\t\t\t\t<dcsset:periodAdditionBegin xsi:type="xs:dateTime">0001-01-01T00:00:00</dcsset:periodAdditionBegin>\n'
+      + '\t\t\t\t\t\t<dcsset:periodAdditionEnd xsi:type="xs:dateTime">0001-01-01T00:00:00</dcsset:periodAdditionEnd>\n'
+      + '\t\t\t\t\t</dcsset:item>\n'
+      + '\t\t\t\t</dcsset:groupItems>\n'
+      + '\t\t\t\t<dcsset:order>\n'
+      + '\t\t\t\t\t<dcsset:item xsi:type="dcsset:OrderItemAuto"/>\n'
+      + '\t\t\t\t</dcsset:order>\n'
+      + '\t\t\t\t<dcsset:selection>\n'
+      + '\t\t\t\t\t<dcsset:item xsi:type="dcsset:SelectedItemAuto"/>\n'
+      + '\t\t\t\t</dcsset:selection>\n'
+      + '\t\t\t</dcsset:item>\n'
+      + '\t\t</dcsset:settings>\n'
       + '\t</settingsVariant>\n'
       + '</DataCompositionSchema>\n';
     assert.strictEqual(xml, expectedXml);
@@ -271,7 +296,7 @@ suite('DataCompositionSchemaService — байт-golden характеризац
       'Поля: 2',
       'Вычисляемые поля: 1',
       'Итоги: 1',
-      'Параметры: 6',
+      'Параметры: 4',
       'Варианты: 1',
       '',
       '--- Query: Продажи ---',
@@ -291,13 +316,6 @@ suite('DataCompositionSchemaService — байт-golden характеризац
       '  НачалоПериода: dateTime [hidden]',
       '  КонецПериода: dateTime [hidden]',
       '  Организация: CatalogRef.Организации',
-      // Те же два "пустых" параметра, что и в компилируемом result.parameters
-      // (см. предыдущий тест): matchBlocks(xml, 'parameter') матчит и вложенные
-      // <item><parameter>Период</parameter></item> внутри <dataParameters>
-      // варианта настроек (сгенерированы dataParameters:'auto'), у которых нет
-      // дочернего <name>/<valueType> — отсюда пустое имя и "<тип не задан>".
-      '  : <тип не задан>',
-      '  : <тип не задан>',
       '',
       '--- Variants ---',
       '  Основной: selection=Номенклатура, Количество',
@@ -728,10 +746,8 @@ suite('DataCompositionSchemaService — байт-golden характеризац
       '  ПодробныеСведенияОПравахДоступа: boolean',
       '',
       '--- Variants ---',
-      // settingsVariant в этой реальной выгрузке использует namespace-префикс
-      // dcsset:name/dcsset:settings — parseSchema ищет НЕпрефиксованные <name>/<selection>,
-      // поэтому name и selection варианта закономерно пустые (задокументированное поведение).
-      '  : selection=Auto',
+      // Вариант без dcsset:selection: выводится «Auto» (поля выбора не заданы).
+      '  ПраваДоступа: selection=Auto',
     ];
     assert.deepStrictEqual(info.lines, expectedLines);
   });

@@ -6,11 +6,8 @@ import {
   findNestingAwareElementRange,
 } from '../XmlUtils';
 import {
-  appendIntoSection,
   countTags,
   editFirstDataSet,
-  editFirstVariantSettings,
-  extractBlock,
   insertBeforeClose,
   insertIntoSchemaRoot,
   matchBlockRanges,
@@ -23,17 +20,82 @@ import {
   buildCalculatedFieldXml,
   buildDataSetXml,
   buildFieldXml,
-  buildFilterXml,
-  buildOrderXml,
   buildParameterXml,
   buildParameterXmlWithAutoDates,
-  buildStructureXml,
   buildTotalFieldXml,
-  buildVariantXml,
 } from './schemaBuilders';
 import { parseField, parseParameter, parseVariant } from './schemaParse';
+import {
+  appendSectionItem,
+  buildConditionalAppearanceItemXml,
+  buildDataParameterItemXml,
+  buildFilterItemXml,
+  buildOrderItemXml,
+  buildOutputParameterItemXml,
+  buildSelectionItemXml,
+  buildStructureItemsXml,
+  buildVariantXml,
+  editVariantSettings,
+  hasSectionItem,
+  readDirectChildText,
+  removeSection,
+  removeSectionItems,
+  replaceFirstSectionItem,
+  replaceStructureItems,
+  stableUserSettingId,
+  upsertSectionItem,
+} from './settingsVariant';
+import type { VariantSettingsScope } from './settingsVariant';
+
+type VariantOperation = Extract<SkdEditOperation,
+  | 'add-selection' | 'add-filter' | 'modify-filter' | 'remove-filter' | 'clear-selection' | 'clear-filter' | 'clear-order'
+  | 'add-order' | 'add-dataParameter' | 'modify-dataParameter' | 'add-conditionalAppearance' | 'set-outputParameter' | 'set-structure'>;
+
+/**
+ * Операции над `dcsset:settings` варианта: таблица вместо ветвей switch — все они идут через
+ * один редактор варианта (поиск варианта, предупреждения, вклейка по диапазонам).
+ */
+const VARIANT_OPERATIONS: Record<VariantOperation, (scope: VariantSettingsScope, value: string, warnings: string[]) => string> = {
+  'add-selection': (scope, value) => appendSectionItem(scope, 'selection', buildSelectionItemXml(value, `${scope.indent}\t`)),
+  'add-filter': (scope, value) => appendSectionItem(scope, 'filter', buildFilterItemXml(value, `${scope.indent}\t`, `${scope.variantName}/filter`)),
+  'modify-filter': (scope, value) => replaceFirstSectionItem(scope, 'filter', buildFilterItemXml(value, `${scope.indent}\t`, `${scope.variantName}/filter`)),
+  'remove-filter': (scope, value) => removeSectionItems(scope, 'filter', (item) => readDirectChildText(item, 'dcsset:left') === value.trim()),
+  'clear-selection': (scope) => removeSection(scope, 'selection'),
+  'clear-filter': (scope) => removeSection(scope, 'filter'),
+  'clear-order': (scope) => removeSection(scope, 'order'),
+  'add-order': (scope, value) => appendSectionItem(scope, 'order', buildOrderItemXml(value, `${scope.indent}\t`)),
+  'add-dataParameter': (scope, value, warnings) => addDataParameter(scope, value, warnings, 'add-dataParameter'),
+  'modify-dataParameter': (scope, value, warnings) => addDataParameter(scope, value, warnings, 'modify-dataParameter'),
+  'add-conditionalAppearance': (scope, value) => appendSectionItem(scope, 'conditionalAppearance', buildConditionalAppearanceItemXml(value, `${scope.indent}\t`, `${scope.variantName}/conditionalAppearance/filter`)),
+  'set-outputParameter': (scope, value) => {
+    const name = value.split('=')[0].trim();
+    return upsertSectionItem(scope, 'outputParameters', (item) => readText(item, 'dcscor:parameter') === name, buildOutputParameterItemXml(value, `${scope.indent}\t`));
+  },
+  'set-structure': (scope, value) => replaceStructureItems(scope, buildStructureItemsXml(value, scope.indent)),
+};
+
+function isVariantOperation(operation: SkdEditOperation): operation is VariantOperation {
+  return operation in VARIANT_OPERATIONS;
+}
+
+/**
+ * Значение параметра DSL отбрасывается (тип схемой не задан). Повторный параметр в варианте
+ * платформа не примет, поэтому дубль — предупреждение без правки.
+ */
+function addDataParameter(scope: VariantSettingsScope, value: string, warnings: string[], operation: 'add-dataParameter' | 'modify-dataParameter'): string {
+  const name = value.replace(/\s*=.*/, '').trim();
+  if (hasSectionItem(scope, 'dataParameters', (item) => readText(item, 'dcscor:parameter') === name)) {
+    warnings.push(`${operation}: параметр уже есть в варианте ${scope.variantName}: ${name}.`);
+    return scope.inner;
+  }
+  const userSettingId = operation === 'add-dataParameter' ? stableUserSettingId(`${scope.variantName}/dataParameters/${name}`) : undefined;
+  return appendSectionItem(scope, 'dataParameters', buildDataParameterItemXml(name, `${scope.indent}\t`, userSettingId));
+}
 
 export function applyEdit(xml: string, operation: SkdEditOperation, value: string, options: SkdEditOptions, warnings: string[]): string {
+  if (isVariantOperation(operation)) {
+    return editVariantSettings(xml, options.variant, warnings, (scope) => VARIANT_OPERATIONS[operation](scope, value, warnings));
+  }
   switch (operation) {
     case 'add-field':
       return editFirstDataSet(xml, options.dataSet, (block) => insertBeforeClose(block, 'dataSet', buildFieldXml(value, '\t\t')));
@@ -51,24 +113,14 @@ export function applyEdit(xml: string, operation: SkdEditOperation, value: strin
       return insertBeforeClose(xml, 'DataCompositionSchema', buildVariantXml(parseVariant(value), []));
     case 'add-dataSetLink':
       return insertIntoSchemaRoot(xml, 'dataSetLink', buildDataSetLinkXml(value));
-    case 'add-conditionalAppearance':
-      return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'conditionalAppearance', buildConditionalAppearanceItemXml(value)));
     case 'set-query':
       return editFirstDataSet(xml, options.dataSet, (block) => replaceOrInsert(block, 'query', escapeXmlText(value), 'dataSet'));
     case 'patch-query':
       return editFirstDataSet(xml, options.dataSet, (block) => block.replace('</query>', `${escapeXmlText(value)}\n</query>`));
-    case 'set-outputParameter':
-      return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'outputParameters', buildOutputParameterItemXml(value)));
-    case 'set-structure':
-      return editFirstVariantSettings(xml, options.variant, (settings) => replaceOrInsert(settings, 'structure', extractBlock(buildStructureXml(value, ''), 'structure') ?? '', 'settings'));
     case 'modify-field':
       return editFirstDataSet(xml, options.dataSet, (block) => replaceFieldBlock(block, value, warnings));
     case 'modify-parameter':
       return replaceParameterBlock(xml, value, warnings);
-    case 'modify-filter':
-      return editFirstVariantSettings(xml, options.variant, (settings) => modifyFirstItemInSection(settings, 'filter', buildFilterXml(value, '')));
-    case 'modify-dataParameter':
-      return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'dataParameters', `<item><parameter>${escapeXmlText(value.replace(/\s*=.*/, '').trim())}</parameter></item>`));
     case 'rename-parameter': {
       const match = /^(.+?)\s*=>\s*(.+)$/.exec(value);
       if (!match) {
@@ -85,22 +137,6 @@ export function applyEdit(xml: string, operation: SkdEditOperation, value: strin
       return removeElementByChildText(xml, 'calculatedField', 'dataPath', value.trim());
     case 'remove-parameter':
       return removeElementByChildText(xml, 'parameter', 'name', value.trim());
-    case 'remove-filter':
-      return editFirstVariantSettings(xml, options.variant, (settings) => removeSectionItemByText(settings, 'filter', 'left', value.trim()));
-    case 'add-selection':
-      return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'selection', value === 'Auto' ? '<item xsi:type="dcsset:SelectedItemAuto"/>' : `<item xsi:type="dcsset:SelectedItemField"><field>${escapeXmlText(value)}</field></item>`));
-    case 'add-filter':
-      return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'filter', extractBlock(buildFilterXml(value, ''), 'filter') ?? ''));
-    case 'add-order':
-      return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'order', extractBlock(buildOrderXml(value, ''), 'order') ?? ''));
-    case 'clear-selection':
-      return editFirstVariantSettings(xml, options.variant, (settings) => replaceOrInsert(settings, 'selection', '', 'settings'));
-    case 'clear-filter':
-      return editFirstVariantSettings(xml, options.variant, (settings) => replaceOrInsert(settings, 'filter', '', 'settings'));
-    case 'clear-order':
-      return editFirstVariantSettings(xml, options.variant, (settings) => replaceOrInsert(settings, 'order', '', 'settings'));
-    case 'add-dataParameter':
-      return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'dataParameters', `<item><parameter>${escapeXmlText(value.replace(/\s*=.*/, '').trim())}</parameter><userSettingID>${escapeXmlText(value.replace(/\s*=.*/, '').trim())}</userSettingID></item>`));
     case 'reorder-parameters':
       return reorderParameters(xml, value, warnings);
   }
@@ -122,30 +158,6 @@ export function buildDataSetLinkXml(value: string): string {
     match[5] ? `\t\t<parameter>${escapeXmlText(match[5].trim())}</parameter>` : '',
     '\t</dataSetLink>',
   ].filter(Boolean).join('\n');
-}
-
-export function buildConditionalAppearanceItemXml(value: string): string {
-  const match = /^(.+?)\s*=\s*(.+?)(?:\s+when\s+(.+?))?(?:\s+for\s+(.+))?$/.exec(value.trim());
-  if (!match) {
-    throw new Error('add-conditionalAppearance ожидает формат: Параметр = значение [when условие] [for Поле1, Поле2].');
-  }
-  // Опциональная группа регулярки фактически может быть undefined, тип RegExpExecArray этого не отражает.
-  const rawFields = match[4] as string | undefined;
-  const fields = (rawFields ?? '').split(',').map((item) => item.trim()).filter(Boolean);
-  return [
-    '<item>',
-    '<appearance>',
-    `<dcscor:item xsi:type="dcsset:SettingsParameterValue"><dcscor:parameter>${escapeXmlText(match[1].trim())}</dcscor:parameter><dcscor:value xsi:type="xs:string">${escapeXmlText(match[2].trim())}</dcscor:value></dcscor:item>`,
-    '</appearance>',
-    match[3] ? `<filter>${extractBlock(buildFilterXml(match[3], ''), 'filter') ?? ''}</filter>` : '',
-    fields.length > 0 ? `<fields>${fields.map((field) => `<item>${escapeXmlText(field)}</item>`).join('')}</fields>` : '',
-    '</item>',
-  ].filter(Boolean).join('');
-}
-
-export function buildOutputParameterItemXml(value: string): string {
-  const [name, rawValue = ''] = value.split(/=(.+)/).map((item) => item.trim());
-  return `<item><parameter>${escapeXmlText(name)}</parameter><value xsi:type="xs:string">${escapeXmlText(rawValue)}</value></item>`;
 }
 
 export function replaceFieldBlock(xml: string, value: string, warnings: string[]): string {
@@ -188,30 +200,6 @@ export function replaceParameterBlock(xml: string, value: string, warnings: stri
   }
   warnings.push(`Параметр не найден, добавлен новый: ${parsed.name}.`);
   return insertIntoSchemaRoot(xml, 'parameter', replacement);
-}
-
-export function modifyFirstItemInSection(xml: string, sectionTag: string, sectionXml: string): string {
-  const inner = extractBlock(sectionXml, sectionTag) ?? '';
-  const section = extractBlock(xml, sectionTag);
-  if (section === null) {
-    return appendIntoSection(xml, sectionTag, inner);
-  }
-  const firstItem = matchBlocks(section, 'item')[0];
-  return firstItem ? xml.replace(firstItem, () => inner) : appendIntoSection(xml, sectionTag, inner);
-}
-
-export function removeSectionItemByText(xml: string, sectionTag: string, childTag: string, value: string): string {
-  const section = extractBlock(xml, sectionTag);
-  if (section === null) {
-    return xml;
-  }
-  let nextSection = section;
-  for (const block of matchBlocks(section, 'item')) {
-    if (readText(block, childTag) === value) {
-      nextSection = nextSection.replace(block, '');
-    }
-  }
-  return xml.replace(section, () => nextSection);
 }
 
 /**

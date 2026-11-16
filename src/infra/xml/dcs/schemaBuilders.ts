@@ -4,12 +4,11 @@ import type {
   SkdDefinition,
   SkdFieldDefinition,
   SkdParameterDefinition,
-  SkdSettingsVariantDefinition,
-  SkdStructureItemDefinition,
 } from '../DataCompositionSchemaService';
 import { escapeXmlText } from '../XmlUtils';
 import { buildMlText, buildUseRestriction, emitValueType } from './dcsShared';
 import { normalizeCalculated, normalizeField, parseCalculated, parseField, parseParameter } from './schemaParse';
+import { buildVariantXml } from './settingsVariant';
 
 export function buildSchemaXml(definition: SkdDefinition): string {
   const dataSources = definition.dataSources?.length ? definition.dataSources : [{ name: 'ИсточникДанных1', type: 'Local' }];
@@ -35,7 +34,7 @@ export function buildSchemaXml(definition: SkdDefinition): string {
     ...(definition.calculatedFields ?? []).map(buildCalculatedFieldXml),
     ...(definition.totalFields ?? []).map(buildTotalFieldXml),
     ...parameters.flatMap(buildParameterXmlWithAutoDates),
-    ...variants.map((variant) => buildVariantXml(variant, parameters)),
+    ...variants.map((variant) => buildVariantXml(variant, parameters.map((parameter) => typeof parameter === 'string' ? parseParameter(parameter).name : parameter.name))),
     '</DataCompositionSchema>',
     '',
   ].join('\n');
@@ -119,101 +118,4 @@ export function buildParameterXml(parameter: SkdParameterDefinition): string {
     parameter.value !== undefined ? `\t\t<value>${escapeXmlText(String(parameter.value))}</value>` : '',
     '\t</parameter>',
   ].filter(Boolean).join('\n');
-}
-
-export function buildVariantXml(variant: SkdSettingsVariantDefinition, parameters: readonly (string | SkdParameterDefinition)[]): string {
-  const selection = variant.selection?.length ? variant.selection : ['Auto'];
-  return [
-    '\t<settingsVariant>',
-    `\t\t<name>${escapeXmlText(variant.name)}</name>`,
-    buildMlText('title', variant.title ?? variant.name, '\t\t'),
-    '\t\t<settings>',
-    buildSelectionXml(selection, '\t\t\t'),
-    ...(variant.filter ?? []).map((item) => buildFilterXml(item, '\t\t\t')),
-    ...(variant.order ?? []).map((item) => buildOrderXml(item, '\t\t\t')),
-    ...buildDataParametersXml(variant.dataParameters, parameters, '\t\t\t'),
-    buildStructureXml(variant.structure ?? 'details', '\t\t\t'),
-    '\t\t</settings>',
-    '\t</settingsVariant>',
-  ].join('\n');
-}
-
-export function buildSelectionXml(selection: readonly string[], indent: string): string {
-  return [`${indent}<selection>`, ...selection.map((item) => item === 'Auto'
-    ? `${indent}\t<item xsi:type="dcsset:SelectedItemAuto"/>`
-    : `${indent}\t<item xsi:type="dcsset:SelectedItemField"><field>${escapeXmlText(item)}</field></item>`), `${indent}</selection>`].join('\n');
-}
-
-export function buildFilterXml(value: string, indent: string): string {
-  const filter = parseFilter(value);
-  return [
-    `${indent}<filter>`,
-    `${indent}\t<item xsi:type="dcsset:FilterItemComparison">`,
-    !filter.use ? `${indent}\t\t<use>false</use>` : '',
-    `${indent}\t\t<left>${escapeXmlText(filter.field)}</left>`,
-    `${indent}\t\t<comparisonType>${escapeXmlText(filter.op)}</comparisonType>`,
-    filter.value ? `${indent}\t\t<right>${escapeXmlText(filter.value)}</right>` : '',
-    filter.user ? `${indent}\t\t<userSettingID>${escapeXmlText(filter.field)}</userSettingID>` : '',
-    `${indent}\t</item>`,
-    `${indent}</filter>`,
-  ].filter(Boolean).join('\n');
-}
-
-export function buildOrderXml(value: string, indent: string): string {
-  const trimmed = value.trim();
-  if (trimmed === 'Auto') {
-    return `${indent}<order><item xsi:type="dcsset:OrderItemAuto"/></order>`;
-  }
-  const desc = /\s+desc$/i.test(trimmed);
-  const field = trimmed.replace(/\s+desc$/i, '');
-  return `${indent}<order><item><field>${escapeXmlText(field)}</field><orderType>${desc ? 'Desc' : 'Asc'}</orderType></item></order>`;
-}
-
-export function buildDataParametersXml(value: readonly string[] | 'auto' | undefined, parameters: readonly (string | SkdParameterDefinition)[], indent: string): string[] {
-  const items = value === 'auto'
-    ? parameters.map((parameter) => typeof parameter === 'string' ? parseParameter(parameter).name : parameter.name)
-    : value ?? [];
-  if (items.length === 0) {
-    return [];
-  }
-  return [`${indent}<dataParameters>`, ...items.map((item) => `${indent}\t<item><parameter>${escapeXmlText(item.replace(/\s*=.*/, '').trim())}</parameter><userSettingID>${escapeXmlText(item.replace(/\s*=.*/, '').trim())}</userSettingID></item>`), `${indent}</dataParameters>`];
-}
-
-export function buildStructureXml(structure: string | readonly SkdStructureItemDefinition[], indent: string): string {
-  if (typeof structure !== 'string') {
-    return [`${indent}<structure>`, ...structure.map((item) => buildStructureItemXml(item, `${indent}\t`)), `${indent}</structure>`].join('\n');
-  }
-  const parts = structure.split('>').map((part) => part.trim()).filter(Boolean);
-  const item = parts.reduceRight<SkdStructureItemDefinition | null>((child, part) => ({
-    groupFields: part === 'details' || part === 'детали' ? [] : [part],
-    children: child ? [child] : [],
-  }), null);
-  return [`${indent}<structure>`, item ? buildStructureItemXml(item, `${indent}\t`) : buildStructureItemXml({ groupFields: [] }, `${indent}\t`), `${indent}</structure>`].join('\n');
-}
-
-export function buildStructureItemXml(item: SkdStructureItemDefinition, indent: string): string {
-  const fields = item.groupFields ?? item.groupBy ?? [];
-  return [
-    `${indent}<item xsi:type="dcsset:StructureItemGroup">`,
-    item.name ? `${indent}\t<name>${escapeXmlText(item.name)}</name>` : '',
-    fields.length > 0 ? `${indent}\t<groupItems>${fields.map((field) => `<item><field>${escapeXmlText(field)}</field><groupType>Items</groupType></item>`).join('')}</groupItems>` : '',
-    item.selection ? buildSelectionXml(item.selection, `${indent}\t`) : buildSelectionXml(['Auto'], `${indent}\t`),
-    ...(item.children ?? []).map((child) => buildStructureItemXml(child, `${indent}\t`)),
-    `${indent}</item>`,
-  ].filter(Boolean).join('\n');
-}
-
-function parseFilter(value: string): { field: string; op: string; value: string; use: boolean; user: boolean } {
-  const user = value.includes('@user');
-  const use = !value.includes('@off');
-  const clean = value.replace(/\s*@\w+/g, '').trim();
-  const match = /^(.+?)\s*(<>|>=|<=|=|>|<|filled|notFilled)\s*(.*)$/.exec(clean);
-  const opMap: Record<string, string> = { '=': 'Equal', '<>': 'NotEqual', '>': 'Greater', '>=': 'GreaterOrEqual', '<': 'Less', '<=': 'LessOrEqual', filled: 'Filled', notFilled: 'NotFilled' };
-  return {
-    field: match?.[1]?.trim() ?? clean,
-    op: opMap[match?.[2] ?? '='] ?? 'Equal',
-    value: match?.[3]?.trim() === '_' ? '' : match?.[3]?.trim() ?? '',
-    use,
-    user,
-  };
 }

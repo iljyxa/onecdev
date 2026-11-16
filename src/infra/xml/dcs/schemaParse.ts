@@ -9,11 +9,11 @@ import type {
 import {
   matchBlocks,
   readMlText,
-  readSectionTexts,
   readText,
   readValueType,
   resolveType,
 } from './dcsShared';
+import { parseVariantInfo } from './settingsVariant';
 
 export function parseSchema(xml: string): Omit<SkdInfoResult, 'templatePath' | 'lines'> {
   return {
@@ -41,13 +41,7 @@ export function parseSchema(xml: string): Omit<SkdInfoResult, 'templatePath' | '
       type: readValueType(block),
       hidden: readText(block, 'availableAsField') === 'false',
     })),
-    variants: matchBlocks(xml, 'settingsVariant').map((block) => ({
-      name: readText(block, 'name'),
-      title: readMlText(block, 'title'),
-      selection: readSectionTexts(block, 'selection', 'field'),
-      filters: readSectionTexts(block, 'filter', 'left'),
-      order: readSectionTexts(block, 'order', 'field'),
-    })),
+    variants: matchBlocks(xml, 'settingsVariant').map((block) => parseVariantInfo(block)),
   };
 }
 

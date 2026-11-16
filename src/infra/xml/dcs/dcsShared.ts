@@ -128,11 +128,6 @@ export function readValueType(xml: string): string {
   return raw.replace(/^[A-Za-z0-9]+:/, '');
 }
 
-export function readSectionTexts(xml: string, sectionTag: string, childTag: string): string[] {
-  const section = extractBlock(xml, sectionTag) ?? '';
-  return matchBlocks(section, childTag).map((block) => readText(block, childTag)).filter(Boolean);
-}
-
 export function countTags(xml: string, tagName: string): number {
   return (xml.match(new RegExp(`<${tagName}\\b`, 'g')) ?? []).length;
 }
@@ -196,14 +191,6 @@ export function replaceOrInsert(xml: string, tagName: string, inner: string, par
   return insertBeforeClose(xml, parentTag, `<${tagName}>${inner}</${tagName}>`);
 }
 
-export function appendIntoSection(xml: string, tagName: string, fragment: string): string {
-  const re = new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`);
-  if (re.test(xml)) {
-    return xml.replace(new RegExp(`</${tagName}>`), () => `${fragment}</${tagName}>`);
-  }
-  return insertBeforeClose(xml, 'settings', `<${tagName}>${fragment}</${tagName}>`);
-}
-
 export function removeElementByChildText(xml: string, tagName: string, childTag: string, value: string): string {
   const range = matchBlockRanges(xml, tagName).find((item) => readText(item.text, childTag) === value);
   return range ? spliceRange(xml, range, '') : xml;
@@ -211,12 +198,4 @@ export function removeElementByChildText(xml: string, tagName: string, childTag:
 
 export function editFirstDataSet(xml: string, dataSetName: string | undefined, editor: (block: string) => string): string {
   return replaceFirstMatchingBlock(xml, 'dataSet', (block) => !dataSetName || readText(block, 'name') === dataSetName, editor);
-}
-
-export function editFirstVariantSettings(xml: string, variantName: string | undefined, editor: (block: string) => string): string {
-  return replaceFirstMatchingBlock(xml, 'settingsVariant', (block) => !variantName || readText(block, 'name') === variantName, (variantBlock) => {
-    const settings = extractBlock(variantBlock, 'settings') ?? '';
-    const editedSettings = editor(settings);
-    return variantBlock.replace(settings, () => editedSettings);
-  });
 }
