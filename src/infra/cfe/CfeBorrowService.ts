@@ -12,6 +12,8 @@ import {
 } from '../xml/MainChildObjectsEditor';
 import {
   extractChildMetaElementXml,
+  findDirectElementRanges,
+  findNestingAwareElementRange,
   writeTextFilePreservingBomAndEol,
 } from '../xml/XmlUtils';
 
@@ -635,9 +637,15 @@ export class CfeBorrowService {
       return result;
     };
 
-    const childItemsMatch = /<ChildItems>[\s\S]*?<\/ChildItems>/.exec(sourceFormXml);
-    const childItemsXml = childItemsMatch
-      ? cleanFormXml(childItemsMatch[0])
+    // Прямой <ChildItems> формы с учётом вложенности: нежадный поиск обрывался на
+    // ChildItems таблицы/группы, и BaseForm получал незакрытые теги — платформа
+    // отклоняла загрузку расширения целиком.
+    const formRange = findNestingAwareElementRange(sourceFormXml, 'Form');
+    // Рукописный файл без корня <Form> → пустой состав элементов.
+    const formInner = formRange ? sourceFormXml.slice(formRange.openEnd, formRange.closeStart) : '';
+    const childItemsRange = findDirectElementRanges(formInner, 'ChildItems').at(0);
+    const childItemsXml = childItemsRange
+      ? cleanFormXml(formInner.slice(childItemsRange.start, childItemsRange.end))
       : '<ChildItems/>';
 
     return [
