@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import type { ChangedConfiguration } from '../../../infra/fs/ConfigurationChangeDetector';
+import { describeFsError, removePathWithRetries } from '../../../infra/fs/PathRemoval';
 import type { ConfigEntry } from '../../../domain/Configuration';
 import { parseConfigXml } from '../../../infra/xml';
 import type { CommandServices, NodeArg } from '../_shared';
@@ -291,7 +292,15 @@ export function registerExtensionCommands(
             services.bslAnalyzerConfigService.updateSource(getConnectedExtensionRoots(services, extensionRoot));
           },
           afterFailure: async () => {
-            fs.rmSync(extensionRoot, { recursive: true, force: true });
+            // Каталог под watcher'ами проекта: на Windows удаление упирается в чужие дескрипторы.
+            // Неудача не должна срывать перезагрузку дерева — остаток каталога виден пользователю (#111).
+            try {
+              removePathWithRetries(extensionRoot);
+            } catch (error) {
+              services.outputChannel.appendLine(
+                `[actions][warn] Не удалось удалить каталог расширения ${extensionRoot}: ${describeFsError(error)}`
+              );
+            }
             await services.reloadEntries();
           },
         },

@@ -1299,6 +1299,49 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         assert.strictEqual(guard.isBusy, false);
       });
     });
+
+    test('выгрузка не удалась, а каталог удалить нельзя — сбой в журнал кодом ФС, дерево всё равно перезагружается (#111)', async function () {
+      // Каталог src/cfe без права записи — удаление вложенного каталога расширения отбивается EACCES,
+      // как на Windows при чужом дескрипторе. От root права не действуют — проверка теряет смысл.
+      if (process.platform === 'win32' || process.getuid?.() === 0) {
+        this.skip();
+      }
+      const guard = new ConfigurationOperationGuard();
+      const lines: string[] = [];
+      let reloadCalls = 0;
+      const cfeDir = path.dirname(extensionRoot);
+      servicesBox.current = createWorkspaceServices({
+        configurationOperationGuard: guard,
+        standaloneServerService: {
+          refreshHealth: () => Promise.resolve({ configured: false, state: 'stopped' }),
+        } as unknown as CommandServices['standaloneServerService'],
+        setTreeProcessingState: () => undefined,
+        reloadEntries: () => { reloadCalls += 1; return Promise.resolve(); },
+        outputChannel: { appendLine: (line: string) => { lines.push(line); } } as unknown as vscode.OutputChannel,
+      });
+      depsBox.current = createDeps({
+        listDatabaseExtensions: () => Promise.resolve(['EVOLC']),
+        decompileExtension: (_name, root) => {
+          fs.cpSync(EXAMPLE_CFE_EVOLC, root, { recursive: true });
+          fs.chmodSync(cfeDir, 0o500);
+          return Promise.resolve(false);
+        },
+      });
+
+      try {
+        await vscode.commands.executeCommand('onecdev.connectExtension');
+      } finally {
+        fs.chmodSync(cfeDir, 0o700);
+      }
+
+      assert.strictEqual(reloadCalls, 1);
+      assert.strictEqual(guard.isBusy, false);
+      assert.strictEqual(fs.existsSync(extensionRoot), true);
+      assert.ok(
+        lines.includes(`[actions][warn] Не удалось удалить каталог расширения ${extensionRoot}: EACCES`),
+        lines.join('\n')
+      );
+    });
   });
 
   /**
