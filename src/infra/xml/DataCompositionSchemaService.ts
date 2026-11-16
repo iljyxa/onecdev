@@ -162,7 +162,6 @@ export type SkdEditOperation =
   | 'add-dataSetLink'
   | 'add-variant'
   | 'add-conditionalAppearance'
-  | 'add-drilldown'
   | 'set-query'
   | 'patch-query'
   | 'set-outputParameter'

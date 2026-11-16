@@ -654,6 +654,17 @@ suite('V8McpServer.registerTools — golden-каталог перед деком
         `форма inputSchema "${expected.name}" (ключи + опциональность) разошлась с эталоном`);
     });
   }
+
+  test('onecdev_edit_skd: операции add-drilldown в контракте нет (#34)', () => {
+    // Операция писала в корень схемы <template> с дочерним <field>, которого у макета СКД нет:
+    // платформа отбивала импорт всей конфигурации. Убрана до генерации по эталону Конфигуратора.
+    const tool = registerAllTools(createBaselineServices()).tools.get('onecdev_edit_skd');
+    assert.ok(tool);
+    const schema = tool.inputSchema as { safeParse: (value: unknown) => { success: boolean } };
+    const args = { path: 'Отчеты.Запасы.Макет.ОсновнаяСхемаКомпоновкиДанных', value: 'Номенклатура' };
+    assert.strictEqual(schema.safeParse({ ...args, operation: 'add-drilldown' }).success, false);
+    assert.strictEqual(schema.safeParse({ ...args, operation: 'add-field' }).success, true, 'контроль: допустимая операция проходит');
+  });
 });
 
 // ─── 2. Инвариант единого post-mutation пути на репрезентативных доменах ───

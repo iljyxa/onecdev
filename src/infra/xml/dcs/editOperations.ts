@@ -52,8 +52,6 @@ export function applyEdit(xml: string, operation: SkdEditOperation, value: strin
       return insertIntoSchemaRoot(xml, 'dataSetLink', buildDataSetLinkXml(value));
     case 'add-conditionalAppearance':
       return editFirstVariantSettings(xml, options.variant, (settings) => appendIntoSection(settings, 'conditionalAppearance', buildConditionalAppearanceItemXml(value)));
-    case 'add-drilldown':
-      return insertIntoSchemaRoot(xml, 'template', buildDrilldownTemplateXml(value));
     case 'set-query':
       return editFirstDataSet(xml, options.dataSet, (block) => replaceOrInsert(block, 'query', escapeXmlText(value), 'dataSet'));
     case 'patch-query':
@@ -142,16 +140,6 @@ export function buildConditionalAppearanceItemXml(value: string): string {
     fields.length > 0 ? `<fields>${fields.map((field) => `<item>${escapeXmlText(field)}</item>`).join('')}</fields>` : '',
     '</item>',
   ].filter(Boolean).join('');
-}
-
-export function buildDrilldownTemplateXml(value: string): string {
-  const fields = value.split(',').map((item) => item.trim()).filter(Boolean);
-  return [
-    '\t<template>',
-    '\t\t<name>РасшифровкаРесурсов</name>',
-    ...fields.map((field) => `\t\t<field>${escapeXmlText(field)}</field>`),
-    '\t</template>',
-  ].join('\n');
 }
 
 export function buildOutputParameterItemXml(value: string): string {
