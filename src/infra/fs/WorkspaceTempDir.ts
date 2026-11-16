@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { FS_RM_MAX_RETRIES, FS_RM_RETRY_DELAY_MS } from './PathRemoval';
 
 /**
  * Одноразовые каталоги операций Конфигуратора в `.onecdev/import-temp` (выгрузки
@@ -104,7 +105,7 @@ export async function pruneStaleImportTempDirs(workspaceRoot: string, now: Date,
     }
     const dir = path.join(root, entry.name);
     if (isStale(await readMtimeMs(dir), nowMs, maxAgeMs)) {
-      await fs.promises.rm(dir, { recursive: true, force: true });
+      await fs.promises.rm(dir, { recursive: true, force: true, maxRetries: FS_RM_MAX_RETRIES, retryDelay: FS_RM_RETRY_DELAY_MS });
       removed.push(dir);
     }
   }
