@@ -187,29 +187,30 @@ suite('Свойства выбора форм — гейт по эталону e
   test('числа замера: у каждого вида таблицы есть заявленное количество объектов-носителей', function () {
     this.timeout(120_000);
     const facts = collectCorpusFacts();
-    // Опорные числа скана корпуса форка (присутствие тега, обе генерации, cf+cfe). Держат
+    // Опорные числа скана корпуса форка (присутствие тега, обе генерации, cf+cfe, плюс исходная
+    // конфигурация корпуса crs в example/crs/config — объект каждого вида). Держат
     // комментарий к FORM_PROPERTY_KEYS_BY_KIND честным: если корпус подменят или
     // обход сломается, тест упадёт раньше, чем «гейт» станет пустой формальностью.
     const expectedCarriers: Readonly<Record<string, number>> = {
-      Catalog: 33,
-      InformationRegister: 8,
-      Enum: 2,
-      Constant: 2,
-      Report: 6,
-      DataProcessor: 2,
-      Document: 10,
-      AccumulationRegister: 6,
-      DocumentJournal: 2,
-      ExchangePlan: 2,
-      FilterCriterion: 2,
-      ChartOfCharacteristicTypes: 2,
-      SettingsStorage: 2,
-      BusinessProcess: 2,
-      ChartOfCalculationTypes: 2,
-      AccountingRegister: 2,
-      ChartOfAccounts: 2,
-      Task: 2,
-      CalculationRegister: 2,
+      Catalog: 35,
+      InformationRegister: 9,
+      Enum: 3,
+      Constant: 3,
+      Report: 7,
+      DataProcessor: 3,
+      Document: 11,
+      AccumulationRegister: 7,
+      DocumentJournal: 3,
+      ExchangePlan: 3,
+      FilterCriterion: 3,
+      ChartOfCharacteristicTypes: 3,
+      SettingsStorage: 3,
+      BusinessProcess: 3,
+      ChartOfCalculationTypes: 3,
+      AccountingRegister: 3,
+      ChartOfAccounts: 3,
+      Task: 3,
+      CalculationRegister: 3,
     };
     // Сравнение картой целиком: при расхождении дифф показывает весь замер сразу.
     const actualCarriers = Object.fromEntries(
