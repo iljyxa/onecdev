@@ -1,10 +1,11 @@
 import { CrsAddressError, parseCrsAddress, type CrsAddress } from './crs/CrsAddress';
-import { isCrsServerVersion, type CrsClient } from './crs/CrsClient';
+import type { CrsClient } from './crs/CrsClient';
 import { createCrsClient, type CrsTransportFactoryOptions } from './crs/CrsConnect';
 import { CrsCallError, type CrsCallErrorKind } from './crs/CrsErrors';
 import { crsPasswordHash } from './crs/CrsSecrets';
 import { devObjectsStatistic, type CrsDevObjectsStatistic } from './crs/CrsStatistic';
 import { CrsTransportError, type CrsTransportErrorKind } from './crs/CrsTransport';
+import { normalizeCrsVersionHint, runWithServerVersionRetry } from './crs/CrsVersionRetry';
 import {
   RepositoryLockStatusError,
   type RepositoryLocation,
@@ -80,27 +81,15 @@ export class NetworkRepositoryLockStatusSource implements RepositoryLockStatusSo
     try {
       const address = parseCrsAddress(location.repoPath);
       const auth = { user: context.user, passwordHash: crsPasswordHash(context.password) };
-      // Подсказка не вида N.N.N.N (пусто, «8.3.27») — версию сообщит рукопожатие openDevDepot.
-      const hint = isCrsServerVersion(context.platformVersionHint) ? context.platformVersionHint : undefined;
       const read = async (version: string | undefined): Promise<RepositoryLockReadResult> => {
         const client = this.client(address, version);
         // removed=false — те же байты запроса, что принимал сервер до переноса клиента (2.21-locks).
         const statistic = await devObjectsStatistic(client, auth, { removed: false });
         return { records: statisticToLockRecords(statistic), serverVersion: await client.serverVersion() };
       };
-      try {
-        return await read(hint);
-      } catch (error) {
-        // Подсказка устарела (платформу обновили): ровно один повтор с версией из исключения сервера.
-        const serverVersion = hint !== undefined && error instanceof CrsCallError && error.kind === 'version-mismatch'
-          ? error.details.serverVersion
-          : undefined;
-        if (serverVersion === undefined) {
-          throw error;
-        }
+      return await runWithServerVersionRetry(normalizeCrsVersionHint(context.platformVersionHint), read, (serverVersion) => {
         retriedWithVersion = serverVersion;
-        return await read(serverVersion);
-      }
+      });
     } catch (error) {
       throw toRepositoryLockStatusError(error, retriedWithVersion);
     }

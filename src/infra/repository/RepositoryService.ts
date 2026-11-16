@@ -288,6 +288,11 @@ export class RepositoryService {
     return this.bindings.hasBinding(target);
   }
 
+  /** Версия платформы из env.json — подсказка версии сервера хранилища для первого вызова. */
+  readPlatformVersionHint(): string | undefined {
+    return this.bindings.readPlatformVersionHint();
+  }
+
   isConnected(target: RepositoryTarget): boolean {
     return this.hasBinding(target) && this.lockStateStore.isConnected(target);
   }
