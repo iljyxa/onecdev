@@ -143,6 +143,12 @@ export function normalizeTypedFieldPropertiesAfterTypeChange(
   // иначе обход выгрузки целиком упирался бы в парсинг каждого поля десятки раз.
   let blocks = collectPropertyBlocks(properties.inner);
   let inner = replaceTypeInner(properties.inner, blocks, typeInnerXml, eol);
+  // Заимствованное поле расширения платформа выгружает усечённо (ObjectBelonging/Name/
+  // Comment/ExtendedConfigurationObject/Type): owner×role-состав принадлежит полю основной
+  // конфигурации, и дописывать его сюда — порча выгрузки расширения (#114).
+  if (blocks.some((block) => block.key === 'ObjectBelonging' && /^<ObjectBelonging>\s*Adopted\s*<\/ObjectBelonging>$/.test(block.xml))) {
+    return `${elementXml.slice(0, properties.start)}${inner}${elementXml.slice(properties.end)}`;
+  }
   if (inner !== properties.inner) {
     blocks = collectPropertyBlocks(inner);
   }
