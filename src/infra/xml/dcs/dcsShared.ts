@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { escapeXmlText, findDirectElementRanges, findNestingAwareElementRange, unescapeXml } from '../XmlUtils';
+import { escapeRegExp, escapeXmlText, findDirectElementRanges, findNestingAwareElementRange, unescapeXml } from '../XmlUtils';
 
 export function resolveTemplateContentPath(inputPath: string): string {
   let target = path.resolve(inputPath);
@@ -67,8 +67,47 @@ export function buildMlText(tagName: string, value: string, indent: string): str
   return [`${indent}<${tagName} xsi:type="v8:LocalStringType">`, `${indent}\t<v8:item><v8:lang>ru</v8:lang><v8:content>${escapeXmlText(value)}</v8:content></v8:item>`, `${indent}</${tagName}>`].join('\n');
 }
 
+export interface BlockRange {
+  readonly start: number;
+  readonly end: number;
+  readonly text: string;
+}
+
+/**
+ * Внешние (не вложенные друг в друга) элементы `tagName` с учётом вложенности одноимённых
+ * тегов. Нежадный поиск `<field…>…</field>` обрывался на внутреннем `<field>Имя</field>` поля
+ * набора данных, и замена/удаление оставляли висящий `</field>` — битый Template.xml (#130).
+ */
+export function matchBlockRanges(xml: string, tagName: string): BlockRange[] {
+  const tagRe = new RegExp(`<(/?)${escapeRegExp(tagName)}(?=[\\s/>])[^>]*?(/?)>`, 'g');
+  const result: BlockRange[] = [];
+  let depth = 0;
+  let start = 0;
+  let match: RegExpExecArray | null;
+  while ((match = tagRe.exec(xml)) !== null) {
+    const end = match.index + match[0].length;
+    if (match[1] === '/') {
+      // Закрывающий без открывающего (обрывок фрагмента) пропускается.
+      if (depth > 0 && --depth === 0) {
+        result.push({ start, end, text: xml.slice(start, end) });
+      }
+    } else if (match[2] === '/') {
+      if (depth === 0) {
+        result.push({ start: match.index, end, text: match[0] });
+      }
+    } else if (depth++ === 0) {
+      start = match.index;
+    }
+  }
+  return result;
+}
+
 export function matchBlocks(xml: string, tagName: string): string[] {
-  return [...xml.matchAll(new RegExp(`<${tagName}\\b[^>]*>[\\s\\S]*?<\\/${tagName}>`, 'g'))].map((match) => match[0]);
+  return matchBlockRanges(xml, tagName).map((range) => range.text);
+}
+
+function spliceRange(xml: string, range: BlockRange, replacement: string): string {
+  return `${xml.slice(0, range.start)}${replacement}${xml.slice(range.end)}`;
 }
 
 export function extractBlock(xml: string, tagName: string): string | null {
@@ -99,13 +138,9 @@ export function countTags(xml: string, tagName: string): number {
 }
 
 export function replaceFirstMatchingBlock(xml: string, tagName: string, predicate: (block: string) => boolean, editor: (block: string) => string): string {
-  for (const block of matchBlocks(xml, tagName)) {
-    if (predicate(block)) {
-      const editedBlock = editor(block);
-      return xml.replace(block, () => editedBlock);
-    }
-  }
-  return xml;
+  // Замена по позиции блока: одинаковый текст может встретиться раньше (вложенный набор).
+  const range = matchBlockRanges(xml, tagName).find((item) => predicate(item.text));
+  return range ? spliceRange(xml, range, editor(range.text)) : xml;
 }
 
 export function insertBeforeClose(xml: string, tagName: string, fragment: string): string {
@@ -170,12 +205,8 @@ export function appendIntoSection(xml: string, tagName: string, fragment: string
 }
 
 export function removeElementByChildText(xml: string, tagName: string, childTag: string, value: string): string {
-  for (const block of matchBlocks(xml, tagName)) {
-    if (readText(block, childTag) === value) {
-      return xml.replace(block, '');
-    }
-  }
-  return xml;
+  const range = matchBlockRanges(xml, tagName).find((item) => readText(item.text, childTag) === value);
+  return range ? spliceRange(xml, range, '') : xml;
 }
 
 export function editFirstDataSet(xml: string, dataSetName: string | undefined, editor: (block: string) => string): string {

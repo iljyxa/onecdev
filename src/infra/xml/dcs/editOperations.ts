@@ -13,6 +13,7 @@ import {
   extractBlock,
   insertBeforeClose,
   insertIntoSchemaRoot,
+  matchBlockRanges,
   matchBlocks,
   readText,
   removeElementByChildText,
@@ -153,11 +154,10 @@ export function replaceFieldBlock(xml: string, value: string, warnings: string[]
     warnings.push('modify-field ожидает shorthand поля с именем.');
     return xml;
   }
-  for (const block of matchBlocks(xml, 'field')) {
-    if (readText(block, 'dataPath') === field.dataPath) {
-      const fieldXml = buildFieldXml(value, '\t\t');
-      return xml.replace(block, () => fieldXml);
-    }
+  const range = matchBlockRanges(xml, 'field').find((item) => readText(item.text, 'dataPath') === field.dataPath);
+  if (range) {
+    // Блок начинается с <field: отступ строки уже стоит в документе.
+    return `${xml.slice(0, range.start)}${buildFieldXml(value, '\t\t').trimStart()}${xml.slice(range.end)}`;
   }
   warnings.push(`Поле не найдено, добавлено новое: ${field.dataPath}.`);
   return insertBeforeClose(xml, 'dataSet', buildFieldXml(value, '\t\t'));
