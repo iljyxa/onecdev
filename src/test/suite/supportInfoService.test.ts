@@ -1109,3 +1109,43 @@ suite('SupportInfoService — hasChangesForbidden (issue #22)', () => {
     });
   });
 });
+
+/**
+ * #126: владелец файлов корневого `Ext/` (модули приложения, `Help.xml`) — `Configuration.xml`
+ * корня. Синтетический `.bin` задаёт корню режим явно; объект рядом — контроль, что режим не
+ * раздаётся всем файлам подряд.
+ */
+suite('SupportInfoService — файлы корневого Ext/ берут режим Configuration.xml (#126)', () => {
+  const rootCases: { code: number; expected: SupportMode; label: string }[] = [
+    { code: SUPPORT_BIN_CODE.locked, expected: SupportMode.Locked, label: 'Locked' },
+    { code: SUPPORT_BIN_CODE.editable, expected: SupportMode.Editable, label: 'Editable' },
+  ];
+  const rootFiles = [['Ext', 'ManagedApplicationModule.bsl'], ['Ext', 'Help.xml']];
+
+  for (const { code, expected, label } of rootCases) {
+    for (const relPath of rootFiles) {
+      test(`корень ${label}: ${relPath.join('/')} → ${label}, объект рядом — свой режим`, () => {
+        withConfigRoot((configRoot) => {
+          const configUuid = fixtureUuid(`root-ext-config-${label}`);
+          const moduleUuid = fixtureUuid(`root-ext-module-${label}`);
+          writeConfigurationXml(configRoot, configUuid);
+          writeObjectXml(configRoot, 'CommonModules', 'ОбщийМодуль1', 'CommonModule', moduleUuid, 'flat');
+          const objectBsl = writeBslFile(path.join(configRoot, 'CommonModules', 'ОбщийМодуль1', 'Ext', 'Module.bsl'));
+          const rootFile = path.join(configRoot, ...relPath);
+          fs.mkdirSync(path.dirname(rootFile), { recursive: true });
+          // У служебных файлов корневого Ext/ своего uuid нет — режим только через владельца.
+          fs.writeFileSync(rootFile, relPath[1].endsWith('.xml') ? '<?xml version="1.0" encoding="UTF-8"?><Help/>' : '', 'utf-8');
+          const objectCode = code === SUPPORT_BIN_CODE.locked ? SUPPORT_BIN_CODE.editable : SUPPORT_BIN_CODE.locked;
+          writeParentConfigurationsBin(configRoot, new Map([[configUuid, code], [moduleUuid, objectCode]]));
+
+          const service = new SupportInfoService(new TestLogger());
+          service.loadConfig(configRoot);
+
+          assert.strictEqual(service.getSupportMode(rootFile), expected);
+          assert.strictEqual(service.isLocked(rootFile), expected === SupportMode.Locked);
+          assert.notStrictEqual(service.getSupportMode(objectBsl), expected, 'объект рядом сохраняет свой режим');
+        });
+      });
+    }
+  }
+});
