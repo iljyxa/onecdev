@@ -4,7 +4,7 @@
  * только глубокую `<root>/<folder>/<name>/<name>.xml`. `findObjectXmlInFolder`
  * — единая функция поиска (deep → flat → null), которую переиспользуют
  * `MetaPathResolver.resolveXml`, `RepositoryService.resolveOwnerObjectXmlPath`
- * и `SupportInfoService.resolveObjectXmlForBsl`.
+ * и `SupportInfoService.resolveOwnerXml`.
  */
 import * as assert from 'assert';
 import * as fs from 'fs';
