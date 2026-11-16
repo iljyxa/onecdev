@@ -32,3 +32,10 @@
     `CHILD_FOLDERS_WITH_OWN_XML`); литералы папок для видов, не являющихся `MetaKind`, остаются техдолгом
     внутри этого реестра. См.
     [repository-file-sync.md](./repository-file-sync.md#известные-ограничения).
+11. История хранилища (`infra/repository/history/`, issue #117) использует имена из модулей статусов
+    захвата: `toRepositoryLockStatusError`, `RepositoryLockStatusErrorCode` и `DEFAULT_CRS_VERSION_HINT`
+    (`RepositoryHistorySession.ts`) теперь обслуживают не только статусы захвата, а любой вызов crs. Кандидат на
+    переименование и вынос в общий модуль `infra/repository/crs/` (перевод отказа протокола → код и текст).
+    См. [repository-crs.md](./repository-crs.md#сервисная-часть-117).
+12. `MetadataValidationService.extractRootUuid` (`infra/xml/MetadataValidationService.ts`) дублирует
+    `readMetadataRootUuid` (`infra/xml/MetadataRootUuidReader.ts`) — кандидат на переход валидатора на общий ридер.
