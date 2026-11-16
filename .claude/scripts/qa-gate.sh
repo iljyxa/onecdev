@@ -62,6 +62,10 @@ sanity "vscode в domain/infra" "import .* from 'vscode'" src/domain src/infra
 sanity "cli в domain/infra" "from ['\"].*cli|from ['\"].*/cli" src/domain src/infra
 sanity "require/readFileSync в domain" "require\(|readFileSync" src/domain
 sanity "FOLDER_MAP/FOLDER_RU" "FOLDER_MAP|FOLDER_RU" src
+# Протокол crs читает только метаданные: содержимое объектов идёт через Конфигуратор (docs/repository-crs.md).
+sanity "содержимое объектов по протоколу" "crs:snapshots|commitObjects|updateObjects|11223344" src --glob '!src/test/**'
+sanity "crs:data вне читателя истории" "crs:data" src --glob '!src/test/**' --glob '!src/infra/repository/crs/CrsHistory.ts'
+sanity "base64 в читателе истории" "base64|atob\(" src/infra/repository/crs/CrsHistory.ts
 
 if [ -z "$RUNTIME" ]; then
   echo "N/A  npm test / coverage:changed — нерантайм-изменение"
