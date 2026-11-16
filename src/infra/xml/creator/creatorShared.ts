@@ -140,7 +140,11 @@ export function needsChildObjects(kind: MetaKind): boolean {
     kind === 'FilterCriterion' ||
     kind === 'SettingsStorage' ||
     kind === 'HTTPService' ||
-    kind === 'WebService'
+    kind === 'WebService' ||
+    // Без пустого <ChildObjects/> платформа отбивает загрузку: «ожидаемое ChildObjects» (#129).
+    kind === 'ExternalDataSource' ||
+    kind === 'IntegrationService' ||
+    kind === 'Sequence'
   ) {
     return true;
   }

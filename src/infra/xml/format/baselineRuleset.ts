@@ -143,6 +143,24 @@ const BASELINE_GENERATED_TYPES: Partial<Record<MetaKind, readonly GeneratedTypeD
   SettingsStorage: [
     { prefix: 'SettingsStorageManager', category: 'Manager' },
   ],
+  // Без InternalInfo платформа отбивает загрузку объекта (#129). ExternalDataSource и
+  // IntegrationService — как в example/2.21; Sequence и WSReference сняты выгрузкой 8.5.1.
+  ExternalDataSource: [
+    { prefix: 'ExternalDataSourceManager', category: 'Manager' },
+    { prefix: 'ExternalDataSourceTablesManager', category: 'TablesManager' },
+    { prefix: 'ExternalDataSourceCubesManager', category: 'CubesManager' },
+  ],
+  IntegrationService: [
+    { prefix: 'IntegrationServiceManager', category: 'Manager' },
+  ],
+  Sequence: [
+    { prefix: 'SequenceRecord', category: 'Record' },
+    { prefix: 'SequenceManager', category: 'Manager' },
+    { prefix: 'SequenceRecordSet', category: 'RecordSet' },
+  ],
+  WSReference: [
+    { prefix: 'WSReferenceManager', category: 'Manager' },
+  ],
 };
 
 /**
