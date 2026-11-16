@@ -476,3 +476,62 @@ suite('RepositoryService.resolveFullName — вложенная подсисте
     });
   }
 });
+
+/**
+ * #51: URL-шаблон и метод HTTP-сервиса, стандартный реквизит хранятся внутри XML владельца и
+ * своего объекта хранилища не имеют — адресуются владельцем, как реквизиты и ТЧ. Узлы — в той
+ * же форме, что строит дерево (`metaObjectTreeBuilder`: xmlPath и ownerObjectXmlPath — XML владельца).
+ */
+suite('RepositoryService.resolveFullName — URLTemplate/Method/StandardAttribute адресуются владельцем (#51)', () => {
+  const cases: readonly { readonly label: string; readonly node: (harness: Harness) => RepositoryNodeRef; readonly expected: string }[] = [
+    {
+      label: 'URL-шаблон telegram HTTP-сервиса Chatbot',
+      node: (harness) => {
+        const xmlPath = ownerXmlPath(harness, 'HTTPServices', 'Chatbot');
+        return { nodeKind: 'URLTemplate', label: 'telegram', xmlPath, metaContext: { rootMetaKind: 'HTTPService', ownerObjectXmlPath: xmlPath } };
+      },
+      expected: 'HTTPСервис.Chatbot',
+    },
+    {
+      label: 'метод POST URL-шаблона telegram',
+      node: (harness) => {
+        const xmlPath = ownerXmlPath(harness, 'HTTPServices', 'Chatbot');
+        return {
+          nodeKind: 'Method',
+          label: 'POST',
+          xmlPath,
+          metaContext: { rootMetaKind: 'HTTPService', ownerObjectXmlPath: xmlPath, urlTemplateName: 'telegram' },
+        };
+      },
+      expected: 'HTTPСервис.Chatbot',
+    },
+    {
+      label: 'стандартный реквизит Наименование справочника Контрагенты',
+      node: (harness) => {
+        const ownerXml = ownerXmlPath(harness, 'Catalogs', 'Контрагенты');
+        return {
+          nodeKind: 'StandardAttribute',
+          label: 'Наименование',
+          xmlPath: ownerXml,
+          metaContext: { rootMetaKind: 'Catalog', ownerObjectXmlPath: ownerXml, standardAttributeName: 'Description' },
+        };
+      },
+      expected: 'Справочник.Контрагенты',
+    },
+  ];
+
+  for (const { label, node, expected } of cases) {
+    test(`${label} → ${expected}; файл объектов операции хранилища адресует владельца`, () => {
+      const harness = createHarness();
+      try {
+        const ref = node(harness);
+        assert.strictEqual(harness.service.resolveFullName(ref), expected);
+        const objects = harness.service.createObjectsFileForNode(ref, false);
+        assert.deepStrictEqual(objects.fullNames, [expected]);
+        assert.ok(fs.readFileSync(objects.filePath, 'utf-8').includes(`<Object fullName="${expected}" includeChildObjects="false">`));
+      } finally {
+        harness.dispose();
+      }
+    });
+  }
+});

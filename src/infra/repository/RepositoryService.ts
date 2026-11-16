@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { MetaKind } from '../../domain/MetaTypes';
+import { CHILD_TAG_CONFIG } from '../../domain/ChildTag';
 import type { ProjectSecretStorage } from '../environment/ProjectSecretStorage';
 import { findObjectXmlInFolder } from '../fs/ObjectLocation';
 import { escapeXmlAttribute as escapeXml, parseConfigXml, parseObjectXml } from '../xml';
@@ -91,16 +92,10 @@ const REPOSITORY_NAMESPACE = 'http://v8.1c.ru/8.3/config/objects';
  * `Владелец.Форма.Имя`, так как нерекурсивный захват владельца их не захватывает;
  * остальные (реквизиты, ТЧ, команды и т.п.) хранятся внутри объекта и адресуются владельцем.
  */
-const CHILD_LIKE_KINDS: ReadonlySet<string> = new Set([
-  'Attribute',
-  'AddressingAttribute',
-  'TabularSection',
-  'Form',
-  'Command',
-  'Template',
-  'Dimension',
-  'Resource',
-  'EnumValue',
+const CHILD_LIKE_KINDS: ReadonlySet<string> = new Set<string>([
+  // Из доменного реестра дочерних тегов, а не ручным перечнем: URLTemplate/Method/
+  // StandardAttribute выпадали из списка и не получали полного имени (#51).
+  ...Object.values(CHILD_TAG_CONFIG).map((config) => config.kind),
   'Column',
 ]);
 
