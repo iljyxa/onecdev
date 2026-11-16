@@ -21,6 +21,25 @@ export function isInsideWorkspaceServiceDir(workspaceRoot: string, filePath: str
   return relative.split(path.sep)[0] !== '..' && !path.isAbsolute(relative);
 }
 
+/**
+ * Каталог-бэкап атомарной замены снимка: `replaceDirectorySnapshot` переименовывает
+ * заменяемый каталог в `.<имя>.onecdev-backup-<pid>-<время>` рядом с ним и удаляет
+ * после замены. Пока он существует, в нём лежит прежняя копия конфигурации.
+ */
+const SNAPSHOT_BACKUP_DIR_NAME = /^\..+\.onecdev-backup-\d+-\d+$/;
+
+/**
+ * Служебный путь рабочей области: события watcher'ов по нему — не правки конфигурации.
+ * Кроме `.onecdev/` это бэкапы замены снимка: они лежат рядом с каталогом конфигурации
+ * и попадают под шаблоны watcher'ов, хотя в служебном каталоге не находятся.
+ */
+export function isWorkspaceServicePath(workspaceRoot: string, filePath: string): boolean {
+  if (isInsideWorkspaceServiceDir(workspaceRoot, filePath)) {
+    return true;
+  }
+  return path.relative(workspaceRoot, filePath).split(path.sep).some((part) => SNAPSHOT_BACKUP_DIR_NAME.test(part));
+}
+
 export function getImportTempRoot(workspaceRoot: string): string {
   return path.join(getWorkspaceServiceRoot(workspaceRoot), 'import-temp');
 }
