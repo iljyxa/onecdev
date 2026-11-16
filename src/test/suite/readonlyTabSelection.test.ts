@@ -66,10 +66,39 @@ suite('readonlyTabSelection — selectReadonlyApplyRoute (issue #63)', () => {
     assert.deepStrictEqual(route && { kind: route.kind, id: route.tab.id }, { kind: 'defer', id: 't' });
   });
 
-  test('сравнение путей не зависит от регистра и сегментов ".."', () => {
-    const variant = path.join(ROOT, 'Catalogs', 'Лишнее', '..', 'Товары', 'Ext', 'OBJECTMODULE.BSL');
+  test('сравнение путей не зависит от сегментов ".."', () => {
+    const variant = path.join(ROOT, 'Catalogs', 'Лишнее', '..', 'Товары', 'Ext', 'ObjectModule.bsl');
     const route = selectReadonlyApplyRoute([tab('t', 'text', true, 1, variant)], FILE);
     assert.strictEqual(route?.tab.id, 't');
+  });
+});
+
+/**
+ * Issue #83: на регистрозависимой ФС `ObjectModule.bsl` и `objectmodule.bsl` — разные файлы,
+ * и видимая вкладка второго не должна становиться `activate`-целью для первого.
+ */
+suite('readonlyTabSelection — регистр в путях по платформе (issue #83)', () => {
+  const UPPER = path.join(ROOT, 'Catalogs', 'Товары', 'Ext', 'OBJECTMODULE.BSL');
+  const cases: { platform: NodeJS.Platform; sameFile: boolean }[] = [
+    { platform: 'linux', sameFile: false },
+    { platform: 'freebsd', sameFile: false },
+    { platform: 'win32', sameFile: true },
+    { platform: 'darwin', sameFile: true },
+  ];
+  for (const { platform, sameFile } of cases) {
+    test(`${platform}: пути, отличающиеся регистром, ${sameFile ? 'совпадают' : 'не совпадают'}`, () => {
+      const tabs = [tab('upper', 'text', true, 1, UPPER), tab('exact', 'text', false, 2)];
+      const route = selectReadonlyApplyRoute(tabs, FILE, platform);
+      assert.deepStrictEqual(
+        route && { kind: route.kind, id: route.tab.id },
+        sameFile ? { kind: 'activate', id: 'upper' } : { kind: 'defer', id: 'exact' }
+      );
+    });
+  }
+
+  test('без явной платформы берётся платформа процесса', () => {
+    const tabs = [tab('upper', 'text', true, 1, UPPER), tab('exact', 'text', false, 2)];
+    assert.deepStrictEqual(selectReadonlyApplyRoute(tabs, FILE), selectReadonlyApplyRoute(tabs, FILE, process.platform));
   });
 });
 

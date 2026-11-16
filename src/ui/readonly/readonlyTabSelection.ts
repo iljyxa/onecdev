@@ -34,21 +34,31 @@ export function isImmediatelyApplicable(tab: Pick<ReadonlyTabCandidate, 'role' |
   return tab.role === 'diff-original' || tab.visible;
 }
 
-function normalizeKey(filePath: string): string {
-  return path.resolve(filePath).toLowerCase();
+/**
+ * ФС по умолчанию регистронезависимы только на Windows (NTFS) и macOS (APFS/HFS+). На Linux
+ * `ObjectModule.bsl` и `objectmodule.bsl` — разные файлы, и вкладку одного нельзя
+ * активировать вместо другого.
+ */
+const CASE_INSENSITIVE_PLATFORMS: ReadonlySet<NodeJS.Platform> = new Set<NodeJS.Platform>(['win32', 'darwin']);
+
+function normalizeKey(filePath: string, platform: NodeJS.Platform): string {
+  const resolved = path.resolve(filePath);
+  return CASE_INSENSITIVE_PLATFORMS.has(platform) ? resolved.toLowerCase() : resolved;
 }
 
 /**
  * Видимая основная вкладка активируется без побочных эффектов, поэтому она важнее
  * временной вкладки для левой стороны сравнения; скрытая основная без левой
- * стороны ждёт собственной активации.
+ * стороны ждёт собственной активации. `platform` задаёт регистрочувствительность
+ * сравнения путей; параметр нужен, чтобы проверить поведение всех платформ на одной.
  */
 export function selectReadonlyApplyRoute<T extends ReadonlyTabCandidate>(
   tabs: readonly T[],
-  filePath: string
+  filePath: string,
+  platform: NodeJS.Platform = process.platform
 ): ReadonlyApplyRoute<T> | undefined {
-  const key = normalizeKey(filePath);
-  const matches = tabs.filter((tab) => normalizeKey(tab.path) === key);
+  const key = normalizeKey(filePath, platform);
+  const matches = tabs.filter((tab) => normalizeKey(tab.path, platform) === key);
   const primary = matches.filter((tab) => tab.role !== 'diff-original');
   const visiblePrimary = primary.find((tab) => tab.visible);
   if (visiblePrimary) {
