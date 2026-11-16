@@ -1,0 +1,9 @@
+Sı∆{HTTP/1.1 200 OK
+Content-Length: 438
+Content-Type: application/xml
+
+Ôªø<?xml version="1.0" encoding="UTF-8"?><crs:call_return xmlns:crs="http://v8.1c.ru/8.2/crs"><crs:info><crs:info><crs:version><crs:major value="7"/><crs:minor value="0"/></crs:version><crs:depotID value="94cd39d3-82e9-4376-981c-f5ed6a9cfb15"/><crs:rootID value="2bb900db-6e85-48a9-a049-b7aedbe761cc"/><crs:mode value="80306"/></crs:info><crs:date value="2026-09-29T18:32:28"/><crs:isExtension value="false"/></crs:info></crs:call_return>fS≤¶HTTP/1.1 200 OK
+Content-Length: 438
+Content-Type: application/xml
+
+Ôªø<?xml version="1.0" encoding="UTF-8"?><crs:call_return xmlns:crs="http://v8.1c.ru/8.2/crs"><crs:info><crs:info><crs:version><crs:major value="7"/><crs:minor value="0"/></crs:version><crs:depotID value="94cd39d3-82e9-4376-981c-f5ed6a9cfb15"/><crs:rootID value="2bb900db-6e85-48a9-a049-b7aedbe761cc"/><crs:mode value="80306"/></crs:info><crs:date value="2026-09-29T18:32:28"/><crs:isExtension value="false"/></crs:info></crs:call_return>fS≤¶

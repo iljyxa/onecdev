@@ -1,0 +1,19 @@
+S��{HTTP/1.1 400 Bad request
+Content-Length: 1334
+Content-Type: application/xml; charset=utf-8
+
+﻿<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="/e1csys/vrscore/exception.xslt?sysver=8.5.1.1529"?><exception xmlns="http://v8.1c.ru/8.2/virtual-resource-system" xmlns:d1p1="http://v8.1c.ru/8.1/data/core" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="d1p1:Exception" clsid="c593fe3b-aeaf-496a-a32e-6b4dc2d13fff"><d1p1:descr>Ошибка разбора XML:  - [1,1]
+Фатальная ошибка: 
+Document is empty
+</d1p1:descr><d1p1:data>77u/ew0Kew0Ke2M1OTNmZTNiLWFlYWYtNDk2YS1hMzJlLTZiNGRjMmQxM2ZmZiwi
+0J7RiNC40LHQutCwINGA0LDQt9Cx0L7RgNCwIFhNTDogIC0gWzEsMV0NCtCk0LDR
+gtCw0LvRjNC90LDRjyDQvtGI0LjQsdC60LA6IA0KRG9jdW1lbnQgaXMgZW1wdHkN
+CiIsDQp7MDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwfSwieG1s
+MjoweDAwMDAwMDAwMDBCNjY4RjEgeG1sMjoweDAwMDAwMDAwMDBCNjc1RDIgY3Jj
+b3JlOjB4MDAwMDAwMDAwMDFGNkU5QyBjcmNvcmU6MHgwMDAwMDAwMDAwMUVCMzQx
+IGNyc2VydmVyOjB4MDAwMDAwMDAwMDAxRjZBMCBjb3JlODU6MHgwMDAwMDAwMDAw
+OEQyNERGIGNvcmU4NToweDAwMDAwMDAwMDA2QUY5RUMgbGliYy5zbzoweDAwMDAw
+MDAwMDAwMDAwMDAgbGliYy5zbzoweDAwMDAwMDAwMDAwMDAwMDAgIiwiMDAwMDAw
+MDAwMDAwMDAwMDAwMDAwMDAwMDAiLDAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAw
+MDAwMDAwMDAwMH0sLTksNDI5NDk2NzI5NSw0Mjk0OTY3Mjk1LCIiLCIiLC0xfSwt
+NiwyLCJEb2N1bWVudCBpcyBlbXB0eQ0KIiwiIiwiIiwxLDF9</d1p1:data></exception>fS��

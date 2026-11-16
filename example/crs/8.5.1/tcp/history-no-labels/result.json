@@ -1,0 +1,6 @@
+{
+  "command": "/ConfigurationRepositoryReport",
+  "user": "Admin",
+  "status": 0,
+  "output": "Отчет успешно построен"
+}

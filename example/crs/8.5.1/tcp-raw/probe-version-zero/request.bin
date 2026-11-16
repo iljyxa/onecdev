@@ -1,0 +1,6 @@
+"HUµ¿Ÿ‰‡Ã;ÆEµØ°ç^<POST  HTTP/1.1
+Content-Length: 239
+Accept: application/xml
+Content-Type: application/xml
+
+ï»¿<?xml version="1.0" encoding="UTF-8"?><crs:call xmlns:crs="http://v8.1c.ru/8.2/crs" alias="exp" name="DevDepotAdmin_openDevDepot" version="0.0.0.0"><crs:params><crs:alias value="exp"/><crs:convert value="false"/></crs:params></crs:call>fS²¦

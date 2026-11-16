@@ -7,3 +7,5 @@
 # виде реальных выгрузок (тесты сохранения формата, см. CLAUDE.md/writeTextFilePreservingBomAndEol) —
 # git не должен трогать переводы строк внутри example/.
 example/** -text
+# Снятый трафик crserver: машинные данные, построчный diff бесполезен.
+example/crs/** -diff linguist-generated

@@ -1,0 +1,5 @@
+HTTP/1.1 200 OK
+Date: Wed, 30 Sep 2026 21:10:00 GMT
+Server: Apache/2.4.66 (Ubuntu)
+Content-Length: 438
+Content-Type: application/xml

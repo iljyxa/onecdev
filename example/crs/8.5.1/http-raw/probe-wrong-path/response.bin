@@ -1,0 +1,12 @@
+HTTP/1.1 404 Not found
+Date: Wed, 30 Sep 2026 03:16:07 GMT
+Server: Apache/2.4.66 (Ubuntu)
+Connection: close
+Transfer-Encoding: chunked
+Content-Type: application/xml
+
+44e
+﻿<?xml version="1.0" encoding="UTF-8"?><exception xmlns="http://v8.1c.ru/8.2/virtual-resource-system" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Exception" clsid="580392e6-ba49-4280-ac67-fcd6f2180121" reason="404"><descr xmlns="http://v8.1c.ru/8.1/data/core">HTTP: Not found
+Ошибка при работе с ресурсом /repo/missing.1ccr</descr><category xmlns="http://v8.1c.ru/8.1/data/core">00000000000000000000000000</category><creationStack xmlns="http://v8.1c.ru/8.1/data/core">wsap24:0x000000000007BE1F wsap24:0x000000000008358F wsap24:0x00000000000709ED apache2:0x0000000000000000 apache2:0x0000000000000000 apache2:0x0000000000000000 apache2:0x0000000000000000 apache2:0x0000000000000000 apache2:0x0000000000000000 mod_mpm_prefork:0x0000000000000000 mod_mpm_prefork:0x0000000000000000 mod_mpm_prefork:0x0000000000000000 mod_mpm_prefork:0x0000000000000000 apache2:0x0000000000000000 apache2:0x0000000000000000 libc.so:0x0000000000000000 libc.so:0x0000000000000000 apache2:0x0000000000000000 </creationStack></exception>
+0
+
