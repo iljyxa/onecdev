@@ -335,6 +335,12 @@ export const EXTENSION_MCP_TOOLS: readonly AiMcpToolInfo[] = [
   },
   {
     profile: 'extension',
+    name: 'onecdev_repository_history',
+    description: 'История хранилища конфигурации по протоколу сервера: версии, авторы, комментарии, метки и изменённые объекты; вся история или по объекту, форме, макету, подсистеме. Только чтение.',
+    requirement: 'Подключённое серверное хранилище (tcp/http); путь Конфигурация, Расширение или канон объекта; листание через beforeVersion',
+  },
+  {
+    profile: 'extension',
     name: 'onecdev_get_properties',
     description: 'ВСЕ свойства объекта по каноническому пути, включая readonly, со всеми допустимыми enum/multiEnum-значениями; для metadataType-свойств в notes указано, каким tool менять значение.',
     requirement: 'Канонический путь (path)',
