@@ -88,6 +88,11 @@ suite('SupportInfoService — реальная фикстура (230 запис�
         { label: 'Documents/ПриходТовара.xml', relPath: ['Documents', 'ПриходТовара.xml'] },
         { label: 'AccumulationRegisters/ТоварыНаСкладах.xml', relPath: ['AccumulationRegisters', 'ТоварыНаСкладах.xml'] },
       ];
+      editableCases.push(
+        // Файлы корневого Ext/ берут режим Configuration.xml (#126): без резолва — None.
+        { label: 'Ext/ManagedApplicationModule.bsl (корень) по Configuration.xml', relPath: ['Ext', 'ManagedApplicationModule.bsl'] },
+        { label: 'Ext/SessionModule.bsl (корень) по Configuration.xml', relPath: ['Ext', 'SessionModule.bsl'] },
+      );
       for (const { label, relPath } of editableCases) {
         test(`${label} → Editable`, () => {
           const xmlPath = path.join(configRoot, ...relPath);
