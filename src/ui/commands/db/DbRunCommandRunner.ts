@@ -9,6 +9,7 @@ import { formatCommandLineForLog, normalizeInfoBasePath, resolveV8ExecutablePath
 import type { RepositoryBinding, RepositoryService } from '../../../infra/repository/RepositoryService';
 import { getAgentOperationServiceForInteractiveDesigner, isAgentConfigurationOperationMode } from '../ext/ExtensionCommandRunner';
 import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
+import { buildRepositoryDesignerArgs } from '../../../infra/repository/RepositoryDesignerArgs';
 
 interface DbRunConnectionParams {
   infoBasePath?: string;
@@ -95,11 +96,7 @@ function buildLaunchArguments(options: DbRunOptions, params: DbRunConnectionPara
     args.push(`/P${params.password}`);
   }
   if (options.mode === 'DESIGNER' && options.repository) {
-    args.push('/ConfigurationRepositoryF', options.repository.repoPath);
-    args.push('/ConfigurationRepositoryN', options.repository.repoUser);
-    if (options.repository.repoPassword) {
-      args.push('/ConfigurationRepositoryP', options.repository.repoPassword);
-    }
+    args.push(...buildRepositoryDesignerArgs(options.repository));
   }
 
   let execute = options.execute ?? '';

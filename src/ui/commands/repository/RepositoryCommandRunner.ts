@@ -17,6 +17,7 @@ import {
 } from '../../../infra/process';
 import { notifyConfigurationOperationBusy } from '../ext/configurationOperationBusy';
 import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
+import { buildRepositoryDesignerArgs } from '../../../infra/repository/RepositoryDesignerArgs';
 
 interface ConnectionParams {
   infoBasePath?: string;
@@ -390,11 +391,7 @@ function appendConnectionDesignerArgs(args: string[], connection: ConnectionPara
 }
 
 function appendRepositoryDesignerArgs(args: string[], binding: RepositoryBinding): void {
-  args.push('/ConfigurationRepositoryF', binding.repoPath);
-  args.push('/ConfigurationRepositoryN', binding.repoUser);
-  if (binding.repoPassword) {
-    args.push('/ConfigurationRepositoryP', binding.repoPassword);
-  }
+  args.push(...buildRepositoryDesignerArgs(binding));
 }
 
 const BOOLEAN_EXTRA_FLAGS = new Set([
