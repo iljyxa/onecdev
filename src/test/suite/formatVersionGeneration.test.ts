@@ -358,4 +358,12 @@ suite('buildFormXmlFromDefinition — написание WindowOpeningMode по 
       assert.ok(xml.includes('\n\t<Width>60</Width>\n'), version);
     }
   });
+
+  test('булево свойство формы пишется true/false в обоих форматах', () => {
+    for (const version of ['2.20', '2.21']) {
+      const xml = buildFormXmlFromDefinition({ properties: { autoTitle: false, autoURL: true } }, version, resolveFormatRuleset(version));
+      assert.ok(xml.includes('\n\t<AutoTitle>false</AutoTitle>\n'), xml);
+      assert.ok(xml.includes('\n\t<AutoURL>true</AutoURL>\n'), xml);
+    }
+  });
 });
