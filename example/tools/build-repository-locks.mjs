@@ -64,6 +64,7 @@ import * as net from 'node:net';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { crserverRangeArg, freeRangeStart } from './crserverPorts.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const VALUE_OPTIONS = ['platform-dir', 'out', 'work'];
@@ -739,7 +740,7 @@ async function startCrserver(work) {
   const dataDir = path.join(work, 'crsdata');
   mkdirSync(dataDir, { recursive: true });
   const port = await findFreePort();
-  const rangeStart = await findFreePort();
+  const rangeStart = await freeRangeStart(port);
   const exe = path.join(platformDir, 'crserver');
   if (!existsSync(exe)) {
     fail(`у платформы ${platformVersion} нет crserver — сетевую фикстуру снять нельзя`);
@@ -747,7 +748,7 @@ async function startCrserver(work) {
   // Порт и диапазон задаются явно: соседний стенд или другой прогон не должны пересечься с этим.
   // Каталог данных — относительный: сервер вставляет его в тексты исключений, а снятые ответы
   // попадают в репозиторий — абсолютный путь рабочего каталога утёк бы в фикстуру.
-  const child = spawn(exe, ['-port', String(port), '-range', `${String(rangeStart)}:${String(rangeStart + 9)}`,
+  const child = spawn(exe, ['-port', String(port), '-range', crserverRangeArg(rangeStart),
     '-d', 'crsdata'], { stdio: 'ignore', cwd: work });
   children.add(child);
   await waitForPort(port);
