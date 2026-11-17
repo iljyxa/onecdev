@@ -13,6 +13,7 @@ import {
 } from '../process';
 import type { Logger } from '../support/Logger';
 import { LEGACY_SERVICE_DIR_NAME } from '../fs/LegacyServiceDirMigration';
+import { parseJsonObjectText } from '../fs/JsonTextFile';
 
 export type StandaloneServerState = 'unconfigured' | 'running' | 'unresponsive' | 'stopped' | 'stale' | 'busy';
 
@@ -422,7 +423,7 @@ export class StandaloneServerService {
     }
 
     try {
-      const parsed = JSON.parse(fs.readFileSync(envPath, 'utf-8')) as { default?: unknown };
+      const parsed = parseJsonObjectText(fs.readFileSync(envPath, 'utf-8'), 'env.json', envPath) as { default?: unknown };
       return isRecord(parsed.default) ? parsed.default : {};
     } catch {
       return {};
