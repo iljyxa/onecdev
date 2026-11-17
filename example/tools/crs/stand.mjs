@@ -597,7 +597,6 @@ function canConnect(port) {
   return new Promise((r) => { const s = net.connect(port, '127.0.0.1'); s.once('connect', () => { s.destroy(); r(true); }); s.once('error', () => r(false)); });
 }
 
-
 const PROCESS_DEADLINE_MS = 10 * 60 * 1000;
 
 // Группы запущенных run(): detached отрывает их от терминала, поэтому Ctrl+C и падение стенда
