@@ -14,6 +14,7 @@ import {
   getHandlerName,
   isPlainObject,
   KNOWN_EVENTS,
+  ownEntry,
   REF_ROOT_SYNONYMS,
   titleFromName,
   warn,
@@ -147,9 +148,9 @@ export function emitElement(lines: string[], raw: FormElementDefinition, indent:
   const rawObj = raw as Record<string, unknown>;
   const el: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(rawObj)) {
-    if (key in ELEMENT_TYPE_SYNONYMS) {
-      const dst = ELEMENT_TYPE_SYNONYMS[key];
-      if (!(dst in rawObj)) {
+    const dst = ownEntry(ELEMENT_TYPE_SYNONYMS, key);
+    if (dst !== undefined) {
+      if (!Object.prototype.hasOwnProperty.call(rawObj, dst)) {
         el[dst] = value;
         continue;
       }
@@ -523,7 +524,7 @@ function emitButton(lines: string[], el: Record<string, unknown>, name: string, 
         hyperlink: 'CommandBarHyperlink', Hyperlink: 'CommandBarHyperlink',
         CommandBarHyperlink: 'CommandBarHyperlink',
       };
-      btnType = cmdBarMap[raw] ?? raw;
+      btnType = ownEntry(cmdBarMap, raw) ?? raw;
     } else {
       const normalMap: Record<string, string> = {
         usual: 'UsualButton', UsualButton: 'UsualButton',
@@ -531,7 +532,7 @@ function emitButton(lines: string[], el: Record<string, unknown>, name: string, 
         hyperlink: 'Hyperlink', Hyperlink: 'Hyperlink',
         CommandBarHyperlink: 'Hyperlink',
       };
-      btnType = normalMap[raw] ?? raw;
+      btnType = ownEntry(normalMap, raw) ?? raw;
     }
   } else if (inCmdBar) {
     btnType = 'CommandBarButton';
@@ -743,8 +744,9 @@ function normalizeChoiceValue(value: unknown): ChoiceValueShape {
   if (parts.length >= 2) {
     const root = parts[0];
     let canonRoot: string | null = null;
-    if (root in REF_ROOT_SYNONYMS) {
-      canonRoot = REF_ROOT_SYNONYMS[root];
+    const synonymRoot = ownEntry(REF_ROOT_SYNONYMS, root);
+    if (synonymRoot !== undefined) {
+      canonRoot = synonymRoot;
     } else if (Object.values(REF_ROOT_SYNONYMS).includes(root)) {
       canonRoot = root;
     }

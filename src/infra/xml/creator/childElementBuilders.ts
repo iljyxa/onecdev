@@ -12,8 +12,9 @@ import {
   hasDirectChildElementNameInBlock,
 } from '../XmlUtils';
 import { resolveInsertOffset } from '../childObjects/ChildObjectsEditor';
+import { buildFormDescriptorXml } from '../form/FormAddService';
+import { isProcessorLike } from '../form/FormShared';
 import {
-  buildFormDescriptorXml,
   buildManagedFormXml,
   buildTemplateXml,
   ensureTemplateContentFiles,
@@ -395,7 +396,12 @@ function updateMainDataCompositionSchemaIfNeeded(
   return xml.replace(openClose, `<MainDataCompositionSchema>${escapeXml(value)}</MainDataCompositionSchema>`);
 }
 
-export function ensureAuxiliaryChildFiles(options: AddChildMetadataOptions, formatVersion: string, ruleset: FormatRuleset): string[] {
+export function ensureAuxiliaryChildFiles(
+  options: AddChildMetadataOptions,
+  formatVersion: string,
+  ruleset: FormatRuleset,
+  ownerKind: string
+): string[] {
   const loc = getObjectLocationFromXml(options.ownerObjectXmlPath);
   if (options.childTag === 'Command') {
     const commandModule = path.join(loc.objectDir, 'Commands', options.name, 'Ext', 'CommandModule.bsl');
@@ -407,7 +413,9 @@ export function ensureAuxiliaryChildFiles(options: AddChildMetadataOptions, form
     const formModule = path.join(loc.objectDir, 'Forms', options.name, 'Ext', 'Form', 'Module.bsl');
     const formXml = path.join(loc.objectDir, 'Forms', options.name, 'Ext', 'Form.xml');
     fs.mkdirSync(path.dirname(formXml), { recursive: true });
-    fs.writeFileSync(descriptorXml, buildFormDescriptorXml(options.name, formatVersion, ruleset), 'utf-8');
+    // Один построитель дескриптора формы с FormAddService (#142): состав свойств снят с корпуса.
+    const descriptor = buildFormDescriptorXml(options.name, splitCamelCase(options.name), formatVersion, isProcessorLike(ownerKind), ruleset);
+    fs.writeFileSync(descriptorXml, descriptor, 'utf-8');
     fs.writeFileSync(formXml, buildManagedFormXml(formatVersion, ruleset), 'utf-8');
     ensureEmptyFile(formModule);
     return [descriptorXml, formXml, formModule];

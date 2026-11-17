@@ -3,7 +3,7 @@ import * as path from 'path';
 import { getMetaFolder } from '../../domain/MetaTypes';
 import { ConfigurationXmlEditor, type EditResult } from './ConfigurationXmlEditor';
 import { resolveFormatRuleset } from './format/formatRegistry';
-import { writeTextFilePreservingBomAndEol } from './XmlUtils';
+import { detectRootObjectKind, writeTextFilePreservingBomAndEol } from './XmlUtils';
 import {
   buildBusinessProcessFlowchartXml,
   buildEmptyRightsXml,
@@ -121,7 +121,11 @@ export class MetadataXmlCreator {
 
     writeTextFilePreservingBomAndEol(options.ownerObjectXmlPath, xml, nextXml.xml);
     const changedFiles = [options.ownerObjectXmlPath];
-    changedFiles.push(...ensureAuxiliaryChildFiles(options, formatVersion, ruleset));
+    // Корень владельца уже разобран addChildToObjectXml (иначе — fail выше), вид определён;
+    // '' — только защита типа.
+    /* c8 ignore next */
+    const ownerKind = detectRootObjectKind(xml) ?? '';
+    changedFiles.push(...ensureAuxiliaryChildFiles(options, formatVersion, ruleset, ownerKind));
     return ok(changedFiles);
   }
 }

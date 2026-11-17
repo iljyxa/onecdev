@@ -200,8 +200,16 @@ export function xmlStr(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/**
+ * Значение таблицы только по собственному ключу. Ключи приходят из DSL формы (вход MCP от агента):
+ * `constructor`, `toString`, `__proto__` через `in`/индексацию нашли бы `Object.prototype` (#144).
+ */
+export function ownEntry<T>(table: Readonly<Partial<Record<string, T>>> | undefined, key: string): T | undefined {
+  return table !== undefined && Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined;
+}
+
 export function getHandlerName(elementName: string, eventName: string): string {
-  const suffix = EVENT_SUFFIX_MAP[eventName];
+  const suffix = ownEntry(EVENT_SUFFIX_MAP, eventName);
   return suffix ? `${elementName}${suffix}` : `${elementName}${eventName}`;
 }
 
@@ -236,11 +244,11 @@ function resolveTypeStr(typeStr: string): string {
     const i = typeStr.indexOf('.');
     const prefix = typeStr.slice(0, i);
     const suffix = typeStr.slice(i);
-    const r = FORM_TYPE_SYNONYMS[prefix.toLowerCase()];
+    const r = ownEntry(FORM_TYPE_SYNONYMS, prefix.toLowerCase());
     return r ? `${r}${suffix}` : typeStr;
   }
   const key = typeStr.toLowerCase();
-  return key in FORM_TYPE_SYNONYMS ? FORM_TYPE_SYNONYMS[key] : typeStr;
+  return ownEntry(FORM_TYPE_SYNONYMS, key) ?? typeStr;
 }
 
 function emitSingleType(lines: string[], rawType: string, indent: string): void {
@@ -284,16 +292,9 @@ function emitSingleType(lines: string[], rawType: string, indent: string): void 
     lines.push(`${indent}</v8:DateQualifiers>`);
     return;
   }
-  if (typeStr in V8_TYPES) {
-    lines.push(`${indent}<v8:Type>${V8_TYPES[typeStr]}</v8:Type>`);
-    return;
-  }
-  if (typeStr in UI_TYPES) {
-    lines.push(`${indent}<v8:Type>${UI_TYPES[typeStr]}</v8:Type>`);
-    return;
-  }
-  if (typeStr.startsWith('DataComposition') && typeStr in DCS_MAP) {
-    lines.push(`${indent}<v8:Type>${DCS_MAP[typeStr]}</v8:Type>`);
+  const knownType = ownEntry(V8_TYPES, typeStr) ?? ownEntry(UI_TYPES, typeStr) ?? ownEntry(DCS_MAP, typeStr);
+  if (knownType !== undefined) {
+    lines.push(`${indent}<v8:Type>${knownType}</v8:Type>`);
     return;
   }
   if (typeStr === 'DynamicList') {
@@ -304,8 +305,9 @@ function emitSingleType(lines: string[], rawType: string, indent: string): void 
     lines.push(`${indent}<v8:Type>cfg:${typeStr}</v8:Type>`);
     return;
   }
-  if (typeStr in KNOWN_INVALID_TYPES) {
-    throw new Error(`Invalid form attribute type '${typeStr}': ${KNOWN_INVALID_TYPES[typeStr]}`);
+  const invalidReason = ownEntry(KNOWN_INVALID_TYPES, typeStr);
+  if (invalidReason !== undefined) {
+    throw new Error(`Invalid form attribute type '${typeStr}': ${invalidReason}`);
   }
   if (typeStr.includes('.')) {
     lines.push(`${indent}<v8:Type>cfg:${typeStr}</v8:Type>`);
