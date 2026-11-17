@@ -30,17 +30,24 @@ function buildOutcome(status: ConfigurationCommandStatus): ConfigurationCommandO
       return { status: 'busy', heldBy: 'Импорт конфигураций' };
     case 'failed':
       return { status: 'failed', completed: ['Основная конфигурация'], stoppedAt: 'EVOLC' };
+    case 'invalid-selection':
+      return {
+        status: 'invalid-selection',
+        reason: 'selection-required',
+        message: 'Укажите configurations или all: true.',
+        available: ['ТорговыйУчет', 'EVOLC'],
+      };
   }
 }
 
 suite('configurationCommandOutcome', () => {
   suite('CONFIGURATION_COMMAND_STATUSES', () => {
-    test('ровно 6 уникальных статусов в задокументированном порядке', () => {
+    test('ровно 7 уникальных статусов в задокументированном порядке', () => {
       assert.deepStrictEqual(
         CONFIGURATION_COMMAND_STATUSES,
-        ['done', 'no-changes', 'no-targets', 'cancelled', 'busy', 'failed']
+        ['done', 'no-changes', 'no-targets', 'cancelled', 'busy', 'failed', 'invalid-selection']
       );
-      assert.strictEqual(new Set(CONFIGURATION_COMMAND_STATUSES).size, 6);
+      assert.strictEqual(new Set(CONFIGURATION_COMMAND_STATUSES).size, 7);
     });
   });
 
@@ -52,6 +59,7 @@ suite('configurationCommandOutcome', () => {
       cancelled: false,
       busy: false,
       failed: false,
+      'invalid-selection': false,
     };
 
     CONFIGURATION_COMMAND_STATUSES.forEach((status: ConfigurationCommandStatus) => {

@@ -6,6 +6,13 @@
  * отдельно от команд.
  */
 
+/**
+ * Почему выбор целей без человека не состоялся: `selection-required` —
+ * кандидатов несколько, а вызывающий не указал, какие брать;
+ * `unknown-names` — названы имена, которых нет среди кандидатов.
+ */
+export type InvalidSelectionReason = 'selection-required' | 'unknown-names';
+
 export type ConfigurationCommandOutcome =
   | { readonly status: 'done'; readonly completed: readonly string[] }
   | { readonly status: 'no-changes' }
@@ -17,6 +24,13 @@ export type ConfigurationCommandOutcome =
     readonly completed: readonly string[];
     readonly stoppedAt?: string;
     readonly error?: string;
+  }
+  | {
+    readonly status: 'invalid-selection';
+    readonly reason: InvalidSelectionReason;
+    readonly message: string;
+    readonly available: readonly string[];
+    readonly unknown?: readonly string[];
   };
 
 export type ConfigurationCommandStatus = ConfigurationCommandOutcome['status'];
@@ -29,6 +43,7 @@ export const CONFIGURATION_COMMAND_STATUSES = [
   'cancelled',
   'busy',
   'failed',
+  'invalid-selection',
 ] as const satisfies readonly ConfigurationCommandStatus[];
 
 /** `no-changes` — тоже успех: прежняя boolean-семантика обновления давала `true`. */

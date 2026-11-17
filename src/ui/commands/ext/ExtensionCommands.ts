@@ -23,19 +23,19 @@ import {
 import { planExtensionChoices } from '../../../infra/environment';
 import { notifyConfigurationOperationBusy } from './configurationOperationBusy';
 import { type ConfigurationCommandOutcome, failedOutcome } from './configurationCommandOutcome';
+import {
+  type ConfigurationTarget,
+  isConfigurationTargetRequest,
+  orderConfigurationTargets,
+  selectConfigurationTargets,
+} from './configurationTargetSelection';
 import { pathKey } from '../../../infra/fs/PathKey';
 
 interface ActionItem extends vscode.QuickPickItem {
   actionId: 'import' | 'update' | 'compileAndUpdateExt';
 }
 
-export interface ImportTarget {
-  kind: 'cf' | 'cfe';
-  name: string;
-  rootPath: string;
-}
-
-interface RootConfigurationTarget extends ImportTarget {
+interface RootConfigurationTarget extends ConfigurationTarget {
   extensionName?: string;
 }
 
@@ -72,7 +72,9 @@ export function registerExtensionCommands(
   deps: ExtensionCommandsDeps = DEFAULT_EXTENSION_COMMANDS_DEPS
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('onecdev.importConfigurations', async (): Promise<ConfigurationCommandOutcome> => {
+    // Аргумент — запрос выбора от MCP-моста; UI передаёт undefined или узел
+    // дерева, и тогда выбор остаётся интерактивным.
+    vscode.commands.registerCommand('onecdev.importConfigurations', async (request?: unknown): Promise<ConfigurationCommandOutcome> => {
       // Ранняя проверка — чтобы не показывать выбор конфигураций, когда импорт
       // всё равно не стартует; окончательный захват — после выбора.
       const heldBy = services.configurationOperationGuard.heldBy;
@@ -92,9 +94,14 @@ export function registerExtensionCommands(
         return { status: 'no-targets' };
       }
 
-      const selected = await deps.pickImportTargets(targets);
-      if (!selected || selected.length === 0) {
-        return { status: 'cancelled' };
+      const selection = await selectConfigurationTargets(
+        targets,
+        isConfigurationTargetRequest(request) ? request : undefined,
+        'import',
+        deps.pickImportTargets
+      );
+      if (selection.kind !== 'selected') {
+        return selection.kind === 'cancelled' ? { status: 'cancelled' } : selection.outcome;
       }
 
       const acquired = services.configurationOperationGuard.tryAcquireOrHeldBy('Импорт конфигураций');
@@ -113,7 +120,7 @@ export function registerExtensionCommands(
       let stoppedAt = '';
       try {
         const ok = await runWithStandaloneServerStopped(services, 'Импорт конфигураций', async () => {
-          const ordered = orderImportTargets(selected);
+          const ordered = orderConfigurationTargets(selection.targets);
           for (let index = 0; index < ordered.length; index += 1) {
             const target = ordered[index];
             setConfigurationProgress(
@@ -170,42 +177,44 @@ export function registerExtensionCommands(
       }
     }),
 
-    vscode.commands.registerCommand('onecdev.updateChangedConfigurations', async (): Promise<ConfigurationCommandOutcome> => {
+    vscode.commands.registerCommand('onecdev.updateChangedConfigurations', async (request?: unknown): Promise<ConfigurationCommandOutcome> => {
+      // Выбор целей идёт до аренды: открытый picker не должен держать guard,
+      // а исход «изменений нет»/«неверный выбор» не трогает индикатор дерева.
+      const heldBy = services.configurationOperationGuard.heldBy;
+      if (heldBy !== undefined) {
+        notifyConfigurationOperationBusy();
+        return { status: 'busy', heldBy };
+      }
+      const changed = services.getChangedConfigurations();
+      if (changed.length === 0) {
+        void vscode.window.showInformationMessage('Изменений в конфигурациях не обнаружено.');
+        return { status: 'no-changes' };
+      }
+      const selection = await selectConfigurationTargets(
+        changed,
+        isConfigurationTargetRequest(request) ? request : undefined,
+        'update',
+        (candidates) => candidates.length === 1 ? Promise.resolve(candidates) : deps.pickChangedConfigurations(candidates)
+      );
+      if (selection.kind !== 'selected') {
+        return selection.kind === 'cancelled' ? { status: 'cancelled' } : selection.outcome;
+      }
+
       const acquired = services.configurationOperationGuard.tryAcquireOrHeldBy('Обновление конфигураций');
       if (!acquired.acquired) {
         notifyConfigurationOperationBusy();
         return { status: 'busy', heldBy: acquired.heldBy };
       }
       const { lease } = acquired;
-      beginConfigurationProgress(services, 'Обновление конфигураций', 'проверка изменений');
+      beginConfigurationProgress(services, 'Обновление конфигураций', 'подготовка');
       await yieldToUi();
       const completedRootPaths: string[] = [];
       const completedNames: string[] = [];
       // См. одноимённую переменную импорта: заполняется вместе с `return false`.
       let stoppedAt = '';
       try {
-        const changed = services.getChangedConfigurations();
-
-        if (changed.length === 0) {
-          setConfigurationProgress(services, 'Обновление конфигураций', 'изменений нет', false);
-          // Уведомление показываем без await: `await` внутри критической секции
-          // держал бы общий guard занятым до закрытия нотификации
-          // пользователем, а до тех пор любая операция отбивалась сообщением
-          // «уже выполняется» (состояние «идёт обновление» залипало).
-          void vscode.window.showInformationMessage('Изменений в конфигурациях не обнаружено.');
-          return { status: 'no-changes' };
-        }
-
-        const selected = changed.length === 1
-          ? changed
-          : await deps.pickChangedConfigurations(changed);
-        if (!selected || selected.length === 0) {
-          setConfigurationProgress(services, 'Обновление конфигураций', 'отменено', false);
-          return { status: 'cancelled' };
-        }
-
         const ok = await runWithStandaloneServerStopped(services, 'Обновление конфигураций', async () => {
-          const ordered = orderUpdateTargets(selected);
+          const ordered = orderConfigurationTargets(selection.targets);
           for (let index = 0; index < ordered.length; index += 1) {
             const target = ordered[index];
             setConfigurationProgress(
@@ -581,7 +590,7 @@ async function runWithStandaloneServerStopped(
   }
 }
 
-function collectImportTargets(entries: ConfigEntry[], workspaceRoot: string): ImportTarget[] {
+function collectImportTargets(entries: ConfigEntry[], workspaceRoot: string): ConfigurationTarget[] {
   const targets = entries.map((entry) => {
     const name = readConfigName(entry);
     return {
@@ -591,15 +600,10 @@ function collectImportTargets(entries: ConfigEntry[], workspaceRoot: string): Im
     };
   });
   appendInitialMainConfigurationTarget(targets, workspaceRoot);
-  return targets.sort((left, right) => {
-    if (left.kind !== right.kind) {
-      return left.kind === 'cf' ? -1 : 1;
-    }
-    return left.name.localeCompare(right.name);
-  });
+  return orderConfigurationTargets(targets);
 }
 
-function appendInitialMainConfigurationTarget(targets: ImportTarget[], workspaceRoot: string): void {
+function appendInitialMainConfigurationTarget(targets: ConfigurationTarget[], workspaceRoot: string): void {
   const mainConfigRoot = path.join(workspaceRoot, 'src', 'cf');
   if (!isDirectory(mainConfigRoot)) {
     return;
@@ -790,13 +794,13 @@ function createProgressHooks(
 }
 
 interface ImportTargetPickItem extends vscode.QuickPickItem {
-  target?: ImportTarget;
+  target?: ConfigurationTarget;
   selectAll?: boolean;
 }
 
 async function pickImportTargets(
-  targets: ImportTarget[]
-): Promise<ImportTarget[] | undefined> {
+  targets: ConfigurationTarget[]
+): Promise<ConfigurationTarget[] | undefined> {
   return new Promise((resolve) => {
     const quickPick = vscode.window.createQuickPick<ImportTargetPickItem>();
     let resolved = false;
@@ -856,7 +860,7 @@ async function pickImportTargets(
         ? targets
         : selected
             .map((item) => item.target)
-            .filter((item): item is ImportTarget => Boolean(item));
+            .filter((item): item is ConfigurationTarget => Boolean(item));
       resolved = true;
       quickPick.hide();
       resolve(result);
@@ -868,15 +872,6 @@ async function pickImportTargets(
       }
     });
     quickPick.show();
-  });
-}
-
-function orderImportTargets(targets: ImportTarget[]): ImportTarget[] {
-  return [...targets].sort((left, right) => {
-    if (left.kind !== right.kind) {
-      return left.kind === 'cf' ? -1 : 1;
-    }
-    return left.name.localeCompare(right.name);
   });
 }
 
@@ -959,15 +954,6 @@ async function pickChangedConfigurations(
       }
     });
     quickPick.show();
-  });
-}
-
-function orderUpdateTargets(targets: ChangedConfiguration[]): ChangedConfiguration[] {
-  return [...targets].sort((left, right) => {
-    if (left.kind !== right.kind) {
-      return left.kind === 'cf' ? -1 : 1;
-    }
-    return left.name.localeCompare(right.name);
   });
 }
 

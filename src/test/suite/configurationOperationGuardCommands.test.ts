@@ -334,39 +334,32 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     });
   });
 
-  test('guard свободен: updateChangedConfigurations без изменений → no-changes; события [true,false]; release() до markConfigurationsClean; финальный setTreeProcessingState={active:false}', async () => {
-    const guard = new ConfigurationOperationGuard();
-    const events: boolean[] = [];
-    guard.onDidChangeBusy((busy) => events.push(busy));
-    const setTreeCalls: unknown[] = [];
-    const markCleanCalls: string[][] = [];
-    let getChangedCalls = 0;
-    let observedDuringGetChanged: { isBusy: boolean; heldBy: string | undefined } | undefined;
-    let observedDuringMarkClean: { isBusy: boolean } | undefined;
+  // Issue #42: выбор целей идёт до аренды, поэтому «изменений нет» больше не
+  // захватывает guard и не трогает индикатор обработки дерева.
+  [undefined, { mode: 'auto' }].forEach((request) => {
+    test(`guard свободен: updateChangedConfigurations без изменений (запрос ${JSON.stringify(request)}) → no-changes без аренды, событий guard нет, setTreeProcessingState/markConfigurationsClean не вызваны`, async () => {
+      const guard = new ConfigurationOperationGuard();
+      const events: boolean[] = [];
+      guard.onDidChangeBusy((busy) => events.push(busy));
+      let getChangedCalls = 0;
+      let observedDuringGetChanged: boolean | undefined;
+      servicesBox.current = createServices({
+        configurationOperationGuard: guard,
+        getChangedConfigurations: () => {
+          getChangedCalls += 1;
+          observedDuringGetChanged = guard.isBusy;
+          return [];
+        },
+      });
 
-    servicesBox.current = createServices({
-      configurationOperationGuard: guard,
-      getChangedConfigurations: () => {
-        getChangedCalls += 1;
-        observedDuringGetChanged = { isBusy: guard.isBusy, heldBy: guard.heldBy };
-        return [];
-      },
-      markConfigurationsClean: (roots: string[]) => {
-        markCleanCalls.push(roots);
-        observedDuringMarkClean = { isBusy: guard.isBusy };
-      },
-      setTreeProcessingState: (state) => { setTreeCalls.push(state); },
+      const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations', request);
+
+      assert.deepStrictEqual(result, { status: 'no-changes' });
+      assert.strictEqual(getChangedCalls, 1);
+      assert.strictEqual(observedDuringGetChanged, false);
+      assert.deepStrictEqual(events, []);
+      assert.deepStrictEqual(bridgeInformationMessages, ['Изменений в конфигурациях не обнаружено.']);
     });
-
-    const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
-
-    assert.deepStrictEqual(result, { status: 'no-changes' });
-    assert.strictEqual(getChangedCalls, 1);
-    assert.deepStrictEqual(observedDuringGetChanged, { isBusy: true, heldBy: 'Обновление конфигураций' });
-    assert.deepStrictEqual(markCleanCalls, [[]]);
-    assert.deepStrictEqual(observedDuringMarkClean, { isBusy: false });
-    assert.deepStrictEqual(events, [true, false]);
-    assert.deepStrictEqual(setTreeCalls.at(-1), { active: false });
   });
 
   test('guard свободен: одна изменённая cf, updateMainConfiguration → true — done, picker не вызван, флаг «одна цель»===true, markConfigurationsClean([[cf]])', async () => {
@@ -403,14 +396,14 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
   [undefined, []].forEach((cancelledSelection) => {
     test(`guard свободен: cf+cfe изменены, pickChangedConfigurations вернул ${JSON.stringify(cancelledSelection)} — cancelled, runner'ы не вызваны`, async () => {
       const guard = new ConfigurationOperationGuard();
+      const events: boolean[] = [];
+      guard.onDidChangeBusy((busy) => events.push(busy));
       servicesBox.current = createServices({
         configurationOperationGuard: guard,
         getChangedConfigurations: () => [
           { kind: 'cf', rootPath: EXAMPLE_CF, name: CF_NAME, changedFilesCount: 1 },
           { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC, name: CFE_NAME, changedFilesCount: 1 },
         ],
-        setTreeProcessingState: () => undefined,
-        markConfigurationsClean: () => undefined,
       });
       depsBox.current = createDeps({
         pickChangedConfigurations: () => Promise.resolve(cancelledSelection),
@@ -420,6 +413,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
 
       assert.deepStrictEqual(result, { status: 'cancelled' });
       assert.strictEqual(guard.isBusy, false);
+      assert.deepStrictEqual(events, [], 'отмена выбора до аренды не должна захватывать guard');
     });
   });
 
@@ -619,6 +613,321 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     const result = await vscode.commands.executeCommand('onecdev.importConfigurations');
 
     assert.deepStrictEqual(result, { status: 'failed', completed: [], error: 'Конфигуратор упал' });
+  });
+
+  /**
+   * Issue #42: MCP-мост передаёт командам запрос выбора целей
+   * (`ConfigurationTargetRequest`), и они не открывают QuickPick. Выбор идёт
+   * ДО аренды guard'а, интерактивный путь (без запроса или с узлом дерева)
+   * сохраняется для UI. Runner'ы и picker'ы по умолчанию — throw-стабы
+   * (`createDeps`), поэтому «не вызван» проверяется самим фактом прохождения.
+   */
+  suite('Issue #42 — неинтерактивный выбор целей', () => {
+    const STOPPED_SERVER = {
+      refreshHealth: () => Promise.resolve({ configured: false, state: 'stopped' }),
+    } as unknown as CommandServices['standaloneServerService'];
+    const CF_ENTRY = { kind: 'cf', rootPath: EXAMPLE_CF };
+    const CFE_ENTRY = { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC };
+    const CF_CHANGED = { kind: 'cf' as const, rootPath: EXAMPLE_CF, name: CF_NAME, changedFilesCount: 1 };
+    const CFE_CHANGED = { kind: 'cfe' as const, rootPath: EXAMPLE_CFE_EVOLC, name: CFE_NAME, changedFilesCount: 1 };
+
+    function entriesProvider(entries: readonly unknown[]): CommandServices['treeProvider'] {
+      return { getEntries: () => [...entries] } as unknown as CommandServices['treeProvider'];
+    }
+
+    function withoutMessage(result: unknown): Record<string, unknown> {
+      const { message, ...rest } = result as Record<string, unknown>;
+      assert.strictEqual(typeof message, 'string');
+      return rest;
+    }
+
+    suite('importConfigurations', () => {
+      test('auto, одна конфигурация → done [cf], picker не вызван', async () => {
+        const markCleanCalls: string[][] = [];
+        servicesBox.current = createServices({
+          treeProvider: entriesProvider([CF_ENTRY]),
+          standaloneServerService: STOPPED_SERVER,
+          setTreeProcessingState: () => undefined,
+          markConfigurationsClean: (roots: string[]) => { markCleanCalls.push(roots); },
+          reloadEntries: () => Promise.resolve(),
+        });
+        depsBox.current = createDeps({ decompileMainConfiguration: () => Promise.resolve(true) });
+
+        const result = await vscode.commands.executeCommand('onecdev.importConfigurations', { mode: 'auto' });
+
+        assert.deepStrictEqual(result, { status: 'done', completed: [CF_NAME] });
+        assert.deepStrictEqual(markCleanCalls, [[EXAMPLE_CF]]);
+      });
+
+      test('auto, cf+cfe → invalid-selection selection-required, событий guard нет, runner\'ы не вызваны', async () => {
+        const guard = new ConfigurationOperationGuard();
+        const events: boolean[] = [];
+        guard.onDidChangeBusy((busy) => events.push(busy));
+        servicesBox.current = createServices({
+          configurationOperationGuard: guard,
+          treeProvider: entriesProvider([CF_ENTRY, CFE_ENTRY]),
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.importConfigurations', { mode: 'auto' });
+
+        assert.deepStrictEqual(withoutMessage(result), {
+          status: 'invalid-selection',
+          reason: 'selection-required',
+          available: [CF_NAME, CFE_NAME],
+        });
+        assert.deepStrictEqual(events, []);
+      });
+
+      test('all → done [cf, EVOLC], reloadEntries вызван 1 раз', async () => {
+        let reloadCalls = 0;
+        servicesBox.current = createServices({
+          treeProvider: entriesProvider([CFE_ENTRY, CF_ENTRY]),
+          standaloneServerService: STOPPED_SERVER,
+          setTreeProcessingState: () => undefined,
+          markConfigurationsClean: () => undefined,
+          reloadEntries: () => { reloadCalls += 1; return Promise.resolve(); },
+        });
+        depsBox.current = createDeps({
+          decompileMainConfiguration: () => Promise.resolve(true),
+          decompileExtension: () => Promise.resolve(true),
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.importConfigurations', { mode: 'all' });
+
+        assert.deepStrictEqual(result, { status: 'done', completed: [CF_NAME, CFE_NAME] });
+        assert.strictEqual(reloadCalls, 1);
+      });
+
+      test('names ["evolc"] → done [EVOLC], только decompileExtension, markConfigurationsClean([[EVOLC]])', async () => {
+        const markCleanCalls: string[][] = [];
+        const decompiled: string[] = [];
+        servicesBox.current = createServices({
+          treeProvider: entriesProvider([CF_ENTRY, CFE_ENTRY]),
+          standaloneServerService: STOPPED_SERVER,
+          setTreeProcessingState: () => undefined,
+          markConfigurationsClean: (roots: string[]) => { markCleanCalls.push(roots); },
+          reloadEntries: () => Promise.resolve(),
+        });
+        depsBox.current = createDeps({
+          decompileExtension: (name) => { decompiled.push(name); return Promise.resolve(true); },
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.importConfigurations', { mode: 'names', names: ['evolc'] });
+
+        assert.deepStrictEqual(result, { status: 'done', completed: [CFE_NAME] });
+        assert.deepStrictEqual(decompiled, [CFE_NAME]);
+        assert.deepStrictEqual(markCleanCalls, [[EXAMPLE_CFE_EVOLC]]);
+      });
+
+      test('names ["Нет"] → invalid-selection unknown-names с unknown и available', async () => {
+        servicesBox.current = createServices({ treeProvider: entriesProvider([CF_ENTRY, CFE_ENTRY]) });
+
+        const result = await vscode.commands.executeCommand('onecdev.importConfigurations', { mode: 'names', names: ['Нет'] });
+
+        assert.deepStrictEqual(withoutMessage(result), {
+          status: 'invalid-selection',
+          reason: 'unknown-names',
+          available: [CF_NAME, CFE_NAME],
+          unknown: ['Нет'],
+        });
+      });
+
+      test('guard заняли во время сбора целей → busy с чужим heldBy, чужая аренда цела', async () => {
+        const guard = new ConfigurationOperationGuard();
+        let foreignLease: ReturnType<ConfigurationOperationGuard['tryAcquire']>;
+        servicesBox.current = createServices({
+          configurationOperationGuard: guard,
+          treeProvider: {
+            getEntries: () => {
+              foreignLease = guard.tryAcquire('Синхронизация с хранилищем: Основная конфигурация');
+              return [CF_ENTRY];
+            },
+          } as unknown as CommandServices['treeProvider'],
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.importConfigurations', { mode: 'auto' });
+
+        assert.deepStrictEqual(result, { status: 'busy', heldBy: 'Синхронизация с хранилищем: Основная конфигурация' });
+        assert.strictEqual(guard.heldBy, 'Синхронизация с хранилищем: Основная конфигурация');
+        foreignLease?.release();
+      });
+
+      test('временная рабочая область без src/cf, auto → no-targets', async () => {
+        const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8-import-auto-no-targets-'));
+        try {
+          servicesBox.current = createServices({
+            workspaceFolder: { uri: vscode.Uri.file(workspaceRoot), name: 'no-targets-fixture', index: 0 },
+            treeProvider: entriesProvider([]),
+          });
+
+          const result = await vscode.commands.executeCommand('onecdev.importConfigurations', { mode: 'auto' });
+
+          assert.deepStrictEqual(result, { status: 'no-targets' });
+        } finally {
+          fs.rmSync(workspaceRoot, { recursive: true, force: true });
+        }
+      });
+
+      test('аргумент — узел дерева (не запрос) → интерактивный путь, pickImportTargets вызван', async () => {
+        let pickCalls = 0;
+        servicesBox.current = createServices({ treeProvider: entriesProvider([CF_ENTRY]) });
+        depsBox.current = createDeps({
+          pickImportTargets: () => { pickCalls += 1; return Promise.resolve(undefined); },
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.importConfigurations', CF_NODE);
+
+        assert.deepStrictEqual(result, { status: 'cancelled' });
+        assert.strictEqual(pickCalls, 1);
+      });
+    });
+
+    suite('updateChangedConfigurations', () => {
+      test('guard занят, auto → busy, getChangedConfigurations не вызван', async () => {
+        const guard = new ConfigurationOperationGuard();
+        const lease = guard.tryAcquire('Хранилище: синхронизация');
+        servicesBox.current = createServices({ configurationOperationGuard: guard });
+
+        const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations', { mode: 'auto' });
+
+        assert.deepStrictEqual(result, { status: 'busy', heldBy: 'Хранилище: синхронизация' });
+        assert.deepStrictEqual(bridgeInformationMessages, [CONFIGURATION_OPERATION_BUSY_MESSAGE]);
+        lease?.release();
+      });
+
+      [{ mode: 'auto' }, { mode: 'names', names: [CF_NAME] }].forEach((request) => {
+        test(`одна изменённая cf, ${JSON.stringify(request)} → done [cf], флаг «одна цель»===true`, async () => {
+          let observedShowSuccessMessage: boolean | undefined;
+          servicesBox.current = createServices({
+            getChangedConfigurations: () => [CF_CHANGED],
+            standaloneServerService: STOPPED_SERVER,
+            setTreeProcessingState: () => undefined,
+            markConfigurationsClean: () => undefined,
+          });
+          depsBox.current = createDeps({
+            updateMainConfiguration: (_name, _root, _workspaceFolder, _outputChannel, showSuccessMessage) => {
+              observedShowSuccessMessage = showSuccessMessage;
+              return Promise.resolve(true);
+            },
+          });
+
+          const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations', request);
+
+          assert.deepStrictEqual(result, { status: 'done', completed: [CF_NAME] });
+          assert.strictEqual(observedShowSuccessMessage, true);
+        });
+      });
+
+      test('две изменённых без аргумента → picker открыт при свободном guard, выбранная cf обновлена', async () => {
+        const guard = new ConfigurationOperationGuard();
+        const observedBusy: boolean[] = [];
+        servicesBox.current = createServices({
+          configurationOperationGuard: guard,
+          getChangedConfigurations: () => [CF_CHANGED, CFE_CHANGED],
+          standaloneServerService: STOPPED_SERVER,
+          setTreeProcessingState: () => undefined,
+          markConfigurationsClean: () => undefined,
+        });
+        depsBox.current = createDeps({
+          pickChangedConfigurations: (changed) => {
+            observedBusy.push(guard.isBusy);
+            return Promise.resolve(changed.filter((target) => target.kind === 'cf'));
+          },
+          updateMainConfiguration: () => Promise.resolve(true),
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
+
+        assert.deepStrictEqual(result, { status: 'done', completed: [CF_NAME] });
+        assert.deepStrictEqual(observedBusy, [false]);
+      });
+
+      test('guard заняли, пока был открыт picker → busy с чужим heldBy, чужая аренда цела', async () => {
+        const guard = new ConfigurationOperationGuard();
+        let foreignLease: ReturnType<ConfigurationOperationGuard['tryAcquire']>;
+        servicesBox.current = createServices({
+          configurationOperationGuard: guard,
+          getChangedConfigurations: () => [CF_CHANGED, CFE_CHANGED],
+        });
+        depsBox.current = createDeps({
+          pickChangedConfigurations: (changed) => {
+            foreignLease = guard.tryAcquire('Синхронизация с хранилищем: Основная конфигурация');
+            return Promise.resolve(changed);
+          },
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations');
+
+        assert.deepStrictEqual(result, { status: 'busy', heldBy: 'Синхронизация с хранилищем: Основная конфигурация' });
+        assert.strictEqual(guard.heldBy, 'Синхронизация с хранилищем: Основная конфигурация');
+        foreignLease?.release();
+      });
+
+      test('auto, две изменённых → invalid-selection selection-required, picker не вызван, событий guard нет', async () => {
+        const guard = new ConfigurationOperationGuard();
+        const events: boolean[] = [];
+        guard.onDidChangeBusy((busy) => events.push(busy));
+        servicesBox.current = createServices({
+          configurationOperationGuard: guard,
+          getChangedConfigurations: () => [CF_CHANGED, CFE_CHANGED],
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations', { mode: 'auto' });
+
+        assert.deepStrictEqual(withoutMessage(result), {
+          status: 'invalid-selection',
+          reason: 'selection-required',
+          available: [CF_NAME, CFE_NAME],
+        });
+        assert.deepStrictEqual(events, []);
+      });
+
+      test('all → done [cf, EVOLC], порядок запуска cf, cfe', async () => {
+        const callOrder: string[] = [];
+        servicesBox.current = createServices({
+          getChangedConfigurations: () => [CFE_CHANGED, CF_CHANGED],
+          standaloneServerService: STOPPED_SERVER,
+          setTreeProcessingState: () => undefined,
+          markConfigurationsClean: () => undefined,
+        });
+        depsBox.current = createDeps({
+          updateMainConfiguration: () => { callOrder.push('cf'); return Promise.resolve(true); },
+          updateExtension: () => { callOrder.push('cfe'); return Promise.resolve(true); },
+        });
+
+        const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations', { mode: 'all' });
+
+        assert.deepStrictEqual(result, { status: 'done', completed: [CF_NAME, CFE_NAME] });
+        assert.deepStrictEqual(callOrder, ['cf', 'cfe']);
+      });
+
+      test('names ["EVOLC"] → done [EVOLC], updateMainConfiguration не вызван', async () => {
+        servicesBox.current = createServices({
+          getChangedConfigurations: () => [CF_CHANGED, CFE_CHANGED],
+          standaloneServerService: STOPPED_SERVER,
+          setTreeProcessingState: () => undefined,
+          markConfigurationsClean: () => undefined,
+        });
+        depsBox.current = createDeps({ updateExtension: () => Promise.resolve(true) });
+
+        const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations', { mode: 'names', names: ['EVOLC'] });
+
+        assert.deepStrictEqual(result, { status: 'done', completed: [CFE_NAME] });
+      });
+
+      test('изменена только cf, names ["EVOLC"] → unknown-names, available только изменённые', async () => {
+        servicesBox.current = createServices({ getChangedConfigurations: () => [CF_CHANGED] });
+
+        const result = await vscode.commands.executeCommand('onecdev.updateChangedConfigurations', { mode: 'names', names: ['EVOLC'] });
+
+        assert.deepStrictEqual(withoutMessage(result), {
+          status: 'invalid-selection',
+          reason: 'unknown-names',
+          available: [CF_NAME],
+          unknown: ['EVOLC'],
+        });
+      });
+    });
   });
 
   test('RepositoryCommands: guard занят «Хранилище: синхронизация» — repository.commit не доходит до show/resolveFullName, чужая аренда цела', async () => {
@@ -1599,7 +1908,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
     });
 
-    test('update: cf успешно, cfe провалилось — {outcome:"failed", completed:[cf], stoppedAt:cfe, result:false}', async () => {
+    test('update all:true: cf успешно, cfe провалилось — {outcome:"failed", completed:[cf], stoppedAt:cfe, result:false}', async () => {
       servicesBox.current = createServices({
         configurationOperationGuard: new ConfigurationOperationGuard(),
         getChangedConfigurations: () => [
@@ -1613,12 +1922,11 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         markConfigurationsClean: () => undefined,
       });
       depsBox.current = createDeps({
-        pickChangedConfigurations: (changed) => Promise.resolve(changed),
         updateMainConfiguration: () => Promise.resolve(true),
         updateExtension: () => Promise.resolve(false),
       });
 
-      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations', all: true });
 
       assert.deepStrictEqual(extractResponse(result), {
         command: 'onecdev.updateChangedConfigurations',
@@ -1629,25 +1937,46 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
     });
 
-    test('update: отмена выбора — {outcome:"cancelled", result:false}', async () => {
+    test('update без аргументов, две изменённых — invalid-selection selection-required, picker не вызван', async () => {
       servicesBox.current = createServices({
         configurationOperationGuard: new ConfigurationOperationGuard(),
         getChangedConfigurations: () => [
           { kind: 'cf', rootPath: EXAMPLE_CF, name: CF_NAME, changedFilesCount: 1 },
           { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC, name: CFE_NAME, changedFilesCount: 1 },
         ],
-        setTreeProcessingState: () => undefined,
-        markConfigurationsClean: () => undefined,
       });
-      depsBox.current = createDeps({ pickChangedConfigurations: () => Promise.resolve(undefined) });
 
       const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations' });
 
-      assert.deepStrictEqual(extractResponse(result), {
+      const { message, ...rest } = extractResponse(result);
+      assert.deepStrictEqual(rest, {
         command: 'onecdev.updateChangedConfigurations',
-        outcome: 'cancelled',
+        outcome: 'invalid-selection',
+        reason: 'selection-required',
+        available: [CF_NAME, CFE_NAME],
         result: false,
       });
+      assert.strictEqual(typeof message, 'string');
+    });
+
+    test('update configurations [EVOLC] при изменённой только cf — invalid-selection unknown-names', async () => {
+      servicesBox.current = createServices({
+        configurationOperationGuard: new ConfigurationOperationGuard(),
+        getChangedConfigurations: () => [{ kind: 'cf', rootPath: EXAMPLE_CF, name: CF_NAME, changedFilesCount: 1 }],
+      });
+
+      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations', configurations: [CFE_NAME] });
+
+      const { message, ...rest } = extractResponse(result);
+      assert.deepStrictEqual(rest, {
+        command: 'onecdev.updateChangedConfigurations',
+        outcome: 'invalid-selection',
+        reason: 'unknown-names',
+        available: [CF_NAME],
+        unknown: [CFE_NAME],
+        result: false,
+      });
+      assert.strictEqual(typeof message, 'string');
     });
 
     test('import: нет каталога src/cf — {outcome:"no-targets", result:false}', async () => {
@@ -1665,31 +1994,10 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
     });
 
-    test('import: отмена выбора — {outcome:"cancelled", result:false}', async () => {
-      servicesBox.current = createServices({
+    function importServices(entries: readonly unknown[]): CommandServices {
+      return createServices({
         configurationOperationGuard: new ConfigurationOperationGuard(),
-        treeProvider: { getEntries: () => [{ kind: 'cf', rootPath: EXAMPLE_CF }] } as unknown as CommandServices['treeProvider'],
-      });
-      depsBox.current = createDeps({ pickImportTargets: () => Promise.resolve(undefined) });
-
-      const result = await executeCommandTool({ command: 'onecdev.importConfigurations' });
-
-      assert.deepStrictEqual(extractResponse(result), {
-        command: 'onecdev.importConfigurations',
-        outcome: 'cancelled',
-        result: false,
-      });
-    });
-
-    test('import: cf+EVOLC выбраны все, оба успешны — {outcome:"done", completed:[cf, EVOLC], result:true}', async () => {
-      servicesBox.current = createServices({
-        configurationOperationGuard: new ConfigurationOperationGuard(),
-        treeProvider: {
-          getEntries: () => [
-            { kind: 'cf', rootPath: EXAMPLE_CF },
-            { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC },
-          ],
-        } as unknown as CommandServices['treeProvider'],
+        treeProvider: { getEntries: () => [...entries] } as unknown as CommandServices['treeProvider'],
         standaloneServerService: {
           refreshHealth: () => Promise.resolve({ configured: false, state: 'stopped' }),
         } as unknown as CommandServices['standaloneServerService'],
@@ -1697,13 +2005,73 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         markConfigurationsClean: () => undefined,
         reloadEntries: () => Promise.resolve(),
       });
+    }
+
+    // Главный регресс issue #42: без аргументов при нескольких конфигурациях
+    // мост раньше открывал QuickPick и ждал человека. pickImportTargets —
+    // throw-стаб из createDeps: его вызов провалил бы тест.
+    test('import без аргументов, cf+cfe — invalid-selection selection-required, picker не вызван', async () => {
+      servicesBox.current = importServices([
+        { kind: 'cf', rootPath: EXAMPLE_CF },
+        { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC },
+      ]);
+
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations' });
+
+      assert.strictEqual(isErrorResult(result), false);
+      const { message, ...rest } = extractResponse(result);
+      assert.deepStrictEqual(rest, {
+        command: 'onecdev.importConfigurations',
+        outcome: 'invalid-selection',
+        reason: 'selection-required',
+        available: [CF_NAME, CFE_NAME],
+        result: false,
+      });
+      assert.ok(typeof message === 'string' && message.includes('configurations'), String(message));
+    });
+
+    test('import без аргументов, одна конфигурация — done [cf]', async () => {
+      servicesBox.current = importServices([{ kind: 'cf', rootPath: EXAMPLE_CF }]);
+      depsBox.current = createDeps({ decompileMainConfiguration: () => Promise.resolve(true) });
+
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations' });
+
+      assert.deepStrictEqual(extractResponse(result), {
+        command: 'onecdev.importConfigurations',
+        outcome: 'done',
+        completed: [CF_NAME],
+        result: true,
+      });
+    });
+
+    test('import configurations [EVOLC] — done [EVOLC]', async () => {
+      servicesBox.current = importServices([
+        { kind: 'cf', rootPath: EXAMPLE_CF },
+        { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC },
+      ]);
+      depsBox.current = createDeps({ decompileExtension: () => Promise.resolve(true) });
+
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations', configurations: [CFE_NAME] });
+
+      assert.deepStrictEqual(extractResponse(result), {
+        command: 'onecdev.importConfigurations',
+        outcome: 'done',
+        completed: [CFE_NAME],
+        result: true,
+      });
+    });
+
+    test('import all:true, cf+EVOLC, оба успешны — {outcome:"done", completed:[cf, EVOLC], result:true}', async () => {
+      servicesBox.current = importServices([
+        { kind: 'cf', rootPath: EXAMPLE_CF },
+        { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC },
+      ]);
       depsBox.current = createDeps({
-        pickImportTargets: (targets) => Promise.resolve(targets),
         decompileMainConfiguration: () => Promise.resolve(true),
         decompileExtension: () => Promise.resolve(true),
       });
 
-      const result = await executeCommandTool({ command: 'onecdev.importConfigurations' });
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations', all: true });
 
       assert.deepStrictEqual(extractResponse(result), {
         command: 'onecdev.importConfigurations',
@@ -1711,6 +2079,63 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         completed: [CF_NAME, CFE_NAME],
         result: true,
       });
+    });
+
+    test('import configurations [Нет] — invalid-selection unknown-names с unknown', async () => {
+      servicesBox.current = importServices([
+        { kind: 'cf', rootPath: EXAMPLE_CF },
+        { kind: 'cfe', rootPath: EXAMPLE_CFE_EVOLC },
+      ]);
+
+      const result = await executeCommandTool({ command: 'onecdev.importConfigurations', configurations: ['Нет'] });
+
+      const { message, ...rest } = extractResponse(result);
+      assert.deepStrictEqual(rest, {
+        command: 'onecdev.importConfigurations',
+        outcome: 'invalid-selection',
+        reason: 'unknown-names',
+        available: [CF_NAME, CFE_NAME],
+        unknown: ['Нет'],
+        result: false,
+      });
+      assert.strictEqual(typeof message, 'string');
+    });
+
+    const MALFORMED_SELECTIONS: readonly { label: string; args: Record<string, unknown> }[] = [
+      { label: 'configurations вместе с all:true', args: { configurations: [CF_NAME], all: true } },
+      { label: 'пустой configurations', args: { configurations: [] } },
+      { label: 'пробельное имя', args: { configurations: ['  '] } },
+    ];
+    ['onecdev.importConfigurations', 'onecdev.updateChangedConfigurations'].forEach((command) => {
+      MALFORMED_SELECTIONS.forEach(({ label, args }) => {
+        test(`${command}: ${label} — isError, команда не вызвана`, async () => {
+          // createServices: getEntries/getChangedConfigurations — throw-стабы,
+          // вызов команды дал бы исход failed/исключение, а не ошибку входа.
+          servicesBox.current = createServices({ configurationOperationGuard: new ConfigurationOperationGuard() });
+
+          const result = await executeCommandTool({ command, ...args });
+
+          assert.strictEqual(isErrorResult(result), true);
+          assert.ok(result.content[0].text.length > 0);
+        });
+      });
+    });
+
+    test('busy: updateChangedConfigurations с configurations [cf] — busy с heldBy, аренда цела', async () => {
+      const guard = new ConfigurationOperationGuard();
+      const lease = guard.tryAcquire('Синхронизация с хранилищем: Основная конфигурация');
+      servicesBox.current = createServices({ configurationOperationGuard: guard });
+
+      const result = await executeCommandTool({ command: 'onecdev.updateChangedConfigurations', configurations: [CF_NAME] });
+
+      assert.deepStrictEqual(extractResponse(result), {
+        command: 'onecdev.updateChangedConfigurations',
+        outcome: 'busy',
+        heldBy: 'Синхронизация с хранилищем: Основная конфигурация',
+        result: false,
+      });
+      assert.strictEqual(guard.heldBy, 'Синхронизация с хранилищем: Основная конфигурация');
+      lease?.release();
     });
 
     suite('refresh — фейковая регистрация команды на время теста', () => {
@@ -1734,6 +2159,19 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
           result: true,
         });
         assert.strictEqual(calls, 1);
+      });
+
+      [{ configurations: ['X'] }, { all: true }, { all: false }].forEach((args) => {
+        test(`refresh с ${JSON.stringify(args)} — isError, команда не вызвана`, async () => {
+          let calls = 0;
+          disposable = vscode.commands.registerCommand('onecdev.refresh', () => { calls += 1; });
+
+          const result = await executeCommandTool({ command: 'onecdev.refresh', ...args });
+
+          assert.strictEqual(isErrorResult(result), true);
+          assert.ok(result.content[0].text.includes('onecdev.refresh'));
+          assert.strictEqual(calls, 0);
+        });
       });
 
       test('refresh бросил исключение — isError:true, текст ошибки', async () => {

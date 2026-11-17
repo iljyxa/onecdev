@@ -12,6 +12,10 @@ import {
   type ConfigurationCommandOutcome,
   isConfigurationCommandSucceeded,
 } from '../../commands/ext/configurationCommandOutcome';
+import {
+  type ConfigurationTargetRequest,
+  parseConfigurationSelectionArgs,
+} from '../../commands/ext/configurationTargetSelection';
 import { canonicalToLegacyModulePath, cfeModuleOwnerCanonical } from '../McpPathResolvers';
 import { runDumpConfigurationToCf, runLoadConfigurationFromCf } from '../../commands/ext/CfFileCommandRunner';
 import { runDumpAllExtensionsToCfe, runLoadAllExtensionsFromCfe } from '../../commands/ext/CfeBatchCommandRunner';
@@ -35,14 +39,17 @@ type AllowedCommandId = (typeof ALLOWED_COMMANDS)[number];
  * в ответ: предпроверка guard'а здесь была бы вторым источником правды и не
  * защищала бы от захвата между проверкой и вызовом.
  */
-async function executeAllowedCommand(command: AllowedCommandId): Promise<ConfigurationCommandOutcome> {
+async function executeAllowedCommand(
+  command: AllowedCommandId,
+  request?: ConfigurationTargetRequest
+): Promise<ConfigurationCommandOutcome> {
   if (command === 'onecdev.refresh') {
     // Перечитывание дерева не работает с базой и не возвращает исход; его
     // завершение без исключения и есть успех.
     await vscode.commands.executeCommand(command);
     return { status: 'done', completed: [] };
   }
-  return vscode.commands.executeCommand<ConfigurationCommandOutcome>(command);
+  return vscode.commands.executeCommand<ConfigurationCommandOutcome>(command, request);
 }
 
 function toExecuteCommandResponse(
@@ -429,20 +436,38 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
     {
       title: 'Выполнить команду расширения',
       description: 'Безопасный мост только для явно разрешённых команд расширения: refresh, importConfigurations, updateChangedConfigurations. '
+        + 'importConfigurations и updateChangedConfigurations выбирают конфигурации без участия пользователя: '
+        + 'configurations — имена конфигураций из onecdev_workspace_overview или из поля available прошлого ответа, без учёта регистра; '
+        + 'all: true — все конфигурации (для updateChangedConfigurations — все изменённые). '
+        + 'configurations и all взаимоисключающие и недопустимы для refresh. '
+        + 'Без них единственная конфигурация обрабатывается сразу, а при нескольких возвращается invalid-selection. '
         + `Ответ: command, outcome (${CONFIGURATION_COMMAND_STATUSES.join('|')}), result (true при done/no-changes), `
-        + 'heldBy при busy — выполняющаяся операция, completed/stoppedAt/error при done/failed. '
-        + 'importConfigurations и updateChangedConfigurations при нескольких конфигурациях ждут выбора пользователя.',
+        + 'heldBy при busy — выполняющаяся операция, completed/stoppedAt/error при done/failed, '
+        + 'reason (selection-required|unknown-names)/message/available/unknown при invalid-selection.',
       inputSchema: z.object({
         command: z.enum(ALLOWED_COMMANDS),
+        configurations: z.array(z.string()).optional(),
+        all: z.boolean().optional(),
       }),
       annotations: {
         destructiveHint: true,
       },
     },
-    async ({ command }) => gate.wrapAsync(async () => {
-      const outcome = await executeAllowedCommand(command);
-      return toExecuteCommandResponse(command, outcome);
-    })
+    async ({ command, configurations, all }) => {
+      // Ошибки формы вызова отбиваются до команды: MCP никогда не должен
+      // доходить до интерактивного выбора, а refresh целей не выбирает.
+      if (command === 'onecdev.refresh') {
+        if (configurations !== undefined || all !== undefined) {
+          return gate.toolError(new Error('Аргументы configurations и all не применимы к команде onecdev.refresh.'));
+        }
+        return gate.wrapAsync(async () => toExecuteCommandResponse(command, await executeAllowedCommand(command)));
+      }
+      const parsed = parseConfigurationSelectionArgs({ configurations, all });
+      if (!parsed.ok) {
+        return gate.toolError(new Error(parsed.error));
+      }
+      return gate.wrapAsync(async () => toExecuteCommandResponse(command, await executeAllowedCommand(command, parsed.request)));
+    }
   );
 }
 

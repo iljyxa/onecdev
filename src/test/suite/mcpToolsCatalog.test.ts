@@ -611,8 +611,16 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_execute_command',
     title: 'Выполнить команду расширения',
-    description: 'Безопасный мост только для явно разрешённых команд расширения: refresh, importConfigurations, updateChangedConfigurations. Ответ: command, outcome (done|no-changes|no-targets|cancelled|busy|failed), result (true при done/no-changes), heldBy при busy — выполняющаяся операция, completed/stoppedAt/error при done/failed. importConfigurations и updateChangedConfigurations при нескольких конфигурациях ждут выбора пользователя.',
-    schemaKeys: { command: false },
+    description: 'Безопасный мост только для явно разрешённых команд расширения: refresh, importConfigurations, updateChangedConfigurations. '
+      + 'importConfigurations и updateChangedConfigurations выбирают конфигурации без участия пользователя: '
+      + 'configurations — имена конфигураций из onecdev_workspace_overview или из поля available прошлого ответа, без учёта регистра; '
+      + 'all: true — все конфигурации (для updateChangedConfigurations — все изменённые). '
+      + 'configurations и all взаимоисключающие и недопустимы для refresh. '
+      + 'Без них единственная конфигурация обрабатывается сразу, а при нескольких возвращается invalid-selection. '
+      + 'Ответ: command, outcome (done|no-changes|no-targets|cancelled|busy|failed|invalid-selection), result (true при done/no-changes), '
+      + 'heldBy при busy — выполняющаяся операция, completed/stoppedAt/error при done/failed, '
+      + 'reason (selection-required|unknown-names)/message/available/unknown при invalid-selection.',
+    schemaKeys: { command: false, configurations: true, all: true },
   },
   {
     name: 'onecdev_repository_history',
