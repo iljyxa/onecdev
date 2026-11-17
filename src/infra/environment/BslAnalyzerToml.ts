@@ -55,6 +55,10 @@ export type ServiceExcludeEdit =
   | { readonly status: 'unchanged' }
   | { readonly status: 'unsupported-format'; readonly detail: string };
 
+export type SourceLayoutEdit =
+  | { readonly status: 'merged'; readonly content: string }
+  | { readonly status: 'unsupported-format'; readonly detail: string };
+
 type LineKind = 'blank' | 'comment' | 'header' | 'entry' | 'other';
 
 interface LogicalLine {
@@ -143,11 +147,16 @@ export function buildBslAnalyzerSourceConfig(
  * Меняет в `[source]` только `root` и `extensions` — каждую запись на её месте; остальные записи
  * (`exclude`, `exclude_globs`, `externals`), комментарии и пустые строки остаются дословно.
  * Недостающий `root` встаёт в начало секции, недостающие `extensions` — сразу после `root`.
+ * `source`, заданный в корне документа без заголовка, не правится: дописанная секция `[source]`
+ * дала бы дубль ключа, и bsl-analyzer не загрузил бы конфиг.
  */
-export function mergeSourceLayout(content: string, extensionPaths: readonly string[]): string {
+export function mergeSourceLayout(content: string, extensionPaths: readonly string[]): SourceLayoutEdit {
   const range = findSourceSectionRange(content);
   if (!range) {
-    return appendSection(content, buildBslAnalyzerSourceConfig(extensionPaths));
+    const detail = describeRootSourceKey(content);
+    return detail
+      ? { status: 'unsupported-format', detail }
+      : { status: 'merged', content: appendSection(content, buildBslAnalyzerSourceConfig(extensionPaths)) };
   }
   const header = content.slice(0, range.bodyStart);
   const body = content.slice(range.bodyStart, range.end);
@@ -173,7 +182,7 @@ export function mergeSourceLayout(content: string, extensionPaths: readonly stri
   }
   // Заголовок без перевода строки бывает только в конце файла — тогда root вставляется всегда.
   const safeHeader = header.endsWith('\n') ? header : `${header}\n`;
-  return safeHeader + applyEdits(body, edits) + content.slice(range.end);
+  return { status: 'merged', content: safeHeader + applyEdits(body, edits) + content.slice(range.end) };
 }
 
 /**
@@ -183,12 +192,9 @@ export function mergeSourceLayout(content: string, extensionPaths: readonly stri
 export function applyServiceExclude(content: string, mode: ServiceExcludeMode): ServiceExcludeEdit {
   const range = findSourceSectionRange(content);
   if (!range) {
-    const inlineKey = findRootSourceKey(content);
-    if (inlineKey) {
-      return {
-        status: 'unsupported-format',
-        detail: `секция source задана ключом «${inlineKey}» без заголовка [source] — такую запись расширение не правит`,
-      };
+    const detail = describeRootSourceKey(content);
+    if (detail) {
+      return { status: 'unsupported-format', detail };
     }
     return mode === 'remove'
       ? { status: 'unchanged' }
@@ -258,6 +264,14 @@ function escapeTomlString(value: string): string {
 
 function isSourceHeader(line: string): boolean {
   return /^\s*\[\s*source\s*\]\s*(#.*)?\s*$/.test(line);
+}
+
+/** Причина отказа от правки, если `source` задан в корне документа без заголовка `[source]`. */
+function describeRootSourceKey(content: string): string | undefined {
+  const inlineKey = findRootSourceKey(content);
+  return inlineKey
+    ? `секция source задана ключом «${inlineKey}» без заголовка [source] — такую запись расширение не правит`
+    : undefined;
 }
 
 /** Ключ корневой таблицы, задающий `source` без заголовка: `source.exclude = …` или `source = {…}`. */

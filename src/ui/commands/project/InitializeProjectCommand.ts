@@ -4,20 +4,15 @@ import * as vscode from 'vscode';
 import type { CommandServices } from '../_shared';
 import { ensureEnvJson } from '../../../infra/repository/envJsonTemplate';
 
+/**
+ * Только каталоги, которыми пользуется расширение: корни выгрузки (`root = "src/cf"` в
+ * `bsl-analyzer.toml`, расширения — `src/cfe/<Имя>`) и настройки рабочей области. Прежний
+ * каркас vanessa-bootstrap (`doc`, `features`, `tools`, …) оставался пустым и выглядел мусором (#107).
+ */
 const PROJECT_DIRECTORIES = [
   '.vscode',
-  'doc',
-  'examples',
-  'features',
-  'fixtures',
-  'lib',
-  'src',
   path.join('src', 'cf'),
   path.join('src', 'cfe'),
-  'tests',
-  'tools',
-  path.join('tools', 'JSON'),
-  'vendor',
 ] as const;
 
 const GITIGNORE_RULES = [
@@ -36,15 +31,16 @@ const GITIGNORE_RULES = [
   '*.dt',
   '*.log',
   '',
+  // `.cursor/`, `.codex/` не игнорируются: туда, как и в `.claude/`, расширение ставит
+  // проектные ИИ-роли (AiSkillsInstaller) — они часть проекта (#107).
   '# Служебные каталоги редакторов',
   '.vscode/',
-  '.cursor/',
-  '.codex/',
   '.onecdev/',
 ] as const;
 
 /**
- * Создаёт минимальный каркас проекта 1С, совместимый с vanessa-bootstrap и командами расширения.
+ * Создаёт минимальный каркас проекта 1С: корни выгрузки `src/cf`/`src/cfe` (раскладка
+ * vanessa-bootstrap), `env.json`, `bsl-analyzer.toml` и `.gitignore`.
  */
 export function registerInitializeProjectCommand(
   context: vscode.ExtensionContext,
@@ -80,13 +76,13 @@ export function ensureProjectDirectoryIsEmpty(rootPath: string): void {
   }
 }
 
-function createProjectDirectories(rootPath: string): void {
+export function createProjectDirectories(rootPath: string): void {
   for (const directory of PROJECT_DIRECTORIES) {
     fs.mkdirSync(path.join(rootPath, directory), { recursive: true });
   }
 }
 
-function ensureGitignore(rootPath: string): void {
+export function ensureGitignore(rootPath: string): void {
   const gitignorePath = path.join(rootPath, '.gitignore');
   const existing = fs.existsSync(gitignorePath)
     ? fs.readFileSync(gitignorePath, 'utf-8')
