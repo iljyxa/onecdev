@@ -66,7 +66,9 @@ src/
 │   │                                  # хранилища и области (RepositoryObjectNames/Scope), раунды
 │   │                                  # выгрузки (RepositoryDumpPlan/Rounds), трёхстороннее слияние
 │   │                                  # (RepositoryMergePlanner/Applier), очистка временных артефактов
-│   │                                  # (RepositoryTempCleanup); статусы захватов с сервера (issue #6,
+│   │                                  # (RepositoryTempCleanup); привязка к хранилищу —
+│   │                                  # RepositoryBindingStore + реестр ключей VrunnerStorageKeys
+│   │                                  # (env.json/autumn-properties.json, fs/JsonTextFile); статусы захватов с сервера (issue #6,
 │   │                                  # см. docs/repository-file-sync.md#статусы-захватов-с-сервера) —
 │   │                                  # RepositoryLockStatusService/Source, два источника:
 │   │                                  # onecd/ (OneCdFile/OneCdTable — read-only формат 1cv8ddb.1CD) и
