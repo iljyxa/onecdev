@@ -219,6 +219,7 @@ function buildCommonFormProperties(ruleset: FormatRuleset): string[] {
     '\t\t\t<IncludeHelpInContents>false</IncludeHelpInContents>',
     '\t\t\t<UsePurposes>',
     '\t\t\t\t<v8:Value xsi:type="app:ApplicationUsePurpose">PlatformApplication</v8:Value>',
+    '\t\t\t\t<v8:Value xsi:type="app:ApplicationUsePurpose">MobilePlatformApplication</v8:Value>',
     '\t\t\t</UsePurposes>',
     // Свойство есть только в эталоне 2.21 (в 2.20 его нет).
     ...(ruleset.includeFormUseInInterfaceCompatibilityMode
