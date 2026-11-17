@@ -28,6 +28,11 @@ interface JsonFileState {
 
 interface CachedJsonFile extends JsonFileState {
   readonly mtimeMs: number;
+  /**
+   * Ошибка разбора тоже кэшируется по mtime: `hasBinding` вызывается на каждый узел дерева,
+   * и повреждённый файл иначе перечитывался бы с диска на каждый узел (запрет №11).
+   */
+  readonly error?: Error;
 }
 
 interface BindingRaw {
@@ -240,10 +245,20 @@ export class RepositoryBindingStore {
     const mtimeMs = getFileMtimeMs(filePath) ?? -1;
     const cached = this.fileCache.get(filePath);
     if (cached?.mtimeMs === mtimeMs) {
+      if (cached.error) {
+        throw cached.error;
+      }
       return cached;
     }
     const text = mtimeMs < 0 ? undefined : fs.readFileSync(filePath, 'utf-8');
-    const value = parseJsonObjectText(text ?? '', fileLabel, filePath);
+    let value: Record<string, unknown>;
+    try {
+      value = parseJsonObjectText(text ?? '', fileLabel, filePath);
+    } catch (error) {
+      // parseJsonObjectText бросает только Error со своим сообщением.
+      this.fileCache.set(filePath, { mtimeMs, text, value: {}, error: error as Error });
+      throw error;
+    }
     this.fileCache.set(filePath, { mtimeMs, text, value });
     return { text, value };
   }

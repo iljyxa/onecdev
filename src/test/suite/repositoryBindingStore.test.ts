@@ -555,6 +555,24 @@ suite('RepositoryBindingStore — стандартные ключи vanessa-runn
       assert.strictEqual((await store.loadBinding(cfTarget))?.repoPath, 'tcp://two');
     });
 
+    test('повреждённый autumn-properties.json не перечитывается с диска на каждый вызов hasBinding', async () => {
+      writeEnv('');
+      const autumnPath = store.getAutumnPropertiesPath();
+      writeAutumn('{ "vrunner": { "storage-name": ');
+      const brokenAt = new Date(Date.now() - 60_000);
+      fs.utimesSync(autumnPath, brokenAt, brokenAt);
+      assert.strictEqual(store.hasBinding(cfTarget), false);
+
+      // Содержимое исправлено, а mtime прежний: ответ из кэша доказывает, что файл не читался заново.
+      writeAutumn(JSON.stringify({ vrunner: { 'storage-name': 'tcp://fixed' } }));
+      fs.utimesSync(autumnPath, brokenAt, brokenAt);
+      assert.strictEqual(store.hasBinding(cfTarget), false);
+      await assert.rejects(store.loadBinding(cfTarget), /autumn-properties\.json повреждён/);
+
+      touchLater(autumnPath, 10);
+      assert.strictEqual(store.hasBinding(cfTarget), true);
+    });
+
     test('внешняя перезапись autumn-properties.json перечитывается по mtime', async () => {
       writeAutumn(JSON.stringify({ vrunner: { 'storage-name': 'tcp://one' } }));
       assert.strictEqual((await store.loadBinding(cfTarget))?.repoPath, 'tcp://one');
