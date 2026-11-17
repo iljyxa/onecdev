@@ -121,7 +121,11 @@ export class MetadataXmlCreator {
 
     writeTextFilePreservingBomAndEol(options.ownerObjectXmlPath, xml, nextXml.xml);
     const changedFiles = [options.ownerObjectXmlPath];
-    changedFiles.push(...ensureAuxiliaryChildFiles(options, formatVersion, ruleset, detectRootObjectKind(xml) ?? ''));
+    // Корень владельца уже разобран addChildToObjectXml (иначе — fail выше), вид определён;
+    // '' — только защита типа.
+    /* c8 ignore next */
+    const ownerKind = detectRootObjectKind(xml) ?? '';
+    changedFiles.push(...ensureAuxiliaryChildFiles(options, formatVersion, ruleset, ownerKind));
     return ok(changedFiles);
   }
 }
