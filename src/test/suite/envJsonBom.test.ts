@@ -24,7 +24,7 @@ suite('env.json с UTF-8 BOM (issue #137)', () => {
   });
 
   function writeEnvWithBom(defaults: Record<string, unknown>): void {
-    fs.writeFileSync(envPath, `﻿${JSON.stringify({ default: defaults }, null, 2)}`, 'utf-8');
+    fs.writeFileSync(envPath, `\uFEFF${JSON.stringify({ default: defaults }, null, 2)}`, 'utf-8');
   }
 
   test('ExtensionCommandRunner.resolveConnectionFromSettings разбирает подключение', async () => {
@@ -38,7 +38,7 @@ suite('env.json с UTF-8 BOM (issue #137)', () => {
   });
 
   test('ExtensionCommandRunner.resolveConnectionFromSettings: битый env.json — понятная ошибка с путём', async () => {
-    fs.writeFileSync(envPath, '﻿{ не json', 'utf-8');
+    fs.writeFileSync(envPath, '\uFEFF{ не json', 'utf-8');
 
     await assert.rejects(
       () => resolveConnectionFromSettings(envPath),

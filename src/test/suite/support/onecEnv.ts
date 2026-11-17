@@ -27,7 +27,7 @@ export function readOnecEnv(projectRoot: string): OnecEnv | null {
   }
   let parsed: { default?: Record<string, unknown> };
   try {
-    parsed = parseJsonObjectText(fs.readFileSync(envPath, 'utf-8'), 'env.json', envPath) as { default?: Record<string, unknown> };
+    parsed = parseJsonObjectText(fs.readFileSync(envPath, 'utf-8'), 'env.json', envPath);
   } catch {
     return null;
   }
