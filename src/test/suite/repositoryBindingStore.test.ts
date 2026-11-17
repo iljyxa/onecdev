@@ -388,6 +388,13 @@ suite('RepositoryBindingStore — стандартные ключи vanessa-runn
       await assert.rejects(store.loadBinding(cfTarget), /autumn-properties\.json повреждён \(/);
     });
 
+    test('hasBinding на горячем пути дерева: привязки в env.json нет → false без исключения, loadBinding по-прежнему отклоняется', async () => {
+      writeEnv('');
+      writeAutumn(broken);
+      assert.strictEqual(store.hasBinding(cfTarget), false);
+      await assert.rejects(store.loadBinding(cfTarget), /autumn-properties\.json повреждён \(/);
+    });
+
     test('не нужен (привязка в env.json) → hasBinding без исключения', () => {
       writeEnv(tabText(vrunnerEnv({ '--storage-name': 'tcp://new' })));
       writeAutumn(broken);

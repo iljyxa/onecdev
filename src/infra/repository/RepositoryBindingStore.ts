@@ -146,8 +146,15 @@ export class RepositoryBindingStore {
     return PLATFORM_VERSION_RE.exec(readString(defaults['--path']) ?? '')?.[0];
   }
 
+  /**
+   * Вызывается на каждый узел дерева (декорация хранилища), поэтому не бросает из-за
+   * чужого `autumn-properties.json`: файл vanessa-runner бывает временно невалиден, пока
+   * его правят, и это не должно ломать отрисовку навигатора. Повреждённый файл здесь —
+   * «привязки нет»; операции с привязкой (load/resolve/save/clear) по-прежнему отбиваются
+   * понятной ошибкой. Повреждённый `env.json` бросает, как и до #120 — это файл расширения.
+   */
   hasBinding(target: RepositoryTarget): boolean {
-    return this.readBindingRaw(target) !== null;
+    return this.readBindingRaw(target, { tolerateBrokenAutumn: true }) !== null;
   }
 
   private async loadBindingRaw(target: RepositoryTarget): Promise<BindingRaw | null> {
@@ -163,7 +170,7 @@ export class RepositoryBindingStore {
    * Синхронное чтение привязки без SecretStorage — для проверок на hot path и
    * последующей асинхронной миграции legacy-пароля.
    */
-  private readBindingRaw(target: RepositoryTarget): BindingRaw | null {
+  private readBindingRaw(target: RepositoryTarget, options: { tolerateBrokenAutumn?: boolean } = {}): BindingRaw | null {
     const defaults = getDefaultSection(this.readEnvFile().value);
     if (target.configKind === 'cfe') {
       const item = getRawExtensionSection(defaults)[target.extensionName ?? ''] as Record<string, unknown> | undefined;
@@ -178,7 +185,7 @@ export class RepositoryBindingStore {
         fallbackPassword: '',
       };
     }
-    const main = selectMainStorageBinding(defaults, () => this.readAutumnFile().value);
+    const main = selectMainStorageBinding(defaults, () => this.readAutumnRootForBinding(options.tolerateBrokenAutumn === true));
     if (!main) {
       return null;
     }
@@ -189,6 +196,17 @@ export class RepositoryBindingStore {
       migratedPassword: legacy ? main.filePassword : '',
       fallbackPassword: legacy ? '' : main.filePassword,
     };
+  }
+
+  private readAutumnRootForBinding(tolerateBroken: boolean): Readonly<Record<string, unknown>> | undefined {
+    if (!tolerateBroken) {
+      return this.readAutumnFile().value;
+    }
+    try {
+      return this.readAutumnFile().value;
+    } catch {
+      return undefined;
+    }
   }
 
   private eraseLegacyRepoPassword(target: RepositoryTarget): void {
