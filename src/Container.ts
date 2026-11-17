@@ -68,6 +68,7 @@ import { updateMetadataCacheAfterRename } from './infra/cache/MetadataCache';
 import {
   BslAnalyzerConfigService,
   BslAnalyzerRootTracker,
+  formatServiceExcludeLog,
   ProjectEnvironmentService,
   ProjectSecretStorage,
 } from './infra/environment';
@@ -351,7 +352,16 @@ export class Container {
       report: (timing) => this.outputChannel.appendLine(formatChangeDetectorTiming(timing)),
     });
 
-    this.lspManager = new LspManager(context, this.outputChannel);
+    this.lspManager = new LspManager(context, this.outputChannel, async (binary) => {
+      const result = await this.bslAnalyzerConfigService.prepareForStart({
+        ...binary,
+        projectInitialized: this.isProjectInitialized(),
+      });
+      const line = formatServiceExcludeLog(result);
+      if (line) {
+        this.outputChannel.appendLine(line);
+      }
+    });
     const extensionPackageJson = context.extension.packageJSON as { version?: string };
     this.mcpServer = new V8McpServer(
       this.buildMcpCommandServices(),
@@ -463,6 +473,8 @@ export class Container {
   /**
    * bsl-analyzer выбирает корень конфигурации только при старте: без перезапуска после
    * появления `src/cf` он продолжает индексировать всю рабочую область (issue #104).
+   * Служебный `.onecdev` с #112 исключён через `[source].exclude`, и watcher сервера его больше
+   * не держит — перезапуск нужен именно для выбора корня, а не ради служебного каталога.
    */
   private restartLspOnRootsChange(entries: readonly ConfigEntry[]): void {
     const decision = this.bslAnalyzerRootTracker.observe(entries, this.lspManager.mode !== 'off');

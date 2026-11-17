@@ -6,7 +6,7 @@ import {
   DocumentRangeFormattingRequest,
   type TextEdit as LspTextEdit,
 } from 'vscode-languageclient/node';
-import { BslAnalyzerService } from './analyzer/BslAnalyzerService';
+import { BslAnalyzerService, type BslAnalyzerBinary } from './analyzer/BslAnalyzerService';
 import { BslAnalyzerStatusBar } from './analyzer/BslAnalyzerStatusBar';
 
 export type LspMode = 'bsl-analyzer' | 'off';
@@ -52,6 +52,7 @@ export class LspManager implements vscode.Disposable {
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly outputChannel: vscode.OutputChannel,
+    private readonly prepareStart?: (binary: BslAnalyzerBinary) => Promise<void>,
   ) {
     this.analyzerService = new BslAnalyzerService(context, outputChannel);
     this.statusBar = new BslAnalyzerStatusBar();
@@ -269,8 +270,20 @@ export class LspManager implements vscode.Disposable {
       return;
     }
 
+    const binary = this.analyzerService.describeBinary();
+    if (this.prepareStart) {
+      // Подготовка (сверка bsl-analyzer.toml с версией сервера, #112) — до старта клиента:
+      // сервер читает конфиг один раз при запуске. Её сбой не должен оставлять пользователя без LSP.
+      try {
+        await this.prepareStart(binary);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.outputChannel.appendLine(`[lsp][warn] Не удалось подготовить bsl-analyzer.toml: ${msg}`);
+      }
+    }
+
     this.statusBar.setState('starting');
-    const execPath = this.analyzerService.getExecutablePath();
+    const execPath = binary.execPath;
     this.outputChannel.appendLine(`[lsp] bsl-analyzer: ${execPath}`);
 
     const serverOptions: ServerOptions = {
