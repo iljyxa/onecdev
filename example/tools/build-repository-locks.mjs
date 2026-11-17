@@ -64,6 +64,7 @@ import * as net from 'node:net';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { crserverRangeArg, freePort, freeRangeStart } from './crserverPorts.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const VALUE_OPTIONS = ['platform-dir', 'out', 'work'];
@@ -738,8 +739,8 @@ function decodeDesignerLog(raw) {
 async function startCrserver(work) {
   const dataDir = path.join(work, 'crsdata');
   mkdirSync(dataDir, { recursive: true });
-  const port = await findFreePort();
-  const rangeStart = await findFreePort();
+  const port = await freePort();
+  const rangeStart = await freeRangeStart(port);
   const exe = path.join(platformDir, 'crserver');
   if (!existsSync(exe)) {
     fail(`у платформы ${platformVersion} нет crserver — сетевую фикстуру снять нельзя`);
@@ -747,7 +748,7 @@ async function startCrserver(work) {
   // Порт и диапазон задаются явно: соседний стенд или другой прогон не должны пересечься с этим.
   // Каталог данных — относительный: сервер вставляет его в тексты исключений, а снятые ответы
   // попадают в репозиторий — абсолютный путь рабочего каталога утёк бы в фикстуру.
-  const child = spawn(exe, ['-port', String(port), '-range', `${String(rangeStart)}:${String(rangeStart + 9)}`,
+  const child = spawn(exe, ['-port', String(port), '-range', crserverRangeArg(rangeStart),
     '-d', 'crsdata'], { stdio: 'ignore', cwd: work });
   children.add(child);
   await waitForPort(port);
@@ -762,7 +763,7 @@ async function startApache(work, crserverPort) {
   mkdirSync(www, { recursive: true });
   writeFileSync(path.join(www, 'repo.1ccr'), '<?xml version="1.0" encoding="UTF-8"?>\n'
     + `<repository connectString="tcp://127.0.0.1:${String(crserverPort)}/${scenario.alias}"/>\n`, 'utf-8');
-  const port = await findFreePort();
+  const port = await freePort();
   const conf = path.join(root, 'httpd.conf');
   // mime_module и log_config_module не загружаются: первому нужен mime.types, второй встроен.
   writeFileSync(conf, [
@@ -844,13 +845,6 @@ function listen(server) {
     server.once('error', reject);
     server.listen(0, '127.0.0.1', () => resolve(server.address().port));
   });
-}
-
-async function findFreePort() {
-  const server = net.createServer();
-  const port = await listen(server);
-  await new Promise((resolve) => server.close(resolve));
-  return port;
 }
 
 async function waitForPort(port) {
