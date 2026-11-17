@@ -258,6 +258,17 @@ suite('ProjectEnvironmentService — формат env.json (#138)', () => {
     assert.strictEqual((JSON.parse(text) as { default: Record<string, string> }).default['--db-user'], 'u');
   });
 
+  test('env.json не объект (массив): настройки по умолчанию, save заменяет содержимое объектом', async () => {
+    fs.writeFileSync(envPath, '[]\n', 'utf-8');
+    const service = makeService(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
+    assert.strictEqual((await service.getSnapshot()).settings.ibConnection, '');
+
+    await service.save({ platformPath: '/opt/1C/8.3.20/1cv8', baseId: 'any-base-id', dbUser: 'u', dbPassword: '' });
+
+    const saved = JSON.parse(fs.readFileSync(envPath, 'utf-8')) as { default: Record<string, string> };
+    assert.strictEqual(saved.default['--db-user'], 'u');
+  });
+
   test('env.json отсутствует: save создаёт файл', async () => {
     const service = makeService(workspaceRoot, new ProjectSecretStorage(createFakeSecretStore(), workspaceRoot));
     await service.save({ platformPath: '/opt/1C/8.3.20/1cv8', baseId: 'any-base-id', dbUser: 'u', dbPassword: '' });
