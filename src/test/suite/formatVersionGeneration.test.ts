@@ -15,9 +15,9 @@ import {
   resolveFormatRuleset,
   setFormatRulesetWarning,
 } from '../../infra/xml/format/formatRegistry';
-import { skipWithoutCorpus } from './support/corpus';
-
-const EXAMPLE_2_20_CF = path.resolve(__dirname, '../../../example/2.20/src/cf');
+import { STANDARD_ATTRIBUTES_BLOCKS, STANDARD_TABULAR_SECTIONS_BLOCKS } from '../../infra/xml/format/standardAttributes';
+import { rootPropertyRank } from '../../infra/xml/properties/PropertyOrder';
+import { EXAMPLE_GENERATIONS, skipWithoutCorpus } from './support/corpus';
 
 // Виды → папка выгрузки. Покрывает все затронутые ветки генерации.
 const KIND_FOLDER: Partial<Record<MetaKind, string>> = {
@@ -80,16 +80,13 @@ function rootPropertyTags(xml: string): string[] {
   return tags;
 }
 
-function referenceRootTags(folder: string, sample: string): string[] {
-  return rootPropertyTags(fs.readFileSync(path.join(EXAMPLE_2_20_CF, folder, sample), 'utf-8'));
+function referenceRootTags(cfRoot: string, folder: string, sample: string): string[] {
+  return rootPropertyTags(fs.readFileSync(path.join(cfRoot, folder, sample), 'utf-8'));
 }
 
-// Виды с корневым блоком StandardAttributes у свежего объекта.
-const SA_KINDS: MetaKind[] = [
-  'Catalog', 'Document', 'AccumulationRegister', 'AccountingRegister', 'CalculationRegister',
-  'ChartOfAccounts', 'ChartOfCharacteristicTypes', 'ChartOfCalculationTypes', 'BusinessProcess',
-  'Task', 'ExchangePlan',
-];
+// Виды с шаблоном блока StandardAttributes — ровно ключи таблицы шаблонов.
+const SA_KINDS = Object.keys(STANDARD_ATTRIBUTES_BLOCKS) as MetaKind[];
+const STS_KINDS = Object.keys(STANDARD_TABULAR_SECTIONS_BLOCKS) as MetaKind[];
 
 suite('formatRegistry — резолвинг ruleset по версии', () => {
   test('2.20 → ruleset format-2.20, 2.21 → baseline, 2.18 (DEFAULT) → format-pre-2.20', () => {
@@ -169,31 +166,49 @@ suite('Генерация объектов по версии формата', ()
     assert.ok(generate('Report', '2.21').xml.includes('<AuxiliaryVariantForm/>'));
   });
 
-  test('StandardAttributes выпускается для нужных видов в обеих версиях', () => {
-    for (const version of ['2.20', '2.21']) {
+  // Платформа 2.20/2.21 у нового объекта блоки стандартных реквизитов/ТЧ не
+  // пишет (в эталонах example/ их нет), генератор — тоже (#16).
+  for (const version of ['2.20', '2.21']) {
+    test(`${version}: ни один вид не получает StandardAttributes/StandardTabularSections`, () => {
+      for (const kind of Object.keys(KIND_FOLDER) as MetaKind[]) {
+        const { xml } = generate(kind, version);
+        assert.ok(!xml.includes('<StandardAttributes'), `${kind}@${version}: лишний StandardAttributes`);
+        assert.ok(!xml.includes('<StandardTabularSections'), `${kind}@${version}: лишний StandardTabularSections`);
+      }
+    });
+  }
+
+  // 2.17–2.19 — статус-кво: доноров нет, блок пишется шаблоном ruleset.
+  for (const version of ['2.17', '2.18', '2.19']) {
+    test(`${version}: виды с шаблоном получают блок, равный шаблону ruleset`, () => {
+      const ruleset = resolveFormatRuleset(version);
       for (const kind of SA_KINDS) {
+        const { xml } = generate(kind, version);
+        assert.ok(xml.includes(ruleset.standardAttributes(kind)), `${kind}@${version}: нет шаблона StandardAttributes`);
+      }
+      for (const kind of STS_KINDS) {
+        const { xml } = generate(kind, version);
         assert.ok(
-          generate(kind, version).xml.includes('<StandardAttributes>'),
-          `${kind}@${version} должен содержать StandardAttributes`
+          xml.includes(ruleset.standardTabularSections(kind)),
+          `${kind}@${version}: нет шаблона StandardTabularSections`
         );
       }
+    });
+  }
+
+  test('emitDefaultStandardBlocks: false у 2.20/2.21, true у pre-2.20', () => {
+    assert.strictEqual(BASELINE_RULESET.emitDefaultStandardBlocks, false);
+    assert.strictEqual(FORMAT_2_20_RULESET.emitDefaultStandardBlocks, false);
+    assert.strictEqual(FORMAT_PRE_2_20_RULESET.emitDefaultStandardBlocks, true);
+  });
+
+  test('сшивка шаблонов с порядком свойств: у каждого вида с шаблоном есть ранг блока', () => {
+    for (const kind of SA_KINDS) {
+      assert.notStrictEqual(rootPropertyRank(kind, 'StandardAttributes'), null, kind);
     }
-  });
-
-  test('InformationRegister (независимый непериодический) — без StandardAttributes', () => {
-    assert.ok(!generate('InformationRegister', '2.20').xml.includes('<StandardAttributes>'));
-    assert.ok(!generate('InformationRegister', '2.21').xml.includes('<StandardAttributes>'));
-  });
-
-  test('Enum и простые виды — без StandardAttributes', () => {
-    assert.ok(!generate('Enum', '2.20').xml.includes('<StandardAttributes>'));
-    assert.ok(!generate('DocumentJournal', '2.20').xml.includes('<StandardAttributes>'));
-  });
-
-  test('ChartOfAccounts содержит StandardTabularSections (ExtDimensionTypes)', () => {
-    const xml = generate('ChartOfAccounts', '2.20').xml;
-    assert.ok(xml.includes('<StandardTabularSections>'));
-    assert.ok(xml.includes('name="ExtDimensionTypes"'));
+    for (const kind of STS_KINDS) {
+      assert.notStrictEqual(rootPropertyRank(kind, 'StandardTabularSections'), null, kind);
+    }
   });
 
   test('CalculationRegister: полный набор свойств (были пропущены)', () => {
@@ -201,7 +216,6 @@ suite('Генерация объектов по версии формата', ()
     for (const tag of ['<Periodicity>Month</Periodicity>', '<ActionPeriod>false</ActionPeriod>', '<ChartOfCalculationTypes/>', '<DataLockControlMode>Automatic</DataLockControlMode>']) {
       assert.ok(xml.includes(tag), `CalculationRegister должен содержать ${tag}`);
     }
-    assert.ok(xml.includes('<StandardAttributes>'));
   });
 
   test('FunctionalOptionsParameter содержит <Use/>', () => {
@@ -252,7 +266,7 @@ suite('Генерация объектов по версии формата', ()
   });
 });
 
-suite('Golden: порядок свойств совпадает с эталоном 2.20', () => {
+suite('Golden: порядок свойств совпадает с эталонами 2.20 и 2.21', () => {
   // `example/` не отслеживается git — без корпуса сьют пропускается, а не падает
   // (единый гейт: support/corpus.ts).
   suiteSetup(function () {
@@ -279,19 +293,19 @@ suite('Golden: порядок свойств совпадает с эталон�
     ['Language', 'Русский.xml'],
   ];
 
-  // Платформа пишет эти блоки только при настройках стандартных реквизитов/ТЧ не по
-  // умолчанию, генератор — всегда (платформа принимает оба варианта). Пока генератор
-  // не научен их опускать (iljyxa/onecdev#16), порядок сверяется без них, если их нет в эталоне.
-  const OPTIONAL_DEFAULT_BLOCKS = ['StandardAttributes', 'StandardTabularSections'];
+  const generations: [string, string][] = [
+    ['2.20', EXAMPLE_GENERATIONS.cf20],
+    ['2.21', EXAMPLE_GENERATIONS.cf21],
+  ];
 
-  for (const [kind, sample] of goldenCases) {
-    test(`${kind}: теги <Properties> совпадают с эталоном`, () => {
-      const folder = KIND_FOLDER[kind] ?? '';
-      const reference = referenceRootTags(folder, sample);
-      const generated = rootPropertyTags(generate(kind, '2.20').xml)
-        .filter((tag) => !OPTIONAL_DEFAULT_BLOCKS.includes(tag) || reference.includes(tag));
-      assert.deepStrictEqual(generated, reference);
-    });
+  for (const [version, cfRoot] of generations) {
+    for (const [kind, sample] of goldenCases) {
+      test(`${version} ${kind}: теги <Properties> совпадают с эталоном`, () => {
+        const folder = KIND_FOLDER[kind] ?? '';
+        const reference = referenceRootTags(cfRoot, folder, sample);
+        assert.deepStrictEqual(rootPropertyTags(generate(kind, version).xml), reference);
+      });
+    }
   }
 });
 

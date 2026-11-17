@@ -45,12 +45,19 @@ export { escapeXml };
 
 /** Блок `<StandardAttributes>` вида (или пусто) как элемент массива свойств. */
 export function saBlock(kind: MetaKind, ruleset: FormatRuleset): string[] {
+  // Шаблон — умолчания платформы; новый объект 2.20/2.21 платформа выгружает без блока.
+  if (!ruleset.emitDefaultStandardBlocks) {
+    return [];
+  }
   const block = ruleset.standardAttributes(kind);
   return block ? [block] : [];
 }
 
 /** Блок `<StandardTabularSections>` вида (или пусто) как элемент массива свойств. */
 export function stsBlock(kind: MetaKind, ruleset: FormatRuleset): string[] {
+  if (!ruleset.emitDefaultStandardBlocks) {
+    return [];
+  }
   const block = ruleset.standardTabularSections(kind);
   return block ? [block] : [];
 }

@@ -82,6 +82,16 @@ export interface FormatRuleset {
   readonly includeFormUseInInterfaceCompatibilityMode: boolean;
 
   /**
+   * Пишет ли генератор у нового объекта блоки `<StandardAttributes>`/
+   * `<StandardTabularSections>`. Шаблоны `standardAttributes`/
+   * `standardTabularSections` — значения по умолчанию платформы, а платформа
+   * (2.20, 2.21) у нового объекта блоков не пишет: в эталонах `example/` их
+   * нет. Поэтому для этих форматов — `false`; шаблоны тогда служат только
+   * источником значений по умолчанию при чтении.
+   */
+  readonly emitDefaultStandardBlocks: boolean;
+
+  /**
    * Готовый блок `<StandardAttributes>…</StandardAttributes>` для свежего
    * объекта вида (отступ — 3 таба, как в `<Properties>`), либо пустая строка,
    * если у объектов этого вида в дефолтной конфигурации стандартных реквизитов
