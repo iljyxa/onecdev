@@ -16,10 +16,12 @@ suite('BslAnalyzerConfigService', () => {
   let root: string;
   let service: BslAnalyzerConfigService;
   let configPath: string;
+  let logLines: string[];
 
   setup(() => {
     root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-bsl-analyzer-'));
-    service = new BslAnalyzerConfigService(root);
+    logLines = [];
+    service = new BslAnalyzerConfigService(root, { appendLine: (line) => { logLines.push(line); } });
     configPath = path.join(root, 'bsl-analyzer.toml');
   });
 
@@ -112,6 +114,20 @@ suite('BslAnalyzerConfigService', () => {
     service.updateSource([]);
     assert.strictEqual(read(), lines('[source]', 'root = "src/cf"', 'exclude = "vendor"', ''));
   });
+
+  for (const form of ['source.root = "src/cf"', 'source = { root = "src/cf" }']) {
+    test(`updateSource: source без заголовка (${form}) — файл не меняется, в лог предупреждение (#139)`, () => {
+      const original = lines('# ручной', form, '');
+      write(original);
+      const mtime = backdate();
+      service.setSourceExcludeSupport('supported');
+      service.updateSource([evolc()]);
+      assert.strictEqual(read(), original);
+      assert.strictEqual(fs.statSync(configPath).mtimeMs, mtime);
+      assert.strictEqual(logLines.length, 1, logLines.join('\n'));
+      assert.match(logLines[0], /^\[lsp\]\[warn\] bsl-analyzer\.toml: .*без заголовка \[source\]/);
+    });
+  }
 
   test('updateSource сохраняет BOM и CRLF побайтно', () => {
     write('﻿[source]\r\nroot = "old"\r\nexclude = ["vendor"]\r\n');

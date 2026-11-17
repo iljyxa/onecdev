@@ -204,7 +204,7 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
     test(`сквозная сверка bsl-analyzer.toml по версии пользовательского бинарника ${version} до старта (#112)`, async () => {
       const project = path.join(tempRoot, 'project');
       fs.mkdirSync(project);
-      const configService = new BslAnalyzerConfigService(project);
+      const configService = new BslAnalyzerConfigService(project, { appendLine: () => undefined });
       fs.writeFileSync(configService.getConfigPath(), before);
       const lines: string[] = [];
       await startManager(lines, {
