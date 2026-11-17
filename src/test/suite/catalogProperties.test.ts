@@ -3,9 +3,12 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { ObjectXmlReader } from '../../infra/xml/ObjectXmlReader';
-import { ensureStandardAttributeXml } from '../../infra/xml/XmlUtils';
+import * as vscode from 'vscode';
+import { STANDARD_ATTRIBUTES_BLOCKS } from '../../infra/xml/format/standardAttributes';
+import { structuredMetaChildHandler } from '../../ui/tree/nodeBuilders/structuredMetaChildHandler';
+import { MetadataNode } from '../../ui/tree/TreeNode';
 import { buildRootMetaObjectProperties } from '../../ui/views/properties/PropertyBuilder';
-import { skipWithoutCorpus } from './support/corpus';
+import { EXAMPLE_GENERATIONS, skipWithoutCorpus } from './support/corpus';
 
 const EXAMPLE_CF = path.resolve(__dirname, '../../../example/2.20/src/cf');
 const objectReader = new ObjectXmlReader();
@@ -110,31 +113,117 @@ suite('Properties — справочник', () => {
     }
   });
 
-  test('Материализует стандартный реквизит при открытии свойств', () => {
-    // Копируем любой Catalog без блока StandardAttributes во временный файл и
-    // проверяем, что материализация добавляет нужные узлы. Так тест не зависит
-    // от конкретного объекта и не модифицирует фикстуру example/.
-    const sourcePath = findFirstCatalogWithoutStandardAttributes()
-      ?? path.join(EXAMPLE_CF, 'Catalogs', 'Товары.xml');
+  test('Показ свойств стандартного реквизита не пишет файл и берёт значения из шаблона вида', () => {
+    // Раньше показ свойств вставлял в XML разреженный блок StandardAttributes
+    // (запреты 10/11 CLAUDE.md, #16). Копия — чтобы не зависеть от example/.
+    const sourcePath = findFirstCatalogWithoutStandardAttributes();
+    assert.ok(sourcePath, 'в корпусе нет справочника без блока StandardAttributes');
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-catalog-prop-'));
     try {
       const targetPath = path.join(tempRoot, path.basename(sourcePath));
       fs.copyFileSync(sourcePath, targetPath);
-      const original = fs.readFileSync(targetPath, 'utf-8');
-      // Если фикстура уже содержит StandardAttributes — материализация всё равно должна
-      // отработать без ошибки и оставить блок на месте.
-      const hadBlock = original.includes('<StandardAttributes>');
-      const materialized = ensureStandardAttributeXml(targetPath, 'Code', 'Catalog');
-      assert.ok(materialized, 'XML стандартного реквизита не создан');
+      const before = fs.readFileSync(targetPath);
 
-      const saved = fs.readFileSync(targetPath, 'utf-8');
-      assert.ok(saved.includes('<StandardAttributes>'));
-      assert.ok(saved.includes('<xr:StandardAttribute name="Code">'));
-      if (!hadBlock) {
-        assert.ok(saved.includes('<xr:Indexing>Index</xr:Indexing>'));
-      }
+      const properties = standardAttributeProperties(targetPath, 'Description');
+
+      assert.ok(fs.readFileSync(targetPath).equals(before), 'файл объекта изменён показом свойств');
+      assert.strictEqual(
+        fillCheckingCurrent(properties),
+        templateValue('Description', 'FillChecking')
+      );
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('Стандартный реквизит табличной части показывается без записи в файл', () => {
+    const sourcePath = path.join(EXAMPLE_GENERATIONS.cf21, 'Catalogs', 'Контрагенты.xml');
+    const xml = fs.readFileSync(sourcePath, 'utf-8');
+    const tsName = /<TabularSection uuid="[^"]+">[\s\S]*?<Properties>\s*<Name>([^<]+)<\/Name>/.exec(xml)?.[1];
+    assert.ok(tsName, 'у справочника нет табличной части');
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-catalog-ts-prop-'));
+    try {
+      const targetPath = path.join(tempRoot, path.basename(sourcePath));
+      fs.copyFileSync(sourcePath, targetPath);
+      const before = fs.readFileSync(targetPath);
+
+      const properties = standardAttributeProperties(targetPath, 'LineNumber', tsName);
+
+      assert.ok(properties.length > 0);
+      assert.ok(fs.readFileSync(targetPath).equals(before), 'файл объекта изменён показом свойств');
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 });
+
+suite('Properties — стандартный реквизит заимствованного справочника', () => {
+  const extensionSource = path.join(EXAMPLE_GENERATIONS.cfe21, 'Catalogs', 'Номенклатура.xml');
+  const baseSource = path.join(EXAMPLE_GENERATIONS.cf21, 'Catalogs', 'Номенклатура.xml');
+  suiteSetup(function () {
+    skipWithoutCorpus(this, extensionSource, baseSource);
+  });
+
+  test('показ свойств не меняет ни файл расширения, ни файл базовой конфигурации', () => {
+    // Раскладка как в проекте: <root>/cf и <root>/cfe/<Имя> — по ней
+    // BorrowedPropertiesResolver находит объект базовой конфигурации.
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-borrowed-sa-'));
+    try {
+      const cfRoot = path.join(tempRoot, 'cf');
+      const cfeRoot = path.join(tempRoot, 'cfe', 'EVOLC');
+      fs.mkdirSync(path.join(cfRoot, 'Catalogs'), { recursive: true });
+      fs.mkdirSync(path.join(cfeRoot, 'Catalogs'), { recursive: true });
+      fs.copyFileSync(path.join(EXAMPLE_GENERATIONS.cf21, 'Configuration.xml'), path.join(cfRoot, 'Configuration.xml'));
+      fs.copyFileSync(path.join(EXAMPLE_GENERATIONS.cfe21, 'Configuration.xml'), path.join(cfeRoot, 'Configuration.xml'));
+      const basePath = path.join(cfRoot, 'Catalogs', 'Номенклатура.xml');
+      const extensionPath = path.join(cfeRoot, 'Catalogs', 'Номенклатура.xml');
+      fs.copyFileSync(baseSource, basePath);
+      fs.copyFileSync(extensionSource, extensionPath);
+      const baseBefore = fs.readFileSync(basePath);
+      const extensionBefore = fs.readFileSync(extensionPath);
+
+      const properties = standardAttributeProperties(extensionPath, 'Description');
+      // Ветка ТЧ у заимствованного объекта: ТЧ нет ни в расширении, ни в базе — свойств нет.
+      assert.deepStrictEqual(standardAttributeProperties(extensionPath, 'LineNumber', 'НетТакойТЧ'), []);
+
+      assert.ok(fs.readFileSync(extensionPath).equals(extensionBefore), 'файл расширения изменён показом свойств');
+      assert.ok(fs.readFileSync(basePath).equals(baseBefore), 'файл базовой конфигурации изменён');
+      assert.ok(properties.some((item) => item.key === 'FillChecking'));
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+});
+
+function standardAttributeProperties(xmlPath: string, name: string, tabularSectionName?: string) {
+  const node = new MetadataNode({
+    label: name,
+    nodeKind: 'StandardAttribute',
+    xmlPath,
+    metaContext: {
+      rootMetaKind: 'Catalog',
+      ownerObjectXmlPath: xmlPath,
+      standardAttributeName: name,
+      ...(tabularSectionName ? { tabularSectionName } : {}),
+    },
+  }, vscode.TreeItemCollapsibleState.None);
+  if (!structuredMetaChildHandler.getProperties) {
+    assert.fail('обработчик свойств дочерних элементов не найден');
+  }
+  return structuredMetaChildHandler.getProperties(node);
+}
+
+/** Текущее значение enum-свойства FillChecking из коллекции свойств панели. */
+function fillCheckingCurrent(properties: ReturnType<typeof standardAttributeProperties>): unknown {
+  const value = properties.find((item) => item.key === 'FillChecking')?.value;
+  return typeof value === 'object' && 'current' in value ? value.current : value;
+}
+
+/** Значение свойства реквизита в шаблоне Catalog — ожидание берётся из ruleset, а не литералом. */
+function templateValue(attributeName: string, key: string): string {
+  const block = STANDARD_ATTRIBUTES_BLOCKS.Catalog ?? '';
+  const element = new RegExp(`<xr:StandardAttribute name="${attributeName}">[\\s\\S]*?</xr:StandardAttribute>`).exec(block)?.[0] ?? '';
+  const value = new RegExp(`<xr:${key}>([^<]*)</xr:${key}>`).exec(element)?.[1];
+  assert.ok(value, `в шаблоне нет ${attributeName}.${key}`);
+  return value;
+}

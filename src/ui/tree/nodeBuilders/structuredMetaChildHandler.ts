@@ -5,8 +5,9 @@ import {
   extractChildMetaElementXml,
   extractColumnXmlFromTabularSection,
   extractMethodXmlFromUrlTemplate,
-  ensureStandardAttributeXml,
   extractStandardAttributeXml,
+  resolveStandardAttributeXml,
+  rulesetForObjectXml,
 } from '../../../infra/xml';
 import { getObjectLocationFromXml } from '../../../infra/fs/MetaPathResolver';
 import type { TypeAwarePropertyOwnerKind } from '../../../infra/xml/TypedFieldPropertyRules';
@@ -88,12 +89,24 @@ export const structuredMetaChildHandler: ObjectHandler = {
           );
         case 'StandardAttribute': {
           const standardAttributeName = node.metaContext.standardAttributeName ?? label;
+          // Значение по умолчанию берётся из шаблона ruleset, файл не трогается (#16).
+          // У заимствованного объекта умолчания подставляются только в
+          // унаследованный XML: собственный пустой элемент расширения не должен
+          // перекрыть значения базовой конфигурации.
           const localXml = tsName
             ? extractStandardAttributeXml(objectXml, standardAttributeName, tsName)
-            : ensureStandardAttributeXml(objectMainXmlPath, standardAttributeName, node.metaContext.rootMetaKind);
-          const inheritedXml = inheritedObjectXml
+            : resolveStandardAttributeXml(objectXml, standardAttributeName, {
+                ruleset: rulesetForObjectXml(objectXml),
+                useDefaults: !inheritedObjectXml,
+              });
+          const inheritedXml = !inheritedObjectXml
+            ? null
+            : tsName
             ? extractStandardAttributeXml(inheritedObjectXml, standardAttributeName, tsName)
-            : null;
+            : resolveStandardAttributeXml(inheritedObjectXml, standardAttributeName, {
+                ruleset: rulesetForObjectXml(inheritedObjectXml),
+                useDefaults: true,
+              });
           return propsFromElementXml(localXml, 'standardAttribute', inheritedXml);
         }
         case 'AddressingAttribute':
