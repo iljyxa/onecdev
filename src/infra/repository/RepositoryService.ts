@@ -33,13 +33,14 @@ import { pathKey } from '../fs/PathKey';
 export interface RepositoryBinding {
   repoPath: string;
   repoUser: string;
-  /** Пароль используется только в памяти для текущего запуска команды; в `env.json` не сохраняется. */
+  /** Пароль используется только в памяти для текущего запуска команды; в файлы настроек проекта не сохраняется. */
   repoPassword: string;
 }
 
 /**
- * Привязка хранилища, как она отдаётся наружу (в webview) после чтения из
- * `env.json`. Пароль сюда не попадает — он хранится в `ProjectSecretStorage`.
+ * Привязка хранилища, как она отдаётся наружу (в webview) после чтения из файлов
+ * настроек vanessa-runner (`env.json`, `autumn-properties.json` — стандартные ключи
+ * `storage-name`/`storage-user`). Пароль сюда не попадает — он хранится в `ProjectSecretStorage`.
  */
 export interface StoredRepositoryBinding {
   repoPath: string;
@@ -246,8 +247,9 @@ export class RepositoryService {
   }
 
   /**
-   * Читает привязку хранилища для отдачи наружу (webview); legacy-пароль из `env.json`
-   * при этом мигрирует в `ProjectSecretStorage`. Пароль в результат не попадает.
+   * Читает привязку хранилища для отдачи наружу (webview); пароль прежних версий
+   * (`--repo-pwd` в `env.json`) при этом мигрирует в `ProjectSecretStorage`. Пароль в
+   * результат не попадает.
    */
   loadBinding(target: RepositoryTarget): Promise<StoredRepositoryBinding | null> {
     return this.bindings.loadBinding(target);
@@ -273,8 +275,9 @@ export class RepositoryService {
   }
 
   /**
-   * Полная привязка (с паролем из SecretStorage) для запуска команды 1С.
-   * Пароль остаётся только в памяти процесса и в `env.json` не пишется.
+   * Полная привязка для запуска команды 1С: пароль из SecretStorage, при его отсутствии —
+   * `storage-pwd` из файла настроек vanessa-runner. Пароль остаётся только в памяти
+   * процесса; расширение его в файлы не пишет.
    */
   resolveBindingForCommand(target: RepositoryTarget): Promise<RepositoryBinding | null> {
     return this.bindings.resolveBindingForCommand(target);

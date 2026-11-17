@@ -35,11 +35,13 @@ src/
 │   │                                  # области файлов), RepositoryDumpPlan/RepositoryDumpRounds (план и
 │   │                                  # раунды выгрузки), RepositoryMergePlanner/Applier (трёхстороннее
 │   │                                  # слияние), ConfigDumpInfoDiff, ConfigurationChildObjectsSync,
-│   │                                  # RepositoryBindingStore — см. docs/repository-file-sync.md;
+│   │                                  # RepositoryBindingStore (привязка в env.json/autumn) и реестр
+│   │                                  # ключей VrunnerStorageKeys — см. docs/repository-file-sync.md;
 │   │                                  # crs/ — клиент протокола crserver (tcp/http, XML-слой в
 │   │                                  # infra/xml/crs/), см. docs/repository-crs.md
 │   ├── fs/AtomicFileWriter.ts        # единственная реализация атомарной записи (temp+rename),
 │   │                                  # см. «Атомарная запись файлов выгрузки» ниже
+│   ├── fs/JsonTextFile.ts            # правка JSON с сохранением отступа/BOM/EOL (env.json, autumn)
 │   ├── mcp/                          # McpServerIdentity/McpStartDecision/McpPortProbe/
 │   │                                  # McpConflictPrompt/McpHost — чистая логика жизненного цикла
 │   │                                  # встроенного MCP-сервера (без vscode), см.

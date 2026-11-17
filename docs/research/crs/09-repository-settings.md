@@ -2,8 +2,10 @@
 > (коммит `8391ab0`, `docs/research/09-repository-settings.md`) без изменения текста; оно датировано и описывает
 > настройки того проекта (`1c-repository-tools.connection.*`, `core/platformTools/launchProfile.ts`). Выводы для
 > onecdev (где хранить адрес, пользователя и пароль хранилища, как соотносится с `env.json` и
-> `RepositoryBindingStore`) — предмет issue iljyxa/onecdev#120; до его решения раздел «Выводы для расширения»
-> — справочный, а не принятый. Номера `#N` относятся к исходному проекту.
+> `RepositoryBindingStore`) — реализовано в iljyxa/onecdev#120, см.
+> [Привязка к хранилищу](../../repository-file-sync.md#привязка-к-хранилищу-envjson--autumn-propertiesjson);
+> раздел «Выводы для расширения» остаётся справочным. Чтение опций из секций команд autumn — iljyxa/onecdev#136.
+> Номера `#N` относятся к исходному проекту.
 
 # Параметры подключения к хранилищу: где их хранить
 

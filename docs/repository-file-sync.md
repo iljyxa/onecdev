@@ -617,6 +617,41 @@ readonly файла проекта в обе стороны (issue #78): `writab
 объектов (захватить или отменить изменения). Прочие отказы, в том числе расхождение идентификатора
 конфигурации, по-прежнему ведут к модальному предложению полной загрузки (issue #113).
 
+## Привязка к хранилищу (`env.json` / `autumn-properties.json`)
+
+Адрес и пользователь хранилища лежат в стандартных ключах vanessa-runner (issue #120); реестр ключей —
+`infra/repository/VrunnerStorageKeys.ts`, чтение и запись — `RepositoryBindingStore`.
+
+Ключи основной конфигурации:
+
+| Источник | Ключи |
+|---|---|
+| `env.json` (vrunner 2.x) | `default["--storage-name"]`, `default["--storage-user"]` |
+| `env.json`, legacy | `default["--repo-path"]`, `default["--repo-user"]` |
+| `autumn-properties.json` в корне рабочей области (3.x) | `{"vrunner": {"storage-name", "storage-user"}}` |
+
+Чтение: порядок источников env-storage → env-legacy → autumn; autumn читается, только если в `env.json`
+привязки нет. Пара адрес/пользователь берётся из одного источника, пустое значение = не задано.
+
+Запись: стандартные ключи ставятся на позицию legacy-ключей, legacy и `--repo-pwd` удаляются. `autumn`
+обновляется, только если там уже есть `vrunner.storage-name` (файл и секция не создаются). Очистка привязки
+убирает обе формы и значения в autumn.
+
+Пароль в файлы не пишется. `--repo-pwd` переносится в SecretStorage только при legacy-источнике (иначе
+остаётся в файле до сохранения/очистки привязки). `--storage-pwd` / `vrunner.storage-pwd` — запасной
+пароль только для запуска команды: не переносится и не стирается.
+
+Расширения: формат `default.extension[<имя>]["repo-path"|"repo-user"]` прежний — у vanessa-runner
+стандартного ключа для них нет.
+
+JSON правится с сохранением формата: отступ, BOM, EOL и завершающий перевод строки (`src/infra/fs/JsonTextFile.ts`).
+Повреждённый `autumn-properties.json`: на декорации дерева (`hasBinding`) трактуется как «привязки нет», в
+операциях даёт понятную ошибку.
+
+Ограничения: не поддерживаются YAML/INI-вариант autumn и плоская форма `"vrunner.storage-name"`; опции в
+секциях команд не читаются (iljyxa/onecdev#136); не проверено на настоящем vanessa-runner, читает ли 3.x
+`vrunner.storage-name` из этого файла. Исследование — `docs/research/crs/09-repository-settings.md`.
+
 ## Настройка
 
 `onecdev.repository.syncFilesOnLockUnlock` (по умолчанию `true`) включает выгрузку, слияние, снимки и откат.
