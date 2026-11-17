@@ -4,6 +4,8 @@ import * as path from 'path';
 import { detectRootObjectKind, findNestingAwareElementRange, writeTextFilePreservingBomAndEol } from '../XmlUtils';
 import { resolveInsertOffset } from '../childObjects/ChildObjectsEditor';
 import { detectChildIndent } from '../creator/creatorShared';
+import type { FormatRuleset } from '../format/FormatRuleset';
+import { resolveFormatRuleset } from '../format/formatRegistry';
 import { buildFormXmlFromDefinition } from './FormBuilders';
 import { generateFormDefinitionForObject } from './FormObjectGenerator';
 import {
@@ -15,7 +17,6 @@ import {
   isEmptyTagValue,
   isExternalKind,
   isProcessorLike,
-  MD_XMLNS,
   normalizePurpose,
   resolveObjectLocation,
   setTagValue,
@@ -39,6 +40,7 @@ export class FormAddService {
     validatePurpose(loc.kind, purpose);
     const synonym = options.synonym ?? options.formName;
     const formatVersion = detectFormatVersion(loc.xmlPath);
+    const ruleset = resolveFormatRuleset(formatVersion);
     const formsDir = path.join(loc.objectDir, 'Forms');
     const formMetaPath = path.join(formsDir, `${options.formName}.xml`);
     const formXmlPath = path.join(formsDir, options.formName, 'Ext', 'Form.xml');
@@ -47,13 +49,13 @@ export class FormAddService {
       throw new Error(`Форма уже существует: ${formMetaPath}`);
     }
 
-    writeNewTextFile(formMetaPath, buildFormDescriptorXml(options.formName, synonym, formatVersion, isProcessorLike(loc.kind)));
+    writeNewTextFile(formMetaPath, buildFormDescriptorXml(options.formName, synonym, formatVersion, isProcessorLike(loc.kind), ruleset));
     const autoFill = options.autoFill !== false; // по умолчанию true
     let formXmlContent: string | null = null;
     if (autoFill) {
       const definition = generateFormDefinitionForObject(loc.xmlPath, purpose, { title: synonym });
       if (definition) {
-        formXmlContent = buildFormXmlFromDefinition(definition, formatVersion);
+        formXmlContent = buildFormXmlFromDefinition(definition, formatVersion, ruleset);
       }
     }
     formXmlContent ??= buildInitialFormXml({
@@ -61,6 +63,7 @@ export class FormAddService {
       objectName: loc.name,
       purpose,
       formatVersion,
+      ruleset,
     });
     writeNewTextFile(formXmlPath, formXmlContent);
     writeNewTextFile(modulePath, buildFormModule(purpose !== 'Object' || !isExternalKind(loc.kind)));
@@ -110,12 +113,13 @@ function buildInitialFormXml(options: {
   readonly objectName: string;
   readonly purpose: FormPurpose;
   readonly formatVersion: string;
+  readonly ruleset: FormatRuleset;
 }): string {
   const attr = mainAttributeForPurpose(options.objectKind, options.objectName, options.purpose);
   return buildFormXmlFromDefinition({
     events: { OnCreateAtServer: 'ПриСозданииНаСервере' },
     attributes: [attr],
-  }, options.formatVersion);
+  }, options.formatVersion, options.ruleset);
 }
 
 export function mainAttributeForPurpose(kind: string, name: string, purpose: FormPurpose): FormAttributeDefinition {
@@ -157,10 +161,16 @@ export function defaultFormProperty(kind: string, purpose: FormPurpose): string 
   return 'DefaultRecordForm';
 }
 
-export function buildFormDescriptorXml(name: string, synonym: string, formatVersion: string, extendedPresentation: boolean): string {
+export function buildFormDescriptorXml(
+  name: string,
+  synonym: string,
+  formatVersion: string,
+  extendedPresentation: boolean,
+  ruleset: FormatRuleset = resolveFormatRuleset(formatVersion)
+): string {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    `<MetaDataObject ${MD_XMLNS} version="${formatVersion}">`,
+    `<MetaDataObject ${ruleset.metaDataObjectXmlns} version="${formatVersion}">`,
     `\t<Form uuid="${crypto.randomUUID()}">`,
     '\t\t<Properties>',
     `\t\t\t<Name>${escapeXml(name)}</Name>`,
@@ -172,6 +182,9 @@ export function buildFormDescriptorXml(name: string, synonym: string, formatVers
     '\t\t\t\t<v8:Value xsi:type="app:ApplicationUsePurpose">PlatformApplication</v8:Value>',
     '\t\t\t\t<v8:Value xsi:type="app:ApplicationUsePurpose">MobilePlatformApplication</v8:Value>',
     '\t\t\t</UsePurposes>',
+    ...(ruleset.includeFormUseInInterfaceCompatibilityMode
+      ? ['\t\t\t<UseInInterfaceCompatibilityMode>Any</UseInInterfaceCompatibilityMode>']
+      : []),
     ...(extendedPresentation ? ['\t\t\t<ExtendedPresentation/>'] : []),
     '\t\t</Properties>',
     '\t</Form>',

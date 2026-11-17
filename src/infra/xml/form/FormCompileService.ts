@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { resolveFormatRuleset } from '../format/formatRegistry';
 import { writeTextFilePreservingBomAndEol } from '../XmlUtils';
 import {
   buildFormDescriptorXml,
@@ -26,7 +27,7 @@ export class FormCompileService {
     const definition = options.fromObject === true && !options.definition
       ? inferDefinitionFromOutputPath(formPath)
       : options.definition ?? {};
-    const compiled = buildFormXmlFromDefinition(definition, formatVersion);
+    const compiled = buildFormXmlFromDefinition(definition, formatVersion, resolveFormatRuleset(formatVersion));
     const exists = fs.existsSync(formPath);
     const original = exists ? fs.readFileSync(formPath, 'utf-8') : '';
     // Перезаписать можно только тело формы. Отказ обязан произойти ДО создания

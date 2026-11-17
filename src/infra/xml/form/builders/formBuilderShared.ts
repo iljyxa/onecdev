@@ -1,13 +1,13 @@
 /**
  * Низовой общий модуль билдеров формы: единственный экземпляр `WARN_SINK`,
  * `withCollectedWarnings`/`warn`, IdAllocator (реэкспорт из FormShared),
- * escape/indent-хелперы, константы (`FORM_XMLNS`/`KNOWN_FORM_EVENTS`),
+ * escape/indent-хелперы, константы (`KNOWN_FORM_EVENTS`),
  * общие типы и низовые эмиттеры типов. Все билдеры делят один sink, чтобы
  * изоляция предупреждений оставалась корректной (golden ловит это).
  */
-import { createIdAllocator, escapeXml, FORM_XMLNS, type IdAllocator } from '../FormShared';
+import { createIdAllocator, escapeXml, type IdAllocator } from '../FormShared';
 
-export { createIdAllocator, escapeXml, FORM_XMLNS };
+export { createIdAllocator, escapeXml };
 export type { IdAllocator };
 
 const EVENT_SUFFIX_MAP: Record<string, string> = {

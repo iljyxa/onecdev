@@ -80,7 +80,7 @@ function buildRootProperties(kind: MetaKind, name: string, ruleset: FormatRulese
     case 'CommonModule':
       return join([...base, ...buildCommonModuleProperties()]);
     case 'CommonForm':
-      return join([...base, ...buildCommonFormProperties()]);
+      return join([...base, ...buildCommonFormProperties(ruleset)]);
     case 'ScheduledJob':
       return join([...base, ...buildScheduledJobProperties()]);
     case 'Subsystem':
@@ -213,14 +213,17 @@ function buildDataProcessorProperties(): string[] {
  * состав свойств сняты с эталона 2.21 (`example/.../CommonForms/*.xml`) и совпадают
  * с каноном `COMMON_FORM_ROOT_META_PROPERTY_KEYS` панели свойств.
  */
-function buildCommonFormProperties(): string[] {
+function buildCommonFormProperties(ruleset: FormatRuleset): string[] {
   return [
     '\t\t\t<FormType>Managed</FormType>',
     '\t\t\t<IncludeHelpInContents>false</IncludeHelpInContents>',
     '\t\t\t<UsePurposes>',
     '\t\t\t\t<v8:Value xsi:type="app:ApplicationUsePurpose">PlatformApplication</v8:Value>',
     '\t\t\t</UsePurposes>',
-    '\t\t\t<UseInInterfaceCompatibilityMode>Any</UseInInterfaceCompatibilityMode>',
+    // Свойство есть только в эталоне 2.21 (в 2.20 его нет).
+    ...(ruleset.includeFormUseInInterfaceCompatibilityMode
+      ? ['\t\t\t<UseInInterfaceCompatibilityMode>Any</UseInInterfaceCompatibilityMode>']
+      : []),
     '\t\t\t<UseStandardCommands>true</UseStandardCommands>',
     '\t\t\t<ExtendedPresentation/>',
     '\t\t\t<Explanation/>',
