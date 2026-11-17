@@ -56,7 +56,11 @@ export function registerBorrowToExtensionCommand(
   );
 }
 
-async function borrowToExtension(node: NodeArg, services: CommandServices): Promise<void> {
+/**
+ * Экспорт — для прямого вызова тестом с сервисами поверх временной выгрузки: id команды
+ * уже зарегистрирован активным расширением тестового хоста.
+ */
+export async function borrowToExtension(node: NodeArg, services: CommandServices): Promise<void> {
   const metaNode = node instanceof MetadataNode ? node : undefined;
 
   const borrowTarget = resolveBorrowTarget(metaNode);
