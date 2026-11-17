@@ -10,6 +10,7 @@ import {
   type RegisteredInfoBase,
 } from './InfoBaseRegistryService';
 import type { ProjectSecretStorage } from './ProjectSecretStorage';
+import { writeJsonPreservingStyle } from '../fs/JsonTextFile';
 
 export interface ProjectLaunchSettings {
   readonly ibConnection: string;
@@ -122,7 +123,8 @@ export class ProjectEnvironmentService {
       throw new Error('Выбранная информационная база не найдена в системном списке 1С.');
     }
 
-    const env = this.readEnv();
+    const envFile = this.readEnv();
+    const env = envFile.value;
     const defaults = getDefaultSection(env);
     const platforms = this.getPlatforms(false);
     const selectedPlatform = platforms.find(
@@ -137,7 +139,7 @@ export class ProjectEnvironmentService {
     // а в файле остаётся пустая строка (совместимость со схемой vanessa-runner).
     defaults['--db-pwd'] = '';
     env.default = defaults;
-    this.writeEnv(env);
+    this.writeEnv(envFile, env);
 
     // Пустой ввод пароля означает «не менять» — существующий секрет сохраняем,
     // поэтому setDbPassword вызываем только при непустом значении.
@@ -179,7 +181,7 @@ export class ProjectEnvironmentService {
 
   private async readSettings(): Promise<ProjectLaunchSettings> {
     await this.migrateLegacyDbPassword();
-    const defaults = getDefaultSection(this.readEnv());
+    const defaults = getDefaultSection(this.readEnv().value);
     return {
       ibConnection: asString(defaults['--ibconnection']),
       dbUser: asString(defaults['--db-user']),
@@ -195,7 +197,8 @@ export class ProjectEnvironmentService {
    * ещё не пересохранённых через новый `save`.
    */
   private async migrateLegacyDbPassword(): Promise<void> {
-    const env = this.readEnv();
+    const envFile = this.readEnv();
+    const env = envFile.value;
     const defaults = getDefaultSection(env);
     const legacy = asString(defaults['--db-pwd']).trim();
     if (!legacy) {
@@ -205,32 +208,43 @@ export class ProjectEnvironmentService {
     await this.secrets.setDbPassword(legacy);
     defaults['--db-pwd'] = '';
     env.default = defaults;
-    this.writeEnv(env);
+    this.writeEnv(envFile, env);
   }
 
-  private readEnv(): Record<string, unknown> {
+  /** `text` — исходный текст файла (эталон формата для перезаписи), undefined — файла нет. */
+  private readEnv(): EnvFile {
     const envPath = this.getEnvPath();
     if (!fs.existsSync(envPath)) {
-      return structuredClone(DEFAULT_ENV);
+      return { text: undefined, value: structuredClone(DEFAULT_ENV) };
     }
 
-    const raw = fs.readFileSync(envPath, 'utf-8').trim();
+    const text = fs.readFileSync(envPath, 'utf-8');
+    // trim() снимает и BOM (U+FEFF — пробельный символ для trim), без него JSON.parse упал бы.
+    const raw = text.trim();
     if (!raw) {
-      return structuredClone(DEFAULT_ENV);
+      return { text, value: structuredClone(DEFAULT_ENV) };
     }
 
     const parsed = JSON.parse(raw) as unknown;
     if (isRecord(parsed)) {
-      return parsed;
+      return { text, value: parsed };
     }
-    return structuredClone(DEFAULT_ENV);
+    return { text, value: structuredClone(DEFAULT_ENV) };
   }
 
-  private writeEnv(env: Record<string, unknown>): void {
-    const envPath = this.getEnvPath();
-    fs.mkdirSync(path.dirname(envPath), { recursive: true });
-    fs.writeFileSync(envPath, `${JSON.stringify(env, null, 2)}\n`, 'utf-8');
+  /**
+   * env.json общий с vanessa-runner и редактором профиля Platform Tools (табуляция, CRLF,
+   * BOM): перезапись в одном стиле давала бы на каждое сохранение настроек diff всего
+   * файла (#138). Эталон стиля — текст, прочитанный ДО изменения.
+   */
+  private writeEnv(original: EnvFile, env: Record<string, unknown>): void {
+    writeJsonPreservingStyle(this.getEnvPath(), original.text, env);
   }
+}
+
+interface EnvFile {
+  readonly text: string | undefined;
+  readonly value: Record<string, unknown>;
 }
 
 function ensureCurrentPlatformInList(
