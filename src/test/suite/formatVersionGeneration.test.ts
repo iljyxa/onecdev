@@ -7,6 +7,8 @@ import { MetadataXmlCreator } from '../../infra/xml/MetadataXmlCreator';
 import { ObjectXmlReader } from '../../infra/xml/ObjectXmlReader';
 import { BASELINE_RULESET } from '../../infra/xml/format/baselineRuleset';
 import { FORMAT_2_20_RULESET } from '../../infra/xml/format/format2_20Ruleset';
+import { FORMAT_PRE_2_20_RULESET } from '../../infra/xml/format/formatPre2_20Ruleset';
+import { buildFormXmlFromDefinition } from '../../infra/xml/form/FormBuilders';
 import {
   DEFAULT_FORMAT_VERSION,
   registerFormatRuleset,
@@ -90,11 +92,24 @@ const SA_KINDS: MetaKind[] = [
 ];
 
 suite('formatRegistry — резолвинг ruleset по версии', () => {
-  test('2.20 → ruleset format-2.20, 2.21/2.18 → baseline', () => {
+  test('2.20 → ruleset format-2.20, 2.21 → baseline, 2.18 (DEFAULT) → format-pre-2.20', () => {
     assert.strictEqual(resolveFormatRuleset('2.20').id, FORMAT_2_20_RULESET.id);
     assert.strictEqual(resolveFormatRuleset('2.21').id, BASELINE_RULESET.id);
-    assert.strictEqual(resolveFormatRuleset(DEFAULT_FORMAT_VERSION).id, BASELINE_RULESET.id);
+    assert.strictEqual(resolveFormatRuleset(DEFAULT_FORMAT_VERSION).id, FORMAT_PRE_2_20_RULESET.id);
   });
+
+  for (const version of ['2.17', '2.18', '2.19']) {
+    test(`${version} → format-pre-2.20 без предупреждения`, () => {
+      const warnings: string[] = [];
+      setFormatRulesetWarning((message) => warnings.push(message));
+      try {
+        assert.strictEqual(resolveFormatRuleset(version).id, FORMAT_PRE_2_20_RULESET.id);
+        assert.deepStrictEqual(warnings, []);
+      } finally {
+        setFormatRulesetWarning(() => undefined);
+      }
+    });
+  }
 
   test('незнакомая версия → самый свежий известный ruleset + предупреждение', () => {
     const warnings: string[] = [];
@@ -278,4 +293,69 @@ suite('Golden: порядок свойств совпадает с эталон�
       assert.deepStrictEqual(generated, reference);
     });
   }
+});
+
+suite('formatPre2_20Ruleset — гибрид: объекты baseline, форма 2.20', () => {
+  test('данные объектов совпадают с baseline', () => {
+    assert.strictEqual(FORMAT_PRE_2_20_RULESET.metaDataObjectXmlns, BASELINE_RULESET.metaDataObjectXmlns);
+    assert.strictEqual(FORMAT_PRE_2_20_RULESET.graphicalSchemaXmlns, BASELINE_RULESET.graphicalSchemaXmlns);
+    assert.strictEqual(FORMAT_PRE_2_20_RULESET.generatedTypes, BASELINE_RULESET.generatedTypes);
+    assert.strictEqual(
+      FORMAT_PRE_2_20_RULESET.includeReportAuxiliaryVariantForm,
+      BASELINE_RULESET.includeReportAuxiliaryVariantForm
+    );
+    for (const kind of SA_KINDS) {
+      assert.strictEqual(FORMAT_PRE_2_20_RULESET.standardAttributes(kind), BASELINE_RULESET.standardAttributes(kind), kind);
+    }
+  });
+
+  test('ось формы совпадает с 2.20', () => {
+    assert.strictEqual(FORMAT_PRE_2_20_RULESET.managedFormXmlns, FORMAT_2_20_RULESET.managedFormXmlns);
+    assert.deepStrictEqual(
+      FORMAT_PRE_2_20_RULESET.managedFormPropertyValueAliases,
+      FORMAT_2_20_RULESET.managedFormPropertyValueAliases
+    );
+    assert.strictEqual(FORMAT_PRE_2_20_RULESET.includeFormUseInInterfaceCompatibilityMode, false);
+    assert.strictEqual(FORMAT_2_20_RULESET.includeFormUseInInterfaceCompatibilityMode, false);
+    assert.strictEqual(BASELINE_RULESET.includeFormUseInInterfaceCompatibilityMode, true);
+  });
+
+  test('managedFormXmlns: pal только у baseline, dcssch у всех, без version', () => {
+    for (const ruleset of [BASELINE_RULESET, FORMAT_2_20_RULESET, FORMAT_PRE_2_20_RULESET]) {
+      assert.ok(ruleset.managedFormXmlns.startsWith('xmlns="http://v8.1c.ru/8.3/xcf/logform" '), ruleset.id);
+      assert.ok(ruleset.managedFormXmlns.includes(' xmlns:dcssch="http://v8.1c.ru/8.1/data-composition-system/schema"'), ruleset.id);
+      assert.ok(!ruleset.managedFormXmlns.includes('version='), ruleset.id);
+      assert.strictEqual(ruleset.managedFormXmlns.includes('xmlns:pal='), ruleset === BASELINE_RULESET, ruleset.id);
+    }
+  });
+});
+
+suite('buildFormXmlFromDefinition — написание WindowOpeningMode по версии формата', () => {
+  // Значение — из строки корня формы; ruleset разрешается по версии (дефолтный аргумент).
+  function windowOpeningMode(value: string, version: string): string {
+    const xml = buildFormXmlFromDefinition({ properties: { windowOpeningMode: value } }, version);
+    const match = /\n\t<WindowOpeningMode>([^<]*)<\/WindowOpeningMode>\n/.exec(xml);
+    assert.ok(match, `нет WindowOpeningMode в форме ${version}`);
+    return match[1];
+  }
+
+  const expected: Record<string, Record<string, string>> = {
+    '2.21': { LockOwnerWindow: 'LockOwner', LockOwner: 'LockOwner', DontBlock: 'DontBlock', LockWholeInterface: 'LockWholeInterface' },
+    '2.20': { LockOwnerWindow: 'LockOwnerWindow', LockOwner: 'LockOwnerWindow', DontBlock: 'DontBlock', LockWholeInterface: 'LockWholeInterface' },
+  };
+  for (const version of ['2.17', '2.18', '2.19', '2.20', '2.21']) {
+    const table = expected[version === '2.21' ? '2.21' : '2.20'];
+    for (const input of Object.keys(table)) {
+      test(`${version}: ${input} → ${table[input]}`, () => {
+        assert.strictEqual(windowOpeningMode(input, version), table[input]);
+      });
+    }
+  }
+
+  test('свойство без таблицы переименований пишется как есть', () => {
+    for (const version of ['2.20', '2.21']) {
+      const xml = buildFormXmlFromDefinition({ properties: { width: 60 } }, version, resolveFormatRuleset(version));
+      assert.ok(xml.includes('\n\t<Width>60</Width>\n'), version);
+    }
+  });
 });

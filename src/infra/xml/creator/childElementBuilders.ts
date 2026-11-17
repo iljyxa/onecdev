@@ -408,7 +408,7 @@ export function ensureAuxiliaryChildFiles(options: AddChildMetadataOptions, form
     const formXml = path.join(loc.objectDir, 'Forms', options.name, 'Ext', 'Form.xml');
     fs.mkdirSync(path.dirname(formXml), { recursive: true });
     fs.writeFileSync(descriptorXml, buildFormDescriptorXml(options.name, formatVersion, ruleset), 'utf-8');
-    fs.writeFileSync(formXml, buildManagedFormXml(formatVersion), 'utf-8');
+    fs.writeFileSync(formXml, buildManagedFormXml(formatVersion, ruleset), 'utf-8');
     ensureEmptyFile(formModule);
     return [descriptorXml, formXml, formModule];
   }

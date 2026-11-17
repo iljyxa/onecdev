@@ -183,6 +183,13 @@ export const BASELINE_RULESET: FormatRuleset = {
     'xmlns="http://v8.1c.ru/8.3/xcf/scheme" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:sch="http://v8.1c.ru/8.2/data/graphscheme" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
   generatedTypes: BASELINE_GENERATED_TYPES,
   includeReportAuxiliaryVariantForm: true,
+  // Корень `Form.xml` снят с эталона example/2.21 (CommonForms/*/Ext/Form.xml,
+  // родная форма 8.5.1 example/crs/config): тот же набор префиксов, что у 2.20,
+  // плюс `pal`.
+  managedFormXmlns:
+    'xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:dcscor="http://v8.1c.ru/8.1/data-composition-system/core" xmlns:dcssch="http://v8.1c.ru/8.1/data-composition-system/schema" xmlns:dcsset="http://v8.1c.ru/8.1/data-composition-system/settings" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+  managedFormPropertyValueAliases: { WindowOpeningMode: { LockOwnerWindow: 'LockOwner' } },
+  includeFormUseInInterfaceCompatibilityMode: true,
 
   standardAttributes(kind: MetaKind): string {
     return STANDARD_ATTRIBUTES_BLOCKS[kind] ?? '';

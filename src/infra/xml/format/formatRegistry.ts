@@ -1,5 +1,6 @@
 import { BASELINE_RULESET } from './baselineRuleset';
 import { FORMAT_2_20_RULESET } from './format2_20Ruleset';
+import { FORMAT_PRE_2_20_RULESET } from './formatPre2_20Ruleset';
 import type { FormatRuleset } from './FormatRuleset';
 
 /**
@@ -20,10 +21,11 @@ export const SCAFFOLD_FORMAT_VERSION = '2.17';
 
 /**
  * Версии формата, известные проекту как валидные. Отдельный от
- * `SUPPORTED_FORMATS` набор: последний отвечает за выбор ruleset генерации
- * (и намеренно не содержит 2.17, чтобы scaffold-выгрузка резолвилась на
- * baseline). Здесь же перечислены версии, которые валидаторы (внешнего объекта
- * и формы) считают «обычными» и не помечают предупреждением.
+ * `SUPPORTED_FORMATS` набор: последний отвечает за выбор ruleset генерации.
+ * 2.17 (scaffold) привязана там к `format-pre-2.20`, у которого корни
+ * `MetaDataObject` те же, что у baseline, поэтому scaffold-выгрузка по
+ * объектам не меняется. Здесь же перечислены версии, которые валидаторы
+ * (внешнего объекта и формы) считают «обычными» и не помечают предупреждением.
  *
  * Ось версии у `MetaDataObject` и у `Form` одна: генератор подставляет в оба
  * корня одну и ту же переменную (`creator/auxiliaryFileBuilders.ts`), поэтому
@@ -50,6 +52,7 @@ export function isKnownFormatVersion(version: string): boolean {
 const RULESETS = new Map<string, FormatRuleset>([
   [BASELINE_RULESET.id, BASELINE_RULESET],
   [FORMAT_2_20_RULESET.id, FORMAT_2_20_RULESET],
+  [FORMAT_PRE_2_20_RULESET.id, FORMAT_PRE_2_20_RULESET],
 ]);
 
 /**
@@ -58,8 +61,10 @@ const RULESETS = new Map<string, FormatRuleset>([
  * выясняется, что формат поменялся, — добавляется новый ruleset и его версии.
  */
 const SUPPORTED_FORMATS = new Map<string, string>([
-  ['2.18', BASELINE_RULESET.id],
-  ['2.19', BASELINE_RULESET.id],
+  // До 2.20 ось формы — как у 2.20 (без pal, LockOwnerWindow): см. formatPre2_20Ruleset.
+  ['2.17', FORMAT_PRE_2_20_RULESET.id],
+  ['2.18', FORMAT_PRE_2_20_RULESET.id],
+  ['2.19', FORMAT_PRE_2_20_RULESET.id],
   ['2.20', FORMAT_2_20_RULESET.id],
   ['2.21', BASELINE_RULESET.id],
 ]);

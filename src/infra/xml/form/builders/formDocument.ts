@@ -4,12 +4,13 @@
  * реквизита, эвристика DynamicList→table) и последовательный обход всех
  * секций. Целиком детерминированная функция — id берутся из IdAllocator.
  */
+import type { FormatRuleset } from '../../format/FormatRuleset';
+import { resolveFormatRuleset } from '../../format/formatRegistry';
 import { buildLocalizedTag, createIdAllocator } from '../FormShared';
 import type { FormAttributeDefinition, FormDefinition, FormElementDefinition } from '../types';
 import {
   emitType,
   escapeXml,
-  FORM_XMLNS,
   isPlainObject,
   KNOWN_FORM_EVENTS,
   warn,
@@ -48,13 +49,17 @@ const PROP_MAP: Record<string, string> = {
   group: 'Group',
 };
 
-export function buildFormXmlFromDefinition(definition: FormDefinition, formatVersion: string): string {
+export function buildFormXmlFromDefinition(
+  definition: FormDefinition,
+  formatVersion: string,
+  ruleset: FormatRuleset = resolveFormatRuleset(formatVersion)
+): string {
   const defn = normalizeDefinition(definition);
   const id = createIdAllocator('');
   const lines: string[] = [];
 
   lines.push('<?xml version="1.0" encoding="UTF-8"?>');
-  lines.push(`<Form ${FORM_XMLNS} version="${formatVersion}">`);
+  lines.push(`<Form ${ruleset.managedFormXmlns} version="${formatVersion}">`);
 
   // Title
   const props = defn.properties ?? {};
@@ -76,7 +81,7 @@ export function buildFormXmlFromDefinition(definition: FormDefinition, formatVer
       propsClone[k] = v;
     }
   }
-  emitProperties(lines, propsClone, '\t');
+  emitProperties(lines, propsClone, '\t', ruleset);
 
   // CommandSet (excluded commands)
   if (defn.excludedCommands?.length) {
@@ -262,11 +267,13 @@ function emitParameters(lines: string[], params: readonly Record<string, unknown
   lines.push(`${indent}</Parameters>`);
 }
 
-function emitProperties(lines: string[], props: Record<string, unknown>, indent: string): void {
+function emitProperties(lines: string[], props: Record<string, unknown>, indent: string, ruleset: FormatRuleset): void {
   if (Object.keys(props).length === 0) {return;}
   for (const [pName, pValue] of Object.entries(props)) {
     const xmlName = pName in PROP_MAP ? PROP_MAP[pName] : `${pName.charAt(0).toUpperCase()}${pName.slice(1)}`;
-    const val = typeof pValue === 'boolean' ? (pValue ? 'true' : 'false') : xmlStr(pValue);
+    const raw = typeof pValue === 'boolean' ? (pValue ? 'true' : 'false') : xmlStr(pValue);
+    // DSL принимает написание любого поколения; приводим к формату выгрузки.
+    const val = ruleset.managedFormPropertyValueAliases[xmlName]?.[raw] ?? raw;
     lines.push(`${indent}<${xmlName}>${escapeXml(val)}</${xmlName}>`);
   }
 }

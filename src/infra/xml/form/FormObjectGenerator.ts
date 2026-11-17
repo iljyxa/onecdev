@@ -42,6 +42,13 @@ interface AttrMeta {
 const reader = new ObjectXmlReader();
 
 /**
+ * Режим «блокировать окно владельца» в DSL. Написание здесь — DSL-ключ, а не
+ * формат выгрузки: написание формата (`LockOwnerWindow` в 2.20, `LockOwner` в
+ * 2.21) выбирает ruleset при сборке Form.xml.
+ */
+const LOCK_OWNER_WINDOW_OPENING_MODE = 'LockOwnerWindow';
+
+/**
  * Генерирует DSL формы для объекта согласно назначению.
  * Возвращает `undefined` если тип объекта не поддерживается генератором.
  */
@@ -401,7 +408,7 @@ function generateDocumentListDsl(meta: ObjectMeta, purpose: FormPurpose, title: 
   };
   const props: Record<string, unknown> = {};
   if (purpose === 'Choice') {
-    props.windowOpeningMode = 'LockOwnerWindow';
+    props.windowOpeningMode = LOCK_OWNER_WINDOW_OPENING_MODE;
     (table as Record<string, unknown>).choiceMode = true;
   }
   return {
@@ -444,7 +451,7 @@ function generateListDsl(meta: ObjectMeta, purpose: FormPurpose, title: string, 
   }
   const props: Record<string, unknown> = {};
   if (purpose === 'Choice') {
-    props.windowOpeningMode = 'LockOwnerWindow';
+    props.windowOpeningMode = LOCK_OWNER_WINDOW_OPENING_MODE;
     table.choiceMode = true;
   }
   return {
@@ -481,7 +488,7 @@ function generateInfoRegisterDsl(meta: ObjectMeta, purpose: FormPurpose, title: 
   }
   return {
     title,
-    properties: { windowOpeningMode: 'LockOwnerWindow' },
+    properties: { windowOpeningMode: LOCK_OWNER_WINDOW_OPENING_MODE },
     events: { OnCreateAtServer: 'ПриСозданииНаСервере' },
     elements,
     attributes: [mainRecordAttribute(meta)],

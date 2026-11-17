@@ -141,6 +141,9 @@ export function buildFormDescriptorXml(name: string, formatVersion: string, rule
     '\t\t\t<UsePurposes>',
     '\t\t\t\t<v8:Value xsi:type="app:ApplicationUsePurpose">PlatformApplication</v8:Value>',
     '\t\t\t</UsePurposes>',
+    ...(ruleset.includeFormUseInInterfaceCompatibilityMode
+      ? ['\t\t\t<UseInInterfaceCompatibilityMode>Any</UseInInterfaceCompatibilityMode>']
+      : []),
     '\t\t</Properties>',
     '\t</Form>',
     '</MetaDataObject>',
@@ -148,15 +151,18 @@ export function buildFormDescriptorXml(name: string, formatVersion: string, rule
   ].join('\n');
 }
 
-export function buildManagedFormXml(formatVersion: string): string {
+export function buildManagedFormXml(
+  formatVersion: string,
+  ruleset: FormatRuleset = resolveFormatRuleset(formatVersion)
+): string {
   // Минимальный каркас пустой управляемой формы (namespace `xcf/logform`).
-  // Ровно как в эталоне 2.20: только AutoCommandBar + пустые Attributes, без
-  // WindowOpeningMode/Group и без префикса pal. Ранее лишний корневой
-  // `<Group>` и pal вызывали XDTO-исключение при чтении формы платформой 2.20.
-  // Набор префиксов и порядок элементов совпадают с реальными формами донора.
+  // Тело — как в эталоне 2.20: только AutoCommandBar + пустые Attributes, без
+  // WindowOpeningMode/Group (лишний корневой `<Group>` вызывал XDTO-исключение
+  // при чтении формы платформой 2.20; в 2.21 их наличие зависит от режима
+  // совместимости, а не от версии). Набор префиксов корня — ruleset формата.
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    `<Form xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:dcscor="http://v8.1c.ru/8.1/data-composition-system/core" xmlns:dcssch="http://v8.1c.ru/8.1/data-composition-system/schema" xmlns:dcsset="http://v8.1c.ru/8.1/data-composition-system/settings" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="${formatVersion}">`,
+    `<Form ${ruleset.managedFormXmlns} version="${formatVersion}">`,
     '\t<AutoCommandBar name="ФормаКоманднаяПанель" id="-1"/>',
     '\t<Attributes/>',
     '</Form>',

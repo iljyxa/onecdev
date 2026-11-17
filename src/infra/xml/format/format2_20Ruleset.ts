@@ -8,7 +8,10 @@ import type { FormatRuleset } from './FormatRuleset';
  *     (палитра появилась в наборе префиксов только в 2.21);
  *   - у корня графической схемы `<GraphicalSchema>` — ровно то же отличие
  *     (эталон example/2.20/src/cf/BusinessProcesses/Поручение/Ext/Flowchart.xml);
- *   - у отчёта НЕТ свойства `<AuxiliaryVariantForm/>` (добавлено в 2.21).
+ *   - у отчёта НЕТ свойства `<AuxiliaryVariantForm/>` (добавлено в 2.21);
+ *   - у корня формы `<Form>` (`Ext/Form.xml`) нет `xmlns:pal`, режим открытия
+ *     окна «блокировать окно владельца» пишется `LockOwnerWindow` (в 2.21 —
+ *     `LockOwner`), а в дескрипторе формы нет `<UseInInterfaceCompatibilityMode>`.
  *
  * Блоки `<StandardAttributes>`/`<StandardTabularSections>` и таблица
  * generatedTypes у 2.20 и 2.21 совпадают по составу/порядку, поэтому наследуются
@@ -26,4 +29,10 @@ export const FORMAT_2_20_RULESET: FormatRuleset = {
     ''
   ),
   includeReportAuxiliaryVariantForm: false,
+  managedFormXmlns: BASELINE_RULESET.managedFormXmlns.replace(
+    ' xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette"',
+    ''
+  ),
+  managedFormPropertyValueAliases: { WindowOpeningMode: { LockOwner: 'LockOwnerWindow' } },
+  includeFormUseInInterfaceCompatibilityMode: false,
 };

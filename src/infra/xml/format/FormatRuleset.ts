@@ -59,6 +59,29 @@ export interface FormatRuleset {
   readonly includeReportAuxiliaryVariantForm: boolean;
 
   /**
+   * Строка xmlns-объявлений корня управляемой формы `<Form …>` (`Ext/Form.xml`,
+   * без `version`). Ось версии та же, что у `metaDataObjectXmlns`: префикс `pal`
+   * есть только в 2.21; `dcssch` платформа пишет во всех поколениях (эталон —
+   * корни `Form.xml` в `example/2.20` и `example/2.21`).
+   */
+  readonly managedFormXmlns: string;
+
+  /**
+   * Написание значений свойств корня формы, переименованных между поколениями
+   * формата: `{ <XML-имя свойства>: { <значение из DSL>: <значение формата> } }`.
+   * DSL принимает любое написание, генератор приводит его к своему формату
+   * (в 2.21 `WindowOpeningMode` `LockOwnerWindow` стал `LockOwner`).
+   */
+  readonly managedFormPropertyValueAliases: Readonly<Partial<Record<string, Readonly<Partial<Record<string, string>>>>>>;
+
+  /**
+   * Пишется ли `<UseInInterfaceCompatibilityMode>Any</…>` в дескрипторе формы
+   * (`Forms/<Имя>.xml`) и общей формы. В эталоне 2.21 свойство есть сразу после
+   * `</UsePurposes>`, в 2.20 его нет.
+   */
+  readonly includeFormUseInInterfaceCompatibilityMode: boolean;
+
+  /**
    * Готовый блок `<StandardAttributes>…</StandardAttributes>` для свежего
    * объекта вида (отступ — 3 таба, как в `<Properties>`), либо пустая строка,
    * если у объектов этого вида в дефолтной конфигурации стандартных реквизитов

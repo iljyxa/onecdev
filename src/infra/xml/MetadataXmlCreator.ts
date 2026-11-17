@@ -75,7 +75,7 @@ export class MetadataXmlCreator {
     if (options.kind === 'CommonForm') {
       const formXmlPath = path.join(objectDir, 'Ext', 'Form.xml');
       fs.mkdirSync(path.dirname(formXmlPath), { recursive: true });
-      fs.writeFileSync(formXmlPath, buildManagedFormXml(formatVersion), 'utf-8');
+      fs.writeFileSync(formXmlPath, buildManagedFormXml(formatVersion, ruleset), 'utf-8');
       changedFiles.push(formXmlPath);
     }
 
