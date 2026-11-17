@@ -3,21 +3,54 @@ import * as path from 'path';
 import type { ProjectSecretStorage } from '../environment/ProjectSecretStorage';
 import { buildRepositoryScopeKey } from './RepositoryLockState';
 import type { RepositoryBinding, RepositoryTarget, StoredRepositoryBinding } from './RepositoryService';
+import { parseJsonObjectText, writeJsonPreservingStyle } from '../fs/JsonTextFile';
+import {
+  AUTUMN_PROPERTIES_FILE,
+  LEGACY_REPO_PWD_KEY,
+  applyMainBindingToAutumn,
+  applyMainBindingToEnvDefaults,
+  removeMainBindingFromAutumn,
+  removeMainBindingFromEnvDefaults,
+  selectMainStorageBinding,
+} from './VrunnerStorageKeys';
 
 const PLATFORM_VERSION_RE = /\d+\.\d+\.\d+\.\d+/;
+const ENV_JSON_FILE = 'env.json';
+const CFE_REPO_PATH_KEY = 'repo-path';
+const CFE_REPO_USER_KEY = 'repo-user';
+const CFE_REPO_PWD_KEY = 'repo-pwd';
 
-interface CachedEnv {
-  mtimeMs: number;
-  value: Record<string, unknown>;
+/** Разобранный JSON-файл; `text` — эталон формата для перезаписи (undefined — файла нет). */
+interface JsonFileState {
+  readonly text: string | undefined;
+  readonly value: Readonly<Record<string, unknown>>;
+}
+
+interface CachedJsonFile extends JsonFileState {
+  readonly mtimeMs: number;
+}
+
+interface BindingRaw {
+  readonly repoPath: string;
+  readonly repoUser: string;
+  /** Пароль прежних версий в файле: переносится в SecretStorage и стирается. */
+  readonly migratedPassword: string;
+  /** Пароль, заведённый пользователем для vanessa-runner: только запасной для команды, файл не трогается. */
+  readonly fallbackPassword: string;
 }
 
 /**
- * Привязка цели к хранилищу в `env.json` (путь и пользователь) и пароль в
- * `ProjectSecretStorage`. Пароль в `env.json` не пишется; оставшийся от прежних
- * версий legacy-пароль мигрируется в SecretStorage при первом чтении.
+ * Привязка цели к хранилищу (путь и пользователь) и пароль в `ProjectSecretStorage`.
+ *
+ * Основная конфигурация хранится в стандартных опциях vanessa-runner — в `env.json`
+ * (`--storage-name/--storage-user`) и, если уже заведено пользователем, в
+ * `autumn-properties.json` (`vrunner.storage-*`); ключи — в `VrunnerStorageKeys`.
+ * Расширения — в `default.extension[<имя>]` env.json (у vanessa-runner аналога нет).
+ * Пароль в файлы не пишется; оставшийся от прежних версий `--repo-pwd` мигрирует в
+ * SecretStorage при первом чтении.
  */
 export class RepositoryBindingStore {
-  private envCache: CachedEnv | undefined;
+  private readonly fileCache = new Map<string, CachedJsonFile>();
 
   constructor(
     private readonly workspaceRoot: string,
@@ -25,38 +58,36 @@ export class RepositoryBindingStore {
   ) {}
 
   getEnvJsonPath(): string {
-    return path.join(this.workspaceRoot, 'env.json');
+    return path.join(this.workspaceRoot, ENV_JSON_FILE);
+  }
+
+  getAutumnPropertiesPath(): string {
+    return path.join(this.workspaceRoot, AUTUMN_PROPERTIES_FILE);
   }
 
   async loadBinding(target: RepositoryTarget): Promise<StoredRepositoryBinding | null> {
-    const raw = this.readBindingRaw(target);
-    if (!raw) {
-      return null;
-    }
-    if (raw.legacyPassword.trim()) {
-      await this.secrets.setRepoPassword(buildRepositoryScopeKey(target), raw.legacyPassword);
-      this.eraseLegacyRepoPassword(target);
-    }
-    return { repoPath: raw.repoPath, repoUser: raw.repoUser };
+    const raw = await this.loadBindingRaw(target);
+    return raw ? { repoPath: raw.repoPath, repoUser: raw.repoUser } : null;
   }
 
   async saveBinding(target: RepositoryTarget, binding: RepositoryBinding): Promise<void> {
     const env = this.readEnvFile();
-    const defaults = getDefaultSection(env);
+    const defaults = getDefaultSection(env.value);
     if (target.configKind === 'cfe') {
       const extensionSection = getExtensionSection(defaults);
       extensionSection[target.extensionName ?? ''] = {
-        'repo-path': binding.repoPath,
-        'repo-user': binding.repoUser,
+        [CFE_REPO_PATH_KEY]: binding.repoPath,
+        [CFE_REPO_USER_KEY]: binding.repoUser,
       };
-      defaults.extension = extensionSection;
+      this.writeEnvFile(env, { ...defaults, extension: extensionSection });
     } else {
-      defaults['--repo-path'] = binding.repoPath;
-      defaults['--repo-user'] = binding.repoUser;
-      delete defaults['--repo-pwd'];
+      // Оба результата вычисляются до первой записи: повреждённый autumn-properties.json
+      // должен отбить операцию, пока env.json ещё не тронут.
+      const autumn = this.readAutumnFile();
+      const nextAutumn = autumn.text === undefined ? undefined : applyMainBindingToAutumn(autumn.value, binding);
+      this.writeEnvFile(env, applyMainBindingToEnvDefaults(defaults, binding));
+      this.writeAutumnFile(autumn, nextAutumn);
     }
-    env.default = defaults;
-    this.writeEnvFile(env);
     // Непустой ввод обновляет секрет; пустой пароль означает «оставить сохранённый».
     if (binding.repoPassword.trim()) {
       await this.secrets.setRepoPassword(buildRepositoryScopeKey(target), binding.repoPassword);
@@ -65,19 +96,21 @@ export class RepositoryBindingStore {
 
   async clearBinding(target: RepositoryTarget): Promise<void> {
     const env = this.readEnvFile();
-    const defaults = getDefaultSection(env);
+    const defaults = getDefaultSection(env.value);
     if (target.configKind === 'cfe') {
       const extensionName = target.extensionName ?? '';
-      defaults.extension = Object.fromEntries(
-        Object.entries(getExtensionSection(defaults)).filter(([name]) => name !== extensionName)
-      );
+      this.writeEnvFile(env, {
+        ...defaults,
+        extension: Object.fromEntries(
+          Object.entries(getExtensionSection(defaults)).filter(([name]) => name !== extensionName)
+        ),
+      });
     } else {
-      delete defaults['--repo-path'];
-      delete defaults['--repo-user'];
-      delete defaults['--repo-pwd'];
+      const autumn = this.readAutumnFile();
+      const nextAutumn = removeMainBindingFromAutumn(autumn.value);
+      this.writeEnvFile(env, removeMainBindingFromEnvDefaults(defaults));
+      this.writeAutumnFile(autumn, nextAutumn);
     }
-    env.default = defaults;
-    this.writeEnvFile(env);
     await this.secrets.setRepoPassword(buildRepositoryScopeKey(target), '');
   }
 
@@ -85,14 +118,19 @@ export class RepositoryBindingStore {
     return this.secrets.hasRepoPassword(buildRepositoryScopeKey(target));
   }
 
-  /** Полная привязка с паролем из SecretStorage — только в памяти для запуска команды 1С. */
+  /**
+   * Полная привязка с паролем — только в памяти для запуска команды 1С. Пароль из
+   * SecretStorage; если его нет — `*-pwd`, заведённый пользователем для vanessa-runner
+   * (как `--db-pwd` у `DbPasswordResolver`).
+   */
   async resolveBindingForCommand(target: RepositoryTarget): Promise<RepositoryBinding | null> {
-    const stored = await this.loadBinding(target);
-    if (!stored) {
+    const raw = await this.loadBindingRaw(target);
+    if (!raw) {
       return null;
     }
-    const repoPassword = await this.secrets.getRepoPassword(buildRepositoryScopeKey(target));
-    return { repoPath: stored.repoPath, repoUser: stored.repoUser, repoPassword: repoPassword ?? '' };
+    // Пустая строка в SecretStorage — тоже «пароля нет».
+    const stored = (await this.secrets.getRepoPassword(buildRepositoryScopeKey(target))) ?? '';
+    return { repoPath: raw.repoPath, repoUser: raw.repoUser, repoPassword: stored.length > 0 ? stored : raw.fallbackPassword };
   }
 
   /**
@@ -100,7 +138,7 @@ export class RepositoryBindingStore {
    * версия-подстрока пути `--path`. Читает уже кэшируемый env.json.
    */
   readPlatformVersionHint(): string | undefined {
-    const defaults = getDefaultSection(this.readEnvFile());
+    const defaults = getDefaultSection(this.readEnvFile().value);
     const explicit = readString(defaults['--v8version'])?.trim();
     if (explicit) {
       return explicit;
@@ -112,89 +150,101 @@ export class RepositoryBindingStore {
     return this.readBindingRaw(target) !== null;
   }
 
+  private async loadBindingRaw(target: RepositoryTarget): Promise<BindingRaw | null> {
+    const raw = this.readBindingRaw(target);
+    if (raw?.migratedPassword.trim()) {
+      await this.secrets.setRepoPassword(buildRepositoryScopeKey(target), raw.migratedPassword);
+      this.eraseLegacyRepoPassword(target);
+    }
+    return raw;
+  }
+
   /**
    * Синхронное чтение привязки без SecretStorage — для проверок на hot path и
    * последующей асинхронной миграции legacy-пароля.
    */
-  private readBindingRaw(
-    target: RepositoryTarget
-  ): { repoPath: string; repoUser: string; legacyPassword: string } | null {
-    const defaults = getDefaultSection(this.readEnvFile());
+  private readBindingRaw(target: RepositoryTarget): BindingRaw | null {
+    const defaults = getDefaultSection(this.readEnvFile().value);
     if (target.configKind === 'cfe') {
       const item = getRawExtensionSection(defaults)[target.extensionName ?? ''] as Record<string, unknown> | undefined;
-      const repoPath = readString(item?.['repo-path']);
+      const repoPath = readString(item?.[CFE_REPO_PATH_KEY]);
       if (!repoPath) {
         return null;
       }
       return {
         repoPath,
-        repoUser: readString(item?.['repo-user']) ?? '',
-        legacyPassword: readString(item?.['repo-pwd']) ?? '',
+        repoUser: readString(item?.[CFE_REPO_USER_KEY]) ?? '',
+        migratedPassword: readString(item?.[CFE_REPO_PWD_KEY]) ?? '',
+        fallbackPassword: '',
       };
     }
-    const repoPath = readString(defaults['--repo-path']);
-    if (!repoPath) {
+    const main = selectMainStorageBinding(defaults, () => this.readAutumnFile().value);
+    if (!main) {
       return null;
     }
+    const legacy = main.source === 'env-legacy';
     return {
-      repoPath,
-      repoUser: readString(defaults['--repo-user']) ?? '',
-      legacyPassword: readString(defaults['--repo-pwd']) ?? '',
+      repoPath: main.repoPath,
+      repoUser: main.repoUser,
+      migratedPassword: legacy ? main.filePassword : '',
+      fallbackPassword: legacy ? '' : main.filePassword,
     };
   }
 
   private eraseLegacyRepoPassword(target: RepositoryTarget): void {
     const env = this.readEnvFile();
-    const defaults = getDefaultSection(env);
+    const defaults = getDefaultSection(env.value);
     if (target.configKind === 'cfe') {
-      const item = getRawExtensionSection(defaults)[target.extensionName ?? ''] as Record<string, unknown> | undefined;
-      if (item) {
-        delete item['repo-pwd'];
-      }
+      const extensionName = target.extensionName ?? '';
+      // Копия, а не delete на месте: объект лежит в кэше, и при сбое записи кэш
+      // разошёлся бы с файлом — повторное чтение уже не нашло бы пароль для стирания.
+      // Секция и запись существуют: стирание вызывается только после их чтения.
+      const extension = defaults.extension as Record<string, unknown>;
+      const item = extension[extensionName] as Record<string, unknown>;
+      this.writeEnvFile(env, {
+        ...defaults,
+        extension: { ...extension, [extensionName]: omitKey(item, CFE_REPO_PWD_KEY) },
+      });
     } else {
-      delete defaults['--repo-pwd'];
+      this.writeEnvFile(env, omitKey(defaults, LEGACY_REPO_PWD_KEY));
     }
-    env.default = defaults;
-    this.writeEnvFile(env);
   }
 
-  private readEnvFile(): Record<string, unknown> {
-    const envPath = this.getEnvJsonPath();
-    const mtimeMs = getFileMtimeMs(envPath) ?? -1;
-    if (this.envCache?.mtimeMs === mtimeMs) {
-      return this.envCache.value;
-    }
-    const raw = mtimeMs < 0 ? '' : fs.readFileSync(envPath, 'utf-8');
-    // Пустой env.json — легитимное состояние (создан инициализацией, но не заполнен).
-    if (raw.trim().length === 0) {
-      const empty = { default: {} };
-      this.envCache = { mtimeMs, value: empty };
-      return empty;
-    }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (error) {
-      // JSON.parse бросает только SyntaxError; ветка String(error) — страховка типа unknown.
-      /* c8 ignore next */
-      const reason = error instanceof Error ? error.message : String(error);
-      throw new Error(`env.json повреждён (${envPath}): ${reason}`, { cause: error });
-    }
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      throw new Error(`env.json повреждён (${envPath}): ожидался объект`);
-    }
-    const value = parsed as Record<string, unknown>;
-    this.envCache = { mtimeMs, value };
-    return value;
+  private readEnvFile(): JsonFileState {
+    return this.readJsonFile(this.getEnvJsonPath(), ENV_JSON_FILE);
   }
 
-  private writeEnvFile(env: Record<string, unknown>): void {
-    const envPath = this.getEnvJsonPath();
-    fs.mkdirSync(path.dirname(envPath), { recursive: true });
-    fs.writeFileSync(envPath, `${JSON.stringify(env, null, 2)}\n`, 'utf-8');
+  private readAutumnFile(): JsonFileState {
+    return this.readJsonFile(this.getAutumnPropertiesPath(), AUTUMN_PROPERTIES_FILE);
+  }
+
+  private readJsonFile(filePath: string, fileLabel: string): JsonFileState {
+    const mtimeMs = getFileMtimeMs(filePath) ?? -1;
+    const cached = this.fileCache.get(filePath);
+    if (cached?.mtimeMs === mtimeMs) {
+      return cached;
+    }
+    const text = mtimeMs < 0 ? undefined : fs.readFileSync(filePath, 'utf-8');
+    const value = parseJsonObjectText(text ?? '', fileLabel, filePath);
+    this.fileCache.set(filePath, { mtimeMs, text, value });
+    return { text, value };
+  }
+
+  private writeEnvFile(env: JsonFileState, defaults: Record<string, unknown>): void {
+    this.writeJsonFile(this.getEnvJsonPath(), env.text, { ...env.value, default: defaults });
+  }
+
+  private writeAutumnFile(autumn: JsonFileState, next: Record<string, unknown> | undefined): void {
+    if (next) {
+      this.writeJsonFile(this.getAutumnPropertiesPath(), autumn.text, next);
+    }
+  }
+
+  private writeJsonFile(filePath: string, original: string | undefined, value: Record<string, unknown>): void {
+    const text = writeJsonPreservingStyle(filePath, original, value);
     // Файл только что записан; mtime отсутствует лишь при гонке с внешним удалением.
     /* c8 ignore next */
-    this.envCache = { mtimeMs: getFileMtimeMs(envPath) ?? Date.now(), value: env };
+    this.fileCache.set(filePath, { mtimeMs: getFileMtimeMs(filePath) ?? Date.now(), text, value });
   }
 }
 
@@ -210,8 +260,8 @@ function getExtensionSection(defaults: Record<string, unknown>): Record<string, 
   const result: Record<string, Record<string, string>> = {};
   for (const [key, item] of Object.entries(getRawExtensionSection(defaults))) {
     result[key] = {
-      'repo-path': readString(item['repo-path']) ?? '',
-      'repo-user': readString(item['repo-user']) ?? '',
+      [CFE_REPO_PATH_KEY]: readString(item[CFE_REPO_PATH_KEY]) ?? '',
+      [CFE_REPO_USER_KEY]: readString(item[CFE_REPO_USER_KEY]) ?? '',
     };
   }
   return result;
@@ -230,6 +280,10 @@ function getRawExtensionSection(defaults: Record<string, unknown>): Record<strin
     }
   }
   return result;
+}
+
+function omitKey(source: Readonly<Record<string, unknown>>, key: string): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(source).filter(([name]) => name !== key));
 }
 
 function readString(value: unknown): string | undefined {
