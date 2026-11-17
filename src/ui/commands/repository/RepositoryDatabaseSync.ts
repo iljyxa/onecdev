@@ -1,4 +1,4 @@
-import * as path from 'path';
+import { pathKey } from '../../../infra/fs/PathKey';
 import * as vscode from 'vscode';
 import type { ChangedConfiguration } from '../../../infra/fs/ConfigurationChangeDetector';
 import type { ConfigurationOperationExclusiveResult } from '../../../infra/process/ConfigurationOperationGuard';
@@ -166,7 +166,7 @@ export async function ensureTargetUpdatedBeforeCommit(
   deps: RepositoryDatabaseSyncDeps = DEFAULT_REPOSITORY_DATABASE_SYNC_DEPS
 ): Promise<boolean> {
   const changed = services.getChangedConfigurations().find(
-    (item) => path.resolve(item.rootPath).toLowerCase() === path.resolve(target.configRoot).toLowerCase()
+    (item) => pathKey(item.rootPath) === pathKey(target.configRoot)
   );
   if (!changed) {
     return true;

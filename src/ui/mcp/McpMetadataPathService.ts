@@ -13,6 +13,7 @@ import { ConfigXmlReader } from '../../infra/xml';
 import type { MetadataTreeProvider } from '../tree/MetadataTreeProvider';
 import type { MetadataNode } from '../tree/TreeNode';
 import type { AddMetadataTarget } from '../tree/TreeNodeModel';
+import { pathKey } from '../../infra/fs/PathKey';
 
 /**
  * MCP-навигация по дереву UniversalPanel в канонических русских путях.
@@ -648,7 +649,7 @@ export class McpMetadataPathService {
       const rootPath = root.xmlPath ? path.dirname(root.xmlPath) : '';
       return normalize(root.textLabel) === normalized
         || normalize(rootPath) === normalized
-        || path.resolve(rootPath).toLowerCase() === normalizedPath.toLowerCase();
+        || pathKey(rootPath) === pathKey(normalizedPath);
     });
     if (found.length === 0) {
       throw new Error(`Конфигурация "${configuration}" не найдена. Используйте имя из onecdev_workspace_overview.`);

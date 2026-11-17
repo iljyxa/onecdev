@@ -11,6 +11,7 @@ import { writeFileAtomic } from '../fs/AtomicFileWriter';
 import { getObjectLocationFromXml, resolveObjectXmlPath } from '../fs/MetaPathResolver';
 import { findObjectXmlInFolder } from '../fs/ObjectLocation';
 import { parseConfigXml, parseObjectXml, readTemplateTypeFromXml } from '../xml';
+import { pathKey } from '../fs/PathKey';
 
 export type MetadataCacheSingleClickAction = 'openTemplateContent';
 
@@ -998,7 +999,7 @@ function findObjectNodeByChangedPath(
   root: MetadataCacheNode,
   changedPath: string
 ): { parent: MetadataCacheNode; index: number; node: MetadataCacheNode } | null {
-  const normalizedChangedPath = normalizePath(changedPath);
+  const normalizedChangedPath = pathKey(changedPath);
   return findObjectNodeByChangedPathInner(root, normalizedChangedPath);
 }
 
@@ -1026,13 +1027,13 @@ function isObjectCacheNode(node: MetadataCacheNode): boolean {
 }
 
 function isPathOwnedByObject(normalizedChangedPath: string, objectXmlPath: string): boolean {
-  const normalizedXmlPath = normalizePath(objectXmlPath);
+  const normalizedXmlPath = pathKey(objectXmlPath);
   if (normalizedChangedPath === normalizedXmlPath) {
     return true;
   }
 
   const loc = getObjectLocationFromXml(objectXmlPath);
-  const normalizedObjectDir = normalizePath(loc.objectDir);
+  const normalizedObjectDir = pathKey(loc.objectDir);
   return normalizedChangedPath.startsWith(`${normalizedObjectDir}${path.sep}`);
 }
 
@@ -1052,10 +1053,10 @@ function findRootAddContainer(node: MetadataCacheNode, targetKind: MetaKind): Me
 }
 
 function findRootObjectNodeByXml(node: MetadataCacheNode, xmlPath: string): MetadataCacheNode | undefined {
-  const normalizedXmlPath = path.normalize(xmlPath).toLowerCase();
+  const normalizedXmlPath = pathKey(xmlPath);
   if (
     node.xmlPath &&
-    path.normalize(node.xmlPath).toLowerCase() === normalizedXmlPath &&
+    pathKey(node.xmlPath) === normalizedXmlPath &&
     (getMetaType(node.type).childTags?.length ?? 0) > 0
   ) {
     return node;
@@ -1102,12 +1103,9 @@ function isConfigurationXml(filePath: string): boolean {
 }
 
 function isPathInside(filePath: string, rootPath: string): boolean {
-  const normalizedFilePath = normalizePath(filePath);
-  const normalizedRootPath = normalizePath(rootPath);
+  const normalizedFilePath = pathKey(filePath);
+  const normalizedRootPath = pathKey(rootPath);
   return normalizedFilePath === normalizedRootPath ||
     normalizedFilePath.startsWith(`${normalizedRootPath}${path.sep}`);
 }
 
-function normalizePath(filePath: string): string {
-  return path.resolve(filePath).toLowerCase();
-}

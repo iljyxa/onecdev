@@ -28,6 +28,7 @@ import {
 } from './RepositoryObjectScope';
 import type { RemoveTree } from '../fs/PathRemoval';
 import { getRepositoryObjectsDir } from './RepositoryTempCleanup';
+import { pathKey } from '../fs/PathKey';
 
 export interface RepositoryBinding {
   repoPath: string;
@@ -227,7 +228,7 @@ export class RepositoryService {
       return null;
     }
 
-    const cacheKey = normalizePathKey(configRoot);
+    const cacheKey = pathKey(configRoot);
     const cached = this.targetCache.get(cacheKey);
     if (cached?.mtimeMs === mtimeMs) {
       return cached.target;
@@ -553,7 +554,7 @@ export class RepositoryService {
       return null;
     }
 
-    const cacheKey = normalizePathKey(xmlPath);
+    const cacheKey = pathKey(xmlPath);
     const cached = this.rootFullNameCache.get(cacheKey);
     if (cached?.mtimeMs === mtimeMs) {
       return cached.value;
@@ -612,20 +613,20 @@ export class RepositoryService {
     }
 
     // Быстрый путь: ровно эта директория уже резолвилась раньше.
-    const startKey = normalizePathKey(current);
+    const startKey = pathKey(current);
     if (this.configRootByDirCache.has(startKey)) {
       return this.configRootByDirCache.get(startKey) ?? null;
     }
 
-    const workspaceRoot = path.resolve(this.workspaceRoot).toLowerCase();
+    const workspaceRoot = pathKey(this.workspaceRoot);
     // Подъём по дереву с накоплением промежуточных директорий. После того
     // как корень найден (или подъём завершился), все посещённые директории
     // получают одно и то же значение — следующие запросы для соседних
     // файлов того же объекта не делают повторных syscall.
     const visited: string[] = [];
     let resolved: string | null = null;
-    while (current.toLowerCase().startsWith(workspaceRoot)) {
-      const cached = this.configRootByDirCache.get(normalizePathKey(current));
+    while (pathKey(current).startsWith(workspaceRoot)) {
+      const cached = this.configRootByDirCache.get(pathKey(current));
       if (cached !== undefined) {
         resolved = cached;
         break;
@@ -643,7 +644,7 @@ export class RepositoryService {
     }
 
     for (const dir of visited) {
-      this.configRootByDirCache.set(normalizePathKey(dir), resolved);
+      this.configRootByDirCache.set(pathKey(dir), resolved);
     }
     return resolved;
   }
@@ -676,6 +677,3 @@ function getFileMtimeMs(filePath: string): number | undefined {
   }
 }
 
-function normalizePathKey(filePath: string): string {
-  return path.resolve(filePath).toLowerCase();
-}

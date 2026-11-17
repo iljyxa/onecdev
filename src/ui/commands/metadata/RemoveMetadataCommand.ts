@@ -8,6 +8,7 @@ import { parseConfigXml } from '../../../infra/xml';
 import { supportLockedReasonOf } from '../../support/supportLockReason';
 import type { MetadataNode } from '../../tree/TreeNode';
 import type { CommandServices } from '../_shared';
+import { pathKey } from '../../../infra/fs/PathKey';
 
 export function registerRemoveMetadataCommand(
   context: vscode.ExtensionContext,
@@ -129,7 +130,7 @@ function rebuildCacheForNode(node: MetadataNode, services: CommandServices): voi
   const configRoot = getObjectLocationFromXml(ownerXmlPath).configRoot;
   const entry = services.treeProvider
     .getEntries()
-    .find((item) => path.resolve(item.rootPath).toLowerCase() === path.resolve(configRoot).toLowerCase());
+    .find((item) => pathKey(item.rootPath) === pathKey(configRoot));
   if (!entry) {
     return;
   }

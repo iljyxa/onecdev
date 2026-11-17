@@ -24,12 +24,26 @@ suite('ConfigurationCleanWindow', () => {
     assert.strictEqual(window.isOpenFor(root), false);
   });
 
-  test('регистр и форма записи пути не влияют на попадание в окно', () => {
-    const now = 0;
-    const window = new ConfigurationCleanWindow(5_000, () => now);
-    window.open([root.toUpperCase()]);
+  test('форма записи пути не влияет на попадание в окно', () => {
+    const window = new ConfigurationCleanWindow(5_000, () => 0);
+    window.open([path.join(root, 'Catalogs', '..')]);
     assert.strictEqual(window.isOpenFor(path.join(root, '.', 'Catalogs', 'Товары.xml')), true);
   });
+
+  // #123: регистр различается только на регистрозависимой ФС — иначе на Linux окно корня
+  // `src/CF` гасило бы события соседней, другой конфигурации `src/cf`.
+  for (const { platform, caseInsensitive } of [
+    { platform: 'win32' as const, caseInsensitive: true },
+    { platform: 'darwin' as const, caseInsensitive: true },
+    { platform: 'linux' as const, caseInsensitive: false },
+  ]) {
+    test(`${platform}: корень в другом регистре ${caseInsensitive ? 'покрывает' : 'не покрывает'} файл`, () => {
+      const window = new ConfigurationCleanWindow(5_000, () => 0, platform);
+      window.open([root.toUpperCase()]);
+      assert.strictEqual(window.isOpenFor(insideFile), caseInsensitive);
+      assert.strictEqual(window.isOpenFor(insideFile.toUpperCase()), true);
+    });
+  }
 
   test('по истечении срока окно закрывается', () => {
     let now = 1_000;

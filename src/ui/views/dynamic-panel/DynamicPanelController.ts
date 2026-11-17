@@ -8,6 +8,7 @@ import type {
 } from '../properties/PropertiesViewController';
 import { ModuleStructureContextHandler } from './contexts/ModuleStructureContextHandler';
 import type { ActiveDocumentInfo, DynamicPanelState, ModuleSymbolDto, RangeDto } from './_types';
+import { pathKey } from '../../../infra/fs/PathKey';
 
 export interface DynamicPanelHost {
   postState(state: DynamicPanelState): void;
@@ -377,7 +378,7 @@ function isSameRemovedChild(activeNode: MetadataNode, removedNode: MetadataNode)
 }
 
 function isInsidePath(childPath: string, parentPath: string): boolean {
-  const child = path.resolve(childPath).toLowerCase();
-  const parent = path.resolve(parentPath).toLowerCase();
+  const child = pathKey(childPath);
+  const parent = pathKey(parentPath);
   return child === parent || child.startsWith(`${parent}${path.sep}`);
 }

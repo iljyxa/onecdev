@@ -88,6 +88,7 @@ import { disposeRepositoryCommandStatusBar } from './ui/commands/repository/Repo
 import { syncRepositoryLockStatusesOnStartup } from './ui/commands/repository/RepositoryLockStatusCommands';
 import { GitStateObserver } from './ui/git/GitStateObserver';
 import type { GitApiLike, GitExtensionLike } from './ui/git/gitExtensionApi';
+import { pathKey } from './infra/fs/PathKey';
 
 /**
  * Композиционный корень расширения. Собирает зависимости в одном месте,
@@ -888,7 +889,7 @@ export class Container {
         continue;
       }
 
-      const key = path.resolve(entry.rootPath).toLowerCase();
+      const key = pathKey(entry.rootPath);
       const current = countsByRoot.get(key);
       countsByRoot.set(key, {
         entry,
@@ -921,9 +922,9 @@ export class Container {
       this.cleanWindowSettleTimer = undefined;
       this.refreshChangedConfigurationState();
     }, ConfigurationCleanWindow.defaultDurationMs + 1_000);
-    const clean = new Set(rootPaths.map((item) => path.resolve(item).toLowerCase()));
+    const clean = new Set(rootPaths.map((item) => pathKey(item)));
     this.changedConfigurations = this.changedConfigurations.filter(
-      (item) => !clean.has(path.resolve(item.rootPath).toLowerCase())
+      (item) => !clean.has(pathKey(item.rootPath))
     );
     void vscode.commands.executeCommand(
       'setContext',
@@ -966,12 +967,12 @@ export class Container {
   private suppressConfigurationReloadForFiles(filePaths: string[]): void {
     const expiresAt = Date.now() + 5_000;
     for (const filePath of filePaths) {
-      this.suppressedConfigurationReloads.set(path.resolve(filePath).toLowerCase(), expiresAt);
+      this.suppressedConfigurationReloads.set(pathKey(filePath), expiresAt);
     }
   }
 
   private consumeSuppressedConfigurationReload(filePath: string): boolean {
-    const key = path.resolve(filePath).toLowerCase();
+    const key = pathKey(filePath);
     const expiresAt = this.suppressedConfigurationReloads.get(key);
     if (!expiresAt) {
       return false;
@@ -1004,7 +1005,7 @@ export class Container {
     this.suppressConfigurationReloadForFiles([configXmlPath]);
 
     const entry = this.treeProvider.getEntries().find(
-      (e) => path.resolve(e.rootPath).toLowerCase() === path.resolve(configRoot).toLowerCase()
+      (e) => pathKey(e.rootPath) === pathKey(configRoot)
     );
 
     if (entry) {
@@ -1136,8 +1137,8 @@ export class Container {
 }
 
 function isPathInside(filePath: string, rootPath: string): boolean {
-  const normalizedFilePath = path.resolve(filePath).toLowerCase();
-  const normalizedRootPath = path.resolve(rootPath).toLowerCase();
+  const normalizedFilePath = pathKey(filePath);
+  const normalizedRootPath = pathKey(rootPath);
   const relative = path.relative(normalizedRootPath, normalizedFilePath);
   return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
 }

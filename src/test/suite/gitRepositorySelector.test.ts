@@ -5,8 +5,8 @@
  * (`repo.rootUri`), чей корень совпадает с рабочим `gitRoot` нашей панели.
  *
  * Сравнение — нормализованное (см. `normalizePath` в `GitMetadataStatusService`,
- * ~строка 404): `path.resolve` → замена `\` на `/` → lower-case → срез
- * хвостового `/`. Точное совпадение без ancestor-fallback: обе стороны —
+ * ~строка 404): `path.resolve` → замена `\` на `/` → lower-case (только на
+ * регистронезависимой ФС, #123) → срез хвостового `/`. Точное совпадение без ancestor-fallback: обе стороны —
  * git toplevel, а не произвольный путь внутри репозитория.
  */
 import * as assert from 'assert';
@@ -70,7 +70,22 @@ suite('GitRepositorySelector — поиск репозитория Git Extension
     // всего для Windows/macOS с нечувствительной к регистру ФС, но нормализация
     // сама по себе платформо-независима и проверяется как чистая функция.
     const upperCased = fixture.gitRoot.toUpperCase();
-    assert.strictEqual(selectGitRepository([upperCased], fixture.gitRoot), 0);
+    assert.strictEqual(selectGitRepository([upperCased], fixture.gitRoot, 'win32'), 0);
+    assert.strictEqual(selectGitRepository([upperCased], fixture.gitRoot, 'darwin'), 0);
+  });
+
+  test('linux: корень в другом регистре — другой репозиторий (#123)', () => {
+    const upperCased = fixture.gitRoot.toUpperCase();
+    assert.strictEqual(selectGitRepository([upperCased], fixture.gitRoot, 'linux'), -1);
+    assert.strictEqual(selectGitRepository([upperCased, fixture.gitRoot], fixture.gitRoot, 'linux'), 1);
+  });
+
+  test('платформа по умолчанию — текущая ОС', () => {
+    const upperCased = fixture.gitRoot.toUpperCase();
+    assert.strictEqual(
+      selectGitRepository([upperCased], fixture.gitRoot),
+      selectGitRepository([upperCased], fixture.gitRoot, process.platform)
+    );
   });
 
   test('совпадение через backslash-разделители при СИНТЕТИЧЕСКОМ Windows-пути (обе стороны в одной форме)', () => {
@@ -88,7 +103,7 @@ suite('GitRepositorySelector — поиск репозитория Git Extension
   test('совпадение через смешанные разделители и регистр одновременно (синтетический путь)', () => {
     const mixed = 'c:\\Projects/REPO\\Sub/dir';
     const canonical = 'C:/projects/repo/sub/DIR';
-    assert.strictEqual(selectGitRepository([mixed], canonical), 0);
+    assert.strictEqual(selectGitRepository([mixed], canonical, 'win32'), 0);
   });
 
   test('несовпадающие синтетические пути (разные корни) → -1 несмотря на схожую форму', () => {
@@ -100,7 +115,7 @@ suite('GitRepositorySelector — поиск репозитория Git Extension
 
   test('точное совпадение синтетических путей с разными разделителями и регистром → индекс найден', () => {
     assert.strictEqual(
-      selectGitRepository(['c:\\Projects\\Repo\\'], 'C:/Projects/repo'),
+      selectGitRepository(['c:\\Projects\\Repo\\'], 'C:/Projects/repo', 'win32'),
       0
     );
   });

@@ -12,3 +12,11 @@ export function pathKey(filePath: string, platform: NodeJS.Platform = process.pl
   const resolved = path.resolve(filePath);
   return CASE_INSENSITIVE_PLATFORMS.has(platform) ? resolved.toLowerCase() : resolved;
 }
+
+/**
+ * Ключ пути с разделителями `/` — для ключей, которые дальше сравниваются префиксом
+ * (`key.startsWith(dir + '/')`) или совпадают с путями из git, где разделитель всегда `/`.
+ */
+export function slashPathKey(filePath: string, platform: NodeJS.Platform = process.platform): string {
+  return pathKey(filePath, platform).split(/[\\/]/).join('/');
+}

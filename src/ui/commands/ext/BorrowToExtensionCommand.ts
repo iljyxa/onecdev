@@ -7,6 +7,7 @@ import { getObjectLocationFromXml, resolveObjectXmlPath } from '../../../infra/f
 import { parseConfigXml } from '../../../infra/xml';
 import { MetadataNode } from '../../tree/TreeNode';
 import type { CommandServices, NodeArg } from '../_shared';
+import { pathKey } from '../../../infra/fs/PathKey';
 
 /** Дочерние типы узлов дерева, для которых нужно заимствовать родительский объект */
 const CHILD_KINDS = new Set<string>([
@@ -55,7 +56,11 @@ export function registerBorrowToExtensionCommand(
   );
 }
 
-async function borrowToExtension(node: NodeArg, services: CommandServices): Promise<void> {
+/**
+ * Экспорт — для прямого вызова тестом с сервисами поверх временной выгрузки: id команды
+ * уже зарегистрирован активным расширением тестового хоста.
+ */
+export async function borrowToExtension(node: NodeArg, services: CommandServices): Promise<void> {
   const metaNode = node instanceof MetadataNode ? node : undefined;
 
   const borrowTarget = resolveBorrowTarget(metaNode);
@@ -378,9 +383,9 @@ function metaKindToTypeName(kind: string): string | null {
 }
 
 function isSameConfigRoot(rootA: string, rootB: string): boolean {
-  return path.resolve(rootA).toLowerCase() === path.resolve(rootB).toLowerCase();
+  return pathKey(rootA) === pathKey(rootB);
 }
 
 function normalizePath(filePath: string): string {
-  return path.resolve(filePath).toLowerCase();
+  return pathKey(filePath);
 }
