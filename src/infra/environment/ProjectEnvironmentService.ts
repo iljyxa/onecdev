@@ -211,7 +211,7 @@ export class ProjectEnvironmentService {
     this.writeEnv(envFile, env);
   }
 
-  /** `text` — исходный текст файла (эталон формата для перезаписи), undefined — файла нет. */
+  /** `text` — исходный текст файла (эталон формата для перезаписи); undefined — файла нет или он не объект. */
   private readEnv(): EnvFile {
     const envPath = this.getEnvPath();
     if (!fs.existsSync(envPath)) {
