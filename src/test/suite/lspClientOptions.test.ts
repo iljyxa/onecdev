@@ -4,6 +4,8 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { RevealOutputChannelOn } from 'vscode-languageclient/node';
+import { BslAnalyzerConfigService } from '../../infra/environment/BslAnalyzerConfigService';
+import { BslAnalyzerService, type BslAnalyzerBinary } from '../../lsp/analyzer/BslAnalyzerService';
 import { buildBslAnalyzerDocumentOptions, LspManager } from '../../lsp/LspManager';
 
 /**
@@ -80,12 +82,21 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
     await vscode.workspace
       .getConfiguration('onecdev.bslAnalyzer')
       .update('path', undefined, vscode.ConfigurationTarget.Global);
+    await vscode.workspace
+      .getConfiguration('onecdev.lsp')
+      .update('mode', undefined, vscode.ConfigurationTarget.Global);
     if (tempRoot) {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
-  async function startManager(lines: string[]): Promise<{ launcher: string; journal: string }> {
+  interface StartOptions {
+    readonly prepareStart?: (binary: BslAnalyzerBinary) => Promise<void>;
+    /** Что обёртка печатает на `--version` (проба версии пользовательского бинарника, #112). */
+    readonly version?: string;
+  }
+
+  async function startManager(lines: string[], options: StartOptions = {}): Promise<{ launcher: string; journal: string }> {
     const serverScript = path.join(tempRoot, 'server.js');
     const journal = path.join(tempRoot, 'journal.txt');
     const launcher = path.join(tempRoot, 'bsl-analyzer');
@@ -94,7 +105,8 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
     // включается в самой обёртке; аргумент `lsp` от клиента обёртка отбрасывает.
     fs.writeFileSync(
       launcher,
-      `#!/bin/sh\nELECTRON_RUN_AS_NODE=1 exec "${process.execPath}" "${serverScript}" "${journal}"\n`,
+      `#!/bin/sh\nif [ "$1" = "--version" ]; then echo "bsl-analyzer ${options.version ?? '0.4.6'}"; exit 0; fi\n`
+        + `ELECTRON_RUN_AS_NODE=1 exec "${process.execPath}" "${serverScript}" "${journal}"\n`,
       { mode: 0o755 }
     );
     await vscode.workspace
@@ -106,7 +118,7 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
       subscriptions: [],
       globalStorageUri: vscode.Uri.file(path.join(tempRoot, 'global-storage')),
     } as unknown as vscode.ExtensionContext;
-    manager = new LspManager(context, outputChannel);
+    manager = new LspManager(context, outputChannel, options.prepareStart);
     await manager.start();
     return { launcher, journal };
   }
@@ -145,5 +157,105 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
     }
     assert.deepStrictEqual(notifications, []);
     assert.ok(lines.some((line) => line.includes('Request textDocument/documentHighlight failed')), lines.join('\n'));
+  });
+
+  test('prepareStart вызывается ровно раз до initialize с описанием пользовательского бинарника (#112)', async () => {
+    const lines: string[] = [];
+    const calls: BslAnalyzerBinary[] = [];
+    const journal = path.join(tempRoot, 'journal.txt');
+    const { launcher } = await startManager(lines, {
+      prepareStart: (binary) => {
+        calls.push(binary);
+        fs.appendFileSync(journal, 'prepareStart\n');
+        return Promise.resolve();
+      },
+    });
+    assert.deepStrictEqual(calls, [{ execPath: launcher, custom: true, installedVersion: undefined }]);
+    assert.deepStrictEqual(fs.readFileSync(journal, 'utf8').split('\n').slice(0, 2), ['prepareStart', 'initialize']);
+  });
+
+  test('ошибка prepareStart логируется и не срывает старт клиента (#112)', async () => {
+    const lines: string[] = [];
+    await startManager(lines, { prepareStart: () => Promise.reject(new Error('EACCES: toml только для чтения')) });
+    assert.ok(lines.some((line) => line.startsWith('[lsp][warn]') && line.includes('EACCES')), lines.join('\n'));
+    assert.ok(lines.includes('[lsp] bsl-analyzer запущен (custom)'), lines.join('\n'));
+  });
+
+  test('ошибка prepareStart не-Error тоже логируется (#112)', async () => {
+    const lines: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- проверяется ветка не-Error причины
+    await startManager(lines, { prepareStart: () => Promise.reject('строка') });
+    assert.ok(lines.some((line) => line.startsWith('[lsp][warn]') && line.includes('строка')), lines.join('\n'));
+  });
+
+  test('lsp.mode = off — prepareStart не вызывается (#112)', async () => {
+    await vscode.workspace.getConfiguration('onecdev.lsp').update('mode', 'off', vscode.ConfigurationTarget.Global);
+    let called = 0;
+    const lines: string[] = [];
+    await startManager(lines, { prepareStart: () => { called++; return Promise.resolve(); } });
+    assert.strictEqual(called, 0);
+    assert.ok(!lines.some((line) => line.includes('bsl-analyzer запущен')), lines.join('\n'));
+  });
+
+  for (const [version, before, after] of [
+    ['0.2.80', '[source]\nroot = "src/cf"\nexclude = [".onecdev"]\n', '[source]\nroot = "src/cf"\n'],
+    ['0.4.6', '[source]\nroot = "src/cf"\n', '[source]\nroot = "src/cf"\nexclude = [".onecdev"]\n'],
+  ] as const) {
+    test(`сквозная сверка bsl-analyzer.toml по версии пользовательского бинарника ${version} до старта (#112)`, async () => {
+      const project = path.join(tempRoot, 'project');
+      fs.mkdirSync(project);
+      const configService = new BslAnalyzerConfigService(project);
+      fs.writeFileSync(configService.getConfigPath(), before);
+      const lines: string[] = [];
+      await startManager(lines, {
+        version,
+        prepareStart: async (binary) => {
+          await configService.prepareForStart({ ...binary, projectInitialized: true });
+        },
+      });
+      assert.strictEqual(fs.readFileSync(configService.getConfigPath(), 'utf8'), after);
+      assert.ok(lines.includes('[lsp] bsl-analyzer запущен (custom)'), lines.join('\n'));
+    });
+  }
+});
+
+suite('BslAnalyzerService.describeBinary (issue #112)', () => {
+  let tempRoot: string;
+
+  setup(() => {
+    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'v8-lsp-describe-'));
+    const storage = path.join(tempRoot, 'global-storage', 'bsl-analyzer');
+    fs.mkdirSync(storage, { recursive: true });
+    fs.writeFileSync(path.join(storage, 'version.txt'), 'v0.4.6\n');
+  });
+
+  teardown(async () => {
+    await vscode.workspace
+      .getConfiguration('onecdev.bslAnalyzer')
+      .update('path', undefined, vscode.ConfigurationTarget.Global);
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  });
+
+  function createService(): BslAnalyzerService {
+    const context = {
+      subscriptions: [],
+      globalStorageUri: vscode.Uri.file(path.join(tempRoot, 'global-storage')),
+    } as unknown as vscode.ExtensionContext;
+    return new BslAnalyzerService(context, { appendLine: () => undefined } as unknown as vscode.OutputChannel);
+  }
+
+  test('путь из настройки — custom, версия из version.txt не берётся', async () => {
+    const custom = path.join(tempRoot, 'my-bsl');
+    await vscode.workspace.getConfiguration('onecdev.bslAnalyzer').update('path', custom, vscode.ConfigurationTarget.Global);
+    assert.deepStrictEqual(createService().describeBinary(), { execPath: custom, custom: true, installedVersion: undefined });
+  });
+
+  test('пустая настройка — автоскачанный бинарник с версией из version.txt', () => {
+    const service = createService();
+    assert.deepStrictEqual(service.describeBinary(), {
+      execPath: service.binaryPath,
+      custom: false,
+      installedVersion: 'v0.4.6',
+    });
   });
 });

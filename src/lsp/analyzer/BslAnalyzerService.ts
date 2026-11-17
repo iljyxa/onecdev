@@ -25,6 +25,15 @@ interface ReleaseInfo {
   sha256Url?: string;
 }
 
+/** Описание бинарника, которым будет запущен сервер (для подготовки конфига до старта). */
+export interface BslAnalyzerBinary {
+  readonly execPath: string;
+  /** Путь задан настройкой `onecdev.bslAnalyzer.path`, а не автоскачан. */
+  readonly custom: boolean;
+  /** Версия автоскачанного бинарника из `version.txt`; для пользовательского пути — `undefined`. */
+  readonly installedVersion: string | undefined;
+}
+
 export class BslAnalyzerService implements vscode.Disposable {
   private storageDir: string;
   private outputChannel: vscode.OutputChannel;
@@ -84,6 +93,17 @@ export class BslAnalyzerService implements vscode.Disposable {
   /** Получить путь к исполняемому файлу с учётом пользовательского пути */
   getExecutablePath(): string {
     return this.getConfiguredExecutablePath() ?? this.binaryPath;
+  }
+
+  /**
+   * Чем будет запущен сервер. Для пользовательского пути `version.txt` не относится к делу
+   * (он описывает автоскачанный бинарник), поэтому версия не передаётся — её определяет проба.
+   */
+  describeBinary(): BslAnalyzerBinary {
+    const customPath = this.getConfiguredExecutablePath();
+    return customPath
+      ? { execPath: customPath, custom: true, installedVersion: undefined }
+      : { execPath: this.binaryPath, custom: false, installedVersion: this.installedVersion };
   }
 
   /**

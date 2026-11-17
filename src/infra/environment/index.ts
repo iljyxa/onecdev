@@ -1,4 +1,6 @@
 export * from './BslAnalyzerConfigService';
+export * from './BslAnalyzerToml';
+export * from './BslAnalyzerVersion';
 export * from './DbPasswordResolver';
 export * from './ExtensionListParser';
 export * from './InfoBaseRegistryService';
