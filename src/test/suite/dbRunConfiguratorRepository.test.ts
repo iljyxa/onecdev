@@ -194,6 +194,15 @@ suite('Запуск конфигуратора с параметрами хра�
       assert.deepStrictEqual(args, ['DESIGNER', '/F', infoBasePath, '/NАдмин']);
     });
 
+    test('env.json с UTF-8 BOM читается (issue #137)', async () => {
+      const envPath = path.join(workspaceRoot, 'env.json');
+      fs.writeFileSync(envPath, `\uFEFF${fs.readFileSync(envPath, 'utf-8')}`, 'utf-8');
+
+      const args = await launch('DESIGNER', null);
+
+      assert.deepStrictEqual(args, ['DESIGNER', '/F', infoBasePath, '/NАдмин', '/Pпароль-базы']);
+    });
+
     test('тонкий клиент параметры хранилища не получает', async () => {
       const args = await launch('ENTERPRISE', { repoPath: '/srv/хранилище', repoUser: 'Разработчик', repoPassword: 'пароль-хранилища' });
 

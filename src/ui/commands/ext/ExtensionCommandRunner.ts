@@ -28,6 +28,7 @@ import { describeFsError, removePathWithRetries } from '../../../infra/fs/PathRe
 import { classifyPartialLoadRefusal, describeRepositoryLoadRefusal } from '../../../infra/process/PartialLoadRefusal';
 import { syncDirectorySnapshot } from '../../../infra/agent/DirectorySnapshot';
 import { pathKey } from '../../../infra/fs/PathKey';
+import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
 
 type NodeArg = MetadataNode | { xmlPath?: string; nodeKind?: string; label?: string };
 
@@ -1629,7 +1630,7 @@ export async function resolveConnectionFromSettings(settingsPath: string): Promi
   }
 
   const raw = fs.readFileSync(settingsPath, 'utf-8');
-  const parsed = JSON.parse(raw) as {
+  const parsed = parseJsonObjectText(raw, 'env.json', settingsPath) as {
     default?: Record<string, unknown>;
   };
   const defaults = parsed.default ?? {};

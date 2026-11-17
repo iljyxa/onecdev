@@ -8,6 +8,7 @@ import { resolveDbPassword, type ProjectSecretStorage } from '../../../infra/env
 import { formatCommandLineForLog, normalizeInfoBasePath, resolveV8ExecutablePath, resolveV8PathHintFromVersion } from '../../../infra/process';
 import type { RepositoryBinding, RepositoryService } from '../../../infra/repository/RepositoryService';
 import { getAgentOperationServiceForInteractiveDesigner, isAgentConfigurationOperationMode } from '../ext/ExtensionCommandRunner';
+import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
 
 interface DbRunConnectionParams {
   infoBasePath?: string;
@@ -171,7 +172,7 @@ async function resolveConnectionFromSettings(
   secrets: ProjectSecretStorage
 ): Promise<DbRunConnectionParams> {
   const raw = fs.readFileSync(settingsPath, 'utf-8');
-  const parsed = JSON.parse(raw) as {
+  const parsed = parseJsonObjectText(raw, 'env.json', settingsPath) as {
     default?: Record<string, unknown>;
   };
   const defaults = parsed.default ?? {};

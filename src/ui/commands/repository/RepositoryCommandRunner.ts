@@ -16,6 +16,7 @@ import {
   runProcess,
 } from '../../../infra/process';
 import { notifyConfigurationOperationBusy } from '../ext/configurationOperationBusy';
+import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
 
 interface ConnectionParams {
   infoBasePath?: string;
@@ -633,7 +634,7 @@ async function resolveDatabaseConnection(
   }
 
   const raw = fs.readFileSync(settingsPath, 'utf-8');
-  const parsed = JSON.parse(raw) as {
+  const parsed = parseJsonObjectText(raw, 'env.json', settingsPath) as {
     default?: Record<string, unknown>;
   };
   const defaults = parsed.default ?? {};
