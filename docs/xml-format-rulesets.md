@@ -27,14 +27,31 @@
   - `buildDefaultTypeBlock()` — блок `<Type>` нового типизированного поля;
   - `buildTypedFieldProperties()` — свойства типизированного поля по его типу;
   - `tabularSectionGeneratedTypes()` — `xr:GeneratedType` табличной части/строки.
+  - `managedFormXmlns` — xmlns-объявления корня управляемой формы `<Form …>`
+    (без `version`): `pal` только в 2.21, `dcssch` во всех поколениях;
+  - `managedFormPropertyValueAliases` — переименованные между поколениями значения
+    свойств корня формы (`WindowOpeningMode`: `LockOwnerWindow` ↔ `LockOwner`).
+    DSL формы принимает любое написание, к формату выгрузки его приводит ruleset;
+    алиасы ищутся только по собственным ключам таблицы (`lookupOwn`), чтобы имя
+    вроде `constructor` не вытянуло член прототипа;
+  - `includeFormUseInInterfaceCompatibilityMode` — `<UseInInterfaceCompatibilityMode>`
+    в дескрипторе формы и общей формы: только 2.21.
 - **`baselineRuleset.ts`** — `BASELINE_RULESET`: формат 2.21 (namespace с
-  `xmlns:pal`, у отчёта есть `<AuxiliaryVariantForm/>`). К нему привязаны
-  версии 2.18–2.19 и 2.21.
+  `xmlns:pal`, у отчёта есть `<AuxiliaryVariantForm/>`, форма — `pal`, `LockOwner`,
+  UIC). К baseline относится только версия 2.21.
 - **`format2_20Ruleset.ts`** — `FORMAT_2_20_RULESET`: дельта от baseline для
   формата 2.20. Отличия, снятые с эталона `example/2.20`: у корневого
-  `<MetaDataObject>` и у корня `<GraphicalSchema>` нет `xmlns:pal`; у отчёта нет
-  `<AuxiliaryVariantForm/>`.
+  `<MetaDataObject>`, корня `<GraphicalSchema>` и корня `<Form>` нет `xmlns:pal`; у отчёта нет
+  `<AuxiliaryVariantForm/>`; `WindowOpeningMode` пишется `LockOwnerWindow`; нет
+  `UseInInterfaceCompatibilityMode` в дескрипторе формы/общей формы.
   Всё остальное (SA-блоки, generatedTypes) наследуется из baseline.
+- **`formatPre2_20Ruleset.ts`** — `FORMAT_PRE_2_20_RULESET`: гибрид для 2.17–2.19.
+  Корни объектов (`MetaDataObject` и т.п.), generatedTypes, SA-блоки — от baseline
+  (так эти версии генерировались всегда: на этом держатся scaffold 2.17 и
+  `DEFAULT_FORMAT_VERSION` 2.18); всё про управляемую форму — от 2.20 (старая
+  платформа не знает ни `pal` в форме, ни `LockOwner`). Статус-кво для старых
+  платформ; точных доноров 2.17–2.19 в корпусе нет. 2.17 входит в
+  `SUPPORTED_FORMATS` и предупреждения о незнакомой версии не даёт.
 - **`standardAttributes.ts`** — константные блоки `<StandardAttributes>` и
   `<StandardTabularSections>` по виду метаданных (сгенерированы из эталонных
   выгрузок). Блоки не зависят от имени объекта; по составу/порядку реквизитов
@@ -74,8 +91,9 @@
 `MetadataXmlCreator` и переносятся в ruleset по мере появления доноров, которым
 они реально нужны:
 
-- namespace вспомогательных файлов (формы, роли, макеты, схемы СКД). Графические
-  схемы уже перенесены — `graphicalSchemaXmlns`; при появлении нового вспомогательного
+- namespace вспомогательных файлов (роли, макеты, схемы СКД). Графические
+  схемы (`graphicalSchemaXmlns`) и формы (`managedFormXmlns`, сделано в #56) уже
+  перенесены; при появлении нового вспомогательного
   XML-файла объекта его пространства имён заводятся полем ruleset по тому же образцу,
   а не литералом в builder'е (иначе версия формата 2.20 снова получит «лишний»
   префикс, как получал макет с `xmlns:pal`);
@@ -98,6 +116,28 @@
 (`normalizeTypedFieldPropertiesAfterTypeChange`), и UI. Ruleset владеет
 *привязкой* к ним (`buildTypedFieldProperties`), поэтому будущий формат может их
 переопределить, не дублируя таблицы.
+
+## Управляемая форма: ось версии формата
+
+Генератор форм (`infra/xml/form/builders/formDocument.ts`, `FormAddService`,
+`creator/auxiliaryFileBuilders.ts`, `creator/rootObjectBuilders.ts`) пишет формат по ruleset версии
+выгрузки, а не единым литералом. Отличия сняты с корпуса: `example/2.20` ↔ `example/2.21`
+и родная форма 2.21 в `example/crs/config`.
+
+| Что | 2.20 (и 2.17–2.19) | 2.21 | Поле ruleset |
+|---|---|---|---|
+| Корень `<Form>`: `xmlns:pal` | нет | есть (`dcssch` — во всех) | `managedFormXmlns` |
+| `WindowOpeningMode` | `LockOwnerWindow` | `LockOwner` | `managedFormPropertyValueAliases` |
+| `UseInInterfaceCompatibilityMode` в дескрипторе формы и общей формы | нет | `Any` после `</UsePurposes>` | `includeFormUseInInterfaceCompatibilityMode` |
+
+Исключённые отличия — `Group` `Vertical`/`DontBlock`, `AutoEditMode`,
+`RowSelectionMode`/`VerticalLinesBWA`/`UseAlternationRowColorBWA`, `Representation` `WeakSeparation`:
+они зависят от режима совместимости конфигурации, а не от версии формата (контрпример — `crs`, issue
+#140), поэтому в ruleset не выносятся.
+
+Открытые хвосты: заимствование форм в расширение (CFE) формат не учитывает — #141; дескриптор формы
+строят два построителя (`auxiliaryFileBuilders.ts` и `FormAddService`) — #142. Новое отличие оси формы —
+полем `FormatRuleset`, не литералом в builder'е.
 
 ## Графическая схема: `Flowchart.xml` и макет «Графическая схема»
 
