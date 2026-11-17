@@ -346,16 +346,19 @@ suite('RepositoryDatabaseSync — ensureTargetUpdatedBeforeCommit', () => {
     assert.deepStrictEqual(harness.events, []);
   });
 
+  // #123: регистр различается только на регистрозависимой ФС — на Linux каталог `SRC/CF` это
+  // другая конфигурация, и её изменения не требуют обновления базы перед помещением `src/cf`.
+  const caseInsensitiveFs = process.platform === 'win32' || process.platform === 'darwin';
   [
-    { label: 'каноничная форма', rootPath: EXAMPLE_CF },
-    { label: 'другой регистр', rootPath: EXAMPLE_CF.toUpperCase() },
+    { label: 'каноничная форма', rootPath: EXAMPLE_CF, matches: true },
+    { label: 'другой регистр', rootPath: EXAMPLE_CF.toUpperCase(), matches: caseInsensitiveFs },
     // Конкатенация вручную (не через path.join/path.resolve), чтобы сегмент
     // "./" реально остался в строке до сравнения внутри production-кода —
     // path.join уже нормализовал бы его и тест ничем не отличался бы от
     // «каноничной формы» выше.
-    { label: 'с ./ сегментом', rootPath: `${EXAMPLE_CF}${path.sep}.${path.sep}` },
-  ].forEach(({ label, rootPath }) => {
-    test(`сопоставление корня: ${label} — считается совпадением, confirm вызывается`, async () => {
+    { label: 'с ./ сегментом', rootPath: `${EXAMPLE_CF}${path.sep}.${path.sep}`, matches: true },
+  ].forEach(({ label, rootPath, matches }) => {
+    test(`сопоставление корня: ${label} — ${matches ? 'совпадение, confirm вызывается' : 'другой корень, confirm не вызывается'}`, async () => {
       const harness = createHarness({
         getChangedConfigurations: () => [changedFor(rootPath)],
       });
@@ -369,8 +372,8 @@ suite('RepositoryDatabaseSync — ensureTargetUpdatedBeforeCommit', () => {
 
       const result = await ensureTargetUpdatedBeforeCommit(target, harness.services, deps);
 
-      assert.strictEqual(confirmCalls, 1);
-      assert.strictEqual(result, false);
+      assert.strictEqual(confirmCalls, matches ? 1 : 0);
+      assert.strictEqual(result, !matches);
     });
   });
 
