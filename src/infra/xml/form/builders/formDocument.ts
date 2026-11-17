@@ -267,13 +267,21 @@ function emitParameters(lines: string[], params: readonly Record<string, unknown
   lines.push(`${indent}</Parameters>`);
 }
 
+/**
+ * Только собственные ключи: значение из DSL (вход MCP от агента) вроде `constructor` иначе нашло бы
+ * метод `Object.prototype` вместо отсутствующего алиаса.
+ */
+function lookupOwn<T>(table: Readonly<Partial<Record<string, T>>> | undefined, key: string): T | undefined {
+  return table !== undefined && Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined;
+}
+
 function emitProperties(lines: string[], props: Record<string, unknown>, indent: string, ruleset: FormatRuleset): void {
   if (Object.keys(props).length === 0) {return;}
   for (const [pName, pValue] of Object.entries(props)) {
     const xmlName = pName in PROP_MAP ? PROP_MAP[pName] : `${pName.charAt(0).toUpperCase()}${pName.slice(1)}`;
     const raw = typeof pValue === 'boolean' ? (pValue ? 'true' : 'false') : xmlStr(pValue);
     // DSL принимает написание любого поколения; приводим к формату выгрузки.
-    const val = ruleset.managedFormPropertyValueAliases[xmlName]?.[raw] ?? raw;
+    const val = lookupOwn(lookupOwn(ruleset.managedFormPropertyValueAliases, xmlName), raw) ?? raw;
     lines.push(`${indent}<${xmlName}>${escapeXml(val)}</${xmlName}>`);
   }
 }

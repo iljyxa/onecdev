@@ -359,6 +359,15 @@ suite('buildFormXmlFromDefinition — написание WindowOpeningMode по 
     }
   });
 
+  test('значение-имя метода Object.prototype не принимается за алиас и пишется как есть', () => {
+    for (const version of ['2.20', '2.21']) {
+      for (const value of ['constructor', 'toString', '__proto__']) {
+        const xml = buildFormXmlFromDefinition({ properties: { windowOpeningMode: value } }, version, resolveFormatRuleset(version));
+        assert.ok(xml.includes(`\n\t<WindowOpeningMode>${value}</WindowOpeningMode>\n`), `${version} ${value}`);
+      }
+    }
+  });
+
   test('булево свойство формы пишется true/false в обоих форматах', () => {
     for (const version of ['2.20', '2.21']) {
       const xml = buildFormXmlFromDefinition({ properties: { autoTitle: false, autoURL: true } }, version, resolveFormatRuleset(version));
