@@ -120,37 +120,6 @@ export function buildBusinessProcessFlowchartXml(
   return buildGraphicalSchemaXml(formatVersion, ruleset, FLOWCHART_GRID);
 }
 
-/**
- * Дескриптор формы `Forms/<Имя>.xml` — отдельный `MetaDataObject` с описанием
- * формы (uuid + свойства). На него ссылается `<Form>Имя</Form>` в ChildObjects
- * владельца, а содержимое формы лежит в `Forms/<Имя>/Ext/Form.xml`. Минимальный
- * набор свойств снят с эталона 2.20 (пустая форма объекта): без FormType и
- * UsePurposes платформа 1С форму не принимает.
- */
-export function buildFormDescriptorXml(name: string, formatVersion: string, ruleset: FormatRuleset): string {
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<MetaDataObject ${ruleset.metaDataObjectXmlns} version="${formatVersion}">`,
-    `\t<Form uuid="${newUuid()}">`,
-    '\t\t<Properties>',
-    `\t\t\t<Name>${escapeXml(name)}</Name>`,
-    buildLocalizedTag('\t\t\t', 'Synonym', splitCamelCase(name)),
-    '\t\t\t<Comment/>',
-    '\t\t\t<FormType>Managed</FormType>',
-    '\t\t\t<IncludeHelpInContents>false</IncludeHelpInContents>',
-    '\t\t\t<UsePurposes>',
-    '\t\t\t\t<v8:Value xsi:type="app:ApplicationUsePurpose">PlatformApplication</v8:Value>',
-    '\t\t\t</UsePurposes>',
-    ...(ruleset.includeFormUseInInterfaceCompatibilityMode
-      ? ['\t\t\t<UseInInterfaceCompatibilityMode>Any</UseInInterfaceCompatibilityMode>']
-      : []),
-    '\t\t</Properties>',
-    '\t</Form>',
-    '</MetaDataObject>',
-    '',
-  ].join('\n');
-}
-
 export function buildManagedFormXml(
   formatVersion: string,
   ruleset: FormatRuleset = resolveFormatRuleset(formatVersion)

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { FormToolsService, MetadataXmlCreator } from '../../infra/xml';
-import { buildFormDescriptorXml as buildCreatorFormDescriptorXml, buildManagedFormXml } from '../../infra/xml/creator/auxiliaryFileBuilders';
+import { buildManagedFormXml } from '../../infra/xml/creator/auxiliaryFileBuilders';
 import { buildFormDescriptorXml } from '../../infra/xml/form/FormAddService';
 import { buildFormXmlFromDefinition } from '../../infra/xml/form/FormBuilders';
 import type { FormDefinition } from '../../infra/xml/form/types';
@@ -190,19 +190,41 @@ suite('Генератор форм против корпуса обеих ген
     );
   });
 
-  for (const version of ['2.17', '2.18', '2.20', '2.21']) {
-    test(`дескриптор формы creator ${version}: UseInInterfaceCompatibilityMode только в 2.21, после UsePurposes`, () => {
-      const ruleset = resolveFormatRuleset(version);
-      const lines = buildCreatorFormDescriptorXml('Форма1', version, ruleset).split('\n');
-      assert.strictEqual(lines[1], `<MetaDataObject ${ruleset.metaDataObjectXmlns} version="${version}">`);
-      const uic = lines.indexOf(UIC_LINE);
-      if (version === '2.21') {
-        assert.strictEqual(lines[uic - 1], '\t\t\t</UsePurposes>');
-      } else {
-        assert.strictEqual(uic, -1);
+  for (const version of VERSIONS) {
+    test(`форма объекта через MetadataXmlCreator ${version}: дескриптор байт-в-байт = эталон ПричиныВозврата (#142)`, () => {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-fmt-'));
+      try {
+        const ownerXml = path.join(root, 'Catalogs', 'Банки.xml');
+        fs.mkdirSync(path.dirname(ownerXml), { recursive: true });
+        fs.copyFileSync(path.join(generationRoot(version), 'Catalogs/Банки.xml'), ownerXml);
+        const result = new MetadataXmlCreator().addChildElement({ ownerObjectXmlPath: ownerXml, childTag: 'Form', name: 'ФормаЭлемента' });
+        assert.strictEqual(result.success, true, result.errors.join('; '));
+
+        const descriptor = fs.readFileSync(path.join(root, 'Catalogs/Банки/Forms/ФормаЭлемента.xml'), 'utf-8');
+        const expected = normalizeUuid(readNormalized(path.join(generationRoot(version), 'Catalogs/ПричиныВозврата/Forms/ФормаЭлемента.xml')));
+        assert.strictEqual(normalizeUuid(descriptor), expected);
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
       }
     });
   }
+
+  test('форма обработки через MetadataXmlCreator: дескриптор с ExtendedPresentation, как у FormAddService (#142)', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-form-fmt-'));
+    try {
+      fs.copyFileSync(path.join(generationRoot('2.21'), 'Configuration.xml'), path.join(root, 'Configuration.xml'));
+      const created = new MetadataXmlCreator().addRootObject({ configRoot: root, kind: 'DataProcessor', name: 'Обработка' });
+      assert.strictEqual(created.success, true, created.errors.join('; '));
+      const result = new MetadataXmlCreator().addChildElement({
+        ownerObjectXmlPath: path.join(root, 'DataProcessors', 'Обработка.xml'), childTag: 'Form', name: 'Форма',
+      });
+      assert.strictEqual(result.success, true, result.errors.join('; '));
+      const descriptor = fs.readFileSync(path.join(root, 'DataProcessors/Обработка/Forms/Форма.xml'), 'utf-8');
+      assert.strictEqual(normalizeUuid(descriptor), normalizeUuid(buildFormDescriptorXml('Форма', 'Форма', '2.21', true)));
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
 
   for (const version of VERSIONS) {
     test(`общая форма через MetadataXmlCreator ${version}: дескриптор и Form.xml по эталону той же генерации`, () => {
@@ -216,6 +238,9 @@ suite('Генератор форм против корпуса обеих ген
         const reference = readNormalized(path.join(generationRoot(version), ALKO_DESCRIPTOR));
         assert.strictEqual(descriptor.includes(UIC_LINE), reference.includes(UIC_LINE));
         assert.strictEqual(descriptor.includes(UIC_LINE), version === '2.21');
+        // Назначения использования — как в эталоне той же генерации (#142).
+        const usePurposes = (xml: string): string => /<UsePurposes>[\s\S]*?<\/UsePurposes>/.exec(xml)?.[0] ?? '';
+        assert.strictEqual(usePurposes(descriptor), usePurposes(reference));
 
         const formXml = fs.readFileSync(path.join(root, 'CommonForms/Тест/Ext/Form.xml'), 'utf-8');
         assert.strictEqual(formXml, buildManagedFormXml(version));
