@@ -47,6 +47,7 @@ suite('Генератор форм: ключи DSL с именами Object.prot
     const attributes = [{ name: 'Объект', type: 'CatalogObject.Контрагенты', main: true }];
     const viaSynonym = build({ elements: [{ InputField: 'Поле', path: 'Объект.Поле', constructor: 'x' }], attributes });
     assert.ok(viaSynonym.includes('<InputField name="Поле"'), viaSynonym);
+    assert.ok(!viaSynonym.includes('function'), 'ключ «constructor» не превращается в имя функции Object');
     // Канонический ключ уже задан — синоним не перетирает его.
     const both = build({ elements: [{ InputField: 'Синоним', input: 'Канон', path: 'Объект.Поле' }], attributes });
     assert.ok(both.includes('<InputField name="Канон"'), both);
@@ -83,8 +84,10 @@ suite('Генератор форм: ключи DSL с именами Object.prot
       attributes: [
         { name: 'Объект', type: 'CatalogObject.Контрагенты', main: true },
         { name: 'Настройки', type: 'DataCompositionSettings' },
+        { name: 'Флаг', type: 'Булево' },
       ],
     });
+    assert.ok(xml.includes('<v8:Type>xs:boolean</v8:Type>'), xml);
     assert.ok(xml.includes('<v8:Type>dcsset:DataCompositionSettings</v8:Type>'), xml);
     assert.ok(xml.includes('>ПолеПриИзменении</Event>'), xml);
     assert.throws(() => build({ attributes: [{ name: 'Р', type: 'FormDataTreeItem' }] }), /Invalid form attribute type 'FormDataTreeItem'/);
