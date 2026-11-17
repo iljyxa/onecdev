@@ -229,7 +229,9 @@ export class ProjectEnvironmentService {
     if (isRecord(parsed)) {
       return { text, value: parsed };
     }
-    return { text, value: structuredClone(DEFAULT_ENV) };
+    // Испорченный файл (не объект) не несёт полезного стиля: однострочный `[]` иначе
+    // задал бы однострочную запись настроек.
+    return { text: undefined, value: structuredClone(DEFAULT_ENV) };
   }
 
   /**
