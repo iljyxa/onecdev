@@ -43,6 +43,40 @@ suite('Генератор форм: ключи DSL с именами Object.prot
     assert.ok(build({ attributes: [{ name: 'Р', type: 'constructor.X' }] }).includes('<v8:Type>cfg:constructor.X</v8:Type>'));
   });
 
+  test('синоним вида элемента — ключ-синоним переименовывается; ключ «constructor» синонимом не считается', () => {
+    const attributes = [{ name: 'Объект', type: 'CatalogObject.Контрагенты', main: true }];
+    const viaSynonym = build({ elements: [{ InputField: 'Поле', path: 'Объект.Поле', constructor: 'x' }], attributes });
+    assert.ok(viaSynonym.includes('<InputField name="Поле"'), viaSynonym);
+    // Канонический ключ уже задан — синоним не перетирает его.
+    const both = build({ elements: [{ InputField: 'Синоним', input: 'Канон', path: 'Объект.Поле' }], attributes });
+    assert.ok(both.includes('<InputField name="Канон"'), both);
+  });
+
+  test('тип кнопки в командной панели: синоним приводится, имя Object.prototype пишется как есть', () => {
+    const xml = build({
+      elements: [{ cmdBar: 'Панель', children: [
+        { button: 'Ссылка', command: 'Команда', type: 'hyperlink' },
+        { button: 'Странная', command: 'Команда', type: 'constructor' },
+      ] }],
+    });
+    assert.ok(xml.includes('<Type>CommandBarHyperlink</Type>'), xml);
+    assert.ok(xml.includes('<Type>constructor</Type>'), xml);
+  });
+
+  test('значения списка выбора: русский и канонический корень ссылки — DesignTimeRef, корень «constructor» — строка', () => {
+    const xml = build({
+      elements: [{ radio: 'Статус', path: 'Объект.Статус', choiceList: [
+        { value: 'Перечисление.Статусы.Новый' },
+        { value: 'Catalog.Валюты.Рубль' },
+        { value: 'constructor.Валюты.Рубль' },
+      ] }],
+      attributes: [{ name: 'Объект', type: 'CatalogObject.Контрагенты', main: true }],
+    });
+    assert.ok(xml.includes('xsi:type="xr:DesignTimeRef">Enum.Статусы.EnumValue.Новый<'), xml);
+    assert.ok(xml.includes('xsi:type="xr:DesignTimeRef">Catalog.Валюты.Рубль<'), xml);
+    assert.ok(xml.includes('xsi:type="xs:string">constructor.Валюты.Рубль<'), xml);
+  });
+
   test('известные таблицы по-прежнему работают: синоним типа, тип DCS, недопустимый тип, суффикс события', () => {
     const xml = build({
       elements: [{ input: 'Поле', path: 'Объект.Поле', on: ['OnChange'] }],
