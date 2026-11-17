@@ -26,7 +26,7 @@ import { readExtensionListFromDumpFile, resolveDbPassword, type ProjectSecretSto
 import { createImportTempDir as createWorkspaceTempDir } from '../../../infra/fs/WorkspaceTempDir';
 import { describeFsError, removePathWithRetries } from '../../../infra/fs/PathRemoval';
 import { classifyPartialLoadRefusal, describeRepositoryLoadRefusal } from '../../../infra/process/PartialLoadRefusal';
-import { syncDirectorySnapshot } from '../../../infra/agent/DirectorySnapshot';
+import { collectSnapshotProjectFiles, syncDirectorySnapshot } from '../../../infra/agent/DirectorySnapshot';
 import { pathKey } from '../../../infra/fs/PathKey';
 import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
 
@@ -1453,79 +1453,6 @@ function showSpinnerStatus(title: string, message: string): void {
     statusBarItem.show();
   }
 }
-
-function collectSnapshotProjectFiles(sourceDir: string, targetDir: string): string[] {
-  const result = new Set<string>();
-  collectSourceProjectFiles(sourceDir, targetDir, result);
-  collectDeletedProjectFiles(sourceDir, targetDir, result);
-  return [...result];
-}
-
-function collectSourceProjectFiles(sourceDir: string, targetDir: string, result: Set<string>): void {
-  if (!fs.existsSync(sourceDir)) {
-    return;
-  }
-
-  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-    const sourcePath = path.join(sourceDir, entry.name);
-    const targetPath = path.join(targetDir, entry.name);
-    if (entry.isDirectory()) {
-      collectSourceProjectFiles(sourcePath, targetPath, result);
-      continue;
-    }
-
-    addSuppressedProjectFile(targetPath, result);
-  }
-}
-
-function collectDeletedProjectFiles(sourceDir: string, targetDir: string, result: Set<string>): void {
-  if (!fs.existsSync(targetDir)) {
-    return;
-  }
-
-  for (const entry of fs.readdirSync(targetDir, { withFileTypes: true })) {
-    const targetPath = path.join(targetDir, entry.name);
-    const sourcePath = path.join(sourceDir, entry.name);
-    if (!fs.existsSync(sourcePath)) {
-      collectExistingFilePaths(targetPath, result);
-      continue;
-    }
-
-    if (entry.isDirectory()) {
-      collectDeletedProjectFiles(sourcePath, targetPath, result);
-    }
-  }
-}
-
-function collectExistingFilePaths(filePath: string, result: Set<string>): void {
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
-
-  const stat = fs.statSync(filePath);
-  if (!stat.isDirectory()) {
-    addSuppressedProjectFile(filePath, result);
-    return;
-  }
-
-  for (const entry of fs.readdirSync(filePath, { withFileTypes: true })) {
-    collectExistingFilePaths(path.join(filePath, entry.name), result);
-  }
-}
-
-function addSuppressedProjectFile(filePath: string, result: Set<string>): void {
-  const normalized = filePath.replace(/\\/g, '/').toLowerCase();
-  if (
-    normalized.endsWith('.xml') ||
-    normalized.endsWith('.bsl') ||
-    normalized.endsWith('/ext/template.txt') ||
-    normalized.endsWith('/ext/template.bin') ||
-    /\/ext\/template\/.+\.html$/.test(normalized)
-  ) {
-    result.add(filePath);
-  }
-}
-
 
 /**
  * Повторы — потому что на Windows каталог держит watcher bsl-analyzer или антивирус
