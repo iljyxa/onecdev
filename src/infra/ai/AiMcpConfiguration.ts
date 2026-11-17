@@ -574,8 +574,8 @@ export const EXTENSION_MCP_TOOLS: readonly AiMcpToolInfo[] = [
   {
     profile: 'extension',
     name: 'onecdev_execute_command',
-    description: 'Безопасный мост к разрешённым командам refresh, importConfigurations, updateChangedConfigurations; возвращает явный исход outcome (busy — с именем выполняющейся операции heldBy).',
-    requirement: 'Команда должна быть в allowlist расширения',
+    description: 'Безопасный мост к разрешённым командам refresh, importConfigurations, updateChangedConfigurations; импорт и обновление выбирают конфигурации без участия пользователя (configurations или all); возвращает явный исход outcome (busy — с именем выполняющейся операции heldBy, invalid-selection — с available и unknown).',
+    requirement: 'Команда из allowlist расширения; для импорта и обновления нескольких конфигураций — configurations (имена из onecdev_workspace_overview или available, без учёта регистра) или all: true',
   },
 ];
 

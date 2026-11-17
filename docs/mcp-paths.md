@@ -643,7 +643,7 @@ MCP-инструменты принимают только канон. Люба�
 | `onecdev_cfe_patch_method` | BSL-перехватчик &Перед/&После/&ИзменениеИКонтроль в CFE. `extensionPath` — каталог расширения, загруженного в проект; объект/форма модуля должны быть в его дереве (заимствованы) и проходят проверку поддержки и захвата в хранилище: модуль формы — по форме, иначе по объекту. | `Справочники.X.МодульОбъекта`, … |
 | `onecdev_cfe_diff` | Состав расширения и проверка переноса #Вставка. | — (`extensionPath` FS) |
 | `onecdev_repository_history` | Версии хранилища конфигурации (только чтение): конфигурация целиком или история объекта. См. §6.5. | `Конфигурация` / `Расширение` / объект, его форма или макет, `ОбщиеФормы.X`, `Подсистема.X.Y` |
-| `onecdev_execute_command` | Allowlist команд расширения: `refresh`, `importConfigurations`, `updateChangedConfigurations`. Ответ — явный исход `outcome` (`done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`); при `busy` — `heldBy` с заголовком держащей операции. | — |
+| `onecdev_execute_command` | Allowlist команд расширения: `refresh`, `importConfigurations`, `updateChangedConfigurations`. Аргументы выбора целей — `configurations: string[]` и `all: boolean`, см. §6.6. Ответ — явный исход `outcome` (`done`/`no-changes`/`no-targets`/`busy`/`failed`/`invalid-selection`); при `busy` — `heldBy` с заголовком держащей операции. `cancelled` из MCP недостижим: окно выбора не открывается. | — |
 
 Несколько инструментов (`create_epf`/`create_erf`/`validate_external_object`/
 `epf_bsp_*`/`cfe_borrow`/`cfe_diff`) работают с EPF/ERF/CFE по обычному
@@ -788,6 +788,26 @@ MCP-инструменты принимают только канон. Люба�
   Без uuid версий и авторов, без версии платформы и без хешей.
 - Не подключено / файловое хранилище (`.1CD`, отсылка к «Построить отчет по хранилищу») / отказ сервера — ошибка
   инструмента без секретов. Английские и legacy-формы пути отбиваются каноном.
+
+### 6.6. Неинтерактивный выбор целей в `onecdev_execute_command`
+
+Для `importConfigurations` и `updateChangedConfigurations` (`ui/mcp/registration/McpConfigLifecycleTools.ts`):
+
+| Аргумент | Тип | Смысл |
+|---|---|---|
+| `configurations` | `string[]` | имена из `onecdev_workspace_overview` или из `available` прошлого ответа; без учёта регистра, `ё` ≠ `е` |
+| `all` | boolean | все кандидаты; для `updateChangedConfigurations` — только изменённые |
+
+- `configurations` и `all` взаимоисключающие; для `refresh` недопустимы. Нарушение — `isError` инструмента.
+- Без обоих аргументов: единственный кандидат выполняется сразу, иначе исход `invalid-selection` с
+  `reason: 'selection-required'`, `available` (имена кандидатов) и `message`.
+- Неизвестное имя — `invalid-selection` с `reason: 'unknown-names'`, `unknown` и `available`; частичного
+  выполнения нет (ни одна из названных конфигураций не обрабатывается).
+- Разделение ошибок: ошибка формы входа (несовместимые аргументы, недопустимые для команды) — `isError`;
+  ошибка по данным (не тот выбор при текущем составе конфигураций) — обычный исход команды
+  `invalid-selection`, чтобы агент поправил вызов по `available` без повторного обзора.
+- Окно выбора из MCP не открывается, поэтому исход `cancelled` недостижим; всего исходов 7
+  (`done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`/`invalid-selection`).
 
 ---
 

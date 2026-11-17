@@ -272,7 +272,7 @@ http://127.0.0.1:38481/mcp
 - `onecdev_rename_metadata` — переименование объекта или дочернего элемента через общий XML-сервис.
 - `onecdev_add_metadata_by_path` — добавление объекта, реквизита, табличной части, колонки, формы, команды или макета по предметному пути.
 - `onecdev_remove_metadata` — удаление объекта или дочернего элемента по предметному пути.
-- `onecdev_execute_command` — ограниченный запуск разрешённых команд расширения: `onecdev.refresh`, `onecdev.importConfigurations`, `onecdev.updateChangedConfigurations`. Ответ содержит явный исход `outcome` (`done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`) и `result` (успех при `done`/`no-changes`); при `busy` — `heldBy` с именем занявшей guard операции. `importConfigurations` и `updateChangedConfigurations` при нескольких найденных конфигурациях открывают выбор пользователю и ждут его ответа, прежде чем вернуть исход.
+- `onecdev_execute_command` — ограниченный запуск разрешённых команд расширения: `onecdev.refresh`, `onecdev.importConfigurations`, `onecdev.updateChangedConfigurations`. Ответ содержит явный исход `outcome` (`done`/`no-changes`/`no-targets`/`busy`/`failed`/`invalid-selection`) и `result` (успех при `done`/`no-changes`); при `busy` — `heldBy` с именем занявшей guard операции. Выбор целей неинтерактивный, окно выбора из MCP не открывается: `importConfigurations` и `updateChangedConfigurations` принимают `configurations` (массив имён из `onecdev_workspace_overview`) или `all: true` (все кандидаты; для обновления — изменённые). Без них единственный кандидат выполняется сразу, а при нескольких возвращается `invalid-selection` со списком `available`.
 
 Предметные пути принимают русские группы и технические имена типов. Примеры:
 

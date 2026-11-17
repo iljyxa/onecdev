@@ -572,11 +572,18 @@ outputChannel) и в `bootstrap()` подписывается на `onDidChangeB
 
 Обе команды, доступные MCP-мосту (`importConfigurations`, `updateChangedConfigurations`), возвращают
 `ConfigurationCommandOutcome` (`ui/commands/ext/configurationCommandOutcome.ts`, без `vscode`) на каждом
-пути — `done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed` — вместо прежних `boolean`/`undefined`,
+пути — `done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`/`invalid-selection` (7-й: выбор целей
+не удался по данным, несёт `reason`/`available`/`unknown`/`message`) — вместо прежних `boolean`/`undefined`,
 которые не различали «занято», «отменено» и «сбой». Мост `onecdev_execute_command`
 (`ui/mcp/registration/McpConfigLifecycleTools.ts`) сам guard заранее не опрашивает и не подменяет исход —
-он вызывает команду через `vscode.commands.executeCommand` и транслирует её `ConfigurationCommandOutcome`
-в ответ как есть (`busy` + `heldBy` при занятости приходят от самой команды). Предпроверка guard'а в мосте
+он вызывает команду через `vscode.commands.executeCommand`, передавая ей запрос выбора
+`ConfigurationTargetRequest` (`configurations`/`all`), и транслирует её `ConfigurationCommandOutcome`
+в ответ как есть (`busy` + `heldBy` при занятости приходят от самой команды). При наличии запроса команда
+окно выбора не открывает, поэтому из MCP `cancelled` недостижим. Общий код выбора для UI и MCP —
+`ui/commands/ext/configurationTargetSelection.ts` (`selectConfigurationTargets`, без `vscode`).
+Порядок `updateChangedConfigurations`: ранняя проверка `heldBy` → список изменённых → `no-changes` без
+захвата аренды → выбор (picker только в UI при ≥ 2 кандидатах) → `tryAcquireOrHeldBy` → прогресс
+(«подготовка»). Выбор целей всегда вне аренды guard. Контракт аргументов — [mcp-paths.md](./mcp-paths.md#66-неинтерактивный-выбор-целей-в-onecdev_execute_command). Предпроверка guard'а в мосте
 была отвергнута при разработке (issue #39): это второй источник правды о занятости и разрыв TOCTOU — между
 проверкой в мосте и фактическим запуском команды есть `await`, за время которого guard мог освободиться
 или, наоборот, оказаться занятым другой операцией.

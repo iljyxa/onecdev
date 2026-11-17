@@ -310,9 +310,12 @@
   логику захвата можно было протестировать без реального процесса 1С → **если команда доступна MCP-мосту
   `onecdev_execute_command`** (`V8McpServer`/`McpConfigLifecycleTools.ts`), она обязана на КАЖДОМ пути
   возвращать `ConfigurationCommandOutcome` (`ui/commands/ext/configurationCommandOutcome.ts`:
-  `done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`), а при занятости — `{ status: 'busy',
-  heldBy }`; мост транслирует этот исход как есть и НЕ опрашивает guard заранее (второй источник правды +
-  TOCTOU между проверкой и запуском команды). Подробности —
+  `done`/`no-changes`/`no-targets`/`cancelled`/`busy`/`failed`/`invalid-selection`), а при занятости —
+  `{ status: 'busy', heldBy }`; мост транслирует этот исход как есть и НЕ опрашивает guard заранее (второй
+  источник правды + TOCTOU между проверкой и запуском команды). **Команда с выбором целей** принимает
+  `ConfigurationTargetRequest`; при его наличии диалог не открывает, а выбор делает через
+  `selectConfigurationTargets` (`ui/commands/ext/configurationTargetSelection.ts`) строго вне аренды guard;
+  ошибки по данным — исход `invalid-selection`, ошибки формы входа — `isError` в мосте. Подробности —
   [architecture.md](./architecture.md#сериализация-операций-конфигуратора-с-базой-configurationoperationguard).
 - **Изменение жизненного цикла/безопасности встроенного MCP-сервера** (порт, идентичность процесса,
   graceful shutdown, Host/Origin, отличается от «новый MCP-инструмент» из раздела выше): чистая логика —
