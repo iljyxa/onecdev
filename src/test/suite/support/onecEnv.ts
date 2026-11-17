@@ -4,6 +4,7 @@ import { importConfiguration } from '../../../cli/commands/importConfiguration';
 import { updateConfiguration } from '../../../cli/commands/updateConfiguration';
 import type { CliArgs } from '../../../cli/core/types';
 import { normalizeInfoBasePath, resolveV8ExecutablePath } from '../../../infra/process/OnecPlatform';
+import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
 
 /**
  * Подключение к базе 1С, снятое из `env.json` конфигурации (формат vanessa-runner).
@@ -26,7 +27,7 @@ export function readOnecEnv(projectRoot: string): OnecEnv | null {
   }
   let parsed: { default?: Record<string, unknown> };
   try {
-    parsed = JSON.parse(fs.readFileSync(envPath, 'utf-8')) as { default?: Record<string, unknown> };
+    parsed = parseJsonObjectText(fs.readFileSync(envPath, 'utf-8'), 'env.json', envPath) as { default?: Record<string, unknown> };
   } catch {
     return null;
   }
