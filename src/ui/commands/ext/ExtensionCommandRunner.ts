@@ -27,6 +27,7 @@ import { createImportTempDir as createWorkspaceTempDir } from '../../../infra/fs
 import { describeFsError, removePathWithRetries } from '../../../infra/fs/PathRemoval';
 import { classifyPartialLoadRefusal, describeRepositoryLoadRefusal } from '../../../infra/process/PartialLoadRefusal';
 import { syncDirectorySnapshot } from '../../../infra/agent/DirectorySnapshot';
+import { pathKey } from '../../../infra/fs/PathKey';
 
 type NodeArg = MetadataNode | { xmlPath?: string; nodeKind?: string; label?: string };
 
@@ -143,7 +144,7 @@ function ensureAgentService(
   workspaceRoot: string,
   factory: () => Promise<CachedAgentService>
 ): Promise<CachedAgentService> {
-  const key = path.resolve(workspaceRoot).toLowerCase();
+  const key = getAgentServiceCacheKey(workspaceRoot);
   const entry = getOrCreate(agentServices, key, factory);
   // Помечаем промис его значением для синхронного геттера getCachedAgentOperationService.
   void entry.then((value) => resolvedServices.set(entry, value.service), () => undefined);
@@ -151,7 +152,7 @@ function ensureAgentService(
 }
 
 export function getAgentServiceCacheKey(workspaceRoot: string): string {
-  return path.resolve(workspaceRoot).toLowerCase();
+  return pathKey(workspaceRoot);
 }
 
 export function getCachedAgentOperationService(workspaceFolder: vscode.WorkspaceFolder): AgentOperationService | undefined {

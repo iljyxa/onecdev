@@ -4,6 +4,7 @@ import { MetaPathResolver } from '../fs/MetaPathResolver';
 import { ConfigXmlReader } from './ConfigXmlReader';
 import { ObjectXmlReader } from './ObjectXmlReader';
 import { extractNestingAwareBlock } from './XmlUtils';
+import { pathKey } from '../fs/PathKey';
 
 export type BasedOnMetaKind = 'Catalog' | 'Document';
 
@@ -66,7 +67,7 @@ export class BasedOnXmlService {
     options: BasedOnReadOptions = {}
   ): BasedOnSnapshot {
     const objectRef = this.buildRef(objectKind, objectName);
-    const normalizedRoot = normalizeRoot(configRoot);
+    const normalizedRoot = pathKey(configRoot);
     const available = this.readAvailableObjects(configRoot);
     const byRef = new Map(available.map((item) => [item.ref, item]));
     const current = byRef.get(objectRef);
@@ -128,7 +129,7 @@ export class BasedOnXmlService {
   }
 
   readAvailableObjects(configRoot: string): BasedOnReferenceItem[] {
-    const normalizedRoot = normalizeRoot(configRoot);
+    const normalizedRoot = pathKey(configRoot);
     const configXmlPath = path.join(configRoot, 'Configuration.xml');
     if (!fs.existsSync(configXmlPath)) {
       return [];
@@ -161,11 +162,11 @@ export class BasedOnXmlService {
   }
 
   hasPreloadedReverseIndex(configRoot: string): boolean {
-    return Boolean(this.getFreshIndex(normalizeRoot(configRoot), configRoot));
+    return Boolean(this.getFreshIndex(pathKey(configRoot), configRoot));
   }
 
   preloadReverseIndex(configRoot: string): Promise<void> {
-    const normalizedRoot = normalizeRoot(configRoot);
+    const normalizedRoot = pathKey(configRoot);
     if (this.getFreshIndex(normalizedRoot, configRoot)) {
       return Promise.resolve();
     }
@@ -197,7 +198,7 @@ export class BasedOnXmlService {
       return;
     }
 
-    const normalizedRoot = normalizeRoot(configRoot);
+    const normalizedRoot = pathKey(configRoot);
     this.availableCache.delete(normalizedRoot);
     this.indexCache.delete(normalizedRoot);
   }
@@ -221,7 +222,7 @@ export class BasedOnXmlService {
   }
 
   private buildIndexSync(configRoot: string): BasedOnIndexCache {
-    const normalizedRoot = normalizeRoot(configRoot);
+    const normalizedRoot = pathKey(configRoot);
     const configMtimeMs = getFileMtimeMs(path.join(configRoot, 'Configuration.xml'));
     const available = this.readAvailableObjects(configRoot);
     const basedOnByRef = new Map<string, string[]>();
@@ -360,9 +361,6 @@ function getFileMtimeMs(filePath: string): number {
   }
 }
 
-function normalizeRoot(configRoot: string): string {
-  return path.resolve(configRoot).toLowerCase();
-}
 
 async function mapWithConcurrency<T>(
   items: readonly T[],

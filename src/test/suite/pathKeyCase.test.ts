@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { pathKey } from '../../infra/fs/PathKey';
+import { pathKey, slashPathKey } from '../../infra/fs/PathKey';
 import { MetadataXmlRemover } from '../../infra/xml/MetadataXmlRemover';
 import { planReadonlyTransitions } from '../../ui/readonly/readonlyTransitionPlan';
 import { skipWithoutCorpus } from './support/corpus';
@@ -30,6 +30,14 @@ suite('pathKey — ключ пути с учётом регистрочувст�
 
   test('платформа по умолчанию — текущая ОС', () => {
     assert.strictEqual(pathKey('A/B.bsl'), pathKey('A/B.bsl', process.platform));
+  });
+
+  test('slashPathKey: разделители — `/`, регистр — по правилу платформы', () => {
+    const key = slashPathKey('Catalogs\\Контрагенты/Ext\\ObjectModule.bsl', 'linux');
+    assert.ok(!key.includes('\\'));
+    assert.ok(key.endsWith('Ext/ObjectModule.bsl'), key);
+    assert.ok(slashPathKey('Catalogs/Контрагенты.xml', 'win32').endsWith('catalogs/контрагенты.xml'));
+    assert.strictEqual(slashPathKey('A/B.bsl'), slashPathKey('A/B.bsl', process.platform));
   });
 
   test('planReadonlyTransitions: два открытых файла, различающиеся регистром, — две записи на linux, одна на win32', () => {

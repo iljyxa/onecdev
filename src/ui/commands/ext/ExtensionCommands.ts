@@ -23,6 +23,7 @@ import {
 import { planExtensionChoices } from '../../../infra/environment';
 import { notifyConfigurationOperationBusy } from './configurationOperationBusy';
 import { type ConfigurationCommandOutcome, failedOutcome } from './configurationCommandOutcome';
+import { pathKey } from '../../../infra/fs/PathKey';
 
 interface ActionItem extends vscode.QuickPickItem {
   actionId: 'import' | 'update' | 'compileAndUpdateExt';
@@ -604,9 +605,9 @@ function appendInitialMainConfigurationTarget(targets: ImportTarget[], workspace
     return;
   }
 
-  const normalizedRoot = path.resolve(mainConfigRoot).toLowerCase();
+  const normalizedRoot = pathKey(mainConfigRoot);
   const hasMainConfig = targets.some((target) =>
-    target.kind === 'cf' && path.resolve(target.rootPath).toLowerCase() === normalizedRoot
+    target.kind === 'cf' && pathKey(target.rootPath) === normalizedRoot
   );
   if (hasMainConfig) {
     return;
@@ -704,8 +705,8 @@ function readConnectedExtensionFolderNames(workspaceRoot: string): string[] {
 /* c8 ignore stop */
 
 function isPathInside(filePath: string, rootPath: string): boolean {
-  const normalizedFilePath = path.resolve(filePath).toLowerCase();
-  const normalizedRootPath = path.resolve(rootPath).toLowerCase();
+  const normalizedFilePath = pathKey(filePath);
+  const normalizedRootPath = pathKey(rootPath);
   const relative = path.relative(normalizedRootPath, normalizedFilePath);
   return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
 }

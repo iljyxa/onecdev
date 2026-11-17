@@ -12,6 +12,7 @@ import {
 } from '../xml/XmlUtils';
 import { readBlobAtHead } from './GitBlobReader';
 import { parsePorcelain } from './GitPorcelainReader';
+import { slashPathKey } from '../fs/PathKey';
 
 export type MetadataGitDecorationStatus = 'added' | 'modified' | 'deleted';
 
@@ -396,13 +397,13 @@ function readTextFile(filePath: string): string | null {
 
 /**
  * Нормализованная форма абсолютного пути для использования в качестве ключа кэша.
- * Унифицирует разделители на forward slash и приводит к нижнему регистру.
+ * Унифицирует разделители на forward slash; регистр — по правилу платформы (`pathKey`, #123).
  * `realpathSync` не используется — он капризен к forward-slash формату на Windows.
  * Forward slash в ключах нужен для prefix-сравнений в `getDirectoryStatus`
  * (агрегация статуса каталога через `key.startsWith(dirPrefix + '/')`).
  */
 function normalizePath(filePath: string): string {
-  return path.resolve(filePath).split(/[\\/]/).join('/').toLowerCase();
+  return slashPathKey(filePath);
 }
 
 function normalizeComparableXml(xml: string): string {

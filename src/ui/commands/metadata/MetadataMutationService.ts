@@ -8,6 +8,7 @@ import type { TemplateType } from '../../../infra/xml';
 import type { AddMetadataTarget, MetadataNode } from '../../tree/TreeNode';
 import type { CommandServices } from '../_shared';
 import { CHANGES_FORBIDDEN_REASON } from '../../support/supportLockReason';
+import { pathKey } from '../../../infra/fs/PathKey';
 
 export interface AddMetadataMutationInput {
   readonly target: AddMetadataTarget;
@@ -157,10 +158,10 @@ export class MetadataMutationService {
     const configRoot = target.kind === 'root'
       ? target.configRoot
       : getObjectLocationFromXml(target.ownerObjectXmlPath).configRoot;
-    const normalizedConfigRoot = path.resolve(configRoot).toLowerCase();
+    const normalizedConfigRoot = pathKey(configRoot);
     return this.services.treeProvider
       .getEntries()
-      .find((entry) => path.resolve(entry.rootPath).toLowerCase() === normalizedConfigRoot);
+      .find((entry) => pathKey(entry.rootPath) === normalizedConfigRoot);
   }
 
   private fail(message: string): AddMetadataMutationResult {

@@ -15,6 +15,7 @@ import {
 } from './RepositoryObjectNames';
 import { resolveUnitXmlRel } from './RepositoryObjectScope';
 import type { RepositoryNodeRef } from './RepositoryService';
+import { pathKey } from '../fs/PathKey';
 
 const SUBSYSTEMS_FOLDER = REPOSITORY_SUBORDINATE_LAYOUT.Subsystem.folder;
 
@@ -90,7 +91,7 @@ export function resolveSubsystemMemberFullNames(
   const visited = new Set<string>();
 
   const visit = (xmlPath: string, fullName: string | undefined): void => {
-    const key = path.resolve(xmlPath).toLowerCase();
+    const key = pathKey(xmlPath);
     if (visited.has(key) || !fs.existsSync(xmlPath)) {
       return;
     }

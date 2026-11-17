@@ -22,6 +22,7 @@ import { GitMetadataDecorationProvider } from './decorations/GitMetadataDecorati
 import { SUPPORT_CHANGES_FORBIDDEN_SUFFIX, SUPPORT_SUFFIX_RE, supportModeSuffix } from '../support/supportLockReason';
 import type { RepositoryLockInfo } from '../../infra/repository/RepositoryLockState';
 import { formatRepositoryLockTitle } from './repositoryLockTitle';
+import { pathKey } from '../../infra/fs/PathKey';
 
 /** Все суффиксы состояния хранилища в contextValue: снимаются перед повторной декорацией. */
 const REPOSITORY_CONTEXT_SUFFIX_RE = /-repo(?:Connected|Disconnected|EditRestricted|EditAllowed|ForeignLocked|Locked|Unlocked)/g;
@@ -672,7 +673,7 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
   }
 
   private normalizePath(filePath: string): string {
-    return path.resolve(filePath).toLowerCase();
+    return pathKey(filePath);
   }
 
   private refreshChangedObjectNodesFromCache(

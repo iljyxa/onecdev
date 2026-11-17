@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { pathKey } from './PathKey';
 
 /**
  * Окно «тишины» по корню конфигурации, открываемое после успешной операции с базой
@@ -32,20 +33,21 @@ export class ConfigurationCleanWindow {
 
   constructor(
     private readonly durationMs = ConfigurationCleanWindow.defaultDurationMs,
-    private readonly now: () => number = () => Date.now()
+    private readonly now: () => number = () => Date.now(),
+    private readonly platform: NodeJS.Platform = process.platform
   ) {}
 
   /** Открывает окно для перечисленных корней конфигураций. */
   open(rootPaths: readonly string[]): void {
     const expiresAt = this.now() + this.durationMs;
     for (const rootPath of rootPaths) {
-      this.openedUntil.set(normalizePath(rootPath), expiresAt);
+      this.openedUntil.set(pathKey(rootPath, this.platform), expiresAt);
     }
   }
 
   /** Истина, если файл лежит в корне с ещё не истёкшим окном тишины. */
   isOpenFor(filePath: string): boolean {
-    const normalizedFilePath = normalizePath(filePath);
+    const normalizedFilePath = pathKey(filePath, this.platform);
     const currentTime = this.now();
     for (const [rootPath, expiresAt] of this.openedUntil) {
       if (!isPathInside(normalizedFilePath, rootPath)) {
@@ -58,10 +60,6 @@ export class ConfigurationCleanWindow {
     }
     return false;
   }
-}
-
-function normalizePath(value: string): string {
-  return path.resolve(value).toLowerCase();
 }
 
 function isPathInside(normalizedFilePath: string, normalizedRootPath: string): boolean {
