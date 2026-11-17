@@ -93,7 +93,9 @@ src/
 │   │                                  # GitGraphLayout, GitCommitChangesReader — см.
 │   │                                  # docs/git-history-graph.md; граф — сворачиваемый блок панели
 │   │                                  # «Изменения метаданных», отдельного webview/вкладки нет)
-│   ├── environment/                  # bsl-analyzer.toml, окружение проекта, реестр баз
+│   ├── environment/                  # bsl-analyzer.toml (BslAnalyzerToml — чистая правка
+│   │                                  # [source].exclude, BslAnalyzerVersion — версия сервера,
+│   │                                  # BslAnalyzerConfigService), окружение проекта, реестр баз
 │   ├── cfFile/                       # CfFileArgs (вектор аргументов /DumpCfg,/LoadCfg),
 │   │                                  # CfFileValidation (guard'ы: суффикс, staging-путь,
 │   │                                  # запрет -AllExtensions, DUMP_STAGING_SUFFIX — маркер
