@@ -50,9 +50,9 @@ export function createStand(work) {
   stand.startCrserver = async () => {
     mkdirSync(path.join(work, 'crsdata'), { recursive: true });
     const port = await freePort();
-    const range = await freePort();
+    const range = await freeRangeStart(port);
     const child = spawn(path.join(platformDir, 'crserver'),
-      ['-port', String(port), '-range', `${String(range)}:${String(range + 9)}`, '-d', 'crsdata'], { stdio: 'ignore', cwd: work });
+      ['-port', String(port), '-range', `${String(range)}:${String(range + RANGE_SIZE - 1)}`, '-d', 'crsdata'], { stdio: 'ignore', cwd: work });
     // crserver живёт дольше run() и не входит в activeGroups: без этого по SIGTERM стенда (process.exit
     // из обработчика сигнала ниже) он остался бы сиротой.
     if (child.pid !== undefined) liveChildren.add(child);
@@ -598,6 +598,30 @@ function canConnect(port) {
 
 function freePort() {
   return new Promise((r) => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => r(p)); }); });
+}
+
+// Порты -range crserver: проверяется весь диапазон, а не только его начало (issue #122), — иначе занятый
+// порт внутри диапазона роняет старт crserver без связи с проверяемым кодом. Порт -port в диапазон не входит.
+const RANGE_SIZE = 10;
+const RANGE_ATTEMPTS = 20;
+
+function canListen(port) {
+  return new Promise((r) => {
+    const s = net.createServer();
+    s.once('error', () => r(false));
+    s.listen(port, '127.0.0.1', () => s.close(() => r(true)));
+  });
+}
+
+async function freeRangeStart(exceptPort) {
+  for (let attempt = 0; attempt < RANGE_ATTEMPTS; attempt += 1) {
+    const base = await freePort();
+    if (base + RANGE_SIZE - 1 > 65535 || (exceptPort >= base && exceptPort < base + RANGE_SIZE)) continue;
+    const ports = Array.from({ length: RANGE_SIZE }, (_, i) => base + i);
+    const free = await Promise.all(ports.map(canListen));
+    if (free.every(Boolean)) return base;
+  }
+  throw new Error(`Не найден свободный диапазон из ${String(RANGE_SIZE)} портов за ${String(RANGE_ATTEMPTS)} попыток`);
 }
 
 const PROCESS_DEADLINE_MS = 10 * 60 * 1000;
