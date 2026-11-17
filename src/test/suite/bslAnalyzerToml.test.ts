@@ -9,6 +9,7 @@ import {
   scanSectionEntries,
   SERVICE_EXCLUDE_ENTRY,
   type ServiceExcludeEdit,
+  type SourceLayoutEdit,
 } from '../../infra/environment/BslAnalyzerToml';
 
 const lines = (...parts: string[]): string => parts.join('\n');
@@ -18,9 +19,15 @@ function changed(edit: ServiceExcludeEdit): string {
   return (edit as { content: string }).content;
 }
 
-function unsupported(edit: ServiceExcludeEdit): string {
+function unsupported(edit: ServiceExcludeEdit | SourceLayoutEdit): string {
   assert.strictEqual(edit.status, 'unsupported-format', JSON.stringify(edit));
   return (edit as { detail: string }).detail;
+}
+
+function mergedLayout(content: string, extensionPaths: readonly string[]): string {
+  const edit = mergeSourceLayout(content, extensionPaths);
+  assert.strictEqual(edit.status, 'merged', JSON.stringify(edit));
+  return (edit as { content: string }).content;
 }
 
 /** Issue #112 — правка `bsl-analyzer.toml` без TOML-библиотеки, с сохранением ручных записей. */
@@ -236,7 +243,7 @@ suite('BslAnalyzerToml — генерация и слияние [source] (issue 
       'enabled = true',
       ''
     );
-    assert.strictEqual(mergeSourceLayout(content, ['src/cfe/EVOLC']), lines(
+    assert.strictEqual(mergedLayout(content, ['src/cfe/EVOLC']), lines(
       '[server]',
       'port = 0',
       '',
@@ -261,50 +268,56 @@ suite('BslAnalyzerToml — генерация и слияние [source] (issue 
 
   test('mergeSourceLayout идемпотентен на собственном выводе', () => {
     const generated = buildBslAnalyzerSourceConfig(['src/cfe/EVOLC'], { serviceExclude: true });
-    assert.strictEqual(mergeSourceLayout(generated, ['src/cfe/EVOLC']), generated);
+    assert.strictEqual(mergedLayout(generated, ['src/cfe/EVOLC']), generated);
   });
 
   test('mergeSourceLayout: расширения исчезли — запись и пустая строка перед ней удаляются', () => {
     const content = lines('[source]', 'root = "src/cf"', '', 'extensions = [', '  "a",', ']', 'exclude = ["x"]', '');
-    assert.strictEqual(mergeSourceLayout(content, []), lines('[source]', 'root = "src/cf"', 'exclude = ["x"]', ''));
+    assert.strictEqual(mergedLayout(content, []), lines('[source]', 'root = "src/cf"', 'exclude = ["x"]', ''));
     assert.strictEqual(
-      mergeSourceLayout(lines('[source]', 'root = "src/cf"', 'extensions = []', ''), []),
+      mergedLayout(lines('[source]', 'root = "src/cf"', 'extensions = []', ''), []),
       lines('[source]', 'root = "src/cf"', '')
     );
     assert.strictEqual(
-      mergeSourceLayout(lines('[source]', 'extensions = []', 'k = 1', ''), []),
+      mergedLayout(lines('[source]', 'extensions = []', 'k = 1', ''), []),
       lines('[source]', 'root = "src/cf"', 'k = 1', '')
     );
   });
 
   test('mergeSourceLayout: расширения появились — вставка после root', () => {
     assert.strictEqual(
-      mergeSourceLayout(lines('[source]', 'root = "src/cf"', 'exclude = ["x"]', ''), ['src/cfe/E']),
+      mergedLayout(lines('[source]', 'root = "src/cf"', 'exclude = ["x"]', ''), ['src/cfe/E']),
       lines('[source]', 'root = "src/cf"', '', 'extensions = [', '  "src/cfe/E",', ']', 'exclude = ["x"]', '')
     );
   });
 
   test('mergeSourceLayout: в секции нет root — вставка в начало тела', () => {
     assert.strictEqual(
-      mergeSourceLayout(lines('[source]', 'exclude = ["x"]', ''), []),
+      mergedLayout(lines('[source]', 'exclude = ["x"]', ''), []),
       lines('[source]', 'root = "src/cf"', 'exclude = ["x"]', '')
     );
     assert.strictEqual(
-      mergeSourceLayout('[source]', ['e']),
+      mergedLayout('[source]', ['e']),
       lines('[source]', 'root = "src/cf"', '', 'extensions = [', '  "e",', ']', '')
     );
   });
 
+  for (const form of ['source.root = "src/cf"', 'source = { root = "src/cf" }']) {
+    test(`mergeSourceLayout: source без заголовка (${form}) — unsupported-format, секция не дописывается (#139)`, () => {
+      assert.match(unsupported(mergeSourceLayout(lines(form, ''), ['src/cfe/E'])), /без заголовка \[source\]/);
+    });
+  }
+
   test('mergeSourceLayout: секции нет — в конец; пустой файл — только секция', () => {
     assert.strictEqual(
-      mergeSourceLayout(lines('[server]', 'port = 0'), []),
+      mergedLayout(lines('[server]', 'port = 0'), []),
       lines('[server]', 'port = 0', '', '[source]', 'root = "src/cf"', '')
     );
     assert.strictEqual(
-      mergeSourceLayout(lines('[server]', 'port = 0', '', ''), []),
+      mergedLayout(lines('[server]', 'port = 0', '', ''), []),
       lines('[server]', 'port = 0', '', '[source]', 'root = "src/cf"', '')
     );
-    assert.strictEqual(mergeSourceLayout('', ['e']), buildBslAnalyzerSourceConfig(['e']));
+    assert.strictEqual(mergedLayout('', ['e']), buildBslAnalyzerSourceConfig(['e']));
   });
 });
 

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { writeFileAtomic } from '../fs/AtomicFileWriter';
+import type { Logger } from '../support/Logger';
 import { preserveBomAndEol } from '../xml/LineEndings';
 import {
   applyServiceExclude,
@@ -50,7 +51,10 @@ export interface BslAnalyzerStartInput {
 export class BslAnalyzerConfigService {
   private support: SourceExcludeSupport = 'unknown';
 
-  constructor(private readonly workspaceRoot: string) {}
+  constructor(
+    private readonly workspaceRoot: string,
+    private readonly logger: Logger
+  ) {}
 
   setSourceExcludeSupport(support: SourceExcludeSupport): void {
     this.support = support;
@@ -73,6 +77,7 @@ export class BslAnalyzerConfigService {
   /**
    * Обновляет в `[source]` только `root` и `extensions`; служебный элемент `exclude` — по
    * последней известной поддержке ключа. Остальное содержимое файла сохраняется дословно.
+   * `source` без заголовка `[source]` не правится: файл остаётся как есть, в лог — предупреждение.
    */
   updateSource(extensionRootPaths: readonly string[]): void {
     const configPath = this.getConfigPath();
@@ -81,7 +86,12 @@ export class BslAnalyzerConfigService {
       return;
     }
     this.editConfig((content) => {
-      const merged = mergeSourceLayout(content, this.normalizeExtensionPaths(extensionRootPaths));
+      const layout = mergeSourceLayout(content, this.normalizeExtensionPaths(extensionRootPaths));
+      if (layout.status === 'unsupported-format') {
+        this.logger.appendLine(`[lsp][warn] bsl-analyzer.toml: формат не поддерживается, [source] не обновлён: ${layout.detail}`);
+        return content;
+      }
+      const merged = layout.content;
       if (this.support === 'unknown') {
         return merged;
       }

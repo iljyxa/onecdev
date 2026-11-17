@@ -206,7 +206,7 @@ export class Container {
       onError: (error) => this.outputChannel.appendLine(`[repository][history][error] ${String(error)}`),
     });
     context.subscriptions.push(this.repositoryHistoryService);
-    this.bslAnalyzerConfigService = new BslAnalyzerConfigService(workspaceFolder.uri.fsPath);
+    this.bslAnalyzerConfigService = new BslAnalyzerConfigService(workspaceFolder.uri.fsPath, this.outputChannel);
     this.projectEnvironmentService = new ProjectEnvironmentService(workspaceFolder.uri.fsPath, this.projectSecretStorage);
     this.standaloneServerService = new StandaloneServerService(workspaceFolder.uri.fsPath, this.outputChannel);
     this.gitMetadataStatusService = new GitMetadataStatusService(workspaceFolder.uri.fsPath);
