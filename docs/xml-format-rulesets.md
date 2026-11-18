@@ -75,8 +75,28 @@
   `rulesetForObjectXml`, `defaultStandardAttributeElementXml`. Показ свойств
   стандартного реквизита файл **не меняет** (`ensureStandardAttributeXml`
   удалена). Для заимствованного объекта умолчания не подставляются
-  (`useDefaults: false`). Правка свойства, когда блока в файле нет, — #145;
-  наследование значений заимствованного объекта — #146.
+  (`useDefaults: false`). Наследование значений заимствованного объекта — #146.
+  `rulesetForObjectXml(xml, {warnOnUnknownVersion})` по умолчанию молчит о
+  незнакомой версии (путь чтения), запись передаёт флаг и предупреждает;
+  `resolveFormatRuleset(version, {warnOnUnknown})` — то же на уровне реестра.
+- **Запись свойства стандартного реквизита (#145)** —
+  `applyStandardAttributePropertyEdit` (`StandardAttributesBlock.ts`) через
+  `ObjectXmlReader.updateStandardAttributeProperty` и
+  `ConfigurationXmlEditor.modifyObjectProperty` (результат `changed` /
+  `unchanged` / `refused` с причиной). Если блока `<StandardAttributes>` нет,
+  материализуется **весь** блок по шаблону ruleset (так выгружает платформа
+  8.5.1: частичный блок принимается и выгружается полным — проверено через
+  `ibcmd import/export`); значение, равное умолчанию при отсутствии блока, —
+  `unchanged`. Существующий блок не удаляется никогда: платформа пишет блок,
+  равный шаблону, у `ев_РабочийПроцесс`, а у pre-2.20 блок — норма. Отказы:
+  реквизит табличной части, списковые свойства, заимствованный объект (#146),
+  вид без шаблона, неизвестный реквизит/свойство, частично заполненный элемент,
+  составное значение с `xsi:nil`. Умолчание индексирования — единственный
+  источник `domain/StandardAttribute`; `xr:Indexing` у стандартного реквизита
+  не существует. Общие куски вынесены в `infra/xml/properties/PropertyValueBlock.ts`
+  (построитель значения свойства, из `ObjectXmlReader`) и
+  `InputByStringFields.ts` (поля ввода по строке, из `PropertiesViewController`);
+  `PropertyBlockEditor.isAdoptedObjectBelonging` — признак заимствованного.
 - **`formatRegistry.ts`** — карта «версия → ruleset», резолвер и version-guard:
   - `resolveFormatRuleset(version)` — ruleset по версии;
   - для **незнакомой** версии берётся самый свежий известный ruleset и

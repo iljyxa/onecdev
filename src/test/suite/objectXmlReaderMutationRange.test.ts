@@ -212,7 +212,7 @@ suite('ObjectXmlReader — мутация по диапазону, а не по 
     assert.strictEqual(fs.readFileSync(xmlPath, 'utf-8'), originalXml, 'файл не должен измениться');
   });
 
-  test('updatePropertyInObject: несуществующий StandardAttribute — extractStandardAttributeXml не находит блок, возвращает false', () => {
+  test('updatePropertyInObject: несуществующий StandardAttribute — отказ unknown-attribute писателя (#145), возвращает false', () => {
     const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-x2-prop-standard-missing-'));
     const xmlPath = path.join(configRoot, 'ПриходТовара.xml');
     const originalXml = fs.readFileSync(DOCUMENT_WITH_DUPLICATE_TYPES, 'utf-8');

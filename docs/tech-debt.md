@@ -39,10 +39,9 @@
     См. [repository-crs.md](./repository-crs.md#сервисная-часть-117).
 12. `MetadataValidationService.extractRootUuid` (`infra/xml/MetadataValidationService.ts`) дублирует
     `readMetadataRootUuid` (`infra/xml/MetadataRootUuidReader.ts`) — кандидат на переход валидатора на общий ридер.
-13. Стандартные реквизиты (issue #16): два источника умолчаний — шаблон ruleset
-    (`infra/xml/format/standardAttributes.ts`, читается через `resolveStandardAttributeXml`) и
-    `domain/StandardAttribute.getDefaultStandardAttributeIndexing`. Часть читателей
-    (`PropertiesViewController.isInputByStringFieldIndexed`, `ObjectXmlReader`) всё ещё идёт через
-    `extractStandardAttributeXml`, не знающий о шаблоне ruleset. Правка свойства, когда блока нет в файле, —
-    #145; наследование значений заимствованного объекта — #146. См.
-    [xml-format-rulesets.md](./xml-format-rulesets.md).
+13. Стандартные реквизиты (#16, #145): запись и чтение умолчаний закрыты (шаблон ruleset +
+    `domain/StandardAttribute` как единственный источник умолчания индексирования). Остаток:
+    #146 — наследование значений заимствованного объекта; #147 — идемпотентная правка остальных
+    видов (сейчас fail); #148 — неполный список стандартных реквизитов домена у
+    `ChartOfCharacteristicTypes`/`CalculationRegister`; #149 — контракт MCP для структурных
+    свойств. См. [xml-format-rulesets.md](./xml-format-rulesets.md).

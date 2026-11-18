@@ -4,6 +4,7 @@ import {
   detectEol,
   findPropertiesRange,
   insertBlockInCanonicalPosition,
+  isAdoptedObjectBelonging,
   removeBlocks,
   replaceBlock,
 } from './typedField/PropertyBlockEditor';
@@ -146,7 +147,7 @@ export function normalizeTypedFieldPropertiesAfterTypeChange(
   // Заимствованное поле расширения платформа выгружает усечённо (ObjectBelonging/Name/
   // Comment/ExtendedConfigurationObject/Type): owner×role-состав принадлежит полю основной
   // конфигурации, и дописывать его сюда — порча выгрузки расширения (#114).
-  if (blocks.some((block) => block.key === 'ObjectBelonging' && /^<ObjectBelonging>\s*Adopted\s*<\/ObjectBelonging>$/.test(block.xml))) {
+  if (isAdoptedObjectBelonging(blocks)) {
     return `${elementXml.slice(0, properties.start)}${inner}${elementXml.slice(properties.end)}`;
   }
   if (inner !== properties.inner) {

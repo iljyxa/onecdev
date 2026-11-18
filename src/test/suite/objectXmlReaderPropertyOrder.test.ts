@@ -541,22 +541,32 @@ suite('ObjectXmlReader.updatePropertyInObject — канон порядка св
     });
   }
 
-  test('дочерний targetKind=StandardAttribute: писатель по-прежнему не трогает файл (у стандартного реквизита нет блока <Properties>)', function () {
+  test('дочерний targetKind=StandardAttribute: блок <StandardAttributes> материализуется на каноническом месте корня (#145)', function () {
     skipWithoutCorpus(this);
-    // Стандартный реквизит лежит внутри StandardAttributes корневого <Properties> и сам
-    // <Properties> не имеет: поведение (false, файл нетронут) закрепляется, чтобы канон корня
-    // не «просочился» в правку стандартных реквизитов.
+    // У стандартного реквизита нет собственного <Properties>: правка идёт через писатель
+    // стандартных реквизитов, который вставляет блок шаблона в <Properties> корня по
+    // ROOT_PROPERTY_ORDER, не трогая остальные свойства.
     const copy = copyToTemp(path.join(EXAMPLE_GENERATIONS.cf20, 'Catalogs', 'Пользователи.xml'));
-    const before = fs.readFileSync(copy);
+    const before = fs.readFileSync(copy, 'utf-8');
     const changed = new ObjectXmlReader().updatePropertyInObject(copy, {
       targetKind: 'StandardAttribute',
       targetName: 'Description',
-      propertyKey: 'ToolTip',
+      propertyKey: 'FillChecking',
       valueKind: 'string',
-      value: 'Подсказка',
+      value: 'DontCheck',
     });
-    assert.strictEqual(changed, false);
-    assert.deepStrictEqual(fs.readFileSync(copy), before);
+    assert.strictEqual(changed, true);
+    const after = fs.readFileSync(copy, 'utf-8');
+    const keys = extractTopLevelPropertiesChildren(after).map((child) => child.tag);
+    const standardIndex = keys.indexOf('StandardAttributes');
+    assert.ok(standardIndex > 0, `блок не вставлен: ${keys.join(',')}`);
+    assert.deepStrictEqual(
+      keys.filter((key) => key !== 'StandardAttributes'),
+      extractTopLevelPropertiesChildren(before).map((child) => child.tag),
+      'состав прочих свойств корня изменился'
+    );
+    assert.strictEqual(keys[standardIndex - 1], 'DefaultPresentation');
+    assert.ok(/<xr:StandardAttribute name="Description">\s*<xr:LinkByType\/>\s*<xr:FillChecking>DontCheck<\/xr:FillChecking>/.test(after));
   });
 
   test('находка 2 (латентная мина): <Properties></Properties> — свойство не уезжает в начало файла, перед <?xml', () => {

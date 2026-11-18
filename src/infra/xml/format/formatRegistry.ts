@@ -96,13 +96,21 @@ export function registerFormatRuleset(ruleset: FormatRuleset, versions: readonly
  * свежий известный ruleset и сигналит предупреждением: работу не блокируем,
  * но честно помечаем, что вывод может не совпасть с этой версией платформы.
  */
-export function resolveFormatRuleset(version: string): FormatRuleset {
+export function resolveFormatRuleset(
+  version: string,
+  options: { readonly warnOnUnknown?: boolean } = {}
+): FormatRuleset {
   const id = SUPPORTED_FORMATS.get(version);
   if (id) {
     return RULESETS.get(id) ?? BASELINE_RULESET;
   }
 
   const newest = newestKnownRuleset();
+  // `warnOnUnknown: false` — путь чтения: незнакомая версия там ничего не
+  // порождает, и предупреждение на каждом показе свойств было бы шумом.
+  if (options.warnOnUnknown === false) {
+    return newest;
+  }
   emitWarning(
     `Формат выгрузки "${version}" не описан в правилах генерации. ` +
       `Используются правила "${newest.id}" (самые свежие из известных). ` +
