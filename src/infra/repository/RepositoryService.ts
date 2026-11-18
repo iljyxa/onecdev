@@ -7,6 +7,7 @@ import { findObjectXmlInFolder } from '../fs/ObjectLocation';
 import { escapeXmlAttribute as escapeXml, parseConfigXml, parseObjectXml } from '../xml';
 import { readChildObjectRefs } from '../xml/ChildObjectRefsReader';
 import { RepositoryBindingStore } from './RepositoryBindingStore';
+import type { CommandSectionStorage } from './VrunnerStorageKeys';
 import { buildRepositoryScopeKey, RepositoryLockState, type RepositoryLockInfo } from './RepositoryLockState';
 import { RepositoryLockStatusService } from './RepositoryLockStatusService';
 import { RepositoryLockSnapshotStore } from './RepositoryLockSnapshotStore';
@@ -285,6 +286,10 @@ export class RepositoryService {
 
   hasBinding(target: RepositoryTarget): boolean {
     return this.bindings.hasBinding(target);
+  }
+
+  findCommandSectionStorages(target: RepositoryTarget): CommandSectionStorage[] {
+    return this.bindings.findCommandSectionStorages(target);
   }
 
   /** Версия платформы из env.json — подсказка версии сервера хранилища для первого вызова. */

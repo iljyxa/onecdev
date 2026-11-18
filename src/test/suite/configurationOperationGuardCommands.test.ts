@@ -2258,6 +2258,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
           isConnected: () => true,
           loadBinding: () => Promise.resolve(undefined),
           hasStoredRepoPassword: () => Promise.resolve(false),
+          findCommandSectionStorages: () => [],
         } as unknown as RepositoryService,
         repositoryConnectionViewProvider: {
           show: () => {

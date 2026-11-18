@@ -7,7 +7,9 @@ import {
 import { toLocalTimestamp } from '../../../infra/repository/RepositoryLockState';
 import { isRootLockName } from '../../../infra/repository/RepositoryObjectNames';
 import type { RepositoryLockStatusSyncResult } from '../../../infra/repository/RepositoryLockStatusService';
-import type { RepositoryBinding, RepositoryTarget } from '../../../infra/repository/RepositoryService';
+import type { RepositoryBinding, RepositoryService, RepositoryTarget } from '../../../infra/repository/RepositoryService';
+import { describeCommandSectionStorages } from '../../../infra/repository/VrunnerStorageKeys';
+import type { RepositoryBinding as ConnectionFormBinding } from '../../views/RepositoryConnectionViewProvider';
 import type { CommandServices } from '../_shared';
 import {
   type PostRepositorySyncOutcome,
@@ -45,6 +47,29 @@ export const DEFAULT_REPOSITORY_BIND_DEPS: RepositoryBindDeps = {
 /* c8 ignore stop */
 
 export const MAX_LISTED_OWN_ELSEWHERE = 10;
+
+/**
+ * Начальные значения формы подключения. Без привязки, но с адресом в секции команды
+ * vanessa-runner (#136) — подсказка, почему проект не считается привязанным, и, если
+ * адрес однозначен, он подставляется: подключение сохранит его в общие опции.
+ */
+export async function resolveConnectionInitialBinding(
+  target: RepositoryTarget,
+  repositoryService: Pick<RepositoryService, 'loadBinding' | 'hasStoredRepoPassword' | 'findCommandSectionStorages'>,
+  notifyWarning: (message: string) => void
+): Promise<ConnectionFormBinding | undefined> {
+  const binding = await repositoryService.loadBinding(target);
+  const repoPasswordSet = await repositoryService.hasStoredRepoPassword(target);
+  if (binding) {
+    return { ...binding, repoPasswordSet };
+  }
+  const described = describeCommandSectionStorages(repositoryService.findCommandSectionStorages(target));
+  if (!described) {
+    return undefined;
+  }
+  notifyWarning(described.hint);
+  return described.prefill ? { ...described.prefill, repoPasswordSet } : undefined;
+}
 
 export type RepositoryBindLockSource = 'server' | 'bind-output' | 'none';
 

@@ -648,9 +648,17 @@ JSON правится с сохранением формата: отступ, BO
 Повреждённый `autumn-properties.json`: на декорации дерева (`hasBinding`) трактуется как «привязки нет», в
 операциях даёт понятную ошибку.
 
-Ограничения: не поддерживаются YAML/INI-вариант autumn и плоская форма `"vrunner.storage-name"`; опции в
-секциях команд не читаются (iljyxa/onecdev#136); не проверено на настоящем vanessa-runner, читает ли 3.x
-`vrunner.storage-name` из этого файла. Исследование — `docs/research/crs/09-repository-settings.md`.
+Опции в секциях команд (`env.json` → `loadrepo["--storage-name"]`, `autumn-properties.json` →
+`vrunner.repo.load.storage-name`) привязкой НЕ считаются (#136). Проверено на vanessa-runner 2.6.1 и 3.0.2:
+адрес секции действует только для своей команды и перекрывает общий, а `bindrepo`/`repo bind`, захват и
+помещение его не видят («Не установлен путь к хранилищу 1С») — 3.x при этом читает общий `vrunner.storage-name`
+из `autumn-properties.json` рабочего каталога. Если общей привязки нет, а адрес есть только в секциях,
+форма подключения (`resolveConnectionInitialBinding`, `RepositoryBindFlow.ts`) показывает подсказку
+(`findCommandSectionStorages`/`describeCommandSectionStorages` в `VrunnerStorageKeys.ts`) и подставляет адрес,
+если он во всех секциях один: подключение сохраняет его в общие опции.
+
+Ограничения: не поддерживаются YAML/INI-вариант autumn и плоская форма `"vrunner.storage-name"`.
+Исследование — `docs/research/crs/09-repository-settings.md`.
 
 ## Настройка
 

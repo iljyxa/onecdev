@@ -12,6 +12,7 @@ import {
   describeBindFailureHint,
   type RepositoryBindDeps,
   validateBindingForm,
+  resolveConnectionInitialBinding,
 } from './RepositoryBindFlow';
 import {
   askRecursiveMode,
@@ -64,12 +65,10 @@ export function registerRepositoryCommands(
       }
       const { target, title } = resolved;
 
-      const initialBinding = await services.repositoryService.loadBinding(target);
-      const repoPasswordSet = await services.repositoryService.hasStoredRepoPassword(target);
       const formData = await services.repositoryConnectionViewProvider.show(
         'connect',
         target.displayName,
-        initialBinding ? { ...initialBinding, repoPasswordSet } : undefined
+        await resolveConnectionInitialBinding(target, services.repositoryService, bindDeps.notifyWarning)
       );
       if (!formData) {
         return;
@@ -116,12 +115,10 @@ export function registerRepositoryCommands(
       }
       const { target, title } = resolved;
 
-      const initialBinding = await services.repositoryService.loadBinding(target);
-      const repoPasswordSet = await services.repositoryService.hasStoredRepoPassword(target);
       const formData = await services.repositoryConnectionViewProvider.show(
         'create',
         target.displayName,
-        initialBinding ? { ...initialBinding, repoPasswordSet } : undefined
+        await resolveConnectionInitialBinding(target, services.repositoryService, bindDeps.notifyWarning)
       );
       if (!formData) {
         return;

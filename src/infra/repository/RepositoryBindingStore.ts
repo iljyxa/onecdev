@@ -6,16 +6,18 @@ import type { RepositoryBinding, RepositoryTarget, StoredRepositoryBinding } fro
 import { parseJsonObjectText, writeJsonPreservingStyle } from '../fs/JsonTextFile';
 import {
   AUTUMN_PROPERTIES_FILE,
+  ENV_JSON_FILE,
   LEGACY_REPO_PWD_KEY,
   applyMainBindingToAutumn,
   applyMainBindingToEnvDefaults,
+  type CommandSectionStorage,
+  findCommandSectionStorages,
   removeMainBindingFromAutumn,
   removeMainBindingFromEnvDefaults,
   selectMainStorageBinding,
 } from './VrunnerStorageKeys';
 
 const PLATFORM_VERSION_RE = /\d+\.\d+\.\d+\.\d+/;
-const ENV_JSON_FILE = 'env.json';
 const CFE_REPO_PATH_KEY = 'repo-path';
 const CFE_REPO_USER_KEY = 'repo-user';
 const CFE_REPO_PWD_KEY = 'repo-pwd';
@@ -160,6 +162,17 @@ export class RepositoryBindingStore {
    */
   hasBinding(target: RepositoryTarget): boolean {
     return this.readBindingRaw(target, { tolerateBrokenAutumn: true }) !== null;
+  }
+
+  /**
+   * Адреса хранилища только из секций команд vanessa-runner (#136) — для подсказки в
+   * форме подключения. При заданной привязке и у расширений — пусто: там подсказывать нечего.
+   */
+  findCommandSectionStorages(target: RepositoryTarget): CommandSectionStorage[] {
+    if (target.configKind === 'cfe' || this.hasBinding(target)) {
+      return [];
+    }
+    return findCommandSectionStorages(this.readEnvFile().value, this.readAutumnRootForBinding(true));
   }
 
   private async loadBindingRaw(target: RepositoryTarget): Promise<BindingRaw | null> {
