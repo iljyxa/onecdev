@@ -3,13 +3,10 @@ import * as os from 'os';
 import * as path from 'path';
 import { decode } from 'iconv-lite';
 import { resolveV8ExecutablePath, runProcess } from '../../infra/process';
+import { buildRepositoryDesignerArgs, type RepositoryDesignerCredentials } from '../../infra/repository/RepositoryDesignerArgs';
 import type { OnecConnection } from './types';
 
-export interface RepositoryConnection {
-  repoPath: string;
-  repoUser: string;
-  repoPassword: string;
-}
+export type { RepositoryDesignerCredentials as RepositoryConnection } from '../../infra/repository/RepositoryDesignerArgs';
 
 export function resolveV8Path(v8Path: string): string {
   return resolveV8ExecutablePath(v8Path);
@@ -29,12 +26,8 @@ export function appendConnectionArgs(args: string[], connection: OnecConnection)
   }
 }
 
-export function appendRepositoryArgs(args: string[], repository: RepositoryConnection): void {
-  args.push('/ConfigurationRepositoryF', repository.repoPath);
-  args.push('/ConfigurationRepositoryN', repository.repoUser);
-  if (repository.repoPassword) {
-    args.push('/ConfigurationRepositoryP', repository.repoPassword);
-  }
+export function appendRepositoryArgs(args: string[], repository: RepositoryDesignerCredentials): void {
+  args.push(...buildRepositoryDesignerArgs(repository));
 }
 
 export function createTempDir(prefix: string): string {
