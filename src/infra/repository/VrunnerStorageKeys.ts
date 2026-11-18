@@ -65,6 +65,79 @@ export function selectMainStorageBinding(
     : null;
 }
 
+const ENV_JSON_FILE_LABEL = 'env.json';
+
+/** Адрес хранилища в секции отдельной команды vanessa-runner, а не в общих опциях (#136). */
+export interface CommandSectionStorage {
+  readonly file: typeof ENV_JSON_FILE_LABEL | typeof AUTUMN_PROPERTIES_FILE;
+  /** `loadrepo` (env.json 2.x) или `vrunner.repo.load` (autumn-properties.json 3.x) */
+  readonly section: string;
+  readonly repoPath: string;
+  readonly repoUser: string;
+}
+
+/**
+ * Адреса хранилища из секций команд. Привязкой они НЕ считаются: проверено на
+ * vanessa-runner 2.6.1 и 3.0.2 — опция секции действует только для своей команды
+ * (и перекрывает общую), а `bindrepo`/`repo bind`, захват и помещение её не видят.
+ * Нужны только для подсказки пользователю, почему проект считается непривязанным.
+ */
+export function findCommandSectionStorages(
+  envRoot: Readonly<Record<string, unknown>>,
+  autumnRoot: Readonly<Record<string, unknown>> | undefined
+): CommandSectionStorage[] {
+  const found: CommandSectionStorage[] = [];
+  for (const [section, value] of Object.entries(envRoot)) {
+    const pair = section === 'default' ? null : readPair(asObject(value) ?? {}, 'env-storage', ENV_STORAGE_NAME_KEY, ENV_STORAGE_USER_KEY, ENV_STORAGE_PWD_KEY);
+    if (pair) {
+      found.push({ file: ENV_JSON_FILE_LABEL, section, repoPath: pair.repoPath, repoUser: pair.repoUser });
+    }
+  }
+  const walk = (node: Readonly<Record<string, unknown>>, parts: readonly string[]): void => {
+    for (const [key, value] of Object.entries(node)) {
+      const child = asObject(value);
+      if (!child) {
+        continue;
+      }
+      const sectionParts = [...parts, key];
+      const pair = readPair(child, 'autumn', AUTUMN_STORAGE_NAME_KEY, AUTUMN_STORAGE_USER_KEY, AUTUMN_STORAGE_PWD_KEY);
+      if (pair) {
+        found.push({ file: AUTUMN_PROPERTIES_FILE, section: sectionParts.join('.'), repoPath: pair.repoPath, repoUser: pair.repoUser });
+      }
+      walk(child, sectionParts);
+    }
+  };
+  const vrunner = readVrunnerSection(autumnRoot);
+  if (vrunner) {
+    walk(vrunner, [AUTUMN_VRUNNER_SECTION]);
+  }
+  return found;
+}
+
+/**
+ * Подсказка для формы подключения. Адрес подставляется, только если во всех секциях
+ * он один: при разных адресах выбор молча привязал бы проект не к тому хранилищу.
+ */
+export function describeCommandSectionStorages(
+  found: readonly CommandSectionStorage[]
+): { readonly hint: string; readonly prefill?: { readonly repoPath: string; readonly repoUser: string } } | undefined {
+  if (found.length === 0) {
+    return undefined;
+  }
+  const places = found.map((item) => `${item.file}: ${item.section}`).join('; ');
+  const hint =
+    `Адрес хранилища задан только в секции команды vanessa-runner (${places}). ` +
+    'vanessa-runner применяет его лишь для этой команды, а подключение, захват и помещение его не видят. ' +
+    'Перенесите адрес в общие опции (env.json → default.--storage-name, autumn-properties.json → vrunner.storage-name)' +
+    ' — подключение к хранилищу сохранит его туда.';
+  const paths = new Set(found.map((item) => item.repoPath));
+  if (paths.size > 1) {
+    return { hint: `${hint} Адреса в секциях различаются — укажите нужный вручную.` };
+  }
+  const users = new Set(found.map((item) => item.repoUser));
+  return { hint, prefill: { repoPath: found[0].repoPath, repoUser: users.size === 1 ? found[0].repoUser : '' } };
+}
+
 /**
  * Стандартные ключи вместо прежних. Позиция сохраняется — на месте прежних ключей,
  * иначе на месте стандартных: файл правит и пользователь, и лишняя перестановка
@@ -153,10 +226,11 @@ function readPair(
 }
 
 function readVrunnerSection(root: Readonly<Record<string, unknown>> | undefined): Readonly<Record<string, unknown>> | undefined {
-  const section = root?.[AUTUMN_VRUNNER_SECTION];
-  return section && typeof section === 'object' && !Array.isArray(section)
-    ? (section as Record<string, unknown>)
-    : undefined;
+  return asObject(root?.[AUTUMN_VRUNNER_SECTION]);
+}
+
+function asObject(value: unknown): Readonly<Record<string, unknown>> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
 }
 
 function readString(value: unknown): string {

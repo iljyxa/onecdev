@@ -9,6 +9,8 @@ import {
   LEGACY_REPO_PWD_KEY,
   applyMainBindingToAutumn,
   applyMainBindingToEnvDefaults,
+  type CommandSectionStorage,
+  findCommandSectionStorages,
   removeMainBindingFromAutumn,
   removeMainBindingFromEnvDefaults,
   selectMainStorageBinding,
@@ -160,6 +162,17 @@ export class RepositoryBindingStore {
    */
   hasBinding(target: RepositoryTarget): boolean {
     return this.readBindingRaw(target, { tolerateBrokenAutumn: true }) !== null;
+  }
+
+  /**
+   * Адреса хранилища только из секций команд vanessa-runner (#136) — для подсказки в
+   * форме подключения. При заданной привязке и у расширений — пусто: там подсказывать нечего.
+   */
+  findCommandSectionStorages(target: RepositoryTarget): CommandSectionStorage[] {
+    if (target.configKind === 'cfe' || this.hasBinding(target)) {
+      return [];
+    }
+    return findCommandSectionStorages(this.readEnvFile().value, this.readAutumnRootForBinding(true));
   }
 
   private async loadBindingRaw(target: RepositoryTarget): Promise<BindingRaw | null> {
