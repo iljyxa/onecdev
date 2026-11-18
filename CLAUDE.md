@@ -32,9 +32,13 @@
 - **`main` — ствол** (`origin` = `iljyxa/onecdev`). С `Macegor/v8vscedit` синхронизации нет.
 - **Ветку задачи создаёт оркестратор** (основной чат) от `origin/main`; субагенты веток не создают. Имена:
   `fix/…`, `feat/…`, `chore/…`; по issue — `fix/issue-<N>-<кратко>`.
-- **В `main` — только `git merge --no-ff`** (merge-коммит — граница задачи); ветка после merge удаляется
-  локально и в `origin`. Долгоживущая ветка подтягивает `main` через `git merge main`, не rebase.
-- `main` в `origin` пушится только с явного подтверждения пользователя; `push --force` в `main` запрещён.
+- **В `main` — только через PR с merge-коммитом** (`gh pr merge --merge --delete-branch`, тема
+  «Влить <ветка>: … (#N)»; merge-коммит — граница задачи, как прежний `--no-ff`). Перед merge — зелёные CI
+  (QA-гейт) и ревью CodeRabbit. После merge — `git pull --ff-only` в `main`, локальная ветка удаляется.
+  Долгоживущая ветка подтягивает `main` через `git merge main`, не rebase. Порядок — «PR и ревью» в
+  [agentic-pipeline.md](./docs/agentic-pipeline.md).
+- Ветку задачи пушить можно; **merge PR и любой push в `main` — только с явного подтверждения
+  пользователя**; `push --force` в `main` запрещён.
 
 ## Issues
 

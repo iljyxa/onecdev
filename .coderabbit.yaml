@@ -1,0 +1,72 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Первичное ревью каждого PR в main (docs/agentic-pipeline.md, «PR и ревью»). Правила проекта CodeRabbit
+# берёт из CLAUDE.md и docs/project-rules.md (knowledge_base.code_guidelines); здесь — только то, что
+# нужно ему сверх них: язык, что не ревьюить и на что смотреть по слоям.
+language: ru-RU
+tone_instructions: "Пиши кратко и по делу, на русском. Каждое замечание: что не так, чем чревато, как исправить. Без похвалы и общих советов."
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+  # example/ — настоящая выгрузка платформы 1С (фикстуры), её не правят руками и не ревьюят;
+  # сборка и lock-файл — производные.
+  path_filters:
+    - "!example/**"
+    - "!dist/**"
+    - "!out/**"
+    - "!package-lock.json"
+    - "!src/icons/**"
+  path_instructions:
+    - path: "src/domain/**"
+      instructions: >-
+        Чистый домен: запрещены импорты vscode, fs, path, require/readFileSync и любые зависимости от
+        cli/**. META_TYPES — единственный реестр типов метаданных: любой параллельный словарь вида
+        Record<string,string> «тип → папка» вне него — дефект архитектуры.
+    - path: "src/infra/**"
+      instructions: >-
+        Запрещён импорт vscode и cli/**. Regex-парсинг XML допустим только в infra/xml/. Редактор
+        существующего XML обязан сохранять BOM и EOL через writeTextFilePreservingBomAndEol, причём эталон
+        стиля — текст, прочитанный ДО замены. Пути XML и BSL-модулей — только через MetaPathResolver.
+    - path: "src/ui/**"
+      instructions: >-
+        Без regex-парсинга XML и вычисления путей — только вызовы infra. Сервисы не создаются через new в
+        командах и builder'ах — только через Container. Основной UI — webview UniversalPanelViewProvider;
+        команды контекстного меню берутся из MODULE_SLOT_ACTIONS, не хардкодятся. Внутри аренды
+        ConfigurationOperationGuard уведомления показываются без await. Справочники свойств живут в
+        infra/xml/PropertySchema.ts, не в UI.
+    - path: "src/ui/mcp/**"
+      instructions: >-
+        MCP-инструменты принимают только канонические пути (docs/mcp-paths.md): коллекции во
+        множественном числе, без английских алиасов, аргумент одного узла называется path. Инструмент
+        записи валидирует вход, возвращает изменённые файлы и идёт единым post-mutation путём; логика —
+        в общих сервисах, тот же код, что у UI-команды. Нельзя исполнять произвольные команды.
+    - path: "src/test/**"
+      instructions: >-
+        Тест проверяет поведение на реальных фикстурах example/ или временных файлах, а не факт вызова;
+        без заглушек и тавтологий ради покрытия, без .only, детерминированно, без угадывания таймингов.
+        Тест не пишет в example/ — только во временный каталог (fs.mkdtempSync).
+    - path: "src-ui/**"
+      instructions: >-
+        Vue-webview. Изменение src-ui/shared/protocol/ — контракт сообщений с расширением: проверь, что
+        правлены обе стороны. Соблюдать CSP и nonce webview.
+    - path: "**/*.ts"
+      instructions: >-
+        Комментарии на русском и объясняют «почему», а не «что». Запрещён any без комментария
+        «// any: <причина>». Файл производственного кода больше ~800 строк — сигнал God-объекта.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CLAUDE.md"
+      - "docs/project-rules.md"
+chat:
+  auto_reply: true
