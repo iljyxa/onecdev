@@ -40,6 +40,21 @@ export class ConfigurationXmlEditor {
       value: string | boolean | string[];
     }
   ): EditResult {
+    if (options.targetKind === 'StandardAttribute') {
+      // Свой писатель с причинами отказа: «не удалось изменить» без причины
+      // скрывало бы и заимствованный объект, и реквизит табличной части (#145).
+      const outcome = this.objectReader.updateStandardAttributeProperty(xmlPath, {
+        attributeName: options.targetName,
+        tabularSectionName: options.tabularSectionName,
+        propertyKey: options.propertyKey,
+        valueKind: options.valueKind,
+        value: options.value,
+      });
+      if (outcome.status === 'refused') {
+        return this.fail(outcome.message);
+      }
+      return outcome.status === 'changed' ? this.ok([xmlPath]) : this.unchanged();
+    }
     const changed = this.objectReader.updatePropertyInObject(xmlPath, options);
     return changed
       ? this.ok([xmlPath])
@@ -497,6 +512,10 @@ export class ConfigurationXmlEditor {
 
   private ok(changedFiles: string[]): EditResult {
     return { success: true, changed: true, changedFiles, warnings: [], errors: [] };
+  }
+
+  private unchanged(): EditResult {
+    return { success: true, changed: false, changedFiles: [], warnings: [], errors: [] };
   }
 
   private warn(message: string): EditResult {

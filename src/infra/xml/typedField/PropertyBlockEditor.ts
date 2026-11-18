@@ -89,6 +89,15 @@ function leadingIndent(inner: string, start: number): string {
   return /^[ \t]*$/.test(prefix) ? prefix : '';
 }
 
+/**
+ * Заимствованный ли объект/поле расширения: `<ObjectBelonging>Adopted</…>`
+ * среди прямых детей `<Properties>`. Такой элемент платформа выгружает
+ * усечённо — состав и значения принадлежат основной конфигурации.
+ */
+export function isAdoptedObjectBelonging(blocks: readonly PropertyBlock[]): boolean {
+  return blocks.some((block) => block.key === 'ObjectBelonging' && /^<ObjectBelonging>\s*Adopted\s*<\/ObjectBelonging>$/.test(block.xml));
+}
+
 /** Преобладающий перевод строки фрагмента (CRLF-файл не должен получить LF-вставку). */
 export function detectEol(text: string): string {
   return text.includes('\r\n') ? '\r\n' : '\n';

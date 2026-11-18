@@ -7,9 +7,7 @@ import {
 } from '../../domain/StandardAttribute';
 import {
   detectRootObjectKind,
-  escapeXmlText,
   isEmptyPropertyValue,
-  extractStandardAttributeXml,
   extractSimpleTag,
   extractSynonym,
   findChildMetaElementRange,
@@ -31,6 +29,22 @@ import {
   insertBlockInCanonicalPosition,
 } from './typedField/PropertyBlockEditor';
 import { insertPropertyBlockInOrder } from './properties/PropertyInsert';
+import {
+  buildPropertyValueBlock,
+  updateLocalizedPropertyContent,
+  type PropertyValueKind,
+} from './properties/PropertyValueBlock';
+import {
+  applyStandardAttributePropertyEdit,
+  rulesetForObjectXml,
+  type StandardAttributeEditRefusal,
+  type StandardAttributePropertyEdit,
+} from './properties/StandardAttributesBlock';
+
+/** Итог записи свойства стандартного реквизита в файл объекта. */
+export type StandardAttributeWriteOutcome =
+  | { readonly status: 'changed' | 'unchanged' }
+  | { readonly status: 'refused'; readonly reason: StandardAttributeEditRefusal | 'read-failed'; readonly message: string };
 
 interface XmlTextNode { '#text': string }
 type XmlElementNode = Record<string, XmlNodeList>;
@@ -351,6 +365,36 @@ export class ObjectXmlReader {
     return true;
   }
 
+  /**
+   * Правит свойство стандартного реквизита корня объекта. Значения берутся из
+   * шаблона умолчаний вида, если блока `<StandardAttributes>` в файле нет:
+   * платформа у нового объекта его не пишет (#16), а без материализации правка
+   * была бы невозможна (#145).
+   */
+  updateStandardAttributeProperty(xmlPath: string, edit: StandardAttributePropertyEdit): StandardAttributeWriteOutcome {
+    let original: string;
+    try {
+      original = fs.readFileSync(xmlPath, 'utf-8');
+    } catch {
+      return { status: 'refused', reason: 'read-failed', message: 'Не удалось прочитать файл объекта.' };
+    }
+    // Предупреждение о незнакомой версии формата — только здесь, на записи:
+    // показ свойств вызывает разрешение ruleset на каждом узле и засорял бы лог.
+    const result = applyStandardAttributePropertyEdit(
+      original,
+      edit,
+      rulesetForObjectXml(original, { warnOnUnknownVersion: true })
+    );
+    if (result.status !== 'changed') {
+      // EOL-нечувствительное сравнение «было/стало» уже сделано внутри
+      // applyStandardAttributePropertyEdit (hasRealChange по элементу).
+      return result;
+    }
+    // `original` — текст ДО правки: эталон BOM/EOL для записи (запрет №12).
+    writeTextFilePreservingBomAndEol(xmlPath, original, result.xml);
+    return { status: 'changed' };
+  }
+
   updatePropertyInObject(
     xmlPath: string,
     options: {
@@ -359,10 +403,19 @@ export class ObjectXmlReader {
       tabularSectionName?: string;
       urlTemplateName?: string;
       propertyKey: string;
-      valueKind: 'string' | 'boolean' | 'localizedString' | 'metadataReferenceList' | 'metadataFieldList';
+      valueKind: PropertyValueKind;
       value: string | boolean | string[];
     }
   ): boolean {
+    if (options.targetKind === 'StandardAttribute') {
+      return this.updateStandardAttributeProperty(xmlPath, {
+        attributeName: options.targetName,
+        tabularSectionName: options.tabularSectionName,
+        propertyKey: options.propertyKey,
+        valueKind: options.valueKind,
+        value: options.value,
+      }).status === 'changed';
+    }
     let xml: string;
     try {
       xml = fs.readFileSync(xmlPath, 'utf-8');
@@ -372,9 +425,8 @@ export class ObjectXmlReader {
 
     // Целевой блок адресуется диапазоном {start,end} в исходном XML, а не текстовым
     // совпадением: одноимённые колонки в разных ТЧ (или совпадающие Type-блоки)
-    // не должны подменять друг друга. StandardAttribute локатора-диапазона не имеет
-    // (лежит внутри StandardAttributes и уникален по атрибуту name), поэтому для него
-    // сохраняется адресная замена по извлечённому значению.
+    // не должны подменять друг друга. StandardAttribute сюда не доходит: у него
+    // свой писатель (updateStandardAttributeProperty) с шаблоном умолчаний вида.
     const targetRange = ((): { start: number; end: number } | null => {
       if (options.targetKind === 'Self') {
         return { start: 0, end: xml.length };
@@ -392,14 +444,6 @@ export class ObjectXmlReader {
           return null;
         }
         return findMethodRangeInUrlTemplate(xml, options.urlTemplateName, options.targetName);
-      }
-      if (options.targetKind === 'StandardAttribute') {
-        const standardXml = extractStandardAttributeXml(xml, options.targetName, options.tabularSectionName);
-        if (!standardXml) {
-          return null;
-        }
-        const start = xml.indexOf(standardXml);
-        return start >= 0 ? { start, end: start + standardXml.length } : null;
       }
       return findChildMetaElementRange(xml, options.targetKind, options.targetName);
     })();
@@ -699,7 +743,7 @@ function indentTypeInner(typeInnerXml: string, indent: string): string {
 function updatePropertyInElement(
   elementXml: string,
   propertyKey: string,
-  valueKind: 'string' | 'boolean' | 'localizedString' | 'metadataReferenceList' | 'metadataFieldList',
+  valueKind: PropertyValueKind,
   value: string | boolean | string[],
   ownerKind?: string
 ): string {
@@ -738,74 +782,4 @@ function updatePropertyInElement(
   // `String.replace('')` вставил бы свойство в позицию 0, то есть перед `<?xml`.
   const innerStart = propertiesMatch.index + '<Properties>'.length;
   return elementXml.slice(0, innerStart) + nextPropsInner + elementXml.slice(innerStart + propsInner.length);
-}
-
-function buildPropertyValueBlock(
-  propertyKey: string,
-  valueKind: 'string' | 'boolean' | 'localizedString' | 'metadataReferenceList' | 'metadataFieldList',
-  value: string | boolean | string[],
-  blockIndent: string
-): string {
-  if (valueKind === 'boolean') {
-    return `<${propertyKey}>${value === true ? 'true' : 'false'}</${propertyKey}>`;
-  }
-  if (valueKind === 'metadataReferenceList') {
-    const items = Array.isArray(value) ? value : [];
-    if (items.length === 0) {
-      return `<${propertyKey}/>`;
-    }
-    return [
-      `<${propertyKey}>`,
-      ...items.map((item) => `\t\t\t\t<xr:Item xsi:type="xr:MDObjectRef">${escapeXmlText(item)}</xr:Item>`),
-      `\t\t\t</${propertyKey}>`,
-    ].join('\n');
-  }
-  if (valueKind === 'metadataFieldList') {
-    const items = Array.isArray(value) ? value : [];
-    if (items.length === 0) {
-      return `<${propertyKey}/>`;
-    }
-    return [
-      `<${propertyKey}>`,
-      ...items.map((item) => `\t\t\t\t<xr:Field>${escapeXmlText(item)}</xr:Field>`),
-      `\t\t\t</${propertyKey}>`,
-    ].join('\n');
-  }
-  // Сюда управление доходит только для 'string' и 'localizedString': boolean и
-  // оба списочных вида обработаны выше и уже вернули свой блок (у них своя
-  // пустота — пустой список).
-  if (isEmptyPropertyValue(value)) {
-    return `<${propertyKey}/>`;
-  }
-  if (valueKind === 'localizedString') {
-    const content = escapeXmlText(typeof value === 'string' ? value : String(value));
-    // Отступы — от места САМОГО свойства, а не фиксированные: блок пишется и на
-    // корне объекта, и у дочернего элемента, где глубина другая. С хардкодом
-    // цикл «очистить → заполнить заново» уводил `<v8:item>` на лишний уровень,
-    // а закрывающий тег — в нулевую колонку.
-    return [
-      `<${propertyKey}>`,
-      `${blockIndent}\t<v8:item>`,
-      `${blockIndent}\t\t<v8:lang>ru</v8:lang>`,
-      `${blockIndent}\t\t<v8:content>${content}</v8:content>`,
-      `${blockIndent}\t</v8:item>`,
-      `${blockIndent}</${propertyKey}>`,
-    ].join('\n');
-  }
-  return `<${propertyKey}>${escapeXmlText(String(value))}</${propertyKey}>`;
-}
-
-function updateLocalizedPropertyContent(propertyBlock: string, value: string | boolean | string[]): string {
-  const content = escapeXmlText(typeof value === 'string' ? value : String(value));
-  const contentRe = /(<v8:content>)[\s\S]*?(<\/v8:content>)/;
-  // Парный блок свойства с САМОЗАКРЫТЫМ `<v8:content/>` внутри: в эталоне такой
-  // формы нет ни разу (0 при 105 278 заполненных), и наш писатель её не создаёт —
-  // пустое локализованное значение схлопывается в `<Synonym/>` целиком. Ветка
-  // оставлена как защита от файла, отредактированного человеком вручную, и из
-  // production недостижима.
-  /* c8 ignore next 3 */
-  if (!contentRe.test(propertyBlock)) {
-    return propertyBlock.replace(/<v8:content\s*\/>/, () => `<v8:content>${content}</v8:content>`);
-  }
-  return propertyBlock.replace(contentRe, (_m, open: string, close: string) => `${open}${content}${close}`);
 }
