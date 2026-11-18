@@ -199,6 +199,12 @@ export const ENUM_OPTIONS: EnumOptionsMap = {
     { value: 'ShowError', label: 'Выдавать ошибку' },
     { value: 'ShowWarning', label: 'Показывать предупреждение' },
   ],
+  // Состав — по XDTO-схеме платформы (8.3.27, 8.5.1): значения `Auto` в ней нет.
+  TypeReductionMode: [
+    { value: 'TransformValues', label: 'Преобразовывать значения' },
+    { value: 'DeleteData', label: 'Удалять данные' },
+    { value: 'Deny', label: 'Запрещать' },
+  ],
   Indexing: [
     { value: 'DontIndex', label: 'Не индексировать' },
     { value: 'Index', label: 'Индексировать' },
@@ -552,6 +558,7 @@ export const PROPERTY_TITLE_RU: Readonly<Record<string, string>> = {
   CreateOnInput: 'Создание при вводе',
   ChoiceHistoryOnInput: 'История выбора при вводе',
   Indexing: 'Индексирование',
+  TypeReductionMode: 'Режим сокращения типа',
   FullTextSearch: 'Полнотекстовый поиск',
   DataHistory: 'История данных',
   LinkByType: 'Связь по типу',

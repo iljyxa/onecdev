@@ -203,11 +203,6 @@ const PROCESSING_COLUMN_KEYS = [...FILL_KEYS] as const;
  * перечисления - Auto». В эталоне у нессылочных полей регистра это `DontUse`/`Use`.
  */
 const REGISTER_FIELD_DEFAULTS: Readonly<Record<string, string>> = { QuickChoice: 'DontUse', CreateOnInput: 'Use' };
-/** У измерения регистра `TypeReductionMode` для нессылочного типа — `TransformValues`, не `Auto`. */
-const REGISTER_DIMENSION_DEFAULTS: Readonly<Record<string, string>> = {
-  ...REGISTER_FIELD_DEFAULTS,
-  TypeReductionMode: 'TransformValues',
-};
 
 type OwnerRules = Partial<Record<TypeAwarePropertyOwnerKind, OwnerRoleRule>>;
 
@@ -250,7 +245,7 @@ const OWNER_ROLE_RULES: Partial<Record<MetaKind, OwnerRules>> = {
     Attribute: { ownerKeys: OBJECT_ATTRIBUTE_KEYS },
     Dimension: {
       ownerKeys: [...OBJECT_ATTRIBUTE_KEYS, 'DenyIncompleteValues', 'Master', 'MainFilter', 'TypeReductionMode'],
-      defaults: REGISTER_DIMENSION_DEFAULTS,
+      defaults: REGISTER_FIELD_DEFAULTS,
     },
     Resource: { ownerKeys: OBJECT_ATTRIBUTE_KEYS, defaults: REGISTER_FIELD_DEFAULTS },
   },
@@ -258,7 +253,7 @@ const OWNER_ROLE_RULES: Partial<Record<MetaKind, OwnerRules>> = {
     Attribute: { ownerKeys: SEARCH_KEYS },
     Dimension: {
       ownerKeys: [...SEARCH_KEYS, 'DenyIncompleteValues', 'UseInTotals'],
-      defaults: REGISTER_DIMENSION_DEFAULTS,
+      defaults: REGISTER_FIELD_DEFAULTS,
     },
     // У ресурса регистра накопления и бухгалтерии нет даже `Indexing`.
     Resource: { ownerKeys: ['FullTextSearch'], defaults: REGISTER_FIELD_DEFAULTS },
@@ -267,7 +262,7 @@ const OWNER_ROLE_RULES: Partial<Record<MetaKind, OwnerRules>> = {
     Attribute: { ownerKeys: SEARCH_KEYS },
     Dimension: {
       ownerKeys: [...SEARCH_KEYS, 'DenyIncompleteValues', 'Balance', 'AccountingFlag'],
-      defaults: REGISTER_DIMENSION_DEFAULTS,
+      defaults: REGISTER_FIELD_DEFAULTS,
     },
     Resource: {
       ownerKeys: ['FullTextSearch', 'Balance', 'AccountingFlag', 'ExtDimensionAccountingFlag'],
@@ -398,7 +393,8 @@ const DEFAULT_VALUES: Readonly<Record<string, string>> = {
   ShowInTotal: 'false',
   Master: 'false',
   MainFilter: 'false',
-  TypeReductionMode: 'Auto',
+  // `Auto` в перечислении платформы нет — умолчание из эталонов.
+  TypeReductionMode: 'TransformValues',
   UseInTotals: 'false',
   Balance: 'false',
   // AccountingFlag/ExtDimensionAccountingFlag — не булево, а ссылка на признак
