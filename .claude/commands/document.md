@@ -1,5 +1,5 @@
 ---
-description: Ручной запуск агента documenter — обновить docs/ и рецепты в docs/change-recipes.md, если изменился публичный контракт/поведение/архитектура. Правит только документацию.
+description: Ручной запуск агента documenter — обновить docs/ и рецепты в docs/recipes/, если изменился публичный контракт/поведение/архитектура. Правит только документацию.
 allowed-tools: Task, Read, Edit, Write
 ---
 
@@ -7,5 +7,5 @@ allowed-tools: Task, Read, Edit, Write
 
 1. По `git diff` определи, что из публичного контракта/поведения/архитектуры поменялось.
 2. Если изменения только внутренние и публичный контракт не поменялся — скажи, что стадия `documenter` пропускается (нечего обновлять).
-3. Иначе делегируй в субагента `documenter` через Task: обновить соответствующие `docs/` (`architecture.md`, `metadata-navigator.md`, `mcp-paths.md`, `xml-format-rulesets.md`, `mcp-server-lifecycle.md`, `git-metadata-changes.md`, `git-history-graph.md` и др.) и/или рецепты в `docs/change-recipes.md`. Не дублировать единый источник правды — обновлять на месте и ссылаться. Для нового сценария — добавить рецепт в `docs/change-recipes.md` по тому же формату; `CLAUDE.md` держать компактным.
+3. Иначе делегируй в субагента `documenter` через Task: обновить соответствующие `docs/` (`architecture.md`, `metadata-navigator.md`, `mcp-paths.md`, `xml-format-rulesets.md`, `mcp-server-lifecycle.md`, `git-metadata-changes.md`, `git-history-graph.md` и др.) и/или рецепты в `docs/recipes/*.md`. Не дублировать единый источник правды — обновлять на месте и ссылаться. Для нового сценария — добавить рецепт в подходящий `docs/recipes/*.md` по тому же формату и строку в индекс `docs/change-recipes.md`; `CLAUDE.md` держать компактным.
 4. Верни список обновлённых файлов и краткую сводку изменений.

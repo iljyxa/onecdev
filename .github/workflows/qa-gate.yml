@@ -1,0 +1,61 @@
+# Тот же QA-гейт, что локально (.claude/scripts/qa-gate.sh): lint, sanity-проверки инвариантов и один
+# прогон coverage:changed (регресс npm test + 100% покрытия изменённого) относительно main.
+# Даёт PR единый статус рядом с ревью CodeRabbit и не занимает машину разработчика.
+name: QA-гейт
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  qa-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Гейт считает дифф от merge-base с origin/main — нужна вся история.
+          fetch-depth: 0
+          # Гейту не нужен токен после checkout: не оставлять его в .git/config для следующих шагов.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # xvfb и библиотеки Electron — для настоящего VS Code из @vscode/test-electron; rg — для sanity-проверок.
+      - name: Системные зависимости
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb ripgrep libgbm1 libnss3 libxkbfile1 libgtk-3-0 libasound2t64
+
+      # --ignore-scripts: install-скрипты ssh2/cpu-features собирают аддоны под системный Node, а extension
+      # host работает на Node из Electron с другим ABI и падает до первого теста.
+      - name: Зависимости
+        run: npm ci --ignore-scripts
+
+      - name: Кэш VS Code для тестов
+        uses: actions/cache@v4
+        with:
+          path: .vscode-test
+          key: vscode-test-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: QA-гейт
+        run: bash .claude/scripts/qa-gate.sh origin/main
+
+      - name: Лог гейта
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-gate-log
+          path: out/qa-gate.log
+          if-no-files-found: ignore
+          retention-days: 7

@@ -11,7 +11,11 @@
       "Bash(git log *)",
       "Bash(git show *)",
       "Bash(bash .claude/scripts/qa-gate.sh*)",
-      "Bash(MOCHA_GREP=* xvfb-run -a npm run test:fast)"
+      "Bash(MOCHA_GREP=* xvfb-run -a npm run test:fast)",
+      "Bash(bash .claude/scripts/pr-review-comments.sh *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr view *)",
+      "Bash(gh issue view *)"
     ]
   },
   "sandbox": {

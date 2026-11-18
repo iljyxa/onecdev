@@ -264,7 +264,7 @@ Suite `crs{TcpTransport,Depot,Client,ReadMethods}.crserver.test.ts`. Храни�
   `stand.mjs` в extension host запрещён: он вешает `process.exit` на SIGINT/SIGTERM/SIGHUP и роняет прогон.
 - Тесты не пишут в `example/`: рабочие каталоги — `fs.mkdtempSync` в `os.tmpdir()`.
 
-Рецепт — «Интеграционный тест с настоящим crserver» в [change-recipes.md](./change-recipes.md).
+Рецепт — «Интеграционный тест с настоящим crserver» в [recipes/repository.md](./recipes/repository.md).
 
 ## План этапов
 
@@ -280,4 +280,4 @@ Suite `crs{TcpTransport,Depot,Client,ReadMethods}.crserver.test.ts`. Храни�
 
 ## Как добавлять
 
-Новый метод протокола — рецепт «Новый метод протокола crs» в [change-recipes.md](./change-recipes.md).
+Новый метод протокола — рецепт «Новый метод протокола crs» в [recipes/repository.md](./recipes/repository.md).
