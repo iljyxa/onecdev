@@ -1,5 +1,5 @@
 ---
-description: Только триаж — определить FAST vs FULL трек для задачи по критериям docs/agentic-pipeline.md и объяснить почему. Ничего не меняет, кода не пишет.
+description: Только триаж — определить трек SOLO / FULL / LARGE для задачи по критериям docs/agentic-pipeline.md и объяснить почему. Ничего не меняет, кода не пишет.
 argument-hint: [описание задачи]
 allowed-tools: Read, Glob, Grep
 ---
@@ -8,8 +8,15 @@ allowed-tools: Read, Glob, Grep
 
 $ARGUMENTS
 
-1. Прочитай `docs/agentic-pipeline.md` (раздел «Триаж: FAST vs FULL») и рецепты сценариев в `docs/change-recipes.md`.
-2. Проверь критерии FULL: правит ли задача центральные контракты (`META_TYPES`, `MetaPathResolver`, `PropertySchema`, ruleset формата), добавляет тип метаданных/слот/тег/схему/MCP-инструмент/команду, меняет контракт webview↔расширение, затрагивает >2–3 файлов или пересекает границы слоёв (domain/infra/ui/lsp/cli).
-3. Если да — **FULL-трек** (architect → implementer → QA-гейт → reviewer → documenter). Если нет — **FAST-трек** (оркестратор реализует сам → QA-гейт → reviewer → documenter). При сомнении — FULL.
+1. Прочитай раздел «Триаж» `docs/agentic-pipeline.md` и таблицу индекса `docs/change-recipes.md` (сами
+   рецепты — только файл подходящего сценария в `docs/recipes/`).
+2. Проверь критерии FULL: новый тип метаданных/слот/тег/схема свойств, правка центральных контрактов
+   (`META_TYPES`, `MetaPathResolver`, `PropertySchema`, `TypedFieldPropertyRules`, ruleset формата),
+   MCP-инструмент или канон путей, протокол webview↔расширение, новая подсистема или новая зависимость между
+   слоями. Число затронутых файлов само по себе FULL не делает.
+3. Да — **FULL** (план в plan mode → TDD в сессии → гейт → `reviewer` → PR + CodeRabbit); не помещается в одну
+   сессию — **LARGE** (`architect` → `implementer` по этапам → гейт → `reviewer` → `documenter`); иначе —
+   **SOLO** (сессия сама → гейт → PR + CodeRabbit). Сомнение между SOLO и FULL — FULL.
 
-Верни: выбранный трек, краткое обоснование по пунктам критериев, какие файлы/слои предположительно затрагиваются, какие агенты будут задействованы. Ничего не редактируй и не запускай.
+Верни: трек, обоснование по пунктам критериев, предполагаемые файлы/слои и рецепт. Ничего не редактируй и не
+запускай.
