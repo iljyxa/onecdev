@@ -44,22 +44,39 @@
   `<MetaDataObject>`, корня `<GraphicalSchema>` и корня `<Form>` нет `xmlns:pal`; у отчёта нет
   `<AuxiliaryVariantForm/>`; `WindowOpeningMode` пишется `LockOwnerWindow`; нет
   `UseInInterfaceCompatibilityMode` в дескрипторе формы/общей формы.
-  Всё остальное (SA-блоки, generatedTypes) наследуется из baseline.
+  Всё остальное (SA-блоки, generatedTypes) наследуется из baseline, включая
+  `emitDefaultStandardBlocks: false` (в эталоне 2.20 блоков нет).
 - **`formatPre2_20Ruleset.ts`** — `FORMAT_PRE_2_20_RULESET`: гибрид для 2.17–2.19.
   Корни объектов (`MetaDataObject` и т.п.), generatedTypes, SA-блоки — от baseline
   (так эти версии генерировались всегда: на этом держатся scaffold 2.17 и
   `DEFAULT_FORMAT_VERSION` 2.18); всё про управляемую форму — от 2.20 (старая
-  платформа не знает ни `pal` в форме, ни `LockOwner`). Статус-кво для старых
+  платформа не знает ни `pal` в форме, ни `LockOwner`); блоки стандартных
+  реквизитов пишутся (`emitDefaultStandardBlocks: true`). Статус-кво для старых
   платформ; точных доноров 2.17–2.19 в корпусе нет. 2.17 входит в
   `SUPPORTED_FORMATS` и предупреждения о незнакомой версии не даёт.
 - **`standardAttributes.ts`** — константные блоки `<StandardAttributes>` и
   `<StandardTabularSections>` по виду метаданных (сгенерированы из эталонных
   выгрузок). Блоки не зависят от имени объекта; по составу/порядку реквизитов
   едины для 2.20 и 2.21. Ruleset публикует их через `standardAttributes(kind)`
-  и `standardTabularSections(kind)`; `MetadataXmlCreator` вставляет в
-  `<Properties>` на фиксированную позицию вида. Виды без стандартных реквизитов
-  у свежего объекта (перечисление, журнал документов, независимый
-  непериодический регистр сведений) блок не получают.
+  и `standardTabularSections(kind)`. Это **умолчания платформы** (исправлены
+  `ExchangePlan`, `CalculationRegister`, `ChartOfAccounts` вместе с
+  `ExtDimensionTypes`), а не обязательный вывод генератора.
+  Генератор пишет блоки только при `FormatRuleset.emitDefaultStandardBlocks`:
+  `false` у baseline (2.21) и 2.20, `true` у pre-2.20 (2.17–2.19). Сверено на
+  платформе: 8.3.27/8.5 при выгрузке не пишут `<StandardAttributes>` и
+  `<StandardTabularSections>`, если значения равны умолчаниям, а при загрузке
+  достраивают их. `saBlock`/`stsBlock` в `infra/xml/creator/creatorShared.ts`
+  при `false` возвращают `[]`; при `true` блок встаёт на фиксированную позицию
+  вида. Виды без стандартных реквизитов у свежего объекта (перечисление, журнал
+  документов, независимый непериодический регистр сведений) блок не получают.
+- **Чтение умолчаний** — `infra/xml/properties/StandardAttributesBlock.ts`:
+  `resolveStandardAttributeXml` (явный элемент из файла, иначе элемент шаблона
+  ruleset по версии корня XML, иначе голый тег), `detectObjectXmlFormatVersion`,
+  `rulesetForObjectXml`, `defaultStandardAttributeElementXml`. Показ свойств
+  стандартного реквизита файл **не меняет** (`ensureStandardAttributeXml`
+  удалена). Для заимствованного объекта умолчания не подставляются
+  (`useDefaults: false`). Правка свойства, когда блока в файле нет, — #145;
+  наследование значений заимствованного объекта — #146.
 - **`formatRegistry.ts`** — карта «версия → ruleset», резолвер и version-guard:
   - `resolveFormatRuleset(version)` — ruleset по версии;
   - для **незнакомой** версии берётся самый свежий известный ruleset и
@@ -106,8 +123,9 @@
   данные — `ROOT_PROPERTY_ORDER`, см.
   [Порядок прямых детей `<Properties>`](#порядок-прямых-детей-properties-корневого-объекта-по-виду);
   в ruleset он не переносился (версия формата на него не влияет). Позиция вставки
-  `<StandardAttributes>`/`<StandardTabularSections>` пока задаётся прямо
-  в `build*`-функциях (сами блоки уже принадлежат ruleset);
+  `<StandardAttributes>`/`<StandardTabularSections>` (только при
+  `emitDefaultStandardBlocks`) пока задаётся прямо в `build*`-функциях (сами
+  блоки и флаг уже принадлежат ruleset);
 - `<StandardAttributes>` табличных частей (реквизит `LineNumber`) при добавлении
   ТЧ через `addChildElement` — на данный момент не генерируется.
 
