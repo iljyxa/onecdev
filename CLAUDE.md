@@ -1,65 +1,48 @@
 # CLAUDE.md
 
-Гайд для Claude Code (и любого агента) при работе с этим репозиторием. Правила ниже — контракт, а не рекомендации.
+Контракт для Claude Code и любого агента в этом репозитории. Файл загружается в каждый ход каждого агента,
+поэтому здесь — только краткие правила. Развёрнутые формулировки, примеры и обоснования —
+**[docs/project-rules.md](./docs/project-rules.md)** (нумерация запретов совпадает); читать нужный раздел,
+когда задача касается его области.
 
 ## О проекте
 
-`onecdev` (hard fork проекта [v8vscedit](https://github.com/Macegor/v8vscedit) с 2026-11-13, репозиторий `iljyxa/onecdev`, лицензия GPL-3.0-only — см. `LICENSE` и `NOTICE`) — расширение для VS Code / Cursor (TypeScript) для работы с выгрузкой конфигураций и расширений 1С:Предприятие: навигация по метаданным из XML, редактирование свойств и состава, создание/удаление объектов метаданных, синхронизация с базой, хранилище конфигурации, LSP для BSL и локальный MCP-сервер для ИИ-агентов.
+`onecdev` — hard fork [v8vscedit](https://github.com/Macegor/v8vscedit) с 2026-11-13, репозиторий
+`iljyxa/onecdev`, GPL-3.0-only (`LICENSE`, `NOTICE`). Расширение VS Code / Cursor (TypeScript) для выгрузки
+конфигураций и расширений 1С: навигатор метаданных из XML (CF и CFE) — дерево, свойства, создание/удаление/
+редактирование объектов; синхронизация с базой; хранилище конфигурации; LSP-клиент внешнего `bsl-analyzer`;
+локальный MCP-сервер для ИИ-агентов.
 
-Две независимые подсистемы:
-1. **Навигатор метаданных** — дерево объектов из XML-выгрузки (CF и CFE), свойства, чтение/создание/редактирование метаданных, открытие BSL-модулей.
-2. **Языковая поддержка BSL** — LSP-клиент для внешнего `bsl-analyzer`.
+Документация — `./docs`: [architecture.md](./docs/architecture.md), [project-layout.md](./docs/project-layout.md)
+(раскладка `src/`), [change-recipes.md](./docs/change-recipes.md) (какие файлы трогать — индекс рецептов),
+[mcp-paths.md](./docs/mcp-paths.md), [xml-format-rulesets.md](./docs/xml-format-rulesets.md),
+[agentic-pipeline.md](./docs/agentic-pipeline.md), [coverage-gate.md](./docs/coverage-gate.md),
+[tech-debt.md](./docs/tech-debt.md) и профильные файлы по подсистемам. Читать **разделы**, а не файлы целиком.
 
-Подробная документация — в `./docs` (`architecture.md`, `metadata-navigator.md`, `metadata-parser.md`, `bsl-language-support.md`, `mcp-paths.md`, `mcp-server-lifecycle.md`, `xml-format-rulesets.md`, `agentic-pipeline.md`, `vscode-extension-best-practices.md`, `git-metadata-changes.md`, `git-history-graph.md`, `repository-file-sync.md`, `repository-crs.md`). Справочники, вынесенные из этого файла ради экономии контекста агентов: **[change-recipes.md](./docs/change-recipes.md)** — какие файлы трогать по сценарию, [project-layout.md](./docs/project-layout.md) — подробная раскладка `src/`, [tech-debt.md](./docs/tech-debt.md) — известные технические долги.
+## Язык
 
-## Язык общения
-
-- Отвечать на русском. Комментарии и документация в коде — только на русском. Сообщения коммитов — на русском.
-- Комментарии объясняют *почему*, а не *что*. Без «комментариев-капитанов» (`// импортируем X`, `// возвращаем результат`) и декоративных эмодзи.
-- Избегать высокоуровневых ответов — давать конкретные решения применительно к проекту.
+- Ответы, комментарии и документация в коде, сообщения коммитов — на русском.
+- Комментарии объясняют *почему*, а не *что*; без «комментариев-капитанов» и декоративных эмодзи.
+- Давать конкретные решения применительно к проекту, а не высокоуровневые советы.
 
 ## Git-процесс
 
-- **Коммиты — на русском.** Категорически запрещено упоминать Claude/ИИ в любой форме: никаких трейлеров `Co-Authored-By: Claude ...`, `Generated with Claude Code` и подобных подписей. То же для тел PR.
-- **`main` — ствол разработки** (`origin` = `iljyxa/onecdev`). Синхронизации с исходным проектом
-  `Macegor/v8vscedit` нет: после хард форка изменения оттуда не забираются и PR туда не отправляются.
-- **Ветку задачи создаёт оркестратор (основной чат)** — в начале задачи, от `origin/main`, и сообщает
-  её имя. Субагенты ветки не создают (запрет в `.claude/agents/*.md`). Имена: `fix/…` (исправление),
-  `feat/…` (новая функциональность), `chore/…` (инструменты, зависимости, конфигурация, документация);
-  для задачи по issue — `fix/issue-<N>-<кратко>`.
-- **Готовая ветка вливается в `main` только `git merge --no-ff`**: merge-коммит — единственная
-  долговременная ссылка на границы задачи (её коммиты — `git log <merge>^1..<merge>^2`). После merge
-  ветка удаляется сразу — локально и в `origin`, если была опубликована. Долгоживущая ветка подтягивает
-  свежий `main` через `git merge main`, а не rebase опубликованной ветки.
-- **Безопасность истории:** `main` в `origin` пушится только с явного подтверждения пользователя;
-  `push --force` в `main` запрещён.
+- **Коммиты — на русском. Запрещено упоминать Claude/ИИ в любой форме**: никаких `Co-Authored-By: Claude`,
+  `Generated with Claude Code` и подобного — ни в коммитах, ни в телах PR.
+- **`main` — ствол** (`origin` = `iljyxa/onecdev`). С `Macegor/v8vscedit` синхронизации нет.
+- **Ветку задачи создаёт оркестратор** (основной чат) от `origin/main`; субагенты веток не создают. Имена:
+  `fix/…`, `feat/…`, `chore/…`; по issue — `fix/issue-<N>-<кратко>`.
+- **В `main` — только `git merge --no-ff`** (merge-коммит — граница задачи); ветка после merge удаляется
+  локально и в `origin`. Долгоживущая ветка подтягивает `main` через `git merge main`, не rebase.
+- `main` в `origin` пушится только с явного подтверждения пользователя; `push --force` в `main` запрещён.
 
 ## Issues
 
-- Задачи ведутся в issues `iljyxa/onecdev`. `gh` без `-R` в клоне с несколькими remote может выбрать
-  чужой репозиторий — **всегда указывать `-R iljyxa/onecdev`**; ссылки `#N` в коммитах и ветках
-  относятся к нему.
-- **Читать issue/PR только через `--json`**: `gh issue view N -R iljyxa/onecdev --json
-  title,body,labels,milestone,comments`. Обычный `gh issue view` запрашивает поле `projectCards`
-  устаревших Projects (classic) и падает с `Projects (classic) is being deprecated` — это не ошибка прав,
-  повторять тот же вызов бесполезно. Правка issue — `gh issue edit` или `gh api`.
-- **Новое issue — сразу с лейблами и milestone:** тип (`bug` / `enhancement` / `refactor` /
-  `documentation`) плюс один или несколько `subsystem: …` (`repository`, `support`, `mcp`, `dcs`,
-  `xml-generator`, `tests`, `ui`, `extension` — расширения CFE и заимствование, `environment`, `core`,
-  `project` и др.). Milestone — подходящий открытый из `gh api repos/iljyxa/onecdev/milestones`; если
-  ни один не подходит — без milestone, не останавливаясь на вопросе. Актуальные лейблы —
-  `gh label list -R iljyxa/onecdev`.
-- **`subsystem:` — подсистема, где лежит основная работа**, а не ближайший общий лейбл: `ui` — только
-  когда работа в webview/панели/дереве (наличие панели у фичи не повод); `extension` — механизм
-  платформы «расширения конфигурации» (CFE), включая заимствование, а не само VS Code-расширение;
-  `environment` — платформа, реестр ИБ, запуск базы/Конфигуратора; `core` — активация, `Container`,
-  служебный каталог расширения. Подходящего нет — завести новый:
-  `gh label create -R iljyxa/onecdev "subsystem: <имя>" --description "<на русском>"`.
-- **Попутно найденный дефект вне объёма задачи** не чинится вскользь — заводится отдельным issue.
-  Оформление (на русском): «Проблема» (файл, функция, механизм дефекта), «Воспроизведение» (реальная
-  фикстура из `example/` и конкретный вызов), «Что сделать» (ожидаемое поведение и тесты); в конце —
-  «Найдено при работе над #N». Неподтверждённую серьёзность (например, не проверено на платформе) так и
-  указать.
+- Всегда `-R iljyxa/onecdev`; читать только через `--json` (`gh issue view N -R iljyxa/onecdev --json
+  title,body,labels,milestone,comments`) — обычный `gh issue view` падает на Projects (classic).
+- Новое issue — сразу с лейблом типа (`bug`/`enhancement`/`refactor`/`documentation`), `subsystem: …` по
+  месту основной работы и открытым milestone, если подходит. Попутный дефект вне задачи не чинится вскользь —
+  отдельное issue. Правила выбора лейблов и шаблон текста — [project-rules.md](./docs/project-rules.md#issues).
 
 ## Конвейер агентной разработки (оркестратор + субагенты)
 
@@ -90,233 +73,105 @@
 ## Команды
 
 ```bash
-npm run build         # полная сборка: clean + build:node + build:webview (Vite → dist/)
-npm run watch         # параллельный watch node + webview (scripts/vite-watch.mjs)
-npm run typecheck     # tsc (расширение) + vue-tsc (webview); = npm run compile
-npm run lint          # eslint . --max-warnings=0
-npm test              # запуск всех тестов через @vscode/test-electron (out/test/runTests.js)
-npm run test:fast     # прогон без pretest-пересборки; фильтр: MOCHA_GREP='<regex>' npm run test:fast
-npm run coverage:changed # 100% ТОЛЬКО по изменённым production-файлам (гейт задачи; scripts/patch-coverage.mjs)
-                       # база — COVERAGE_BASE_REF (синоним COVERAGE_BASE), иначе merge-base с
-                       # origin/develop|origin/main; прогон дробится на COVERAGE_SHARDS свежих процессов;
-                       # коды 0/1/2 и канарейка деградации — docs/coverage-gate.md
-npm run coverage      # c8 с глобальным порогом 100% (аспирационный; сейчас RED из-за легаси-долга — не гейт задачи)
-npm run coverage:report  # покрытие без падения по порогу (диагностика)
+npm run build            # clean + build:node + build:webview (Vite → dist/)
+npm run typecheck        # tsc + vue-tsc (= npm run compile)
+npm run lint             # eslint . --max-warnings=0
+npm test                 # все тесты через @vscode/test-electron; pretest пересобирает всё
+npm run test:fast        # без pretest; фильтр: MOCHA_GREP='<regex>' (после npm run test:compile)
+npm run coverage:changed # 100% patch coverage изменённого — гейт задачи (docs/coverage-gate.md)
 ```
 
-- **`npm test` требует предварительной сборки.** Скрипт `pretest` делает `typecheck → build:node → build:webview → test:compile` (без `clean` — сборка инкрементальная; компиляция тестов в `out/` через `tsconfig.test.json`). Тестовый runner берётся из `out/`, т.к. Mocha грузит `out/test/suite/*.js`.
-- Запуск под конкретной версией VS Code: `VSCODE_TEST_VERSION=1.85.0 npm test`. `takeRunnerSettingsAndSanitize`
-  (`src/test/runnerEnv.ts`) читает эту переменную ДО очистки унаследованного от IDE окружения (очистка
-  стирает всё с префиксом `VSCODE_`, включая саму `VSCODE_TEST_VERSION`) — порядок чтения важен, не
-  переставлять. Если версия ещё не скачана, `@vscode/test-electron` при
-  первом запуске сам скачает её в `.vscode-test/` (нужна сеть); повторные запуски используют кэш.
-- **Отдельный тест — быстро и без `.only`.** Runner (`src/test/suite/index.ts`) читает `MOCHA_GREP` и применяет `mocha.grep()`. Итерация: правка теста → `npm run test:compile` → `MOCHA_GREP='<regex по имени suite/теста>' npm run test:fast` (`test:fast` НЕ запускает `pretest`, т.е. не пересобирает Vite — на порядок быстрее полного `npm test`). `.only` больше не нужен.
-- Перед любым коммитом: `npm run compile` и **`npm run lint`** должны проходить без ошибок и предупреждений.
-- **Зависимости ставить `npm ci --ignore-scripts`.** Install-скрипты есть лишь у `ssh2` и `cpu-features`:
-  они собирают нативные аддоны под системный Node, а extension host VS Code работает на Node из Electron с
-  другим ABI и падает (segfault, код 139) ещё до первого теста. Без аддонов `ssh2` работает на чистом JS.
-- **Без дисплея (CI, Linux-сервер, сессия агента)** тесты запускаются через `xvfb-run -a npm test` /
-  `xvfb-run -a npm run test:fast`; `qa-gate.sh` подставляет `xvfb-run` сам.
-- **Базовое состояние `npm test` — 0 падений.** Унаследованных падений нет: любое падение — регрессия
-  задачи, а не «известный шум». Пропуски (pending) — корпусные тесты, носителей которых пока нет в
-  `example/`.
-- Точки входа: `main` = `./dist/extension.js`; CLI — `dist/cli/onec-tools.js`. Целевая среда — VS Code API ≥ 1.85, TypeScript ≥ 5.3, strict, ES2020.
+- Итерация по одному тесту: `npm run test:compile` → `MOCHA_GREP='…' npm run test:fast`; `.only` не нужен.
+- Без дисплея — `xvfb-run -a …` (`qa-gate.sh` подставляет сам).
+- Зависимости — `npm ci --ignore-scripts` (нативные аддоны `ssh2` ломают extension host).
+- Базовое состояние `npm test` — 0 падений: любое падение — регрессия задачи. Pending — корпусные тесты без
+  носителей в `example/`.
+- Перед коммитом `npm run compile` и `npm run lint` — без ошибок и предупреждений.
+- `VSCODE_TEST_VERSION`, порядок чтения окружения раннером, глобальный `coverage` —
+  [project-rules.md](./docs/project-rules.md#команды).
 
-## Технологический стек
-
-- TypeScript ≥ 5.3, target ES2020, strict. VS Code API ≥ 1.85, `vscode-languageclient`.
-- **Vite** (сборка в `dist/`). Два конфига: `vite.node.config.ts` (Node-таргет: `extension`, CLI) и `vite.webview.config.ts` (Vue-webview из `src-ui/`). Встроенного `server`-entry нет — LSP внешний (`bsl-analyzer`).
-- `iconv-lite` — декодирование OEM-866/Win1251 вывода vrunner.
-- Тесты — Mocha через `@vscode/test-electron`, покрытие — `c8`.
+Стек: TypeScript ≥ 5.3 strict, ES2020; VS Code API ≥ 1.85; Vite (`vite.node.config.ts` — extension и CLI,
+`vite.webview.config.ts` — Vue из `src-ui/`); Mocha + `@vscode/test-electron`, `c8`. Точки входа:
+`dist/extension.js`, CLI `dist/cli/onec-tools.js`.
 
 ## Архитектура
 
-Слоистая, с однонаправленными зависимостями. Единый принцип: **одна декларативная таблица типов метаданных (`META_TYPES`) → один конвейер, использующий её везде**. Всё поведение — функции и сервисы поверх таблицы.
+Слоистая, зависимости однонаправленные. **Одна декларативная таблица `META_TYPES` → один конвейер.**
 
 ```
-domain          ←   никто (самый низ)
-infra           ←   domain
-ui              ←   domain, infra
-lsp             ←   infra (на чтение файлов), domain (опционально)
-cli             ←   domain, infra (отдельный потребитель, нижние слои от него не зависят)
-container/ext   ←   всё
+domain ← никто;  infra ← domain;  ui ← domain, infra;  lsp ← infra (+domain);  cli ← domain, infra;  container/ext ← всё
 ```
 
-Запреты зависимостей:
-- `domain/**` не импортирует `vscode`, `fs`, `path`.
-- `infra/**` не импортирует `vscode`.
-- `domain/**` и `infra/**` не импортируют `cli/**`; CLI всегда потребитель.
-- `ui/**` не содержит regex-парсинга XML и вычислений путей — только вызовы `infra/*`.
-- LSP-подсистема не содержит встроенного сервера; все языковые возможности — через внешний `bsl-analyzer`.
+- `domain/**` не импортирует `vscode`, `fs`, `path`; `infra/**` — `vscode`; `domain`/`infra` не импортируют `cli/**`.
+- `ui/**` — без regex-парсинга XML и вычисления путей, только вызовы `infra/*`.
+- Код, нужный и расширению, и CLI, живёт в `infra/<подпапка>/`, `cli/core/*` — тонкий re-export.
+- Каталоги: `src/{domain,infra,ui,lsp,cli,test}`, `Container.ts`, `extension.ts`; `src-ui/` — Vue-webview
+  (`apps/*`, `shared/protocol` — контракт сообщений, правится с обеих сторон). Подробно —
+  [project-layout.md](./docs/project-layout.md).
+- **`META_TYPES`** (`domain/MetaTypes.ts`) — единственный источник правды по типам метаданных; новый тип —
+  ТОЛЬКО одна запись в нём. **`MetaPathResolver`** — все пути XML и BSL-модулей. **`Container.bootstrap()`** —
+  composition root, сервисы создаются только там.
+- **Основной UI — webview `UniversalPanelViewProvider`** (`ui/views/universal/`), а не нативный TreeView;
+  контекстное меню — `getNodeActions()`/`addModuleActions()` через `MODULE_SLOT_ACTIONS`, не `package.json`.
+- Генерация XML привязана к версии формата через ruleset (`infra/xml/format/`, текущий — 2.21).
+- Детали контрактов (поля `MetaTypeDef`, порядок bootstrap, webview) —
+  [project-rules.md](./docs/project-rules.md#архитектура).
 
-### Раскладка каталогов (кратко; подробно — [project-layout.md](./docs/project-layout.md))
+## MCP-сервер
 
-```
-src/
-├── extension.ts, Container.ts   # тонкий activate/deactivate; composition root
-├── domain/     # чистый домен: META_TYPES, ChildTag, ModuleSlot, MetaObject, CanonicalNames — без vscode/fs/path
-├── infra/      # xml/ (ридеры/эдиторы, PropertySchema, format/ ruleset), fs/ (MetaPathResolver), cfe/, support/,
-│               # cache/, repository/, git/, environment/, process/ (ConfigurationOperationGuard), mcp/, skills/ — без vscode
-├── ui/         # tree/, views/ (universal/ — ОСНОВНОЙ UI, properties/, changes/, history/, …), commands/, git/, mcp/, readonly/
-├── lsp/        # LspManager + внешний bsl-analyzer
-├── cli/        # отдельный потребитель domain/infra (onec-tools.ts, commands/, core/)
-└── test/       # runTests.ts + suite/
-src-ui/         # Vue-webview: apps/* (панели), shared/ (protocol/, state/, components/, api/)
-```
+`ui/mcp/V8McpServer.ts` — официальный канал автоматизации, только loopback, SDK `@modelcontextprotocol/sdk` v1.x,
+Streamable HTTP. Бизнес-логика — в общих сервисах: UI-команда и MCP-инструмент вызывают один код. Нельзя:
+произвольная команда/`executeCommand`/запись XML в обход сервиса. Инструмент записи валидирует вход, возвращает
+изменённые файлы и идёт единым post-mutation путём. Пути — только канон
+[mcp-paths.md](./docs/mcp-paths.md): коллекции во множественном числе, без английских алиасов, аргумент `path`.
+Полные правила — [project-rules.md](./docs/project-rules.md#mcp-сервер-для-ии-агентов); жизненный цикл —
+[mcp-server-lifecycle.md](./docs/mcp-server-lifecycle.md).
 
-`cli/` — отдельный потребитель `domain/` и `infra/`. Если код нужен и расширению, и CLI — он живёт в `infra/<подпапка>/`, а `cli/core/*` даёт тонкий re-export.
+## Рецепты изменений
 
-Вне `src/` — `scripts/patch-coverage.mjs` (тонкий оркестратор гейта `coverage:changed`: git, спавны,
-ФС, печать) и `scripts/patch-coverage/` (чистые модули без I/O, покрытые тестами наравне с `src/**`:
-`branchFacts.mjs` — детектор ветвлений по TS AST, `diffBase.mjs` — выбор базы диффа, `verdict.mjs` —
-разбор `lcov` и вердикт, `shards.mjs` — планирование и сверка порций прогона). Подробности —
-[docs/coverage-gate.md](./docs/coverage-gate.md).
-
-### Центральный контракт — `META_TYPES`
-
-Единственный источник правды по типам метаданных: иконки, папки выгрузки, дочерние элементы, слоты модулей, группировка в дереве, схема свойств.
-
-```typescript
-// domain/MetaTypes.ts
-export interface MetaTypeDef {
-  kind: MetaKind;                  // 'Catalog'
-  label: string;                   // 'Справочник'
-  pluralLabel: string;             // 'Справочники'
-  folder?: string;                 // 'Catalogs'
-  icon: string;                    // имя SVG без расширения
-  group: MetaGroup;                // 'common' | 'top' | 'documents-branch' | 'child' | 'service' | 'root'
-  groupOrder: number;
-  childTags?: readonly ChildTag[]; // ['Attribute','TabularSection','Form','Command','Template']
-  modules?: readonly ModuleSlot[]; // ['Object','Manager']
-  propertySchema?: string;         // ключ в PROPERTY_SCHEMAS
-  singleClickCommand?: OpenModuleCommandId;
-  pathSegment?: string;            // канонический сегмент пути для MCP
-  englishKind?: string;            // англ. имя типа (по умолчанию = kind)
-  repositoryClassId?: string;      // classID вида в истории хранилища (crs)
-}
-```
-
-Правила:
-- **Добавление нового типа метаданных — ТОЛЬКО одна запись в `META_TYPES`.** Если пришлось править что-то ещё — это утечка знаний из реестра.
-- Никаких параллельных словарей `typeToFolder`, `NODE_DESCRIPTORS`, `HANDLER_REGISTRY`, `FOLDER_MAP`.
-- `ConfigXmlReader`, `MetaPathResolver`, `MetaObjectBuilder`, `GroupBuilder`, `PropertyBuilder` — все читают данные из `META_TYPES`.
-
-### Центральный контракт — `MetaPathResolver`
-
-Один класс вместо россыпи функций; карта слотов модулей (`Object→Ext/ObjectModule.bsl` и т.п.) — внутри как данные. Все пути (XML и BSL-модули) резолвятся только через него.
-
-### Composition root
-
-`Container.bootstrap()`: создаёт `OutputChannel` и все сервисы → регистрирует `TreeView`/декорации/`FileSystemWatcher` → `CommandRegistry.registerAll(ctx, services)` → `reloadEntries()` → запускает `V8McpServer` (если `onecdev.mcp.enabled`) → стартует `LspManager`. Сервисы не создаются через `new` в командах/builder'ах — только через Container.
-
-### Основной UI — webview, а не TreeView
-
-**`UniversalPanelViewProvider` (`src/ui/views/universal/`) — основной UI навигатора** (HTML/Vue-webview: дерево, поиск, контекстное меню, операции). Нативный `MetadataTreeProvider` (`ui/tree/`) существует только как источник данных (`treeProvider.getChildren()`); сам TreeView-виджет — атавизм и **не основной UI**.
-
-Следствия:
-- Контекстное меню узлов формируется в `UniversalPanelViewProvider.getNodeActions()` / `addModuleActions()`, **а не** через `package.json → contributes.menus`.
-- Источник правды для команд узла — `META_TYPES.modules`, читаемый через `MODULE_SLOT_ACTIONS`.
-- Новая команда узла: добавить в `MODULE_SLOT_ACTIONS` (в `UniversalPanelViewProvider.ts`) + зарегистрировать в `CommandRegistry`. Правка `package.json → menus` — опциональна (для нативного TreeView).
-
-### Webview (`src-ui/`)
-
-Vue-приложения (сборка `vite.webview.config.ts`, проверка типов `vue-tsc`/`tsconfig.ui.json`): `src-ui/apps/*` — отдельные панели, `src-ui/shared/` — общий код (`protocol/` — контракт сообщений webview ↔ расширение, `state/`, `components/` в т.ч. общее дерево `UniversalTree*.vue`, `api/`). Состав панелей — [project-layout.md](./docs/project-layout.md#webview-src-ui). При изменении взаимодействия панели и расширения правьте обе стороны протокола.
-
-## MCP-сервер для ИИ-агентов
-
-`src/ui/mcp/V8McpServer.ts` — локальный MCP-сервер, официальный канал автоматизации. Запускается только после `reloadEntries()`, слушает loopback, не даёт агенту прямой доступ к shell/произвольным путям/произвольным VS Code командам. Старт/остановка, гарантированное освобождение порта и разрешение конфликта порта с другим инстансом/проектом — отдельный слой `infra/mcp/`, см. [mcp-server-lifecycle.md](./docs/mcp-server-lifecycle.md) (не путать с каноном путей инструментов ниже).
-
-Правила:
-- SDK: production-ветка `@modelcontextprotocol/sdk` v1.x. Транспорт: Streamable HTTP на `127.0.0.1`/`localhost`/`::1`; удалённый bind запрещён.
-- Инструменты регистрируются в `V8McpServer.ts`, но бизнес-логика живёт в общих сервисах (`infra/*`, `ui/commands/*/*Service.ts`). UI-команда и MCP-инструмент для одного действия вызывают **один и тот же код**.
-- Для команд, меняющих конфигурацию/базу (импорт, обновление, создание/удаление/редактирование метаданных), добавлять MCP-инструмент или явно документировать, почему нельзя.
-- Нельзя делать инструмент, исполняющий произвольную строку команды, произвольный `vscode.commands.executeCommand` или пишущий XML в обход существующего сервиса.
-- Любой инструмент записи сначала валидирует вход и права, возвращает список изменённых файлов и маркирует конфигурацию изменённой тем же механизмом, что UI. Единый post-mutation путь: `suppressConfigurationReloadForFiles(changedFiles)` → `markChangedConfigurationByFiles(changedFiles)` → `treeProvider.refresh()` → `refreshActionsView()`.
-- Значения enum, boolean/localized-классификация и схемы свойств живут в `infra/xml/PropertySchema.ts` (или спец-реестре infra), MCP только публикует контракт.
-
-### Канон именования путей MCP
-
-Полный справочник — `./docs/mcp-paths.md`. Ключевое:
-- Корни-коллекции — **только множественное число** (`Справочники.Контрагенты`, `РегистрыСведений.КурсыВалют`). Единственное — только для `Подсистема`, `Конфигурация`, `Расширение`.
-- Реквизиты/ТЧ — прямые сегменты без роли-префикса (`Справочники.Контрагенты.ИНН`; внутри ТЧ — `…ТабличнаяЧасть.Имя.Реквизит.Имя`).
-- Английских алиасов (`Catalog.X`) и legacy-форм нет; любая такая форма отбивается с подсказкой канона.
-- У инструментов, работающих с одним узлом, аргумент называется `path`; парные `compile_*` принимают `parentPath`. Никаких `objectPath`/`formPath`/`modulePath` и т.п.
-- Контракт `resolveFormXmlByCanonical` (`ui/mcp/McpPathResolvers.ts`) — путь к **ТЕЛУ** формы (`…/Ext/Form.xml`), не к дескриптору и не к XML объекта: `Справочники.X.Форма.Y` → `Catalogs/X/Forms/Y/Ext/Form.xml`, `ОбщиеФормы.X` → `CommonForms/X/Ext/Form.xml`. См. [mcp-paths.md](./docs/mcp-paths.md#формы-тело-и-дескриптор).
-
-## Инвариант изменений — рецепты в [change-recipes.md](./docs/change-recipes.md)
-
-Для каждого сценария там указано, какие файлы трогать; если требуется править сверх списка — задача решается в другом слое. `architect` и `reviewer` сверяются с рецептом обязательно. Сценарии: новый тип метаданных; слот модуля (`ModuleSlot`); дочерний тег (`ChildTag`); контейнерный дочерний тип с вложенными листьями (ТЧ→Колонка, HTTPСервис→URLШаблон→Метод); схема свойств; правило состава свойств типизированного поля; команда; builder узла; декорация узла; view/webview; сервис инфры; возможность LSP; настройка; watcher; внешняя интеграция (vrunner); чтение данных из базы через пакетный Конфигуратор; открытие BSL-модулей; операция хранилища, меняющая файлы проекта; источник статусов захвата хранилища; операция Конфигуратора с базой (`ConfigurationOperationGuard`); жизненный цикл встроенного MCP-сервера; часть объекта в панели «Изменения метаданных»; git-мутация над панелью изменений; триггер обновления панели по git-событию; возможность блока «История»; возможность панели «История хранилища»; декомпозиция God-класса; перенос функции из 1С-скилов в расширение.
+Какие файлы трогать по сценарию — индекс [change-recipes.md](./docs/change-recipes.md) → один тематический
+файл `docs/recipes/*.md`. Правка сверх рецепта — задача решается в другом слое.
 
 ## Запреты и анти-паттерны
 
-1. **Никаких regex-парсеров XML вне `infra/xml/`.**
-2. **Нет дублирующих реестров типов.** `Record<string,string>` с `Catalog:'Catalogs'` вне `META_TYPES` — баг архитектуры.
-3. **Нет команд в `package.json`, не покрытых `CommandRegistry`.**
-4. **`MetadataTreeProvider` не знает про типы метаданных** — делегирует в builder'ы.
-5. **`TreeNode` не хранит XML-логику** — только отображение + ссылка на `TreeNodeModel`.
-6. **Не импортировать `vscode` в `domain/` и `infra/`.**
-7. **Сервисы не создаются через `new` в командах/builder'ах** — только через `Container`.
-8. **Не использовать `any`.** Если неизбежно — комментарий `// any: <причина>`.
-9. **Не сохранять пароли/токены в файлы проекта.** Секреты — через VS Code SecretStorage.
-10. **Не создавать файлы при команде «Открыть».** Создание — только явным командам добавления/генерации.
-11. **Не вешать синхронный I/O на getters, tooltip, decoration и hot path дерева.**
-12. **Не терять формат XML.** Любой редактор существующего XML сохраняет BOM и стиль переводов строк исходного файла (`writeTextFilePreservingBomAndEol`). **Ловушка:** в `originalContent` передаётся текст, прочитанный ДО замены (отдельная константа перед `replace`), а не уже изменённый — иначе эталон стиля берётся с результата, и сохранение BOM/EOL становится пустой операцией (прецедент — `CfeBorrowService`).
-13. **Справочники свойств не живут в UI** — только в `infra/xml/PropertySchema.ts` (или спец-реестре infra); UI рендерит готовое.
-14. **Команды контекстного меню не хардкодятся в `UniversalPanelViewProvider`** — `addModuleActions` читает `META_TYPES[kind].modules` через `MODULE_SLOT_ACTIONS`.
-15. **Нативный TreeView — не основной UI**; не дублировать логику меню в `package.json`, если она есть в `addModuleActions`.
-16. **MCP-инструменты принимают только канон** (см. `./docs/mcp-paths.md`).
-17. **God-объектов быть не должно.** Порог-ориентир — **~800 строк** на файл производственного кода; превышение требует либо явного обоснования, либо декомпозиции. Дробить **по ответственности/домену, а не механически по строкам**. Каноничные приёмы: регистрация MCP-инструментов дробится по доменам (`src/ui/mcp/registration/*`, образец — `McpAddToolsRegistration`); диспетчер `switch (kind)` заменяется **таблицей** `Record<MetaKind, …>` — данные типа в `META_TYPES`, XML-литералы формата в спец-реестре `infra/` (параллельные словари вне `META_TYPES` запрещены, см. п.2); класс-фасад остаётся тонким, логика — в module-level функциях/подмодулях того же слоя. **Любое дробление XML-генератора обязано сохранять байт-в-байт выход** (BOM/EOL/порядок атрибутов/самозакрытие, см. п.12) и предваряться байт-golden-тестом; декомпозиция `MetadataXmlCreator`/`FormBuilders` без такого эталона — запрещена (идёт вслепую).
-18. **Внутри аренды `ConfigurationOperationGuard` (или любой другой эксклюзивной операции) уведомления показываются без `await`.** `await vscode.window.showInformationMessage(...)`/`showWarningMessage(...)` до `release()` держит guard занятым до закрытия нотификации пользователем — любая параллельная операция всё это время отбивается сообщением «уже выполняется», хотя фактически ничего не выполняется.
-
-## Ключевые принципы
-
-- Один декларативный реестр `META_TYPES` → один конвейер. Поведение — функции/сервисы поверх таблицы, без дублирующих словарей.
-- Все пути (XML и BSL-модули) резолвятся только через `MetaPathResolver`.
-- `bsl-analyzer` — единственный LSP; BSL-файлы открываются напрямую через `file://`.
-- Ленивая загрузка дерева: дочерние узлы строятся при раскрытии.
-- **Генерация XML привязана к версии формата через ruleset** (`infra/xml/format/`, текущий — 2.21). См. `docs/xml-format-rulesets.md`.
+1. Никаких regex-парсеров XML вне `infra/xml/`.
+2. Нет дублирующих реестров типов (`typeToFolder`, `FOLDER_MAP` и т.п. вне `META_TYPES`).
+3. Нет команд в `package.json`, не покрытых `CommandRegistry`.
+4. `MetadataTreeProvider` не знает про типы метаданных — делегирует в builder'ы.
+5. `TreeNode` не хранит XML-логику.
+6. Не импортировать `vscode` в `domain/` и `infra/`.
+7. Сервисы не создаются через `new` в командах/builder'ах — только через `Container`.
+8. Не использовать `any`; если неизбежно — `// any: <причина>`.
+9. Пароли/токены — только SecretStorage, не в файлы проекта.
+10. Не создавать файлы при команде «Открыть».
+11. Не вешать синхронный I/O на getters, tooltip, decoration и hot path дерева.
+12. Не терять формат XML: BOM и EOL исходного файла (`writeTextFilePreservingBomAndEol`, эталон стиля — текст
+    ДО замены).
+13. Справочники свойств — в `infra/xml/PropertySchema.ts` (или спец-реестре infra), не в UI.
+14. Команды контекстного меню не хардкодятся в `UniversalPanelViewProvider` — `MODULE_SLOT_ACTIONS`.
+15. Нативный TreeView — не основной UI; не дублировать меню в `package.json`.
+16. MCP-инструменты принимают только канон путей.
+17. Без God-объектов (~800 строк); дробить по ответственности; XML-генераторы — только с байт-golden-тестом.
+18. Внутри аренды `ConfigurationOperationGuard` уведомления — без `await`.
 
 ## TDD и покрытие
 
-1. **Любое изменение поведения начинается с теста** (красный → код → зелёный).
-2. **Покрытие кода, ЗАТРОНУТОГО изменением, — 100%** по строкам, веткам, функциям, операторам. Гейт — `npm run coverage:changed` (patch coverage: новые файлы целиком, изменённые — только строки диффа; прогон дробится на свежие процессы `COVERAGE_SHARDS`, иначе V8 теряет поблочную детализацию), в конвейере — через `.claude/scripts/qa-gate.sh`, который всегда передаёт базу (`COVERAGE_BASE_REF`, синоним `COVERAGE_BASE`). Вердикт, коды возврата и канарейка деградации — [docs/coverage-gate.md](./docs/coverage-gate.md); **код 2 — «данным нельзя верить, перемерь», не «допиши тест»**. Глобальный `npm run coverage --100` красный из-за легаси-долга (`ui/tree/nodeBuilders/*`, `ExtensionCommandRunner`, `RepositoryCommandRunner`, `InitializeProjectCommand`, `infra/xml/form/*` и др.) — **известное состояние, не предмет задачи**; не доказывать это заново через stash/baseline. `Container.ts`/`extension.ts` c8 не инструментирует — они покрываются интеграционно и исключены из гейта
-(тот же список исключений `NOT_INSTRUMENTED` в `scripts/patch-coverage.mjs` включает и
-`src/ui/commands/CommandRegistry.ts` — реестр вызовов `register*Commands`, исполняется только при
-активации из `Container`, сами регистраторы проверяются тестами напрямую).
-3. **Заглушки/фиктивные ассёрты/тесты ради покрытия запрещены.** Тест проверяет реальное поведение на настоящих XML-фикстурах (`example/2.20/src/cf`, `example/2.21/src/cf`, `example/2.21/src/cfe/EVOLC`), реальных временных файлах или реальном процессе; mock/stub — только для недоступной внешней системы с обоснованием. Тесты **детерминированы** — без гонок/угадывания таймингов; учитывай фоновое поведение SDK/клиентов.
-4. **Тест не пишет в `example/`.** Мутационные сьюты копируют нужное во временный каталог (`fs.mkdtempSync`) и работают там; резервирование в `setup` с восстановлением в `teardown` защитой не является — обрыв прогона между ними оставляет корпус испорченным.
-5. Непокрываемую из-за VS Code API логику выносить в `domain/`/`infra/` и покрывать unit-тестом; тонкий UI-адаптер — интеграционным тестом. Осознанно недостижимую защитную ветку — `/* c8 ignore */` с обоснованием.
-6. **Все тесты задачи — за один проход** (ветки заранее: ошибки, таймауты, guard'ы, граничные входы; параметризация по конечным множествам — enum/настройки, напр. `host ∈ {127.0.0.1, localhost, ::1}`), чтобы не гонять ре-цикл через гейт.
-7. Перед завершением задачи QA-гейт — GREEN. Если его нельзя выполнить локально — зафиксировать причину, задачу не считать завершённой.
+1. Изменение поведения начинается с теста (красный → код → зелёный); все тесты задачи — за один проход.
+2. Покрытие затронутого кода — 100% (`coverage:changed`; код 2 — «перемерь», а не «допиши тест»).
+3. Тесты — на реальных фикстурах (`example/2.20/src/cf`, `example/2.21/src/cf`, `example/2.21/src/cfe/EVOLC`),
+   временных файлах или реальном процессе; без заглушек ради покрытия; детерминированные.
+4. Тест не пишет в `example/` — только во временный каталог (`fs.mkdtempSync`).
+5. Логику, недоступную тесту из-за VS Code API, выносить в `domain/`/`infra/`.
 
-## Рабочий процесс и отладка
+Подробности (исключения гейта, `/* c8 ignore */`, легаси-долг глобального покрытия) —
+[project-rules.md](./docs/project-rules.md#tdd-и-покрытие).
 
-- Запуск: `npm install` → `npm run watch` → `F5` (Extension Development Host), `Ctrl+Shift+F5` — перезапуск.
-- Каналы вывода: «BSL LSP Trace» (JSON-RPC), «1С Редактор» (лог расширения), «BSL Analyzer» (stdout/stderr сервера).
-- Инкрементальность: менять не более одного слоя за коммит; после каждого коммита проходят `npm run compile` и `npm run lint`.
-- Новый код — только в целевых папках. Создание новых файлов в корне `src/` запрещено (кроме `Container.ts`, `extension.ts`). Папки `src/handlers|nodes|services|views|language|language-server|formEditor` не существуют — не создавать.
-- Не создавать параллельные версии сервисов («v2»). При переносе файла — `git mv` + обновить импорты + `compile`/`lint`.
+## Рабочий процесс
 
-### Sanity-чек после изменений
-
-1. `npm run compile` — 0 ошибок.
-2. `npm run lint` — 0 ошибок и предупреждений.
-3. `npm run build` — Vite собирается.
-4. `rg "typeToFolder\s*:" src` — 0.
-5. `rg "import .* from 'vscode'" src/domain src/infra` — 0.
-6. `rg "from ['\"].*cli|from ['\"].*/cli" src/domain src/infra` — 0.
-7. `rg "require\(|readFileSync" src/domain` — 0.
-8. `rg "FOLDER_MAP|FOLDER_RU" src` — 0.
-9. `rg "crs:snapshots|commitObjects|updateObjects|11223344" src --glob '!src/test/**'` — 0 (протокол crs не читает содержимое объектов, [repository-crs.md](./docs/repository-crs.md)).
-10. `rg "crs:data" src --glob '!src/test/**' --glob '!src/infra/repository/crs/CrsHistory.ts'` — 0.
-11. `rg "base64|atob\(" src/infra/repository/crs/CrsHistory.ts` — 0.
-
-## Известные технические долги
-
-Перечень — [tech-debt.md](./docs/tech-debt.md). Сверяться при планировании задач в затронутых областях (`CommandRegistry`, `TreeNode`, XML-парсинг на регулярках, панель «Изменения метаданных», блок «История», хранилище).
-
-## `.cursor/`, `.codex/`, `.claude/skills/` — это доменные 1С-скилы, а не разработка расширения
-
-`.cursor/rules/` и `.cursor/skills/`, а также скилы в `.claude/skills/` (перенесены из `.codex/skills/`: `cf-*`, `cfe-*`, `epf-*`, `erf-*`, `meta-*`, `form-*`, `role-*`, `skd-*`, `mxl-*`, `subsystem-*`, `web-*`, `db-*`, `interface-*`, `template-*`, `help-add`, `img-grid` и т.п.) — это **стандарты написания кода 1С/BSL и навыки работы с метаданными редактируемых конфигураций 1С**. Расширение устанавливает их пользователям как проектные ИИ-роли.
-
-**Важно: эти 1С-скилы нужны только для справки** — как ориентир, что и как должно делать само расширение с выгрузкой 1С (канон операций, форматы, DSL). Они относятся к редактируемым конфигурациям 1С, **не** к TypeScript-коду этого репозитория. При разработке самого расширения руководствуйтесь этим файлом, а не BSL-правилами из `.cursor/rules/` и не 1С-скилами.
+- Новый код — только в целевых папках слоёв; новых файлов в корне `src/` и папок
+  `handlers|nodes|services|views|language|language-server|formEditor` не создавать; без «v2»-версий
+  сервисов; перенос файла — `git mv`.
+- Sanity-проверки инвариантов выполняет `qa-gate.sh` (список — [project-rules.md](./docs/project-rules.md#sanity-чек-после-изменений)).
+- Известные техдолги — [tech-debt.md](./docs/tech-debt.md).
+- `.cursor/`, `.codex/`, `.claude/skills/` (`cf-*`, `meta-*`, `form-*` и т.п.) — доменные 1С-скилы для
+  пользователей расширения, справочно; к TypeScript-коду репозитория они не относятся.

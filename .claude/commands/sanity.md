@@ -3,7 +3,7 @@ description: Механические sanity-чеки из CLAUDE.md — compile
 allowed-tools: Bash
 ---
 
-Запусти sanity-чеки из раздела «Sanity-чек после изменений» корневого `CLAUDE.md`. Выполняй ровно эти проверки и сообщай результат каждой:
+Запусти sanity-чеки из раздела «Sanity-чек после изменений» `docs/project-rules.md`. Выполняй ровно эти проверки и сообщай результат каждой:
 
 ```bash
 npm run compile                                                        # 0 ошибок

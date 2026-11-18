@@ -45,7 +45,7 @@ echo "QA-гейт: база $BASE_REF (${MERGE_BASE:0:10}), изменено ф�
 
 if npm run lint >>"$LOG" 2>&1; then pass "lint"; else fail "lint (см. $LOG)"; fi
 
-# Sanity-чеки архитектурных инвариантов из CLAUDE.md.
+# Sanity-чеки архитектурных инвариантов (список — docs/project-rules.md, «Sanity-чек после изменений»).
 sanity() {
   local title="$1"; shift
   local hits rc
