@@ -19,6 +19,7 @@ export const ENV_STORAGE_PWD_KEY = '--storage-pwd';
 export const LEGACY_REPO_PATH_KEY = '--repo-path';
 export const LEGACY_REPO_USER_KEY = '--repo-user';
 export const LEGACY_REPO_PWD_KEY = '--repo-pwd';
+export const ENV_JSON_FILE = 'env.json';
 export const AUTUMN_PROPERTIES_FILE = 'autumn-properties.json';
 export const AUTUMN_VRUNNER_SECTION = 'vrunner';
 export const AUTUMN_STORAGE_NAME_KEY = 'storage-name';
@@ -65,11 +66,9 @@ export function selectMainStorageBinding(
     : null;
 }
 
-const ENV_JSON_FILE_LABEL = 'env.json';
-
 /** Адрес хранилища в секции отдельной команды vanessa-runner, а не в общих опциях (#136). */
 export interface CommandSectionStorage {
-  readonly file: typeof ENV_JSON_FILE_LABEL | typeof AUTUMN_PROPERTIES_FILE;
+  readonly file: typeof ENV_JSON_FILE | typeof AUTUMN_PROPERTIES_FILE;
   /** `loadrepo` (env.json 2.x) или `vrunner.repo.load` (autumn-properties.json 3.x) */
   readonly section: string;
   readonly repoPath: string;
@@ -90,7 +89,7 @@ export function findCommandSectionStorages(
   for (const [section, value] of Object.entries(envRoot)) {
     const pair = section === 'default' ? null : readPair(asObject(value) ?? {}, 'env-storage', ENV_STORAGE_NAME_KEY, ENV_STORAGE_USER_KEY, ENV_STORAGE_PWD_KEY);
     if (pair) {
-      found.push({ file: ENV_JSON_FILE_LABEL, section, repoPath: pair.repoPath, repoUser: pair.repoUser });
+      found.push({ file: ENV_JSON_FILE, section, repoPath: pair.repoPath, repoUser: pair.repoUser });
     }
   }
   const walk = (node: Readonly<Record<string, unknown>>, parts: readonly string[]): void => {

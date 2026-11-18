@@ -128,6 +128,7 @@
 vanessa-runner 3.0.2 (OneScript 2.2.0) и 2.6.1 (OneScript 1.9.4), платформа 8.5.1, файловая ИБ; выбранное
 хранилище видно по ошибке Конфигуратора «Хранилище конфигурации по адресу: … не обнаружено».
 
+- 3.x: общий `vrunner.storage-name` из `autumn-properties.json` рабочего каталога `repo load` читает.
 - 3.x: `vrunner.repo.load.storage-name` без общего → `repo load` берёт адрес секции; при общем
   `vrunner.storage-name` секция его перекрывает; `repo bind` секцию `repo.load` не видит.
 - 2.x: `env.json` `loadrepo["--storage-name"]` (`--settings`) — так же; `bindrepo` секцию `loadrepo` не видит.

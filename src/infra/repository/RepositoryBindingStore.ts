@@ -6,6 +6,7 @@ import type { RepositoryBinding, RepositoryTarget, StoredRepositoryBinding } fro
 import { parseJsonObjectText, writeJsonPreservingStyle } from '../fs/JsonTextFile';
 import {
   AUTUMN_PROPERTIES_FILE,
+  ENV_JSON_FILE,
   LEGACY_REPO_PWD_KEY,
   applyMainBindingToAutumn,
   applyMainBindingToEnvDefaults,
@@ -17,7 +18,6 @@ import {
 } from './VrunnerStorageKeys';
 
 const PLATFORM_VERSION_RE = /\d+\.\d+\.\d+\.\d+/;
-const ENV_JSON_FILE = 'env.json';
 const CFE_REPO_PATH_KEY = 'repo-path';
 const CFE_REPO_USER_KEY = 'repo-user';
 const CFE_REPO_PWD_KEY = 'repo-pwd';

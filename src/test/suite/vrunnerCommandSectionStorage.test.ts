@@ -127,7 +127,7 @@ suite('Адрес хранилища только в секции команды
       assert.match(warnings[0], /env\.json: loadrepo/);
     });
 
-    test('autumn-properties.json с секцией и повреждённым env отсутствующим — секция найдена', () => {
+    test('секция в autumn-properties.json при отсутствующем env.json — найдена', () => {
       writeJson('autumn-properties.json', { vrunner: { repo: { load: { 'storage-name': 'tcp://srv/repo' } } } });
       assert.deepStrictEqual(store.findCommandSectionStorages(cfTarget), [
         { file: 'autumn-properties.json', section: 'vrunner.repo.load', repoPath: 'tcp://srv/repo', repoUser: '' },
