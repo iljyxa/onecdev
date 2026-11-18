@@ -121,6 +121,22 @@ export const BOOLEAN_PROPERTY_TAGS: ReadonlySet<string> = new Set([
   'ExecuteAfterWriteDataHistoryVersionProcessing',
 ]);
 
+/**
+ * Теги, значение которых — типизированное XML (`xsi:type`/`xsi:nil` у
+ * Min/Max/FillValue) или вложенная структура (связи и параметры выбора,
+ * связь по типу). Пустыми они хранятся самозакрытыми и по форме от простой
+ * строки не отличаются, поэтому запись строкой отсекается по ключу: иначе
+ * `<xr:LinkByType>X</xr:LinkByType>` испортил бы файл (#149).
+ */
+export const COMPOSITE_VALUE_PROPERTY_TAGS: ReadonlySet<string> = new Set([
+  'FillValue',
+  'MinValue',
+  'MaxValue',
+  'LinkByType',
+  'ChoiceParameterLinks',
+  'ChoiceParameters',
+]);
+
 /** Опции команды командного интерфейса (свойство Group) */
 const COMMAND_INTERFACE_GROUP_OPTIONS: readonly EnumPropertyOption[] = [
   { value: 'NavigationPanelImportant', label: 'Панель навигации: важное' },

@@ -1,4 +1,9 @@
-import type { ConfigurationXmlEditor, SubsystemPropertyKey, SubsystemXmlService } from '../../infra/xml';
+import {
+  COMPOSITE_VALUE_PROPERTY_TAGS,
+  type ConfigurationXmlEditor,
+  type SubsystemPropertyKey,
+  type SubsystemXmlService,
+} from '../../infra/xml';
 import type {
   EnumPropertyOption,
   EnumPropertyValue,
@@ -89,12 +94,6 @@ export interface McpTypeGroup {
   readonly items: readonly McpTypeOption[];
 }
 
-const SPECIALIZED_PROPERTY_KEYS = new Set([
-  'FillValue',
-  'MinValue',
-  'MaxValue',
-]);
-
 /**
  * Контракт и запись простых свойств для MCP.
  * Перед изменением всегда строится фактическое свойство выбранного узла,
@@ -172,7 +171,7 @@ export class McpPropertyService {
         ? (property.value as MultiEnumPropertyValue).allowedValues
         : undefined;
 
-    const supportedBySetProperty = !SPECIALIZED_PROPERTY_KEYS.has(property.key) && (
+    const supportedBySetProperty = property.readonly !== true && !COMPOSITE_VALUE_PROPERTY_TAGS.has(property.key) && (
       property.kind === 'string' ||
       property.kind === 'boolean' ||
       property.kind === 'enum' ||
@@ -182,8 +181,10 @@ export class McpPropertyService {
 
     const notes = supportedBySetProperty
       ? []
-      : SPECIALIZED_PROPERTY_KEYS.has(property.key)
-        ? ['Свойство хранит типизированное XML-значение; запись простой строкой через set_property запрещена.']
+      : property.readonly === true
+        ? ['Свойство доступно только для чтения.']
+      : COMPOSITE_VALUE_PROPERTY_TAGS.has(property.key)
+        ? ['Свойство хранит составное XML-значение; запись простой строкой через set_property запрещена.']
       : property.key === 'Name' && this.isRootRename(node)
         ? ['Переименование корневого объекта выполняется отдельным инструментом, чтобы обновить файл, ссылки и кэш дерева.']
       : property.kind === 'metadataType'
@@ -211,7 +212,7 @@ export class McpPropertyService {
     if (property.readonly) {
       throw new Error(`Свойство "${propertyKey}" доступно только для чтения.`);
     }
-    if (SPECIALIZED_PROPERTY_KEYS.has(property.key)) {
+    if (COMPOSITE_VALUE_PROPERTY_TAGS.has(property.key)) {
       throw new Error(`Свойство "${propertyKey}" требует специализированного инструмента.`);
     }
     if (property.key === 'Name' && this.isRootRename(node)) {

@@ -8,6 +8,7 @@ import {
   extractStandardAttributeXml,
   resolveStandardAttributeXml,
   rulesetForObjectXml,
+  standardAttributePropertyKeys,
 } from '../../../infra/xml';
 import { getObjectLocationFromXml } from '../../../infra/fs/MetaPathResolver';
 import type { TypeAwarePropertyOwnerKind } from '../../../infra/xml/TypedFieldPropertyRules';
@@ -93,10 +94,11 @@ export const structuredMetaChildHandler: ObjectHandler = {
           // У заимствованного объекта умолчания подставляются только в
           // унаследованный XML: собственный пустой элемент расширения не должен
           // перекрыть значения базовой конфигурации.
+          const ruleset = rulesetForObjectXml(objectXml);
           const localXml = tsName
             ? extractStandardAttributeXml(objectXml, standardAttributeName, tsName)
             : resolveStandardAttributeXml(objectXml, standardAttributeName, {
-                ruleset: rulesetForObjectXml(objectXml),
+                ruleset,
                 useDefaults: !inheritedObjectXml,
               });
           const inheritedXml = !inheritedObjectXml
@@ -107,7 +109,7 @@ export const structuredMetaChildHandler: ObjectHandler = {
                 ruleset: rulesetForObjectXml(inheritedObjectXml),
                 useDefaults: true,
               });
-          return propsFromElementXml(localXml, 'standardAttribute', inheritedXml);
+          return propsFromElementXml(localXml, { standardAttributeKeys: standardAttributePropertyKeys(ruleset) }, inheritedXml);
         }
         case 'AddressingAttribute':
           return propsFromElementXml(
@@ -231,7 +233,7 @@ export const structuredMetaChildHandler: ObjectHandler = {
 
 function propsFromElementXml(
   elementXml: string | null,
-  mode: 'typed' | 'tabular' | 'enumValue' | 'standardAttribute' = 'typed',
+  mode: 'typed' | 'tabular' | 'enumValue' | { readonly standardAttributeKeys: readonly string[] } = 'typed',
   inheritedElementXml: string | null = null,
   ownerKind?: string,
   role?: TypeAwarePropertyOwnerKind
@@ -245,8 +247,8 @@ function propsFromElementXml(
   if (mode === 'enumValue') {
     return buildEnumValueProperties(elementXml ?? '', inheritedElementXml);
   }
-  if (mode === 'standardAttribute') {
-    return buildStandardAttributeProperties(elementXml ?? '', inheritedElementXml);
+  if (typeof mode === 'object') {
+    return buildStandardAttributeProperties(elementXml ?? '', inheritedElementXml, mode.standardAttributeKeys);
   }
   // Роль поля — из вида узла дерева: по тегу XML колонку ТЧ от реквизита
   // верхнего уровня не отличить, а состав свойств у них разный.
