@@ -195,6 +195,6 @@ Electron-хост (`@vscode/test-electron`), который под станда�
 ## Границы
 
 - Субагенты запускаются сессией задачи; друг друга не запускают.
-- Права по ролям: `architect`/`reviewer` — read-only, `documenter` — только документация (хук
-  `.claude/hooks/restrict-write-paths.mjs`), `qa-e2e` — только тесты и E2E-фикстуры.
+- Права по ролям: `reviewer` — read-only; `architect` — запись только в `docs/plans/`, `documenter` — только
+  документация (оба — хуком `.claude/hooks/restrict-write-paths.mjs`); `qa-e2e` — только тесты и E2E-фикстуры.
 - Ветки создаёт сессия задачи; коммиты — на русском, без упоминаний Claude/ИИ (см. `CLAUDE.md`).

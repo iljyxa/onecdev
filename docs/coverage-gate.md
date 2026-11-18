@@ -1,6 +1,6 @@
 # Гейт `coverage:changed`
 
-Обязательный гейт **каждой** задачи (FAST и FULL-трек, см. [agentic-pipeline.md](./agentic-pipeline.md)):
+Обязательный гейт **каждой** задачи (любой трек — SOLO, FULL, LARGE; см. [agentic-pipeline.md](./agentic-pipeline.md)):
 `npm run coverage:changed` проверяет 100% покрытие ровно тех строк/веток, которые задача добавила или
 изменила (industry-standard patch coverage), а не весь файл и не проект целиком. Реализация —
 `scripts/patch-coverage.mjs` (тонкий оркестратор: git, спавны, ФС, печать) + чистые модули без I/O в
@@ -184,6 +184,6 @@ V8» выше: на здоровом дроблёном прогоне доля 
 
 ## Связанные документы
 
-- [agentic-pipeline.md](./agentic-pipeline.md) — где `coverage:changed` стоит в конвейере (стадия
-  qa-e2e, гейт для FAST и FULL-трека).
+- [agentic-pipeline.md](./agentic-pipeline.md) — где `coverage:changed` стоит в конвейере (внутри
+  `qa-gate.sh` локально и в CI; гейт любой задачи).
 - Корневой [`CLAUDE.md`](../CLAUDE.md) — краткий контракт; развёрнуто — [project-rules.md](./project-rules.md), разделы «TDD и покрытие» и «Команды».

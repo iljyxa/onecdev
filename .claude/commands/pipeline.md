@@ -18,7 +18,7 @@ $ARGUMENTS
    контексте): SOLO по умолчанию; FULL — новый тип/слот/тег/схема, центральные контракты, MCP-инструмент или
    канон путей, протокол webview↔расширение, новая подсистема; LARGE — FULL, не помещающийся в одну сессию.
    Назови трек одной строкой с причиной.
-4. **Ветка** от `origin/main`: `git fetch origin && git switch -c <fix|feat|chore>/issue-<N>-<кратко> origin/main`.
+4. **Ветка** от `origin/main`: `git fetch origin && git switch -c <ветка> origin/main`, имя — по «Git-процессу» `CLAUDE.md`.
 5. **Трек:**
    - **SOLO:** рецепт из `docs/recipes/*.md` → точечная разведка (LSP, разделы docs) → все тесты → код →
      связанные тесты, compile, lint.

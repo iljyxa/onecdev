@@ -181,6 +181,25 @@ Vue-приложения (сборка `vite.webview.config.ts`, проверк�
 - У инструментов, работающих с одним узлом, аргумент называется `path`; парные `compile_*` принимают `parentPath`. Никаких `objectPath`/`formPath`/`modulePath` и т.п.
 - Контракт `resolveFormXmlByCanonical` (`ui/mcp/McpPathResolvers.ts`) — путь к **ТЕЛУ** формы (`…/Ext/Form.xml`), не к дескриптору и не к XML объекта: `Справочники.X.Форма.Y` → `Catalogs/X/Forms/Y/Ext/Form.xml`, `ОбщиеФормы.X` → `CommonForms/X/Ext/Form.xml`. См. [mcp-paths.md](./mcp-paths.md#формы-тело-и-дескриптор).
 
+## Технологический стек
+
+- TypeScript ≥ 5.3, target ES2020, strict. VS Code API ≥ 1.85, `vscode-languageclient`.
+- **Vite** (сборка в `dist/`). Два конфига: `vite.node.config.ts` (Node-таргет: `extension`, CLI) и `vite.webview.config.ts` (Vue-webview из `src-ui/`). Встроенного `server`-entry нет — LSP внешний (`bsl-analyzer`).
+- `iconv-lite` — декодирование OEM-866/Win1251 вывода vrunner.
+- Тесты — Mocha через `@vscode/test-electron`, покрытие — `c8`.
+
+## Ключевые принципы
+
+- Один декларативный реестр `META_TYPES` → один конвейер. Поведение — функции/сервисы поверх таблицы, без дублирующих словарей.
+- Все пути (XML и BSL-модули) резолвятся только через `MetaPathResolver`.
+- `bsl-analyzer` — единственный LSP; BSL-файлы открываются напрямую через `file://`.
+- Ленивая загрузка дерева: дочерние узлы строятся при раскрытии.
+- **Генерация XML привязана к версии формата через ruleset** (`infra/xml/format/`, текущий — 2.21). См. `docs/xml-format-rulesets.md`.
+
+## Известные технические долги
+
+Перечень — [tech-debt.md](./tech-debt.md). Сверяться при планировании задач в затронутых областях (`CommandRegistry`, `TreeNode`, XML-парсинг на регулярках, панель «Изменения метаданных», блок «История», хранилище).
+
 ## Запреты и анти-паттерны
 
 1. **Никаких regex-парсеров XML вне `infra/xml/`.**
