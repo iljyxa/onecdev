@@ -46,6 +46,11 @@ export type StandardAttributeWriteOutcome =
   | { readonly status: 'changed' | 'unchanged' }
   | { readonly status: 'refused'; readonly reason: StandardAttributeEditRefusal | 'read-failed'; readonly message: string };
 
+/** Итог записи свойства объекта или дочернего элемента (#147). */
+export type PropertyWriteOutcome =
+  | StandardAttributeWriteOutcome
+  | { readonly status: 'refused'; readonly reason: 'target-not-found' | 'no-properties'; readonly message: string };
+
 interface XmlTextNode { '#text': string }
 type XmlElementNode = Record<string, XmlNodeList>;
 type XmlNode = XmlTextNode | XmlElementNode;
@@ -395,7 +400,13 @@ export class ObjectXmlReader {
     return { status: 'changed' };
   }
 
-  updatePropertyInObject(
+  /** Булев фасад над {@link writePropertyInObject} для вызовов, которым причина не нужна. */
+  updatePropertyInObject(xmlPath: string, options: Parameters<ObjectXmlReader['writePropertyInObject']>[1]): boolean {
+    return this.writePropertyInObject(xmlPath, options).status === 'changed';
+  }
+
+  /** Правка свойства; «значение уже такое» — `unchanged`, а не отказ: иначе повтор выглядел ошибкой (#147). */
+  writePropertyInObject(
     xmlPath: string,
     options: {
       targetKind: 'Self' | 'StandardAttribute' | 'Attribute' | 'AddressingAttribute' | 'Dimension' | 'Resource' | 'Column' | 'TabularSection' | 'Command' | 'EnumValue' | 'URLTemplate' | 'Method';
@@ -406,7 +417,7 @@ export class ObjectXmlReader {
       valueKind: PropertyValueKind;
       value: string | boolean | string[];
     }
-  ): boolean {
+  ): PropertyWriteOutcome {
     if (options.targetKind === 'StandardAttribute') {
       return this.updateStandardAttributeProperty(xmlPath, {
         attributeName: options.targetName,
@@ -414,13 +425,13 @@ export class ObjectXmlReader {
         propertyKey: options.propertyKey,
         valueKind: options.valueKind,
         value: options.value,
-      }).status === 'changed';
+      });
     }
     let xml: string;
     try {
       xml = fs.readFileSync(xmlPath, 'utf-8');
     } catch {
-      return false;
+      return { status: 'refused', reason: 'read-failed', message: 'Не удалось прочитать файл объекта.' };
     }
 
     // Целевой блок адресуется диапазоном {start,end} в исходном XML, а не текстовым
@@ -449,7 +460,7 @@ export class ObjectXmlReader {
     })();
 
     if (!targetRange) {
-      return false;
+      return { status: 'refused', reason: 'target-not-found', message: `Элемент "${options.targetName}" не найден в XML объекта.` };
     }
 
     const targetXml = xml.slice(targetRange.start, targetRange.end);
@@ -463,8 +474,11 @@ export class ObjectXmlReader {
       // команда) своя ось состава свойств, и ранг ключа корня там не при чём.
       options.targetKind === 'Self' ? detectRootObjectKind(xml) : undefined
     );
+    if (updatedTarget === null) {
+      return { status: 'refused', reason: 'no-properties', message: 'У выбранного элемента нет блока свойств <Properties>.' };
+    }
     if (updatedTarget === targetXml) {
-      return false;
+      return { status: 'unchanged' };
     }
 
     const updatedXml = xml.slice(0, targetRange.start) + updatedTarget + xml.slice(targetRange.end);
@@ -472,10 +486,10 @@ export class ObjectXmlReader {
     // собирает вставляемый блок через .join('\n'), поэтому на CRLF-файле побайтовое
     // сравнение давало бы ложный «изменён» при идемпотентной вставке.
     if (!hasRealChange(xml, updatedXml)) {
-      return false;
+      return { status: 'unchanged' };
     }
     writeTextFilePreservingBomAndEol(xmlPath, xml, updatedXml);
-    return true;
+    return { status: 'changed' };
   }
 }
 
@@ -746,10 +760,10 @@ function updatePropertyInElement(
   valueKind: PropertyValueKind,
   value: string | boolean | string[],
   ownerKind?: string
-): string {
+): string | null {
   const propertiesMatch = /<Properties>([\s\S]*?)<\/Properties>/.exec(elementXml);
   if (!propertiesMatch) {
-    return elementXml;
+    return null;
   }
   const propsInner = propertiesMatch[1];
   const propertyRe = new RegExp(`<${propertyKey}>[\\s\\S]*?<\\/${propertyKey}>`);
