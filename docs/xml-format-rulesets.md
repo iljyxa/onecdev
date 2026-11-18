@@ -1020,8 +1020,13 @@ ns-префикс и атрибуты (`[A-Za-z_][\w.:-]*` плюс опцион
 Предикат — `isEmptyPropertyValue` в `infra/xml/XmlUtils.ts`, ОДИН на всех писателей
 свойств. Писателей два, и это не очевидно:
 
-- `ObjectXmlReader.updatePropertyInObject` — свойства объекта метаданных и его дочерних
-  элементов; сюда же делегирует `ConfigurationXmlEditor.modifyObjectProperty`;
+- `ObjectXmlReader.writePropertyInObject` — свойства объекта метаданных и его дочерних
+  элементов; возвращает `PropertyWriteOutcome`: `changed`, `unchanged` (значение уже
+  такое — не ошибка, #147) или `refused` с причиной (`read-failed`, `target-not-found`,
+  `no-properties`, причины писателя стандартных реквизитов). `modifyObjectProperty`
+  переводит `refused` в отказ с этим текстом, `unchanged` — в успех без изменений;
+  булев фасад `updatePropertyInObject` (`changed` → `true`) оставлен для вызовов, которым
+  причина не нужна (`BasedOnXmlService`);
 - `ConfigurationXmlEditor.buildRootPropertyBlock` — свойства КОРНЯ конфигурации и
   расширения (`modifyConfigurationProperty`), отдельный построитель блока.
 

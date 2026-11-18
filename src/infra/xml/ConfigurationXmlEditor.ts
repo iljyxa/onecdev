@@ -40,25 +40,13 @@ export class ConfigurationXmlEditor {
       value: string | boolean | string[];
     }
   ): EditResult {
-    if (options.targetKind === 'StandardAttribute') {
-      // Свой писатель с причинами отказа: «не удалось изменить» без причины
-      // скрывало бы и заимствованный объект, и реквизит табличной части (#145).
-      const outcome = this.objectReader.updateStandardAttributeProperty(xmlPath, {
-        attributeName: options.targetName,
-        tabularSectionName: options.tabularSectionName,
-        propertyKey: options.propertyKey,
-        valueKind: options.valueKind,
-        value: options.value,
-      });
-      if (outcome.status === 'refused') {
-        return this.fail(outcome.message);
-      }
-      return outcome.status === 'changed' ? this.ok([xmlPath]) : this.unchanged();
+    // Отказ — с причиной писателя, повтор того же значения — успех без изменений
+    // (#145, #147): иначе панель и MCP показывали ошибку на идемпотентной правке.
+    const outcome = this.objectReader.writePropertyInObject(xmlPath, options);
+    if (outcome.status === 'refused') {
+      return this.fail(outcome.message);
     }
-    const changed = this.objectReader.updatePropertyInObject(xmlPath, options);
-    return changed
-      ? this.ok([xmlPath])
-      : this.fail(`Не удалось изменить свойство "${options.propertyKey}".`);
+    return outcome.status === 'changed' ? this.ok([xmlPath]) : this.unchanged();
   }
 
   modifyObjectType(
