@@ -239,6 +239,33 @@ function editElementProperty(
   return elementXml.slice(0, start) + next + elementXml.slice(inner.start + property.end);
 }
 
+const STANDARD_ATTRIBUTE_ELEMENT_RE = /<xr:StandardAttribute name="[^"]*">([\s\S]*?)<\/xr:StandardAttribute>/g;
+const propertyKeysByRuleset = new WeakMap<FormatRuleset, readonly string[]>();
+
+/**
+ * Ключи свойств `<xr:StandardAttribute>` (без `xr:`) в порядке шаблонов ruleset.
+ * Состав берётся из шаблонов, снятых с платформы, а не из набора типизированного
+ * поля: у стандартного реквизита нет `Name`, `Indexing`, `ChoiceFoldersAndItems`,
+ * `DenyIncompleteValues`, и контракт не должен обещать их запись (#149).
+ */
+export function standardAttributePropertyKeys(ruleset: FormatRuleset): readonly string[] {
+  const cached = propertyKeysByRuleset.get(ruleset);
+  if (cached) {
+    return cached;
+  }
+  const keys = new Set<string>();
+  for (const kind of Object.keys(META_TYPES) as MetaKind[]) {
+    for (const element of ruleset.standardAttributes(kind).matchAll(STANDARD_ATTRIBUTE_ELEMENT_RE)) {
+      for (const block of collectPropertyBlocks(element[1])) {
+        keys.add(block.key.replace(/^xr:/, ''));
+      }
+    }
+  }
+  const result = [...keys];
+  propertyKeysByRuleset.set(ruleset, result);
+  return result;
+}
+
 /** Элемент `<xr:StandardAttribute>` из шаблона ruleset вида или `null`. */
 export function defaultStandardAttributeElementXml(
   ruleset: FormatRuleset,

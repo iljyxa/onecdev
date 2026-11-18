@@ -632,7 +632,18 @@ export const TYPED_FIELD_PROPERTY_KEYS: string[] = [
   // редактируемыми и дописала бы их в XML — платформа такой файл отклоняет.
 ];
 
-export const STANDARD_ATTRIBUTE_PROPERTY_KEYS: string[] = TYPED_FIELD_PROPERTY_KEYS.filter((key) => key !== 'Type');
+/**
+ * Порядок свойств стандартного реквизита. Состав — ключи шаблона ruleset
+ * (`templateKeys`), порядок — как у типизированного поля, чтобы панели
+ * реквизитов выглядели одинаково; ключи шаблона вне этого порядка — в конце.
+ * `Name` в XML нет (имя — атрибут элемента), он показывается только для чтения.
+ */
+export function standardAttributePropertyKeyOrder(templateKeys: readonly string[]): string[] {
+  const inTemplate = new Set(templateKeys);
+  const ordered = TYPED_FIELD_PROPERTY_KEYS.filter((key) => inTemplate.has(key));
+  const known = new Set(ordered);
+  return ['Name', ...ordered, ...templateKeys.filter((key) => !known.has(key))];
+}
 
 /** Поля табличной части */
 export const TABULAR_SECTION_PROPERTY_KEYS: string[] = [

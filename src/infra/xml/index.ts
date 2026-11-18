@@ -41,6 +41,7 @@ export * from './MetadataPropertiesXml';
 export {
   resolveStandardAttributeXml,
   rulesetForObjectXml,
+  standardAttributePropertyKeys,
   type ResolveStandardAttributeOptions,
 } from './properties/StandardAttributesBlock';
 export type { ConfigInfo } from '../../domain/Configuration';

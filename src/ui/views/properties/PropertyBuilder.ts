@@ -51,7 +51,7 @@ import {
   ENUM_VALUE_PROPERTY_KEYS,
   FORM_PROPERTY_KEYS,
   HTTP_METHOD_PROPERTY_KEYS,
-  STANDARD_ATTRIBUTE_PROPERTY_KEYS,
+  standardAttributePropertyKeyOrder,
   TABULAR_SECTION_PROPERTY_KEYS,
   TEMPLATE_META_PROPERTY_KEYS,
   URL_TEMPLATE_PROPERTY_KEYS,
@@ -584,14 +584,15 @@ function formatMetadataFieldDisplay(canonical: string): string {
 
 export function buildStandardAttributeProperties(
   elementXml: string,
-  inheritedElementXml?: string | null
+  inheritedElementXml: string | null,
+  templateKeys: readonly string[]
 ): ObjectPropertiesCollection {
   const local = normalizeStandardAttributeElementXml(elementXml);
   const inherited = inheritedElementXml ? normalizeStandardAttributeElementXml(inheritedElementXml) : null;
-  return buildEffectivePropertyItemsForKeys(local, inherited, STANDARD_ATTRIBUTE_PROPERTY_KEYS, {
+  return buildEffectivePropertyItemsForKeys(local, inherited, standardAttributePropertyKeyOrder(templateKeys), {
     includeExtraKeys: true,
     showMissingKeys: true,
-  });
+  }).map((item) => (item.key === 'Name' ? { ...item, readonly: true } : item));
 }
 
 function normalizeStandardAttributeElementXml(elementXml: string): string {

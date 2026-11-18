@@ -14,6 +14,7 @@ import {
   detectObjectXmlFormatVersion,
   resolveStandardAttributeXml,
   rulesetForObjectXml,
+  standardAttributePropertyKeys,
 } from '../../infra/xml/properties/StandardAttributesBlock';
 import { EXAMPLE_GENERATIONS, skipWithoutCorpus } from './support/corpus';
 
@@ -196,5 +197,24 @@ suite('ObjectXmlReader — стандартные реквизиты новог�
     } finally {
       fs.rmSync(configRoot, { recursive: true, force: true });
     }
+  });
+});
+
+suite('standardAttributePropertyKeys — состав свойств из шаблонов ruleset (#149)', () => {
+  const EXPECTED = [
+    'LinkByType', 'FillChecking', 'MultiLine', 'FillFromFillingValue', 'CreateOnInput', 'TypeReductionMode', 'MaxValue',
+    'ToolTip', 'ExtendedEdit', 'Format', 'ChoiceForm', 'QuickChoice', 'ChoiceHistoryOnInput', 'EditFormat',
+    'PasswordMode', 'DataHistory', 'MarkNegatives', 'MinValue', 'Synonym', 'Comment', 'FullTextSearch',
+    'ChoiceParameterLinks', 'FillValue', 'Mask', 'ChoiceParameters',
+  ];
+
+  for (const [label, ruleset] of [['baseline', BASELINE_RULESET], ['2.20', FORMAT_2_20_RULESET]] as const) {
+    test(`${label}: ключи без префикса xr:, в порядке шаблона, без Name/Indexing/DenyIncompleteValues`, () => {
+      assert.deepStrictEqual([...standardAttributePropertyKeys(ruleset)], EXPECTED);
+    });
+  }
+
+  test('повторный вызов отдаёт тот же массив (шаблоны разбираются один раз на ruleset)', () => {
+    assert.strictEqual(standardAttributePropertyKeys(BASELINE_RULESET), standardAttributePropertyKeys(BASELINE_RULESET));
   });
 });

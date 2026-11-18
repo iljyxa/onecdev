@@ -323,6 +323,121 @@ suite('McpPropertyService', () => {
     }
   });
 
+  suite('Составные и отсутствующие свойства в контракте (#149)', () => {
+    const roots: string[] = [];
+    teardown(() => {
+      for (const root of roots.splice(0)) {
+        fs.rmSync(root, { recursive: true, force: true });
+      }
+    });
+
+    function copyCatalog(name: string): string {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-composite-'));
+      roots.push(root);
+      const xmlPath = path.join(root, `${name}.xml`);
+      fs.copyFileSync(path.resolve(__dirname, '../../../example/2.20/src/cf/Catalogs', `${name}.xml`), xmlPath);
+      return xmlPath;
+    }
+
+    function copyUsers(): string {
+      return copyCatalog('Пользователи');
+    }
+
+    function descriptionNode(xmlPath: string): MetadataNode {
+      return new MetadataNode({
+        label: 'Description',
+        nodeKind: 'StandardAttribute',
+        xmlPath,
+        metaContext: { rootMetaKind: 'Catalog', ownerObjectXmlPath: xmlPath, standardAttributeName: 'Description' },
+      }, vscode.TreeItemCollapsibleState.None);
+    }
+
+    const COMPOSITE_KEYS = ['LinkByType', 'ChoiceParameterLinks', 'ChoiceParameters'] as const;
+
+    test('стандартный реквизит: состав ключей — Имя + свойства шаблона ruleset, без Indexing/ChoiceFoldersAndItems/DenyIncompleteValues', () => {
+      const contracts = new McpPropertyService(new ConfigurationXmlEditor()).getPropertyContracts(descriptionNode(copyUsers()));
+
+      assert.deepStrictEqual(contracts.map((item) => item.propertyKey), [
+        'Name', 'Synonym', 'Comment', 'PasswordMode', 'Format', 'EditFormat', 'ToolTip', 'MarkNegatives', 'Mask',
+        'MultiLine', 'ExtendedEdit', 'MinValue', 'MaxValue', 'FillFromFillingValue', 'FillValue', 'FillChecking',
+        'ChoiceParameterLinks', 'ChoiceForm', 'QuickChoice', 'CreateOnInput', 'ChoiceHistoryOnInput', 'FullTextSearch',
+        'DataHistory', 'LinkByType', 'TypeReductionMode', 'ChoiceParameters',
+      ]);
+      const name = contracts.find((item) => item.propertyKey === 'Name');
+      assert.ok(name);
+      assert.strictEqual(name.readonly, true);
+      assert.strictEqual(name.supportedBySetProperty, false);
+      assert.deepStrictEqual(name.notes, ['Свойство доступно только для чтения.']);
+    });
+
+    test('стандартный реквизит: составные свойства не записываются простой строкой', () => {
+      const xmlPath = copyUsers();
+      const node = descriptionNode(xmlPath);
+      const service = new McpPropertyService(new ConfigurationXmlEditor());
+      const before = fs.readFileSync(xmlPath);
+
+      for (const key of COMPOSITE_KEYS) {
+        const contract = service.getPropertyContract(node, key);
+        assert.strictEqual(contract.supportedBySetProperty, false, key);
+        assert.deepStrictEqual(contract.notes, [
+          'Свойство хранит составное XML-значение; запись простой строкой через set_property запрещена.',
+        ], key);
+        assert.throws(() => service.setProperty(node, key, 'X'), /требует специализированного инструмента/, key);
+      }
+      assert.throws(() => service.setProperty(node, 'Name', 'X'), /доступно только для чтения/);
+      assert.throws(() => service.setProperty(node, 'Indexing', 'Index'), /недоступно для узла/);
+      assert.ok(fs.readFileSync(xmlPath).equals(before), 'файл объекта изменён');
+    });
+
+    test('обычный реквизит ссылочного типа: составные свойства не записываются простой строкой', () => {
+      // У ссылочного реквизита есть свойства выбора; у строкового их в контракте нет вовсе.
+      const xmlPath = copyCatalog('Контрагенты');
+      const node = createChildNode(xmlPath, 'Attribute', 'Регион');
+      const service = new McpPropertyService(new ConfigurationXmlEditor());
+      const before = fs.readFileSync(xmlPath);
+
+      for (const key of COMPOSITE_KEYS) {
+        assert.strictEqual(service.getPropertyContract(node, key).supportedBySetProperty, false, key);
+        assert.throws(() => service.setProperty(node, key, 'X'), /требует специализированного инструмента/, key);
+      }
+      assert.ok(fs.readFileSync(xmlPath).equals(before), 'файл объекта изменён');
+    });
+
+    test('стандартный реквизит ТЧ, которой нет в заимствованном объекте: свойства из базовой конфигурации', () => {
+      // В EVOLC Контрагенты заимствован без ТЧ «КонтактныеЛица» — собственного
+      // элемента нет, значения приходят только из базовой конфигурации.
+      const xmlPath = path.resolve(__dirname, '../../../example/2.21/src/cfe/EVOLC/Catalogs/Контрагенты.xml');
+      const node = new MetadataNode({
+        label: 'LineNumber',
+        nodeKind: 'StandardAttribute',
+        xmlPath,
+        metaContext: {
+          rootMetaKind: 'Catalog',
+          ownerObjectXmlPath: xmlPath,
+          standardAttributeName: 'LineNumber',
+          tabularSectionName: 'КонтактныеЛица',
+        },
+      }, vscode.TreeItemCollapsibleState.None);
+
+      const contracts = new McpPropertyService(new ConfigurationXmlEditor()).getPropertyContracts(node);
+
+      assert.strictEqual(contracts[0]?.propertyKey, 'Name');
+      assert.strictEqual(contracts[0]?.readonly, true);
+      assert.ok(!contracts.some((item) => item.propertyKey === 'Indexing'));
+    });
+
+    test('свойство-список ссылок (Ввод по строке) — запись через set_property не обещается', () => {
+      const xmlPath = path.resolve(__dirname, '../../../example/2.20/src/cf/Catalogs/Контрагенты.xml');
+      const node = new MetadataNode({ label: 'Контрагенты', nodeKind: 'Catalog', xmlPath }, vscode.TreeItemCollapsibleState.None);
+
+      const contract = new McpPropertyService(new ConfigurationXmlEditor()).getPropertyContract(node, 'InputByString');
+
+      assert.strictEqual(contract.kind, 'metadataReferenceList');
+      assert.strictEqual(contract.supportedBySetProperty, false);
+      assert.deepStrictEqual(contract.notes, ['Для этого свойства нужен специализированный инструмент с дополнительным контрактом значения.']);
+    });
+  });
+
   test('запрещает недопустимое enum-значение до записи XML', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-prop-'));
     try {
