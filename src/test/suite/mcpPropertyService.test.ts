@@ -458,7 +458,13 @@ suite('McpPropertyService', () => {
       return target;
     }
 
-    function cases(): { name: string; xmlPath: string; node: MetadataNode; xmlTag: RegExp }[] {
+    /** Значение TypeReductionMode внутри целевого элемента; без элемента — undefined. */
+    function reductionModeIn(xml: string, element: RegExp, tag: string): string | undefined {
+      const block = element.exec(xml)?.[0];
+      return block ? new RegExp(`<${tag}>([^<]*)</${tag}>`).exec(block)?.[1] : undefined;
+    }
+
+    function cases(): { name: string; xmlPath: string; node: MetadataNode; modeOf: (xml: string) => string | undefined }[] {
       const catalogXml = copyFixture('2.20/src/cf/Catalogs/Пользователи.xml');
       const registerXml = copyFixture('2.20/src/cf/InformationRegisters/КурсыВалют.xml');
       return [
@@ -471,7 +477,8 @@ suite('McpPropertyService', () => {
             xmlPath: catalogXml,
             metaContext: { rootMetaKind: 'Catalog', ownerObjectXmlPath: catalogXml, standardAttributeName: 'Description' },
           }, vscode.TreeItemCollapsibleState.None),
-          xmlTag: /<xr:StandardAttribute name="Description">[\s\S]*?<xr:TypeReductionMode>Deny<\/xr:TypeReductionMode>/,
+          modeOf: (xml) => reductionModeIn(
+            xml, /<xr:StandardAttribute name="Description">[\s\S]*?<\/xr:StandardAttribute>/, 'xr:TypeReductionMode'),
         },
         {
           name: 'измерение регистра сведений',
@@ -482,7 +489,9 @@ suite('McpPropertyService', () => {
             xmlPath: registerXml,
             metaContext: { rootMetaKind: 'InformationRegister', ownerObjectXmlPath: registerXml },
           }, vscode.TreeItemCollapsibleState.None),
-          xmlTag: /<Name>Валюта<\/Name>[\s\S]*?<TypeReductionMode>Deny<\/TypeReductionMode>/,
+          // Имя сразу за `<Properties>` и ленивый захват до своего `</Dimension>`: соседнее измерение не попадает.
+          modeOf: (xml) => reductionModeIn(
+            xml, /<Dimension uuid="[^"]*">\s*<Properties>\s*<Name>Валюта<\/Name>[\s\S]*?<\/Dimension>/, 'TypeReductionMode'),
         },
       ];
     }
@@ -507,8 +516,11 @@ suite('McpPropertyService', () => {
         }
         assert.ok(fs.readFileSync(item.xmlPath).equals(before), `${item.name}: файл изменён`);
 
+        const modeBefore = item.modeOf(before.toString('utf-8'));
+        assert.notStrictEqual(modeBefore, 'Deny', `${item.name}: фикстура уже содержит Deny`);
+
         service.setProperty(item.node, 'TypeReductionMode', 'Deny');
-        assert.match(fs.readFileSync(item.xmlPath, 'utf-8'), item.xmlTag, item.name);
+        assert.strictEqual(item.modeOf(fs.readFileSync(item.xmlPath, 'utf-8')), 'Deny', item.name);
       }
     });
   });
