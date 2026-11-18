@@ -21,8 +21,6 @@ import { buildEventSourceInnerXml } from './EventSubscriptionPropertyService';
 import { toCanonicalPropertyInput } from './PropertyPresentationRegistry';
 import {
   type BasedOnMetaKind,
-  extractSimpleTag,
-  extractStandardAttributeXml,
   parseConfigXml,
   parseObjectXml,
 } from '../../../infra/xml';
@@ -30,7 +28,6 @@ import type {
   BasedOnXmlService,
   ConfigurationXmlEditor,
 } from '../../../infra/xml';
-import { extractChildMetaElementXml } from '../../../infra/xml';
 import type { RepositoryService } from '../../../infra/repository/RepositoryService';
 import type { SupportInfoService, SupportMode } from '../../../infra/support/SupportInfoService';
 import { getHandlerForNode } from '../../tree/nodeBuilders/index';
@@ -42,7 +39,7 @@ import type {
   PropertiesViewState,
 } from './_types';
 import { getObjectLocationFromXml } from '../../../infra/fs';
-import { getDefaultStandardAttributeIndexing } from '../../../domain/StandardAttribute';
+import { isInputByStringFieldIndexed } from '../../../infra/xml/properties/InputByStringFields';
 import type {
   SubsystemMembershipSnapshot,
   SubsystemMembershipTreeNode,
@@ -687,7 +684,7 @@ export class PropertiesViewController {
       const objectName = objectInfo?.name ?? this.activeNode.textLabel;
       return (objectInfo?.children ?? [])
         .filter((item) => item.tag === 'StandardAttribute' || item.tag === 'Attribute' || item.tag === 'Dimension' || item.tag === 'Resource')
-        .filter((item) => this.isInputByStringFieldIndexed(objectXml, objectKind, item.tag, item.name))
+        .filter((item) => isInputByStringFieldIndexed(objectXml, objectKind, item.tag, item.name))
         .map((item) => ({
           canonical: `${objectKind}.${objectName}.${item.tag}.${item.name}`,
           display: item.presentation ?? item.name,
@@ -718,21 +715,6 @@ export class PropertiesViewController {
     } catch {
       return [];
     }
-  }
-
-  private isInputByStringFieldIndexed(objectXml: string, objectKind: string, tag: string, name: string): boolean {
-    const elementXml = tag === 'StandardAttribute'
-      ? extractStandardAttributeXml(objectXml, name)
-      : extractChildMetaElementXml(objectXml, tag, name);
-    const indexing = elementXml ? extractSimpleTag(elementXml, tag === 'StandardAttribute' ? 'xr:Indexing' : 'Indexing') : undefined;
-    if (indexing) {
-      return indexing !== 'DontIndex';
-    }
-    if (tag === 'StandardAttribute') {
-      const defaultIndexing = getDefaultStandardAttributeIndexing(objectKind, name);
-      return defaultIndexing !== undefined && defaultIndexing !== 'DontIndex';
-    }
-    return false;
   }
 
   private setMetadataReferenceList(key: string, values: string[]): void {

@@ -7,6 +7,7 @@ import { ConfigurationXmlEditor, SubsystemToolsService, SubsystemXmlService } fr
 import { MetadataXmlCreator } from '../../infra/xml/MetadataXmlCreator';
 import { MetadataNode } from '../../ui/tree/TreeNode';
 import { McpPropertyService } from '../../ui/mcp/McpPropertyService';
+import type { MetaKind } from '../../domain/MetaTypes';
 import { skipWithoutCorpus } from './support/corpus';
 
 suite('McpPropertyService', () => {
@@ -53,6 +54,83 @@ suite('McpPropertyService', () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  suite('setProperty стандартного реквизита (#145)', () => {
+    const roots: string[] = [];
+    teardown(() => {
+      for (const root of roots.splice(0)) {
+        fs.rmSync(root, { recursive: true, force: true });
+      }
+    });
+
+    function copyFixture(relative: string): string {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-standard-set-'));
+      roots.push(root);
+      const xmlPath = path.join(root, path.basename(relative));
+      fs.copyFileSync(path.resolve(__dirname, '../../../example', relative), xmlPath);
+      return xmlPath;
+    }
+
+    function standardAttributeNode(xmlPath: string, name: string, rootMetaKind: MetaKind, tabularSectionName?: string): MetadataNode {
+      return new MetadataNode({
+        label: name,
+        nodeKind: 'StandardAttribute',
+        xmlPath,
+        metaContext: {
+          rootMetaKind,
+          ownerObjectXmlPath: xmlPath,
+          standardAttributeName: name,
+          ...(tabularSectionName ? { tabularSectionName } : {}),
+        },
+      }, vscode.TreeItemCollapsibleState.None);
+    }
+
+    test('объект без блока: changed, changedFiles=[xmlPath]; повтор — без изменений; контракт видит новое значение', () => {
+      const xmlPath = copyFixture('2.20/src/cf/Catalogs/Пользователи.xml');
+      const node = standardAttributeNode(xmlPath, 'Description', 'Catalog');
+      const service = new McpPropertyService(new ConfigurationXmlEditor());
+
+      const first = service.setProperty(node, 'FillChecking', 'DontCheck');
+      assert.strictEqual(first.success, true, first.message);
+      assert.strictEqual(first.changed, true);
+      assert.deepStrictEqual(first.changedFiles, [xmlPath]);
+
+      const before = fs.readFileSync(xmlPath);
+      const second = service.setProperty(node, 'FillChecking', 'DontCheck');
+      assert.strictEqual(second.success, true, second.message);
+      assert.strictEqual(second.changed, false);
+      assert.ok(fs.readFileSync(xmlPath).equals(before));
+
+      assert.strictEqual(service.getPropertyContract(node, 'FillChecking').currentValue, 'DontCheck');
+    });
+
+    test('заимствованный объект — отказ с причиной, файл не тронут', () => {
+      const xmlPath = copyFixture('2.21/src/cfe/EVOLC/Catalogs/Номенклатура.xml');
+      const before = fs.readFileSync(xmlPath);
+
+      const result = new McpPropertyService(new ConfigurationXmlEditor())
+        .setProperty(standardAttributeNode(xmlPath, 'Description', 'Catalog'), 'FillChecking', 'DontCheck');
+
+      assert.strictEqual(result.success, false);
+      assert.strictEqual(result.message, 'Стандартные реквизиты заимствованного объекта не редактируются в расширении.');
+      assert.ok(fs.readFileSync(xmlPath).equals(before));
+    });
+
+    test('реквизит табличной части — отказ с причиной', () => {
+      const xmlPath = copyFixture('2.20/src/cf/Documents/Заказ.xml');
+      const before = fs.readFileSync(xmlPath);
+
+      const result = new McpPropertyService(new ConfigurationXmlEditor())
+        .setProperty(standardAttributeNode(xmlPath, 'LineNumber', 'Document', 'ТабличнаяЧасть1'), 'FillChecking', 'ShowError');
+
+      assert.strictEqual(result.success, false);
+      assert.strictEqual(
+        result.message,
+        'Свойства стандартных реквизитов табличной части пока не редактируются: для них нет шаблона умолчаний платформы.'
+      );
+      assert.ok(fs.readFileSync(xmlPath).equals(before));
+    });
   });
 
   test('возвращает и записывает ключевые свойства регламентного задания после штатного создания', () => {
