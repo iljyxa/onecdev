@@ -438,6 +438,81 @@ suite('McpPropertyService', () => {
     });
   });
 
+  suite('TypeReductionMode — перечисление платформы (#152)', () => {
+    // Состав из XDTO-схемы платформы (enums TypeReductionMode 8.3.27 и 8.5.1):
+    // значения `Auto` в ней нет.
+    const ALLOWED = ['TransformValues', 'DeleteData', 'Deny'];
+    let root: string;
+
+    setup(() => {
+      root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-type-reduction-'));
+    });
+
+    teardown(() => {
+      fs.rmSync(root, { recursive: true, force: true });
+    });
+
+    function copyFixture(relative: string): string {
+      const target = path.join(root, path.basename(relative));
+      fs.copyFileSync(path.resolve(__dirname, '../../../example', relative), target);
+      return target;
+    }
+
+    function cases(): { name: string; xmlPath: string; node: MetadataNode; xmlTag: RegExp }[] {
+      const catalogXml = copyFixture('2.20/src/cf/Catalogs/Пользователи.xml');
+      const registerXml = copyFixture('2.20/src/cf/InformationRegisters/КурсыВалют.xml');
+      return [
+        {
+          name: 'стандартный реквизит',
+          xmlPath: catalogXml,
+          node: new MetadataNode({
+            label: 'Description',
+            nodeKind: 'StandardAttribute',
+            xmlPath: catalogXml,
+            metaContext: { rootMetaKind: 'Catalog', ownerObjectXmlPath: catalogXml, standardAttributeName: 'Description' },
+          }, vscode.TreeItemCollapsibleState.None),
+          xmlTag: /<xr:StandardAttribute name="Description">[\s\S]*?<xr:TypeReductionMode>Deny<\/xr:TypeReductionMode>/,
+        },
+        {
+          name: 'измерение регистра сведений',
+          xmlPath: registerXml,
+          node: new MetadataNode({
+            label: 'Валюта',
+            nodeKind: 'Dimension',
+            xmlPath: registerXml,
+            metaContext: { rootMetaKind: 'InformationRegister', ownerObjectXmlPath: registerXml },
+          }, vscode.TreeItemCollapsibleState.None),
+          xmlTag: /<Name>Валюта<\/Name>[\s\S]*?<TypeReductionMode>Deny<\/TypeReductionMode>/,
+        },
+      ];
+    }
+
+    test('контракт — enum со значениями платформы и подписью Конфигуратора', () => {
+      const service = new McpPropertyService(new ConfigurationXmlEditor());
+      for (const item of cases()) {
+        const contract = service.getPropertyContract(item.node, 'TypeReductionMode');
+        assert.strictEqual(contract.kind, 'enum', item.name);
+        assert.strictEqual(contract.title, 'Режим сокращения типа', item.name);
+        assert.strictEqual(contract.supportedBySetProperty, true, item.name);
+        assert.deepStrictEqual(contract.allowedValues?.map((option) => option.value), ALLOWED, item.name);
+      }
+    });
+
+    test('недопустимое значение отбивается до записи, допустимое — пишется', () => {
+      const service = new McpPropertyService(new ConfigurationXmlEditor());
+      for (const item of cases()) {
+        const before = fs.readFileSync(item.xmlPath);
+        for (const bad of ['X', 'Auto']) {
+          assert.throws(() => service.setProperty(item.node, 'TypeReductionMode', bad), /Недопустимое значение/, item.name);
+        }
+        assert.ok(fs.readFileSync(item.xmlPath).equals(before), `${item.name}: файл изменён`);
+
+        service.setProperty(item.node, 'TypeReductionMode', 'Deny');
+        assert.match(fs.readFileSync(item.xmlPath, 'utf-8'), item.xmlTag, item.name);
+      }
+    });
+  });
+
   test('запрещает недопустимое enum-значение до записи XML', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-prop-'));
     try {

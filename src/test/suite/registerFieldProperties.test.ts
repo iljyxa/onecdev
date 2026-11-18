@@ -13,7 +13,13 @@ import {
 // Единственная точка чтения состава владелец×роль: owner-агностичной обёртки
 // `getTypedFieldPropertyKeys` и «регистрового» сужения владельца больше нет —
 // регистр частный случай той же таблицы.
-import { getGeneratedPropertyKeys } from '../../infra/xml/typedField/TypedFieldOwnerRules';
+import {
+  getFieldDefaultValues,
+  getGeneratedPropertyKeys,
+  listRolesForOwner,
+  listRuleOwnerKinds,
+} from '../../infra/xml/typedField/TypedFieldOwnerRules';
+import { ENUM_OPTIONS } from '../../infra/xml/PropertySchema';
 import { skipWithoutCorpus } from './support/corpus';
 
 const EXAMPLE_CF_2_21 = path.resolve(__dirname, '../../../example/2.21/src/cf');
@@ -420,6 +426,18 @@ suite('registerFieldProperties — состав свойств полей рег
         continue;
       }
       assert.ok(afterTypeChange.includes(`<${key}`), `панель предлагает ${key}, которого путь записи не пишет`);
+    }
+  });
+
+  test('умолчание TypeReductionMode — значение перечисления платформы (#152)', () => {
+    // В XDTO-схеме платформы у TypeReductionMode нет `Auto`: новое поле с ним не загрузится.
+    const allowed = ENUM_OPTIONS.TypeReductionMode.map((option) => option.value);
+    assert.ok(allowed.length > 0, 'нет опций TypeReductionMode');
+    for (const owner of [undefined, ...listRuleOwnerKinds()]) {
+      for (const role of listRolesForOwner(owner)) {
+        const value = getFieldDefaultValues(role, owner).TypeReductionMode;
+        assert.ok(allowed.includes(value), `${owner ?? '—'}.${role}: ${value}`);
+      }
     }
   });
 
