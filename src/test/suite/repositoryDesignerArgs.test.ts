@@ -21,6 +21,8 @@ suite('buildRepositoryDesignerArgs (#86)', () => {
   test('CLI дописывает те же аргументы после уже собранных', () => {
     const args = ['DESIGNER'];
     appendRepositoryArgs(args, { repoPath: '/srv/repo', repoUser: 'Admin', repoPassword: 'x' });
-    assert.deepStrictEqual(args, ['DESIGNER', ...buildRepositoryDesignerArgs({ repoPath: '/srv/repo', repoUser: 'Admin', repoPassword: 'x' })]);
+    assert.deepStrictEqual(args, [
+      'DESIGNER', '/ConfigurationRepositoryF', '/srv/repo', '/ConfigurationRepositoryN', 'Admin', '/ConfigurationRepositoryP', 'x',
+    ]);
   });
 });
