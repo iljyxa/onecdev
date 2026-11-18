@@ -109,9 +109,10 @@ TDD с обязательными гейтом и ревью на каждой �
    заранее.
 5. **Красный** по правильной причине → **реализация** минимальным изменением → только связанные тесты
    (`npm run test:compile` → `MOCHA_GREP=… xvfb-run -a npm run test:fast`) → `compile` + `lint`.
-6. **QA-гейт:** `bash .claude/scripts/qa-gate.sh` (база `main`) — запускать в фоне
+6. **QA-гейт:** `bash .claude/scripts/qa-gate.sh` (база по умолчанию — `origin/main`; перед запуском
+   `git fetch origin`) — запускать в фоне
    (`run_in_background`), уведомление придёт само. Внутри: lint, sanity-проверки,
-   `COVERAGE_BASE_REF=<база> npm run coverage:changed` (полный `npm test` под c8 = регресс + 100% покрытия
+   `COVERAGE_BASE_REF=<точка ответвления от базы> npm run coverage:changed` (полный `npm test` под c8 = регресс + 100% покрытия
    изменённого); если production-файлов для покрытия нет — обычный `npm test`. Сводка — в выводе, полный лог
    — `out/qa-gate.log`; коды и «перемерь, а не допиши тест» — [coverage-gate.md](./coverage-gate.md).
    Базовое состояние — 0 failing: любое падение — регрессия задачи. Флейк — дефект теста.

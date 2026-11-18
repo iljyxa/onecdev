@@ -23,6 +23,8 @@ jobs:
         with:
           # Гейт считает дифф от merge-base с origin/main — нужна вся история.
           fetch-depth: 0
+          # Гейту не нужен токен после checkout: не оставлять его в .git/config для следующих шагов.
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:

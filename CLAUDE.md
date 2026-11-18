@@ -60,7 +60,7 @@
   план в plan mode с утверждением пользователя → TDD в той же сессии → гейт → агент `reviewer` → PR →
   CodeRabbit. **LARGE** (не помещается в одну сессию): `architect` пишет план в `docs/plans/` →
   `implementer` по этапам.
-- **QA-гейт — скрипт:** `bash .claude/scripts/qa-gate.sh [база=main]` (lint, sanity, один прогон
+- **QA-гейт — скрипт:** `bash .claude/scripts/qa-gate.sh [база=origin/main]` (lint, sanity, один прогон
   `coverage:changed` = регресс + 100% patch coverage; нерантайм-изменения — тесты `N/A`); в фоне, без опроса.
   RED с неочевидной причиной — агент `qa-e2e` по `out/qa-gate.log`.
 - **Инвариант: гейт и ревью — на любой задаче** (SOLO — CodeRabbit; FULL/LARGE — ещё и `reviewer`).

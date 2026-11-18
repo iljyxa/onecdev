@@ -8,14 +8,20 @@
 # Почему один прогон: `coverage:changed` сам запускает полный `npm test` (вместе с pretest) под c8,
 # поэтому отдельный `npm test` перед ним дублировал сборку и регресс-прогон.
 #
-# Использование: bash .claude/scripts/qa-gate.sh [база]   (по умолчанию база — main)
+# Использование: bash .claude/scripts/qa-gate.sh [база]   (по умолчанию — origin/main, без него — main)
+#
+# Почему origin/main: ветка задачи создаётся от origin/main, а локальный main обновляется только
+# вручную. Со старым локальным main точка ответвления уезжает назад, и в «изменения задачи»
+# попадают чужие коммиты, уже влитые в origin/main.
 # Выход: 0 — GREEN, 1 — RED. Полный лог — в $QA_GATE_LOG (по умолчанию out/qa-gate.log).
 
 set -uo pipefail
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
-BASE_REF="${1:-${COVERAGE_BASE_REF:-main}}"
+DEFAULT_BASE=main
+git rev-parse --verify -q origin/main >/dev/null && DEFAULT_BASE=origin/main
+BASE_REF="${1:-${COVERAGE_BASE_REF:-$DEFAULT_BASE}}"
 LOG="${QA_GATE_LOG:-out/qa-gate.log}"
 mkdir -p "$(dirname "$LOG")"
 : > "$LOG"
@@ -80,7 +86,10 @@ if [ -z "${DISPLAY:-}" ] && command -v xvfb-run >/dev/null 2>&1; then RUN=(xvfb-
 # Какие файлы подлежат покрытию, решает только patch-coverage.mjs (isProdTs, NOT_INSTRUMENTED):
 # дублировать фильтр здесь — второй источник правды.
 COVERED=1
-COVERAGE_BASE_REF="$BASE_REF" "${RUN[@]}" npm run coverage:changed >>"$LOG" 2>&1
+# Базой покрытия передаётся точка ответвления, а не сама ветка: coverage:changed сравнивает рабочее
+# дерево с базой напрямую, и если ветка отстала от базы, коммиты базы, которых нет в ветке, попали бы
+# в патч задачи обратным диффом.
+COVERAGE_BASE_REF="$MERGE_BASE" "${RUN[@]}" npm run coverage:changed >>"$LOG" 2>&1
 code=$?
 gate="coverage:changed (npm test под c8)"
 if [ $code -eq 2 ] && grep -q 'production-файлов относительно базы НЕ НАЙДЕНО' "$LOG"; then

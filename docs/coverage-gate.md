@@ -1,6 +1,7 @@
 # Гейт `coverage:changed`
 
-Обязательный гейт **каждой** задачи (любой трек — SOLO, FULL, LARGE; см. [agentic-pipeline.md](./agentic-pipeline.md)):
+Обязательный гейт **каждой** задачи с рантайм-изменениями (любой трек — SOLO, FULL, LARGE; задачи только
+с `docs/`, `.claude/**`, `.github/**` `qa-gate.sh` распознаёт сам и ставит тестам `N/A`; см. [agentic-pipeline.md](./agentic-pipeline.md)):
 `npm run coverage:changed` проверяет 100% покрытие ровно тех строк/веток, которые задача добавила или
 изменила (industry-standard patch coverage), а не весь файл и не проект целиком. Реализация —
 `scripts/patch-coverage.mjs` (тонкий оркестратор: git, спавны, ФС, печать) + чистые модули без I/O в

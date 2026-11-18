@@ -15,6 +15,9 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    # 0 — не ставить автоматическое ревью на паузу после N проверенных коммитов: каждый push исправлений
+    # должен получить повторное ревью без ручного «@coderabbitai review».
+    auto_pause_after_reviewed_commits: 0
     base_branches:
       - main
   # example/ — настоящая выгрузка платформы 1С (фикстуры), её не правят руками и не ревьюят;
