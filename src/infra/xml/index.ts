@@ -38,6 +38,11 @@ export * from './ExchangePlanContentService';
 export * from './TemplateXml';
 export * from './TypedFieldPropertyRules';
 export * from './MetadataPropertiesXml';
+export {
+  resolveStandardAttributeXml,
+  rulesetForObjectXml,
+  type ResolveStandardAttributeOptions,
+} from './properties/StandardAttributesBlock';
 export type { ConfigInfo } from '../../domain/Configuration';
 export type { MetaObject, MetaChild } from '../../domain/MetaObject';
 

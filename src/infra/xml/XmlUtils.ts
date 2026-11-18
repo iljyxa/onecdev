@@ -1,6 +1,4 @@
 import { XMLParser } from 'fast-xml-parser';
-import * as fs from 'fs';
-import { getDefaultStandardAttributeIndexing } from '../../domain/StandardAttribute';
 import { preserveBomAndEol } from './LineEndings';
 import { writeFileAtomic } from '../fs/AtomicFileWriter';
 
@@ -573,53 +571,13 @@ export function extractStandardAttributeXml(
   return re.exec(standardAttributesInner)?.[0] ?? null;
 }
 
-/** Создаёт описание стандартного реквизита в XML объекта, если оно ещё не было материализовано. */
-export function ensureStandardAttributeXml(
-  objectXmlPath: string,
-  attributeName: string,
-  rootKind: string
-): string | null {
-  let xml: string;
-  try {
-    xml = fs.readFileSync(objectXmlPath, 'utf-8');
-  } catch {
-    return null;
-  }
-  const existing = extractExistingStandardAttributeXml(xml, attributeName);
-  if (existing) {
-    return existing;
-  }
-
-  const propertiesMatch = /<Properties>([\s\S]*?)<\/Properties>/.exec(xml);
-  if (!propertiesMatch) {
-    return null;
-  }
-  const propsInner = propertiesMatch[1];
-  const standardAttributeXml = buildDefaultStandardAttributeXml(rootKind, attributeName, '\t\t\t\t');
-  const standardAttributesMatch = /<StandardAttributes>([\s\S]*?)<\/StandardAttributes>/.exec(propsInner);
-  const selfClosingStandardAttributesMatch = /<StandardAttributes\s*\/>/.exec(propsInner);
-
-  const nextPropsInner = standardAttributesMatch
-    ? propsInner.replace(
-        standardAttributesMatch[0],
-        `<StandardAttributes>${standardAttributesMatch[1]}\n${standardAttributeXml}\n\t\t\t</StandardAttributes>`
-      )
-    : selfClosingStandardAttributesMatch
-    ? propsInner.replace(
-        selfClosingStandardAttributesMatch[0],
-        `<StandardAttributes>\n${standardAttributeXml}\n\t\t\t</StandardAttributes>`
-      )
-    : insertStandardAttributesBlock(propsInner, standardAttributeXml);
-
-  if (nextPropsInner === propsInner) {
-    return null;
-  }
-  const nextXml = xml.replace(propsInner, nextPropsInner);
-  writeTextFilePreservingBomAndEol(objectXmlPath, xml, nextXml);
-  return extractExistingStandardAttributeXml(nextXml, attributeName);
-}
-
-function extractExistingStandardAttributeXml(objectXml: string, attributeName: string): string | null {
+/**
+ * Явный (записанный в файл) элемент стандартного реквизита корня объекта или
+ * `null`. В отличие от {@link extractStandardAttributeXml} не подставляет
+ * голый элемент при отсутствии блока — по `null` вызывающий решает, брать ли
+ * умолчание вида.
+ */
+export function extractExplicitStandardAttributeXml(objectXml: string, attributeName: string): string | null {
   const rootXml = extractRootObjectElementXml(objectXml);
   if (!rootXml) {
     return null;
@@ -638,24 +596,6 @@ function extractExistingStandardAttributeXml(objectXml: string, attributeName: s
     'm'
   );
   return re.exec(standardAttributesInner)?.[0] ?? null;
-}
-
-function insertStandardAttributesBlock(propsInner: string, standardAttributeXml: string): string {
-  const block = `\t\t\t<StandardAttributes>\n${standardAttributeXml}\n\t\t\t</StandardAttributes>`;
-  const inputByStringIndex = propsInner.search(/\n\t\t\t<InputByString\b/);
-  if (inputByStringIndex >= 0) {
-    return `${propsInner.slice(0, inputByStringIndex)}\n${block}${propsInner.slice(inputByStringIndex)}`;
-  }
-  return `${propsInner.trimEnd()}\n${block}\n\t\t`;
-}
-
-function buildDefaultStandardAttributeXml(rootKind: string, attributeName: string, indent: string): string {
-  const indexing = getDefaultStandardAttributeIndexing(rootKind, attributeName);
-  return [
-    `${indent}<xr:StandardAttribute name="${escapeXmlAttribute(attributeName)}">`,
-    indexing ? `${indent}\t<xr:Indexing>${indexing}</xr:Indexing>` : undefined,
-    `${indent}</xr:StandardAttribute>`,
-  ].filter((line): line is string => Boolean(line)).join('\n');
 }
 
 /**

@@ -39,3 +39,10 @@
     См. [repository-crs.md](./repository-crs.md#сервисная-часть-117).
 12. `MetadataValidationService.extractRootUuid` (`infra/xml/MetadataValidationService.ts`) дублирует
     `readMetadataRootUuid` (`infra/xml/MetadataRootUuidReader.ts`) — кандидат на переход валидатора на общий ридер.
+13. Стандартные реквизиты (issue #16): два источника умолчаний — шаблон ruleset
+    (`infra/xml/format/standardAttributes.ts`, читается через `resolveStandardAttributeXml`) и
+    `domain/StandardAttribute.getDefaultStandardAttributeIndexing`. Часть читателей
+    (`PropertiesViewController.isInputByStringFieldIndexed`, `ObjectXmlReader`) всё ещё идёт через
+    `extractStandardAttributeXml`, не знающий о шаблоне ruleset. Правка свойства, когда блока нет в файле, —
+    #145; наследование значений заимствованного объекта — #146. См.
+    [xml-format-rulesets.md](./xml-format-rulesets.md).

@@ -80,14 +80,14 @@ function assertMatchesGolden(
 
 suite('MetadataXmlCreator — байт-golden характеризация (предусловие дробления на infra/xml/creator/*)', () => {
   suite('addRootObject: репрезентативный набор видов, версия 2.21', () => {
-    test('Catalog: полный XML (StandardAttributes, InternalInfo, childTags Attribute/TabularSection/Form/Command/Template) + Ext/ObjectModule.bsl', () => {
+    test('Catalog: полный XML (без StandardAttributes, InternalInfo, childTags Attribute/TabularSection/Form/Command/Template) + Ext/ObjectModule.bsl', () => {
       const configRoot = newConfigRoot('2.21');
       const result = new MetadataXmlCreator().addRootObject({ configRoot, kind: 'Catalog', name: 'Тест' });
       assert.strictEqual(result.success, true, result.errors.join('; '));
       assertMatchesGolden(configRoot, result.changedFiles, GOLDEN_Catalog21);
     });
 
-    test('Document: полный XML (Posting/RegisterRecords, StandardAttributes) + Ext/ObjectModule.bsl', () => {
+    test('Document: полный XML (Posting/RegisterRecords, без StandardAttributes) + Ext/ObjectModule.bsl', () => {
       const configRoot = newConfigRoot('2.21');
       const result = new MetadataXmlCreator().addRootObject({ configRoot, kind: 'Document', name: 'Тест' });
       assert.strictEqual(result.success, true, result.errors.join('; '));

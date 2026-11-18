@@ -32,6 +32,29 @@ suite('McpPropertyService', () => {
     );
   });
 
+  test('контракты стандартного реквизита не меняют файл объекта (#16)', () => {
+    const source = path.resolve(__dirname, '../../../example/2.20/src/cf/Catalogs/Пользователи.xml');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-standard-attr-'));
+    try {
+      const xmlPath = path.join(root, 'Пользователи.xml');
+      fs.copyFileSync(source, xmlPath);
+      const before = fs.readFileSync(xmlPath);
+      const node = new MetadataNode({
+        label: 'Description',
+        nodeKind: 'StandardAttribute',
+        xmlPath,
+        metaContext: { rootMetaKind: 'Catalog', ownerObjectXmlPath: xmlPath, standardAttributeName: 'Description' },
+      }, vscode.TreeItemCollapsibleState.None);
+
+      const contracts = new McpPropertyService(new ConfigurationXmlEditor()).getPropertyContracts(node);
+
+      assert.ok(contracts.some((item) => item.propertyKey === 'FillChecking'));
+      assert.ok(fs.readFileSync(xmlPath).equals(before), 'файл объекта изменён чтением контрактов');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('возвращает и записывает ключевые свойства регламентного задания после штатного создания', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-scheduled-job-'));
     try {

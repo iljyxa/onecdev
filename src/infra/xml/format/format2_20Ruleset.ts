@@ -13,9 +13,10 @@ import type { FormatRuleset } from './FormatRuleset';
  *     окна «блокировать окно владельца» пишется `LockOwnerWindow` (в 2.21 —
  *     `LockOwner`), а в дескрипторе формы нет `<UseInInterfaceCompatibilityMode>`.
  *
- * Блоки `<StandardAttributes>`/`<StandardTabularSections>` и таблица
- * generatedTypes у 2.20 и 2.21 совпадают по составу/порядку, поэтому наследуются
- * из baseline без изменений.
+ * Шаблоны `<StandardAttributes>`/`<StandardTabularSections>` (значения по
+ * умолчанию платформы, сверены на 8.3.27) и таблица generatedTypes у 2.20 и
+ * 2.21 совпадают, поэтому наследуются из baseline без изменений — как и
+ * `emitDefaultStandardBlocks: false`: блоков нет и в эталоне `example/2.20`.
  */
 export const FORMAT_2_20_RULESET: FormatRuleset = {
   ...BASELINE_RULESET,
