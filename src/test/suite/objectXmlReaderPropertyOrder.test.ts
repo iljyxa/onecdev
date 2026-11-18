@@ -551,9 +551,9 @@ suite('ObjectXmlReader.updatePropertyInObject — канон порядка св
     const changed = new ObjectXmlReader().updatePropertyInObject(copy, {
       targetKind: 'StandardAttribute',
       targetName: 'Description',
-      propertyKey: 'ToolTip',
+      propertyKey: 'FillChecking',
       valueKind: 'string',
-      value: 'Подсказка',
+      value: 'DontCheck',
     });
     assert.strictEqual(changed, true);
     const after = fs.readFileSync(copy, 'utf-8');
@@ -566,7 +566,7 @@ suite('ObjectXmlReader.updatePropertyInObject — канон порядка св
       'состав прочих свойств корня изменился'
     );
     assert.strictEqual(keys[standardIndex - 1], 'DefaultPresentation');
-    assert.ok(/<xr:StandardAttribute name="Description">[\s\S]*?<xr:ToolTip>Подсказка<\/xr:ToolTip>/.test(after));
+    assert.ok(/<xr:StandardAttribute name="Description">\s*<xr:LinkByType\/>\s*<xr:FillChecking>DontCheck<\/xr:FillChecking>/.test(after));
   });
 
   test('находка 2 (латентная мина): <Properties></Properties> — свойство не уезжает в начало файла, перед <?xml', () => {

@@ -31,6 +31,9 @@ src/
 │   │   │   ├── ChildObjectsOrder.ts  # ДАННЫЕ: CHILD_OBJECTS_ORDER (по MetaKind), childTagRank, hasOrderRule
 │   │   │   └── ChildObjectsEditor.ts # МЕХАНИКА: resolveInsertOffset — не знает ни одного вида метаданных
 │   │   ├── properties/               # канон порядка <Properties> КОРНЕВОГО объекта (docs/xml-format-rulesets.md)
+│   │   │   ├── StandardAttributesBlock.ts # чтение умолчаний и запись свойства стандартного реквизита (#145)
+│   │   │   ├── PropertyValueBlock.ts # построитель значения свойства (вынесен из ObjectXmlReader)
+│   │   │   ├── InputByStringFields.ts # поля ввода по строке (вынесены из PropertiesViewController)
 │   │   │   ├── PropertyOrder.ts      # ДАННЫЕ: ROOT_PROPERTY_ORDER (по MetaKind), rootPropertyRank, hasRootPropertyOrderRule
 │   │   │   └── PropertyInsert.ts     # МЕХАНИКА: insertPropertyBlockInOrder — не знает ни одного вида метаданных
 │   │   ├── crs/                      # XML протокола crserver (docs/repository-crs.md):
