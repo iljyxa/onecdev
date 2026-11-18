@@ -181,10 +181,10 @@ export class McpPropertyService {
 
     const notes = supportedBySetProperty
       ? []
-      : property.readonly === true
-        ? ['Свойство доступно только для чтения.']
       : COMPOSITE_VALUE_PROPERTY_TAGS.has(property.key)
         ? ['Свойство хранит составное XML-значение; запись простой строкой через set_property запрещена.']
+      : property.readonly === true
+        ? ['Свойство доступно только для чтения.']
       : property.key === 'Name' && this.isRootRename(node)
         ? ['Переименование корневого объекта выполняется отдельным инструментом, чтобы обновить файл, ссылки и кэш дерева.']
       : property.kind === 'metadataType'
@@ -209,11 +209,13 @@ export class McpPropertyService {
     if (!property) {
       throw new Error(`Свойство "${propertyKey}" недоступно для узла "${node.textLabel}".`);
     }
-    if (property.readonly) {
-      throw new Error(`Свойство "${propertyKey}" доступно только для чтения.`);
-    }
+    // Составные теги проверяются раньше readonly: панель тоже помечает их readonly (#151),
+    // но агенту нужна подсказка про специализированный инструмент, а не общий отказ.
     if (COMPOSITE_VALUE_PROPERTY_TAGS.has(property.key)) {
       throw new Error(`Свойство "${propertyKey}" требует специализированного инструмента.`);
+    }
+    if (property.readonly) {
+      throw new Error(`Свойство "${propertyKey}" доступно только для чтения.`);
     }
     if (property.key === 'Name' && this.isRootRename(node)) {
       throw new Error('Переименование корневого объекта через set_property запрещено: нужен отдельный инструмент.');

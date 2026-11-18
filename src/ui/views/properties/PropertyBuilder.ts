@@ -22,6 +22,7 @@ import {
 import { isTypedFieldControlledPropertyKey, type TypeAwarePropertyOwnerKind } from '../../../infra/xml/TypedFieldPropertyRules';
 import {
   BOOLEAN_PROPERTY_TAGS,
+  COMPOSITE_VALUE_PROPERTY_TAGS,
   ENUM_DEFAULTS,
   ENUM_OPTIONS,
   LOCALIZED_PROPERTY_TAGS,
@@ -152,7 +153,9 @@ function tryBuildScalarStringPropertyItem(params: {
         : simple === undefined
         ? ''
         : formatPropertyDisplayValue(simple),
-    readonly: Boolean(complexInner?.trim().includes('<')),
+    // Пустой составной тег (`<LinkByType/>`) по форме не отличим от пустой строки, поэтому
+    // признак берётся из того же множества, что и в MCP (#149), а не из наличия вложенных элементов.
+    readonly: COMPOSITE_VALUE_PROPERTY_TAGS.has(key) || Boolean(complexInner?.trim().includes('<')),
   };
 }
 
