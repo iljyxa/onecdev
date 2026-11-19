@@ -66,7 +66,7 @@ suite('CfeBorrowService — Form.xml заимствованной формы к�
     });
   }
 
-  const cases: ReadonlyArray<readonly [string, string, string]> = [
+  const cases: readonly (readonly [string, string, string])[] = [
     ['2.20', 'button-in-form-command-bar',
       'кнопка в командной панели формы → UseForFoldersAndItems на обоих уровнях'],
     ['2.21', 'command-bar-props-button-multiline-text',
