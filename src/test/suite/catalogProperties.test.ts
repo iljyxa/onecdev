@@ -193,6 +193,33 @@ suite('Properties — стандартный реквизит заимствов
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
+
+  test('ключ, которого нет в элементе расширения, показывается значением базовой конфигурации (#146)', () => {
+    // В расширении элемента Description нет вовсе — синтезированный пустой элемент
+    // не должен перекрывать базу умолчаниями enum/boolean (FillChecking = DontCheck).
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-borrowed-sa-'));
+    try {
+      const cfRoot = path.join(tempRoot, 'cf');
+      const cfeRoot = path.join(tempRoot, 'cfe', 'EVOLC');
+      fs.mkdirSync(path.join(cfRoot, 'Catalogs'), { recursive: true });
+      fs.mkdirSync(path.join(cfeRoot, 'Catalogs'), { recursive: true });
+      fs.copyFileSync(path.join(EXAMPLE_GENERATIONS.cf21, 'Configuration.xml'), path.join(cfRoot, 'Configuration.xml'));
+      fs.copyFileSync(path.join(EXAMPLE_GENERATIONS.cfe21, 'Configuration.xml'), path.join(cfeRoot, 'Configuration.xml'));
+      fs.copyFileSync(baseSource, path.join(cfRoot, 'Catalogs', 'Номенклатура.xml'));
+      const extensionPath = path.join(cfeRoot, 'Catalogs', 'Номенклатура.xml');
+      fs.copyFileSync(extensionSource, extensionPath);
+
+      const properties = standardAttributeProperties(extensionPath, 'Description');
+
+      assert.strictEqual(fillCheckingCurrent(properties), templateValue('Description', 'FillChecking'));
+      const fillChecking = properties.find((item) => item.key === 'FillChecking');
+      assert.strictEqual(fillChecking?.inherited, true, 'FillChecking должен быть унаследованным');
+      // Собственных значений у реквизита в расширении нет — локальным не может быть ни один пункт.
+      assert.deepStrictEqual(properties.filter((item) => !item.inherited).map((item) => item.key), []);
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
 });
 
 function standardAttributeProperties(xmlPath: string, name: string, tabularSectionName?: string) {
