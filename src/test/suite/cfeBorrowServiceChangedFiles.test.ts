@@ -35,7 +35,6 @@ suite('CfeBorrowService — список изменённых файлов за�
     return [
       path.join(formsDir, `${formName}.xml`),
       path.join(formsDir, formName, 'Ext', 'Form.xml'),
-      path.join(formsDir, formName, 'Ext', 'Form', 'Module.bsl'),
     ];
   };
 
