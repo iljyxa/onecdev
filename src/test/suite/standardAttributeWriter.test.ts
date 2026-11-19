@@ -222,13 +222,8 @@ suite('Писатель стандартных реквизитов: файлы 
         assert.ok(fs.readFileSync(copy).equals(bytes), 'повтор изменил файл');
 
         const childrenAfter = reader.read(copy)?.children.filter((item) => item.tag === 'StandardAttribute').map((item) => item.name);
-        // Ни один реквизит из дерева не пропадает. Новые могут появиться только из
-        // шаблона: у ChartOfCharacteristicTypes и CalculationRegister перечень домена
-        // (STANDARD_ATTRIBUTES_BY_KIND) уже шаблона платформы, а явный блок читатель
-        // показывает целиком — как у файла, выгруженного платформой.
-        const templateSet = new Set(templateNames(ruleset, kind));
-        assert.deepStrictEqual(childrenAfter?.slice(0, childrenBefore?.length), childrenBefore);
-        assert.deepStrictEqual(childrenAfter?.filter((item) => !childrenBefore?.includes(item) && !templateSet.has(item)), []);
+        // Вставка явного блока не меняет состав и порядок реквизитов в дереве (#148).
+        assert.deepStrictEqual(childrenAfter, childrenBefore);
         const resolved = resolveStandardAttributeXml(after, name, { ruleset, useDefaults: true });
         assert.strictEqual(valueOf(resolved, 'FillChecking'), next);
       });

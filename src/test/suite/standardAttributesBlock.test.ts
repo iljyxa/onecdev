@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import type { MetaKind } from '../../domain/MetaTypes';
+import { getStandardAttributePresentation, getStandardAttributesForKind } from '../../domain/StandardAttribute';
 import { MetadataXmlCreator } from '../../infra/xml/MetadataXmlCreator';
 import { ObjectXmlReader } from '../../infra/xml/ObjectXmlReader';
 import { BASELINE_RULESET } from '../../infra/xml/format/baselineRuleset';
@@ -65,6 +66,21 @@ suite('Шаблоны стандартных реквизитов — умолч
     const section = elementOf(STANDARD_TABULAR_SECTIONS_BLOCKS.ChartOfAccounts ?? '', 'StandardTabularSection', 'ExtDimensionTypes');
     assert.strictEqual(valueOf(elementOf(section, 'StandardAttribute', 'ExtDimensionType'), 'FillChecking'), 'ShowError');
   });
+});
+
+suite('Состав стандартных реквизитов домена = шаблон ruleset (#148)', () => {
+  // Домен не может импортировать infra, поэтому перечень по видам продублирован в
+  // domain/StandardAttribute.ts; этот тест держит его равным шаблону платформы —
+  // иначе дерево меняет состав, как только в XML появляется явный блок.
+  for (const kind of Object.keys(STANDARD_ATTRIBUTES_BLOCKS) as MetaKind[]) {
+    test(`${kind}: имена и порядок совпадают с шаблоном, у каждого есть представление`, () => {
+      const expected = [...(STANDARD_ATTRIBUTES_BLOCKS[kind] ?? '').matchAll(/<xr:StandardAttribute name="([^"]+)">/g)]
+        .map((match) => match[1]);
+      const names = getStandardAttributesForKind(kind).map((item) => item.name);
+      assert.deepStrictEqual(names, expected);
+      assert.deepStrictEqual(names.filter((name) => getStandardAttributePresentation(name) === name), []);
+    });
+  }
 });
 
 suite('Шаблон Catalog — сверка с корпусом', () => {

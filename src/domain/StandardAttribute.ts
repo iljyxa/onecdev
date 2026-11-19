@@ -40,8 +40,21 @@ const STANDARD_ATTRIBUTE_PRESENTATIONS: Readonly<Record<string, string>> = {
   SentNo: 'Номер отправленного сообщения',
   OffBalance: 'Забалансовый',
   ActionPeriodIsBasic: 'Период действия является базовым',
+  ValueType: 'Тип значения',
+  RegistrationPeriod: 'Период регистрации',
+  ReversingEntry: 'Сторно',
+  EndOfBasePeriod: 'Базовый период конец',
+  BegOfBasePeriod: 'Базовый период начало',
+  EndOfActionPeriod: 'Период действия конец',
+  BegOfActionPeriod: 'Период действия начало',
+  ActionPeriod: 'Период действия',
+  CalculationType: 'Вид расчета',
 };
 
+// Состав и порядок — как в блоке <StandardAttributes> выгрузки платформы (шаблоны
+// infra/xml/format/standardAttributes.ts). Домен не импортирует infra, поэтому
+// перечень продублирован; равенство с шаблоном проверяет тест (#148). Иначе дерево
+// меняет состав, как только в XML появляется явный блок.
 const STANDARD_ATTRIBUTES_BY_KIND: Readonly<Partial<Record<MetaKind, readonly string[]>>> = {
   Catalog: ['PredefinedDataName', 'Predefined', 'Ref', 'DeletionMark', 'IsFolder', 'Owner', 'Parent', 'Description', 'Code'],
   Document: ['Posted', 'Ref', 'DeletionMark', 'Date', 'Number'],
@@ -50,9 +63,14 @@ const STANDARD_ATTRIBUTES_BY_KIND: Readonly<Partial<Record<MetaKind, readonly st
   InformationRegister: ['Active', 'LineNumber', 'Recorder', 'Period'],
   AccumulationRegister: ['RecordType', 'Active', 'LineNumber', 'Recorder', 'Period'],
   AccountingRegister: ['Account', 'Active', 'LineNumber', 'Recorder', 'Period'],
-  CalculationRegister: ['Active', 'LineNumber', 'Recorder', 'Period'],
+  CalculationRegister: [
+    'RegistrationPeriod', 'ReversingEntry', 'Active', 'EndOfBasePeriod', 'BegOfBasePeriod', 'EndOfActionPeriod',
+    'BegOfActionPeriod', 'ActionPeriod', 'CalculationType', 'LineNumber', 'Recorder',
+  ],
   ExchangePlan: ['ExchangeDate', 'ThisNode', 'ReceivedNo', 'SentNo', 'Ref', 'DeletionMark', 'Description', 'Code'],
-  ChartOfCharacteristicTypes: ['Ref', 'DeletionMark', 'Description', 'Code'],
+  ChartOfCharacteristicTypes: [
+    'PredefinedDataName', 'ValueType', 'Description', 'Code', 'IsFolder', 'Parent', 'Predefined', 'DeletionMark', 'Ref',
+  ],
   ChartOfAccounts: ['PredefinedDataName', 'Order', 'OffBalance', 'Type', 'Description', 'Code', 'Parent', 'Predefined', 'DeletionMark', 'Ref'],
   ChartOfCalculationTypes: ['PredefinedDataName', 'Predefined', 'Ref', 'DeletionMark', 'ActionPeriodIsBasic', 'Description', 'Code'],
   DocumentJournal: ['Type', 'Ref', 'Date', 'Posted', 'DeletionMark', 'Number'],
