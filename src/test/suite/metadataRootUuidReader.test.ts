@@ -74,6 +74,19 @@ suite('MetadataRootUuidReader (#117)', () => {
     assert.strictEqual(readMetadataRootUuid(text), '2c53bb9d-bda3-431e-95f5-0d4145c8ac74');
   });
 
+  test('дефисы и «--» внутри комментария, несколько комментариев подряд — корень находится', () => {
+    const text = '<MetaDataObject>\n<!-- a - b -- c -->\n<!--x--><!---->\n<Catalog uuid="2c53bb9d-bda3-431e-95f5-0d4145c8ac74"/></MetaDataObject>';
+    assert.strictEqual(readMetadataRootUuid(text), '2c53bb9d-bda3-431e-95f5-0d4145c8ac74');
+  });
+
+  test('10 000 повторов «--><!--» без корневого элемента — null (CodeQL js/redos)', () => {
+    // Прежний `<!--[\s\S]*?-->` давал экспоненциальный перебор: каждое «--><!--» могло быть и границей
+    // комментариев, и их содержимым (24 повтора — уже ~1 с). На таком входе он не завершился бы никогда,
+    // поэтому регресс виден как зависание, а не как сравнение с порогом времени.
+    const text = '<MetaDataObject><!--' + '--><!--'.repeat(10_000);
+    assert.strictEqual(readMetadataRootUuid(text), null);
+  });
+
   test('нет файла — null', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v8-root-uuid-'));
     try {

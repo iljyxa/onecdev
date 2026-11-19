@@ -12,6 +12,7 @@ import {
 } from '../../infra/repository/history/RepositoryHistorySession';
 import { DEFAULT_CRS_VERSION_HINT } from '../../infra/repository/RepositoryLockStatusService';
 import type { RepositoryBinding } from '../../infra/repository/RepositoryService';
+import { escapeRegExp } from './support/configDumpInfoFixture';
 import { tcpRawProbeBodies } from './support/crsFixtures';
 import { callRejection, STAND_VERSION } from './support/crsMethods';
 import { RecordedTransport } from './support/crsRecordedTransport';
@@ -139,7 +140,7 @@ suite('RepositoryHistorySession (#117)', () => {
     const error = await callRejection(devDepotVersions(new CrsClient(transport, { alias: 'exp', version: '8.3.0.0' }), { user: 'Admin', passwordHash: '' }));
     const failure = toRepositoryHistoryFailure(error, STAND_VERSION);
     assert.strictEqual(failure.code, 'version-mismatch');
-    assert.match(failure.message, new RegExp(`повтор с версией сервера ${STAND_VERSION.replace(/\./g, '\\.')} не помог`));
+    assert.match(failure.message, new RegExp(`повтор с версией сервера ${escapeRegExp(STAND_VERSION)} не помог`));
     assert.deepStrictEqual(Object.keys(failure).sort(), ['code', 'message']);
     const unavailable = toRepositoryHistoryFailure(new CrsTransportError('unavailable', 'tcp://127.0.0.1:1: соединение отклонено', { endpoint: 'tcp://127.0.0.1:1' }));
     assert.strictEqual(unavailable.code, 'unavailable');

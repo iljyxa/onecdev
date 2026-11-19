@@ -126,9 +126,12 @@ export function resolveDumpStagingPath(outputFile: string, uniqueSuffix: string)
  * бэкапов навсегда — с планом выгрузки он не конфликтует и сам не исчезнет.
  */
 export function isDumpStagingFileName(fileName: string): boolean {
-  // Ведущая точка и непустая часть перед маркером — то, что строит
-  // `resolveDumpStagingPath`; голый маркер именем нашего файла быть не может.
-  return new RegExp(`^\\..+${DUMP_STAGING_SUFFIX.replace(/\./g, '\\.')}$`).test(fileName);
+  // `resolveDumpStagingPath` строит `.<basename>.<уникальный суффикс><маркер>`: между ведущей точкой
+  // и маркером всегда есть точка-разделитель. Без неё имя не наше, даже если похоже по краям.
+  if (!fileName.startsWith('.') || !fileName.endsWith(DUMP_STAGING_SUFFIX)) {
+    return false;
+  }
+  return fileName.slice(1, -DUMP_STAGING_SUFFIX.length).includes('.');
 }
 
 /**
