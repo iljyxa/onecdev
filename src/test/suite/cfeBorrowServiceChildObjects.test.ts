@@ -201,7 +201,6 @@ suite('CfeBorrowService — ChildObjects оболочки по META_TYPES (issue
           path.join(extDir, 'Configuration.xml'),
           path.join(formsDir, 'ФормаЭлемента.xml'),
           path.join(formsDir, 'ФормаЭлемента', 'Ext', 'Form.xml'),
-          path.join(formsDir, 'ФормаЭлемента', 'Ext', 'Form', 'Module.bsl'),
         ],
       });
       const xml = maskGeneratedUuids(fs.readFileSync(objFile, 'utf-8'), c.sourceUuid);

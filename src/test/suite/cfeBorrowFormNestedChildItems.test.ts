@@ -43,7 +43,7 @@ suite('CfeBorrowService.borrowForm — форма с вложенными ChildI
     });
   }
 
-  test('исходный Form.xml без корня <Form> (рукописный) → BaseForm с пустым <ChildItems/>, XML корректен', function () {
+  test('исходный Form.xml без корня <Form> (рукописный) → BaseForm без элементов, с командной панелью по умолчанию, XML корректен', function () {
     skipWithoutCorpus(this);
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-borrow-form-noroot-'));
     try {
@@ -58,7 +58,8 @@ suite('CfeBorrowService.borrowForm — форма с вложенными ChildI
 
       const formXml = fs.readFileSync(path.join(extDir, 'Catalogs', 'Контрагенты', 'Forms', 'ФормаЭлемента', 'Ext', 'Form.xml'), 'utf-8');
       assertWellFormedXml(formXml, 'Form.xml из рукописного источника');
-      assert.ok(/<BaseForm[^>]*>\s*<ChildItems\/>/.test(formXml), formXml);
+      assert.ok(/<BaseForm[^>]*>\s*<AutoCommandBar name="" id="-1"\/>\s*<Attributes\/>/.test(formXml), formXml);
+      assert.ok(!formXml.includes('<ChildItems'), formXml);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

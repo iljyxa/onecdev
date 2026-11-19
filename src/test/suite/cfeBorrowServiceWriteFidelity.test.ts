@@ -18,7 +18,7 @@ import { directChildObjectsTagSequence } from './support/childObjectsCorpus';
  *  - `registerChildInParentObject`, ветка обычной вставки по канону;
  *  - `registerFormInParentObject`, вставка `<Form>`.
  * Остальные четыре создают НОВЫЙ файл (сохранять нечего): объектный XML,
- * дескриптор формы, `Form.xml`, пустой `Module.bsl`.
+ * дескриптор формы, `Form.xml` (пустой `Module.bsl` не создаётся — #167).
  *
  * Вставляемые блоки собираются с `\n`, поэтому в CRLF-файле без нормализации
  * оказывались бы одиночные `\n` — смешанные окончания строк.
@@ -257,7 +257,7 @@ suite('CfeBorrowService: запись сохраняет BOM и стиль EOL �
 });
 
 suite('CfeBorrowService: создание НОВЫХ файлов не регрессировало (T-B1.20)', () => {
-  test('borrowForm в чистое расширение: объектный XML, дескриптор формы, Form.xml с BaseForm, пустой Module.bsl, регистрация в Configuration.xml', () => {
+  test('borrowForm в чистое расширение: объектный XML, дескриптор формы, Form.xml с BaseForm без пустого Module.bsl, регистрация в Configuration.xml', () => {
     const { cfDir, extDir } = newDirs();
     writeSourceCatalog(cfDir);
 
@@ -268,15 +268,17 @@ suite('CfeBorrowService: создание НОВЫХ файлов не регр�
     const formMeta = path.join(extDir, 'Catalogs', 'Клиенты', 'Forms', 'ФормаСписка.xml');
     const formXml = path.join(extDir, 'Catalogs', 'Клиенты', 'Forms', 'ФормаСписка', 'Ext', 'Form.xml');
     const moduleBsl = path.join(extDir, 'Catalogs', 'Клиенты', 'Forms', 'ФормаСписка', 'Ext', 'Form', 'Module.bsl');
-    for (const file of [objectXml, formMeta, formXml, moduleBsl, path.join(extDir, 'Configuration.xml')]) {
+    for (const file of [objectXml, formMeta, formXml, path.join(extDir, 'Configuration.xml')]) {
       assert.ok(result.files.includes(file), `не отражён в files: ${file}`);
       assert.ok(fs.existsSync(file), `не создан: ${file}`);
     }
     for (const file of [objectXml, formMeta, formXml]) {
       assert.strictEqual(XMLValidator.validate(fs.readFileSync(file, 'utf-8')), true, `${file}: не well-formed`);
     }
-    // Пустой модуль в формате выгрузки платформы — один BOM (#165).
-    assert.strictEqual(fs.readFileSync(moduleBsl, 'utf-8'), '\uFEFF', 'Module.bsl создаётся пустым');
+    // Пустой модуль формы платформа не выгружает: созданный нами пропадал после цикла
+    // «загрузка → выгрузка» (#167).
+    assert.ok(!fs.existsSync(moduleBsl), 'пустой Module.bsl не создаётся');
+    assert.ok(!result.files.includes(moduleBsl));
 
     const objectText = fs.readFileSync(objectXml, 'utf-8');
     assert.ok(objectText.includes('<ObjectBelonging>Adopted</ObjectBelonging>'));

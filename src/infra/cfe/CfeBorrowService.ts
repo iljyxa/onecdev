@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { META_TYPES, type MetaKind, type MetaTypeDef, getMetaFolder } from '../../domain/MetaTypes';
 import { buildBorrowedChildXml } from '../xml/BorrowedChildXml';
+import { buildBorrowedFormExtXml } from '../xml/BorrowedFormXml';
 import { ConfigurationXmlEditor } from '../xml/ConfigurationXmlEditor';
 import { writeNewExportFile } from '../fs/NewExportFile';
 import {
@@ -12,8 +13,6 @@ import {
 } from '../xml/MainChildObjectsEditor';
 import {
   extractChildMetaElementXml,
-  findDirectElementRanges,
-  findNestingAwareElementRange,
   writeTextFilePreservingBomAndEol,
 } from '../xml/XmlUtils';
 import { resolveFormatRuleset } from '../xml/format/formatRegistry';
@@ -291,20 +290,14 @@ export class CfeBorrowService {
 
     if (hasFormExt) {
       const sourceFormExtXml = fs.readFileSync(sourceFormExtXmlPath, 'utf-8');
-      const borrowedFormExtXml = this.buildBorrowedFormExtXml(sourceFormExtXml);
+      const borrowedFormExtXml = buildBorrowedFormExtXml(sourceFormExtXml);
       const formExtDir = path.join(formMetaDir, formName, 'Ext');
-      fs.mkdirSync(formExtDir, { recursive: true });
       const formExtFile = path.join(formExtDir, 'Form.xml');
       writeNewExportFile(formExtFile, borrowedFormExtXml);
       files.push(formExtFile);
-
-      const moduleDir = path.join(formExtDir, 'Form');
-      fs.mkdirSync(moduleDir, { recursive: true });
-      const moduleFile = path.join(moduleDir, 'Module.bsl');
-      if (!fs.existsSync(moduleFile)) {
-        writeNewExportFile(moduleFile, '');
-        files.push(moduleFile);
-      }
+      // Пустой Ext/Form/Module.bsl не создаётся: платформа его не выгружает, и после цикла
+      // «загрузка → выгрузка» файл пропадал (#167). Модуль появляется с первым перехватчиком
+      // (CfePatchMethodService создаёт его сам).
     }
 
     // XML родителя уже в files, если родитель заимствован этим же вызовом.
@@ -604,58 +597,6 @@ export class CfeBorrowService {
       `\t\t</Properties>`,
       `\t</Form>`,
       `</MetaDataObject>`,
-    ].join('\n');
-  }
-
-  /**
-   * Строит Form.xml для заимствованной формы.
-   * Очищает ссылки на команды и DataPath привязок элементов формы,
-   * добавляет блок BaseForm с исходным состоянием.
-   */
-  private buildBorrowedFormExtXml(sourceFormXml: string): string {
-    const nsStrip = / xmlns(?::\w+)?="[^"]*"/g;
-
-    // Определяем версию и XML-декларацию из источника
-    const xmlDeclMatch = /^(<\?xml[^?]*\?>)/.exec(sourceFormXml);
-    const xmlDecl = xmlDeclMatch?.[1] ?? '<?xml version="1.0" encoding="UTF-8"?>';
-    const formTagMatch = /(<Form[^>]*>)/.exec(sourceFormXml);
-    const formTag = formTagMatch?.[1] ?? '<Form>';
-    const formVersionMatch = /version="([^"]+)"/.exec(formTag);
-    const formVersion = formVersionMatch?.[1] ?? '2.17';
-
-    const cleanFormXml = (xml: string): string => {
-      let result = xml.replace(nsStrip, '');
-      // Команды и DataPath очищаем, чтобы не было битых ссылок в расширении
-      result = result.replace(/<CommandName>[^<]*<\/CommandName>/g, '<CommandName>0</CommandName>');
-      result = result.replace(/\s*<DataPath>[^<]*<\/DataPath>/g, '');
-      result = result.replace(/\s*<TitleDataPath>[^<]*<\/TitleDataPath>/g, '');
-      result = result.replace(/\s*<RowPictureDataPath>[^<]*<\/RowPictureDataPath>/g, '');
-      result = result.replace(/\s*<ExcludedCommand>[^<]*<\/ExcludedCommand>/g, '');
-      result = result.replace(/\s*<Events>[\s\S]*?<\/Events>/g, '');
-      return result;
-    };
-
-    // Прямой <ChildItems> формы с учётом вложенности: нежадный поиск обрывался на
-    // ChildItems таблицы/группы, и BaseForm получал незакрытые теги — платформа
-    // отклоняла загрузку расширения целиком.
-    const formRange = findNestingAwareElementRange(sourceFormXml, 'Form');
-    // Рукописный файл без корня <Form> → пустой состав элементов.
-    const formInner = formRange ? sourceFormXml.slice(formRange.openEnd, formRange.closeStart) : '';
-    const childItemsRange = findDirectElementRanges(formInner, 'ChildItems').at(0);
-    const childItemsXml = childItemsRange
-      ? cleanFormXml(formInner.slice(childItemsRange.start, childItemsRange.end))
-      : '<ChildItems/>';
-
-    return [
-      xmlDecl,
-      formTag,
-      `\t<ChildItems/>`,
-      `\t<Attributes/>`,
-      `\t<BaseForm version="${formVersion}">`,
-      `\t\t${childItemsXml}`,
-      `\t\t<Attributes/>`,
-      `\t</BaseForm>`,
-      `</Form>`,
     ].join('\n');
   }
 

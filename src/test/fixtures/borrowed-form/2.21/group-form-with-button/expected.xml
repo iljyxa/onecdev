@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Form xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:dcscor="http://v8.1c.ru/8.1/data-composition-system/core" xmlns:dcssch="http://v8.1c.ru/8.1/data-composition-system/schema" xmlns:dcsset="http://v8.1c.ru/8.1/data-composition-system/settings" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.21">
+	<UseForFoldersAndItems>Items</UseForFoldersAndItems>
+	<AutoCommandBar name="ФормаКоманднаяПанель" id="-1">
+		<ChildItems>
+			<Button name="ФормаЗакрытьТ" id="900">
+				<Type>CommandBarButton</Type>
+				<CommandName>0</CommandName>
+				<ExtendedTooltip name="ФормаЗакрытьТРасширеннаяПодсказка" id="901"/>
+			</Button>
+		</ChildItems>
+	</AutoCommandBar>
+	<Attributes/>
+	<BaseForm version="2.21">
+		<UseForFoldersAndItems>Items</UseForFoldersAndItems>
+		<AutoCommandBar name="ФормаКоманднаяПанель" id="-1">
+			<ChildItems>
+				<Button name="ФормаЗакрытьТ" id="900">
+					<Type>CommandBarButton</Type>
+					<CommandName>0</CommandName>
+					<ExtendedTooltip name="ФормаЗакрытьТРасширеннаяПодсказка" id="901"/>
+				</Button>
+			</ChildItems>
+		</AutoCommandBar>
+		<ChildItems>
+			<UsualGroup name="ГруппаШапка" id="1">
+				<Group>Vertical</Group>
+				<Representation>None</Representation>
+				<ShowTitle>false</ShowTitle>
+				<ExtendedTooltip name="ГруппаШапкаРасширеннаяПодсказка" id="2"/>
+				<ChildItems>
+					<UsualGroup name="ГруппаКодНаименование" id="3">
+						<Group>Horizontal</Group>
+						<Representation>None</Representation>
+						<ShowTitle>false</ShowTitle>
+						<ExtendedTooltip name="ГруппаКодНаименованиеРасширеннаяПодсказка" id="4"/>
+						<ChildItems>
+							<InputField name="Наименование" id="5">
+								<ContextMenu name="НаименованиеКонтекстноеМеню" id="6"/>
+								<ExtendedTooltip name="НаименованиеРасширеннаяПодсказка" id="7"/>
+							</InputField>
+							<InputField name="Код" id="8">
+								<ContextMenu name="КодКонтекстноеМеню" id="9"/>
+								<ExtendedTooltip name="КодРасширеннаяПодсказка" id="10"/>
+							</InputField>
+						</ChildItems>
+					</UsualGroup>
+					<CheckBoxField name="Выбран" id="11">
+						<TitleLocation>Right</TitleLocation>
+						<ContextMenu name="ВыбранКонтекстноеМеню" id="12"/>
+						<ExtendedTooltip name="ВыбранРасширеннаяПодсказка" id="13"/>
+					</CheckBoxField>
+				</ChildItems>
+			</UsualGroup>
+			<Table name="ВремяПоДнямНедели" id="14">
+				<RowFilter xsi:nil="true"/>
+				<ContextMenu name="ВремяПоДнямНеделиКонтекстноеМеню" id="15"/>
+				<AutoCommandBar name="ВремяПоДнямНеделиКоманднаяПанель" id="16"/>
+				<ExtendedTooltip name="ВремяПоДнямНеделиРасширеннаяПодсказка" id="29"/>
+				<SearchStringAddition name="ВремяПоДнямНеделиСтрокаПоиска" id="17">
+					<AdditionSource>
+						<Item>ВремяПоДнямНедели</Item>
+						<Type>SearchStringRepresentation</Type>
+					</AdditionSource>
+					<ContextMenu name="ВремяПоДнямНеделиСтрокаПоискаКонтекстноеМеню" id="30"/>
+					<ExtendedTooltip name="ВремяПоДнямНеделиСтрокаПоискаРасширеннаяПодсказка" id="31"/>
+				</SearchStringAddition>
+				<ViewStatusAddition name="ВремяПоДнямНеделиСостояниеПросмотра" id="18">
+					<AdditionSource>
+						<Item>ВремяПоДнямНедели</Item>
+						<Type>ViewStatusRepresentation</Type>
+					</AdditionSource>
+					<ContextMenu name="ВремяПоДнямНеделиСостояниеПросмотраКонтекстноеМеню" id="32"/>
+					<ExtendedTooltip name="ВремяПоДнямНеделиСостояниеПросмотраРасширеннаяПодсказка" id="33"/>
+				</ViewStatusAddition>
+				<SearchControlAddition name="ВремяПоДнямНеделиУправлениеПоиском" id="19">
+					<AdditionSource>
+						<Item>ВремяПоДнямНедели</Item>
+						<Type>SearchControl</Type>
+					</AdditionSource>
+					<ContextMenu name="ВремяПоДнямНеделиУправлениеПоискомКонтекстноеМеню" id="34"/>
+					<ExtendedTooltip name="ВремяПоДнямНеделиУправлениеПоискомРасширеннаяПодсказка" id="35"/>
+				</SearchControlAddition>
+				<ChildItems>
+					<LabelField name="ВремяПоДнямНеделиНомерСтроки" id="20">
+						<ContextMenu name="ВремяПоДнямНеделиНомерСтрокиКонтекстноеМеню" id="21"/>
+						<ExtendedTooltip name="ВремяПоДнямНеделиНомерСтрокиРасширеннаяПодсказка" id="22"/>
+					</LabelField>
+					<CheckBoxField name="ВремяПоДнямНеделиВыбран" id="23">
+						<TitleLocation>Right</TitleLocation>
+						<ContextMenu name="ВремяПоДнямНеделиВыбранКонтекстноеМеню" id="24"/>
+						<ExtendedTooltip name="ВремяПоДнямНеделиВыбранРасширеннаяПодсказка" id="25"/>
+					</CheckBoxField>
+				</ChildItems>
+			</Table>
+		</ChildItems>
+		<Attributes/>
+	</BaseForm>
+</Form>
