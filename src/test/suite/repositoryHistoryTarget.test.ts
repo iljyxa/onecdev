@@ -6,6 +6,7 @@ import type { SecretStore } from '../../infra/ai/AiSecretStorage';
 import { ProjectSecretStorage } from '../../infra/environment/ProjectSecretStorage';
 import { canShowRepositoryHistory, resolveRepositoryHistoryTarget } from '../../infra/repository/history/RepositoryHistoryTarget';
 import { RepositoryService, type RepositoryNodeRef } from '../../infra/repository/RepositoryService';
+import { escapeRegExp } from './support/configDumpInfoFixture';
 
 /**
  * Цель истории хранилища по узлу дерева (#117): корень — вся история, объект — история единицы
@@ -36,7 +37,7 @@ function secrets(): SecretStore {
 
 function dumpInfoId(root: string, name: string): string {
   const text = fs.readFileSync(path.join(root, 'ConfigDumpInfo.xml'), 'utf-8');
-  const match = new RegExp(`<Metadata name="${name.replace(/\./g, '\\.')}" id="([0-9a-f-]{36})"`).exec(text);
+  const match = new RegExp(`<Metadata name="${escapeRegExp(name)}" id="([0-9a-f-]{36})"`).exec(text);
   assert.ok(match, `${name} нет в ConfigDumpInfo.xml`);
   return match[1];
 }

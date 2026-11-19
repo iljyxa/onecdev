@@ -25,6 +25,7 @@ import * as path from 'path';
 import { CLI_COMMANDS } from '../../cli/commands';
 import type { CliArgs } from '../../cli/core/types';
 import { runProcess } from '../../infra/process/ProcessRunner';
+import { escapeRegExp } from './support/configDumpInfoFixture';
 import { tryRequireProductionModule } from './support/tryRequireProductionModule';
 
 interface DumpCfRequest {
@@ -249,7 +250,7 @@ suite('CLI-команды dump-cf/load-cf — регистрация и guard-в
     });
     const usage = stdoutLines.join('\n');
     for (const name of ['dump-cf', 'db-dump-cf', 'load-cf', 'db-load-cf']) {
-      assert.match(usage, new RegExp(name.replace(/-/g, '\\-')), `usage должен упоминать команду "${name}"`);
+      assert.match(usage, new RegExp(escapeRegExp(name)), `usage должен упоминать команду "${name}"`);
     }
   });
 

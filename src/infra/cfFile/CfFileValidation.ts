@@ -128,7 +128,9 @@ export function resolveDumpStagingPath(outputFile: string, uniqueSuffix: string)
 export function isDumpStagingFileName(fileName: string): boolean {
   // Ведущая точка и непустая часть перед маркером — то, что строит
   // `resolveDumpStagingPath`; голый маркер именем нашего файла быть не может.
-  return new RegExp(`^\\..+${DUMP_STAGING_SUFFIX.replace(/\./g, '\\.')}$`).test(fileName);
+  return fileName.startsWith('.')
+    && fileName.endsWith(DUMP_STAGING_SUFFIX)
+    && fileName.length > 1 + DUMP_STAGING_SUFFIX.length;
 }
 
 /**

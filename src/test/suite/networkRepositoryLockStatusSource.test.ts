@@ -25,6 +25,7 @@ import {
   type RepositoryLockStatusSource,
   type RepositoryServerLockRecord,
 } from '../../infra/repository/RepositoryLockStatusSource';
+import { escapeRegExp } from './support/configDumpInfoFixture';
 import { readFixture } from './support/crsFixtures';
 import { recordedClient } from './support/crsMethods';
 import {
@@ -137,7 +138,7 @@ for (const version of NETWORK_FIXTURE_VERSIONS) {
           const bodies = server.requests.map((stream) => bodyOf(transport, stream).toString('utf-8'));
           assert.strictEqual(bodies.length, 2);
           assert.match(bodies[0], /name="DevDepotAdmin_openDevDepot" version="0\.0\.0\.0"/);
-          assert.match(bodies[1], new RegExp(`name="DevDepot_devObjectsStatistic" version="${run.platform.replace(/\./g, '\\.')}"`));
+          assert.match(bodies[1], new RegExp(`name="DevDepot_devObjectsStatistic" version="${escapeRegExp(run.platform)}"`));
         });
       }
 

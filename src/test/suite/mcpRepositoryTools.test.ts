@@ -17,6 +17,7 @@ import { McpMutationGate } from '../../ui/mcp/registration/McpMutationGate';
 import type { McpCommandServices, McpRegistrationDeps } from '../../ui/mcp/registration/McpRegistrationDeps';
 import { registerRepositoryTools } from '../../ui/mcp/registration/McpRepositoryTools';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
+import { escapeRegExp } from './support/configDumpInfoFixture';
 import { tcpBodyProbe } from './support/crsFixtures';
 import { assertNoHashes, inputsOf, STAND_VERSION } from './support/crsMethods';
 import { RecordedTransport } from './support/crsRecordedTransport';
@@ -56,7 +57,7 @@ function secrets(): SecretStore {
 
 function dumpInfoId(root: string, name: string): string {
   const text = fs.readFileSync(path.join(root, 'ConfigDumpInfo.xml'), 'utf-8');
-  const match = new RegExp(`<Metadata name="${name.replace(/\./g, '\\.')}" id="([0-9a-f-]{36})"`).exec(text);
+  const match = new RegExp(`<Metadata name="${escapeRegExp(name)}" id="([0-9a-f-]{36})"`).exec(text);
   assert.ok(match, `${name} нет в ConfigDumpInfo.xml`);
   return match[1];
 }

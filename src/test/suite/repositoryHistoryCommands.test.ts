@@ -14,6 +14,7 @@ import {
   type RepositoryHistoryNotifier,
 } from '../../ui/commands/repository/RepositoryHistoryCommands';
 import { RepositoryHistoryViewProvider } from '../../ui/views/repositoryHistory/RepositoryHistoryViewProvider';
+import { escapeRegExp } from './support/configDumpInfoFixture';
 import { type FakeWebviewPanelFactory, installFakeWebviewPanels } from './support/fakeWebviewPanel';
 
 /**
@@ -38,7 +39,7 @@ function secrets(): SecretStore {
 
 function dumpInfoId(root: string, name: string): string {
   const text = fs.readFileSync(path.join(root, 'ConfigDumpInfo.xml'), 'utf-8');
-  const match = new RegExp(`<Metadata name="${name.replace(/\./g, '\\.')}" id="([0-9a-f-]{36})"`).exec(text);
+  const match = new RegExp(`<Metadata name="${escapeRegExp(name)}" id="([0-9a-f-]{36})"`).exec(text);
   assert.ok(match, `${name} нет в ConfigDumpInfo.xml`);
   return match[1];
 }
