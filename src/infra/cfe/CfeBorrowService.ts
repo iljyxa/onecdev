@@ -280,14 +280,16 @@ export class CfeBorrowService {
     const formatVersion = this.detectFormatVersion(extDir);
     fs.mkdirSync(formMetaDir, { recursive: true });
 
-    const formMetaXml = this.buildBorrowedFormMetaXml(formName, sourceFormUuid, formatVersion);
-    writeFileAtomic(formMetaFile, formMetaXml);
-    files.push(formMetaFile);
-
     const sourceFormExtXmlPath = path.join(
       path.dirname(sourceFormXmlPath), formName, 'Ext', 'Form.xml'
     );
-    if (fs.existsSync(sourceFormExtXmlPath)) {
+    const hasFormExt = fs.existsSync(sourceFormExtXmlPath);
+
+    const formMetaXml = this.buildBorrowedFormMetaXml(formName, sourceFormUuid, formatVersion, hasFormExt);
+    writeFileAtomic(formMetaFile, formMetaXml);
+    files.push(formMetaFile);
+
+    if (hasFormExt) {
       const sourceFormExtXml = fs.readFileSync(sourceFormExtXmlPath, 'utf-8');
       const borrowedFormExtXml = this.buildBorrowedFormExtXml(sourceFormExtXml);
       const formExtDir = path.join(formMetaDir, formName, 'Ext');
@@ -568,9 +570,23 @@ export class CfeBorrowService {
   private buildBorrowedFormMetaXml(
     formName: string,
     sourceUuid: string,
-    formatVersion: string
+    formatVersion: string,
+    extendsForm: boolean
   ): string {
     const newUuid = this.newGuid();
+    // Раз у формы будет свой Ext/Form.xml, свойство «Форма» расширено: платформа пишет его
+    // состояние в InternalInfo (выгрузка 8.3.27 и 8.5.1). Без блока загрузка проходит, но
+    // каждый цикл «загрузка → выгрузка» даёт diff дескриптора (#161).
+    const internalInfo = extendsForm
+      ? [
+        `\t\t<InternalInfo>`,
+        `\t\t\t<xr:PropertyState>`,
+        `\t\t\t\t<xr:Property>Form</xr:Property>`,
+        `\t\t\t\t<xr:State>Extended</xr:State>`,
+        `\t\t\t</xr:PropertyState>`,
+        `\t\t</InternalInfo>`,
+      ]
+      : [`\t\t<InternalInfo/>`];
     // `includeFormUseInInterfaceCompatibilityMode` здесь не применяется: у заимствованной
     // формы платформа не пишет `<UseInInterfaceCompatibilityMode>` ни в 2.20, ни в 2.21
     // (выгрузка 8.3.27 и 8.5.1 расширения с заимствованной формой, #141).
@@ -578,7 +594,7 @@ export class CfeBorrowService {
       `<?xml version="1.0" encoding="UTF-8"?>`,
       `<MetaDataObject ${resolveFormatRuleset(formatVersion).metaDataObjectXmlns} version="${formatVersion}">`,
       `\t<Form uuid="${newUuid}">`,
-      `\t\t<InternalInfo/>`,
+      ...internalInfo,
       `\t\t<Properties>`,
       `\t\t\t<ObjectBelonging>Adopted</ObjectBelonging>`,
       `\t\t\t<Name>${formName}</Name>`,
