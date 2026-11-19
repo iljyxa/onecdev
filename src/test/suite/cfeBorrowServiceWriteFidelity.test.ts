@@ -294,7 +294,8 @@ suite('CfeBorrowService: создание НОВЫХ файлов не регр�
     const result = new CfeBorrowService().borrowForm(cfDir, extDir, 'Catalog', 'Клиенты', 'ФормаСписка');
     assert.strictEqual(result.alreadyBorrowed, false);
     const formDir = path.join(extDir, 'Catalogs', 'Клиенты', 'Forms');
-    assert.ok(fs.existsSync(path.join(formDir, 'ФормаСписка.xml')));
+    // Без Ext/Form.xml свойство «Форма» не расширяется — PropertyState Form/Extended не пишется (#161).
+    assert.ok(fs.readFileSync(path.join(formDir, 'ФормаСписка.xml'), 'utf-8').includes('\t\t<InternalInfo/>\n'));
     assert.ok(!fs.existsSync(path.join(formDir, 'ФормаСписка', 'Ext')));
     assert.ok(!result.files.some((f) => f.endsWith('Form.xml') || f.endsWith('Module.bsl')));
   });
