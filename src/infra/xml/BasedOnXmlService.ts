@@ -115,7 +115,13 @@ export class BasedOnXmlService {
       if (target.ref === objectRef) {
         continue;
       }
-      const current = this.readBasedOnRefs(target.xmlPath);
+      // Нечитаемый файл — не «ссылок нет»: иначе удаление обратной ссылки из него
+      // молча пропускалось бы, а ссылка оставалась в файле.
+      const current = this.tryReadBasedOnRefs(target.xmlPath);
+      if (current === null) {
+        errors.push(`${target.ref}: не удалось прочитать файл объекта.`);
+        continue;
+      }
       const hasRef = current.includes(objectRef);
       const shouldHaveRef = selected.has(target.ref);
       if (hasRef === shouldHaveRef) {
@@ -214,11 +220,16 @@ export class BasedOnXmlService {
   }
 
   private readBasedOnRefs(xmlPath: string): string[] {
+    return this.tryReadBasedOnRefs(xmlPath) ?? [];
+  }
+
+  /** `null` — файл не прочитан; отличает отказ чтения от пустого списка ссылок. */
+  private tryReadBasedOnRefs(xmlPath: string): string[] | null {
     try {
       const xml = fs.readFileSync(xmlPath, 'utf-8');
       return readBasedOnRefsFromXml(xml);
     } catch {
-      return [];
+      return null;
     }
   }
 

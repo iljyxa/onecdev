@@ -107,6 +107,32 @@ suite('BasedOnXmlService', () => {
     assert.ok(result.errors[0].includes('Catalog.Партнеры'), result.errors[0]);
     assert.ok(fs.readFileSync(orderPath, 'utf-8').includes('Catalog.Клиенты'));
   });
+
+  test('Обратный ввод: нечитаемый файл объекта — ошибка, а не «ссылок нет»', () => {
+    const root = createBasedOnFixture('onecdev-based-on-reverse-unreadable-');
+    // Каталог вместо файла: resolveXml его находит (existsSync), чтение падает с EISDIR.
+    const unreadablePath = path.join(root, 'Catalogs', 'Партнеры.xml');
+    fs.rmSync(unreadablePath);
+    fs.mkdirSync(unreadablePath);
+
+    const result = new BasedOnXmlService().setBasedFor(root, 'Catalog', 'Клиенты', ['Document.Заказ']);
+
+    assert.deepStrictEqual(result.changedFiles, [path.join(root, 'Documents', 'Заказ.xml')]);
+    assert.strictEqual(result.errors.length, 1);
+    assert.ok(result.errors[0].includes('Catalog.Партнеры'), result.errors[0]);
+  });
+
+  test('Снимок по объекту с нечитаемым файлом — пустой список, без исключения', () => {
+    const root = createBasedOnFixture('onecdev-based-on-snapshot-unreadable-');
+    const unreadablePath = path.join(root, 'Catalogs', 'Клиенты.xml');
+    fs.rmSync(unreadablePath);
+    fs.mkdirSync(unreadablePath);
+
+    const snapshot = new BasedOnXmlService().readSnapshot(root, 'Catalog', 'Клиенты');
+
+    assert.deepStrictEqual(snapshot.basedOn, []);
+    assert.deepStrictEqual(snapshot.basedFor, []);
+  });
 });
 
 function createBasedOnFixture(prefix: string): string {
