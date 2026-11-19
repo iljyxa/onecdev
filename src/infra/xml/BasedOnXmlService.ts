@@ -25,6 +25,11 @@ export interface BasedOnSnapshot {
 export interface BasedOnEditResult {
   changed: boolean;
   changedFiles: string[];
+  /**
+   * Отказы записи с причиной писателя — по одному на объект (#150). Непустой список
+   * при `changed: true` — частичный успех обратного ввода: часть объектов записана.
+   */
+  errors: string[];
 }
 
 export interface BasedOnReadOptions {
@@ -88,11 +93,12 @@ export class BasedOnXmlService {
   }
 
   setBasedOn(configRoot: string, objectKind: BasedOnMetaKind, objectName: string, refs: string[]): BasedOnEditResult {
+    const objectRef = this.buildRef(objectKind, objectName);
     const xmlPath = this.pathResolver.resolveXml(configRoot, objectKind, objectName);
     if (!xmlPath) {
-      return { changed: false, changedFiles: [] };
+      return { changed: false, changedFiles: [], errors: [`${objectRef}: файл объекта не найден.`] };
     }
-    const result = this.writeBasedOn(xmlPath, uniqueRefs(refs));
+    const result = this.writeBasedOn(objectRef, xmlPath, uniqueRefs(refs));
     if (result.changed) {
       this.invalidate(configRoot);
     }
@@ -103,12 +109,19 @@ export class BasedOnXmlService {
     const objectRef = this.buildRef(objectKind, objectName);
     const selected = new Set(uniqueRefs(refs));
     const changedFiles: string[] = [];
+    const errors: string[] = [];
 
     for (const target of this.readAvailableObjects(configRoot)) {
       if (target.ref === objectRef) {
         continue;
       }
-      const current = this.readBasedOnRefs(target.xmlPath);
+      // Нечитаемый файл — не «ссылок нет»: иначе удаление обратной ссылки из него
+      // молча пропускалось бы, а ссылка оставалась в файле.
+      const current = this.tryReadBasedOnRefs(target.xmlPath);
+      if (current === null) {
+        errors.push(`${target.ref}: не удалось прочитать файл объекта.`);
+        continue;
+      }
       const hasRef = current.includes(objectRef);
       const shouldHaveRef = selected.has(target.ref);
       if (hasRef === shouldHaveRef) {
@@ -117,15 +130,18 @@ export class BasedOnXmlService {
       const next = shouldHaveRef
         ? [...current, objectRef]
         : current.filter((ref) => ref !== objectRef);
-      const written = this.writeBasedOn(target.xmlPath, next);
+      // Отказ одного объекта не откатывает и не прерывает остальные: записи
+      // независимы по файлам, а пользователь получает список несостоявшихся.
+      const written = this.writeBasedOn(target.ref, target.xmlPath, next);
       changedFiles.push(...written.changedFiles);
+      errors.push(...written.errors);
     }
 
     const changed = changedFiles.length > 0;
     if (changed) {
       this.invalidate(configRoot);
     }
-    return { changed, changedFiles };
+    return { changed, changedFiles, errors };
   }
 
   readAvailableObjects(configRoot: string): BasedOnReferenceItem[] {
@@ -204,11 +220,16 @@ export class BasedOnXmlService {
   }
 
   private readBasedOnRefs(xmlPath: string): string[] {
+    return this.tryReadBasedOnRefs(xmlPath) ?? [];
+  }
+
+  /** `null` — файл не прочитан; отличает отказ чтения от пустого списка ссылок. */
+  private tryReadBasedOnRefs(xmlPath: string): string[] | null {
     try {
       const xml = fs.readFileSync(xmlPath, 'utf-8');
       return readBasedOnRefsFromXml(xml);
     } catch {
-      return [];
+      return null;
     }
   }
 
@@ -274,15 +295,21 @@ export class BasedOnXmlService {
     };
   }
 
-  private writeBasedOn(xmlPath: string, refs: string[]): BasedOnEditResult {
-    const changed = this.objectReader.updatePropertyInObject(xmlPath, {
+  private writeBasedOn(objectRef: string, xmlPath: string, refs: string[]): BasedOnEditResult {
+    // Исход, а не булев фасад: «уже такое» и отказ писателя различаются (#150).
+    const outcome = this.objectReader.writePropertyInObject(xmlPath, {
       targetKind: 'Self',
       targetName: '',
       propertyKey: 'BasedOn',
       valueKind: 'metadataReferenceList',
       value: uniqueRefs(refs),
     });
-    return changed ? { changed: true, changedFiles: [xmlPath] } : { changed: false, changedFiles: [] };
+    if (outcome.status === 'refused') {
+      return { changed: false, changedFiles: [], errors: [`${objectRef}: ${outcome.message}`] };
+    }
+    return outcome.status === 'changed'
+      ? { changed: true, changedFiles: [xmlPath], errors: [] }
+      : { changed: false, changedFiles: [], errors: [] };
   }
 
   private buildRef(kind: BasedOnMetaKind, name: string): string {
