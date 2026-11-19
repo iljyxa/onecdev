@@ -75,7 +75,10 @@
   правилом» то, что в корпусе неоднородно. См.
   [xml-format-rulesets.md](../xml-format-rulesets.md#графическая-схема-flowchartxml-и-макет-графическая-схема).
 - **Любой писатель файла выгрузки (и служебного кэша):** только через `infra/fs/AtomicFileWriter`
-  (`writeFileAtomic`) либо `writeTextFilePreservingBomAndEol`, который делегирует туда. Собственный
+  (`writeFileAtomic`) либо `writeTextFilePreservingBomAndEol`, который делегирует туда. НОВЫЙ файл
+  выгрузки — только `writeNewExportFile` (`infra/fs/NewExportFile.ts`): BOM + CRLF, у XML без
+  завершающего EOL, как у платформы (#165); golden-тест нового файла сравнивает байты без нормализации
+  BOM/EOL. Собственный
   `fs.writeFileSync`/`rename` для файла выгрузки заводить нельзя — третьей копии temp+rename быть не
   должно. Граница гарантии — обрыв процесса, не потеря питания (`fsync` нет); временный путь не оканчивается
   на `.xml` (watcher `src/**/*.xml`). Почему это не та же механика, что staging-выгрузка CF — в

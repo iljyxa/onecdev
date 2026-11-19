@@ -4,7 +4,7 @@ import * as path from 'path';
 import { META_TYPES, type MetaKind, type MetaTypeDef, getMetaFolder } from '../../domain/MetaTypes';
 import { buildBorrowedChildXml } from '../xml/BorrowedChildXml';
 import { ConfigurationXmlEditor } from '../xml/ConfigurationXmlEditor';
-import { writeFileAtomic } from '../fs/AtomicFileWriter';
+import { writeNewExportFile } from '../fs/NewExportFile';
 import {
   MAIN_CHILD_OBJECTS_ENTRY_INDENT,
   ensureMainChildObjects,
@@ -217,7 +217,7 @@ export class CfeBorrowService {
     const targetDir = path.join(extDir, folder);
     fs.mkdirSync(targetDir, { recursive: true });
     const targetFile = path.join(targetDir, `${objectName}.xml`);
-    writeFileAtomic(targetFile, borrowedXml);
+    writeNewExportFile(targetFile, borrowedXml);
 
     const extConfigXmlPath = path.join(extDir, 'Configuration.xml');
     this.configEditor.addChildObject(extConfigXmlPath, `${typeName}.${objectName}`);
@@ -286,7 +286,7 @@ export class CfeBorrowService {
     const hasFormExt = fs.existsSync(sourceFormExtXmlPath);
 
     const formMetaXml = this.buildBorrowedFormMetaXml(formName, sourceFormUuid, formatVersion, hasFormExt);
-    writeFileAtomic(formMetaFile, formMetaXml);
+    writeNewExportFile(formMetaFile, formMetaXml);
     files.push(formMetaFile);
 
     if (hasFormExt) {
@@ -295,14 +295,14 @@ export class CfeBorrowService {
       const formExtDir = path.join(formMetaDir, formName, 'Ext');
       fs.mkdirSync(formExtDir, { recursive: true });
       const formExtFile = path.join(formExtDir, 'Form.xml');
-      writeFileAtomic(formExtFile, borrowedFormExtXml);
+      writeNewExportFile(formExtFile, borrowedFormExtXml);
       files.push(formExtFile);
 
       const moduleDir = path.join(formExtDir, 'Form');
       fs.mkdirSync(moduleDir, { recursive: true });
       const moduleFile = path.join(moduleDir, 'Module.bsl');
       if (!fs.existsSync(moduleFile)) {
-        writeFileAtomic(moduleFile, '');
+        writeNewExportFile(moduleFile, '');
         files.push(moduleFile);
       }
     }

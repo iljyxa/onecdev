@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../fs/NewExportFile';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getMetaFolder } from '../../domain/MetaTypes';
@@ -62,7 +63,7 @@ export class MetadataXmlCreator {
     // корневого XML, — иначе появляется ветка, которую нечем покрыть.
     const commonTemplateType = resolveTemplateType(options.templateType);
     const templateType = options.kind === 'CommonTemplate' ? commonTemplateType : undefined;
-    fs.writeFileSync(xmlPath, buildRootObjectXml(options.kind, options.name, formatVersion, ruleset, templateType), 'utf-8');
+    writeNewExportFile(xmlPath, buildRootObjectXml(options.kind, options.name, formatVersion, ruleset, templateType));
 
     const changedFiles = [xmlPath];
     if (options.kind === 'CommonTemplate') {
@@ -74,22 +75,19 @@ export class MetadataXmlCreator {
     }
     if (options.kind === 'CommonForm') {
       const formXmlPath = path.join(objectDir, 'Ext', 'Form.xml');
-      fs.mkdirSync(path.dirname(formXmlPath), { recursive: true });
-      fs.writeFileSync(formXmlPath, buildManagedFormXml(formatVersion, ruleset), 'utf-8');
+      writeNewExportFile(formXmlPath, buildManagedFormXml(formatVersion, ruleset));
       changedFiles.push(formXmlPath);
     }
 
     if (options.kind === 'Role') {
       const rightsPath = path.join(objectDir, 'Ext', 'Rights.xml');
-      fs.mkdirSync(path.dirname(rightsPath), { recursive: true });
-      fs.writeFileSync(rightsPath, buildEmptyRightsXml(formatVersion), 'utf-8');
+      writeNewExportFile(rightsPath, buildEmptyRightsXml(formatVersion));
       changedFiles.push(rightsPath);
     }
 
     if (options.kind === 'BusinessProcess') {
       const flowchartPath = path.join(objectDir, 'Ext', 'Flowchart.xml');
-      fs.mkdirSync(path.dirname(flowchartPath), { recursive: true });
-      fs.writeFileSync(flowchartPath, buildBusinessProcessFlowchartXml(formatVersion, ruleset), 'utf-8');
+      writeNewExportFile(flowchartPath, buildBusinessProcessFlowchartXml(formatVersion, ruleset));
       changedFiles.push(flowchartPath);
     }
 

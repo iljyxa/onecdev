@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../fs/NewExportFile';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { TemplateType } from './MetadataXmlCreator';
@@ -38,8 +39,7 @@ export function ensureTextTemplateContentPath(templateXmlPath: string, templateN
   }
 
   const contentPath = getDefaultTextTemplateContentPath(templateXmlPath, templateName);
-  fs.mkdirSync(path.dirname(contentPath), { recursive: true });
-  fs.writeFileSync(contentPath, '', 'utf-8');
+  writeNewExportFile(contentPath, '');
   return contentPath;
 }
 

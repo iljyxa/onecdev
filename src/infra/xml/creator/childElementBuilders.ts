@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../../fs/NewExportFile';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { ChildTag } from '../../../domain/ChildTag';
@@ -415,8 +416,8 @@ export function ensureAuxiliaryChildFiles(
     fs.mkdirSync(path.dirname(formXml), { recursive: true });
     // Один построитель дескриптора формы с FormAddService (#142): состав свойств снят с корпуса.
     const descriptor = buildFormDescriptorXml(options.name, splitCamelCase(options.name), formatVersion, isProcessorLike(ownerKind), ruleset);
-    fs.writeFileSync(descriptorXml, descriptor, 'utf-8');
-    fs.writeFileSync(formXml, buildManagedFormXml(formatVersion, ruleset), 'utf-8');
+    writeNewExportFile(descriptorXml, descriptor);
+    writeNewExportFile(formXml, buildManagedFormXml(formatVersion, ruleset));
     ensureEmptyFile(formModule);
     return [descriptorXml, formXml, formModule];
   }
@@ -427,7 +428,7 @@ export function ensureAuxiliaryChildFiles(
     const changedFiles: string[] = [];
     fs.mkdirSync(path.dirname(templateXml), { recursive: true });
     if (!fs.existsSync(templateXml)) {
-      fs.writeFileSync(templateXml, buildTemplateXml(options.name, formatVersion, templateType, ruleset), 'utf-8');
+      writeNewExportFile(templateXml, buildTemplateXml(options.name, formatVersion, templateType, ruleset));
       changedFiles.push(templateXml);
     }
     changedFiles.push(...ensureTemplateContentFiles(templateDir, templateType, formatVersion, ruleset));

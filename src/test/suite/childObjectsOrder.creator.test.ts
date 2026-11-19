@@ -33,6 +33,15 @@ function readXml(filePath: string): string {
   return fs.readFileSync(filePath, 'utf-8');
 }
 
+/** Первая строка созданного файла; файл обязан быть в формате выгрузки платформы — BOM и CRLF (#165). */
+function exportFileDeclaration(filePath: string): string {
+  const text = readXml(filePath);
+  assert.ok(text.startsWith('\uFEFF'), `${filePath}: BOM`);
+  const end = text.indexOf('\r\n');
+  assert.ok(end > 0, `${filePath}: CRLF`);
+  return text.slice(1, end);
+}
+
 function newConfigRoot(version = '2.21'): string {
   const configRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-child-order-'));
   const configXml = [
@@ -98,7 +107,7 @@ suite('ChildObjects/декларация: T-3 — все генераторы XM
       const created = ensureTemplateContentFiles(dir, type, '2.21');
       const xmlFile = created.find((f) => f.endsWith('.xml'));
       assert.ok(xmlFile, `${type}: не создан описательный .xml`);
-      assert.strictEqual(readXml(xmlFile).split('\n')[0], '<?xml version="1.0" encoding="UTF-8"?>');
+      assert.strictEqual(exportFileDeclaration(xmlFile), '<?xml version="1.0" encoding="UTF-8"?>');
     });
   }
 
@@ -109,7 +118,7 @@ suite('ChildObjects/декларация: T-3 — все генераторы XM
     assertOk(result, 'addRootObject(Role)');
     const rightsPath = result.changedFiles.find((f) => f.endsWith('Rights.xml'));
     assert.ok(rightsPath);
-    assert.strictEqual(readXml(rightsPath).split('\n')[0], '<?xml version="1.0" encoding="UTF-8"?>');
+    assert.strictEqual(exportFileDeclaration(rightsPath), '<?xml version="1.0" encoding="UTF-8"?>');
   });
 
   test('MetadataXmlCreator.addRootObject(BusinessProcess): buildBusinessProcessFlowchartXml(Ext/Flowchart.xml) — "UTF-8"', () => {
@@ -119,7 +128,7 @@ suite('ChildObjects/декларация: T-3 — все генераторы XM
     assertOk(result, 'addRootObject(BusinessProcess)');
     const flowchartPath = result.changedFiles.find((f) => f.endsWith('Flowchart.xml'));
     assert.ok(flowchartPath);
-    assert.strictEqual(readXml(flowchartPath).split('\n')[0], '<?xml version="1.0" encoding="UTF-8"?>');
+    assert.strictEqual(exportFileDeclaration(flowchartPath), '<?xml version="1.0" encoding="UTF-8"?>');
   });
 
   test('MetadataXmlCreator.addChildElement(Form): buildFormDescriptorXml/buildManagedFormXml — "UTF-8" (контроль: уже был верным)', () => {
@@ -131,8 +140,8 @@ suite('ChildObjects/декларация: T-3 — все генераторы XM
     const descriptorXml = result.changedFiles.find((f) => f.endsWith('Форма1.xml'));
     const formXml = result.changedFiles.find((f) => f.endsWith(path.join('Форма1', 'Ext', 'Form.xml')));
     assert.ok(descriptorXml && formXml);
-    assert.strictEqual(readXml(descriptorXml).split('\n')[0], '<?xml version="1.0" encoding="UTF-8"?>');
-    assert.strictEqual(readXml(formXml).split('\n')[0], '<?xml version="1.0" encoding="UTF-8"?>');
+    assert.strictEqual(exportFileDeclaration(descriptorXml), '<?xml version="1.0" encoding="UTF-8"?>');
+    assert.strictEqual(exportFileDeclaration(formXml), '<?xml version="1.0" encoding="UTF-8"?>');
   });
 
   test('externalObjectXml.buildExternalObjectXml (контрольная группа — уже "UTF-8" до задачи, править не нужно)', () => {

@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../fs/NewExportFile';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getMetaFolder, type MetaKind } from '../../domain/MetaTypes';
@@ -58,7 +59,7 @@ export class CfePatchMethodService {
     fs.mkdirSync(path.dirname(moduleFilePath), { recursive: true });
     const created = !fs.existsSync(moduleFilePath);
     if (created) {
-      fs.writeFileSync(moduleFilePath, interceptorText, 'utf-8');
+      writeNewExportFile(moduleFilePath, interceptorText);
     } else {
       const current = fs.readFileSync(moduleFilePath, 'utf-8');
       const separator = current.trim().length === 0

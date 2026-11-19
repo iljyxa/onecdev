@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { formatNewExportText } from '../../infra/fs/NewExportFile';
 import { FormToolsService, MetadataXmlCreator } from '../../infra/xml';
 import { buildManagedFormXml } from '../../infra/xml/creator/auxiliaryFileBuilders';
 import { buildFormDescriptorXml } from '../../infra/xml/form/FormAddService';
@@ -73,8 +74,9 @@ function readNormalized(file: string): string {
   return buffer.toString('utf-8').replace(/^\uFEFF/, '').replace(/\r\n/g, '\n') + '\n';
 }
 
+/** Вторая строка (корень документа) — без учёта стиля EOL: эталон сведён к LF, файл на диске — в CRLF. */
 function secondLine(text: string): string {
-  return text.split('\n')[1];
+  return text.split(/\r?\n/)[1];
 }
 
 function normalizeUuid(xml: string): string {
@@ -200,9 +202,10 @@ suite('Генератор форм против корпуса обеих ген
         const result = new MetadataXmlCreator().addChildElement({ ownerObjectXmlPath: ownerXml, childTag: 'Form', name: 'ФормаЭлемента' });
         assert.strictEqual(result.success, true, result.errors.join('; '));
 
+        // Байт-в-байт с выгрузкой платформы, включая BOM и CRLF (#165).
         const descriptor = fs.readFileSync(path.join(root, 'Catalogs/Банки/Forms/ФормаЭлемента.xml'), 'utf-8');
-        const expected = normalizeUuid(readNormalized(path.join(generationRoot(version), 'Catalogs/ПричиныВозврата/Forms/ФормаЭлемента.xml')));
-        assert.strictEqual(normalizeUuid(descriptor), expected);
+        const expected = fs.readFileSync(path.join(generationRoot(version), 'Catalogs/ПричиныВозврата/Forms/ФормаЭлемента.xml'), 'utf-8');
+        assert.strictEqual(normalizeUuid(descriptor), normalizeUuid(expected));
       } finally {
         fs.rmSync(root, { recursive: true, force: true });
       }
@@ -220,7 +223,7 @@ suite('Генератор форм против корпуса обеих ген
       });
       assert.strictEqual(result.success, true, result.errors.join('; '));
       const descriptor = fs.readFileSync(path.join(root, 'DataProcessors/Обработка/Forms/Форма.xml'), 'utf-8');
-      assert.strictEqual(normalizeUuid(descriptor), normalizeUuid(buildFormDescriptorXml('Форма', 'Форма', '2.21', true)));
+      assert.strictEqual(normalizeUuid(descriptor), normalizeUuid(formatNewExportText('Форма.xml', buildFormDescriptorXml('Форма', 'Форма', '2.21', true))));
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -235,7 +238,7 @@ suite('Генератор форм против корпуса обеих ген
         assert.strictEqual(result.success, true, result.errors.join('; '));
 
         const descriptor = fs.readFileSync(path.join(root, 'CommonForms/Тест.xml'), 'utf-8');
-        const reference = readNormalized(path.join(generationRoot(version), ALKO_DESCRIPTOR));
+        const reference = fs.readFileSync(path.join(generationRoot(version), ALKO_DESCRIPTOR), 'utf-8');
         assert.strictEqual(descriptor.includes(UIC_LINE), reference.includes(UIC_LINE));
         assert.strictEqual(descriptor.includes(UIC_LINE), version === '2.21');
         // Назначения использования — как в эталоне той же генерации (#142).
@@ -243,7 +246,7 @@ suite('Генератор форм против корпуса обеих ген
         assert.strictEqual(usePurposes(descriptor), usePurposes(reference));
 
         const formXml = fs.readFileSync(path.join(root, 'CommonForms/Тест/Ext/Form.xml'), 'utf-8');
-        assert.strictEqual(formXml, buildManagedFormXml(version));
+        assert.strictEqual(formXml, formatNewExportText('Form.xml', buildManagedFormXml(version)));
         assert.strictEqual(secondLine(formXml), secondLine(readNormalized(path.join(generationRoot(version), ALKO_FORM))));
       } finally {
         fs.rmSync(root, { recursive: true, force: true });
@@ -297,7 +300,7 @@ suite('FormToolsService на реальных объектах обеих ген
 
         const formXmlPath = path.join(root, object, 'Forms/Новая/Ext/Form.xml');
         const formXml = fs.readFileSync(formXmlPath, 'utf-8');
-        assert.ok(formXml.includes(`\n\t<WindowOpeningMode>${lockOwner}</WindowOpeningMode>\n`));
+        assert.ok(formXml.includes(`\r\n\t<WindowOpeningMode>${lockOwner}</WindowOpeningMode>\r\n`));
         assert.strictEqual(secondLine(formXml), corpusRoot());
 
         const descriptor = fs.readFileSync(path.join(root, object, 'Forms/Новая.xml'), 'utf-8');
@@ -311,7 +314,7 @@ suite('FormToolsService на реальных объектах обеих ген
       new FormToolsService().addForm({ objectPath: path.join(root, 'Catalogs/Контрагенты.xml'), formName: 'Новая', purpose: 'List' });
       const formXml = fs.readFileSync(path.join(root, 'Catalogs/Контрагенты/Forms/Новая/Ext/Form.xml'), 'utf-8');
       assert.ok(!formXml.includes('<WindowOpeningMode>'));
-      assert.ok(!formXml.includes('\n\t<Group>'));
+      assert.ok(!formXml.includes('\r\n\t<Group>'));
       assert.strictEqual(secondLine(formXml), corpusRoot());
     });
 

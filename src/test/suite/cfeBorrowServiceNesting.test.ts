@@ -191,7 +191,7 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
     });
   });
 
-  suite('АвансовыйОтчет (Document, оболочку создаёт сервис, LF без BOM) — доимствование после ТЧ ТабличнаяЧасть1', () => {
+  suite('АвансовыйОтчет (Document, оболочку создаёт сервис в формате платформы: BOM, CRLF) — доимствование после ТЧ ТабличнаяЧасть1', () => {
     let extDir: string;
     let service: CfeBorrowService;
     let file: string;
@@ -217,9 +217,9 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
 
     /** Опорная точка: позиция главного закрывающего `</ChildObjects>` перед `</Document>`. */
     function mainCloseAt(snapshot: string): number {
-      const at = snapshot.indexOf('\n\t\t</ChildObjects>\n\t</Document>');
+      const at = snapshot.indexOf('\r\n\t\t</ChildObjects>\r\n\t</Document>');
       assert.ok(at > 0, 'в снимке должен быть главный закрывающий тег ChildObjects перед </Document>');
-      return at + 1;
+      return at + 2;
     }
 
     function tabularSectionSlice(xml: string): string {
@@ -231,20 +231,21 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
     test('реквизит объекта Реквизит1 после доимствования ТЧ регистрируется в главном ChildObjects документа, блок ТЧ не меняется', () => {
       const snapshot = borrowTabularSection();
       // Канон порядка <ChildObjects> документа: реквизит встаёт ПЕРЕД табличной частью.
-      const at = mainTabularSectionLineAt(snapshot, '\n');
+      const at = mainTabularSectionLineAt(snapshot, '\r\n');
       const tsBefore = tabularSectionSlice(snapshot);
 
       const result = service.borrowChild(CF_DIR, extDir, 'Document', 'АвансовыйОтчет', 'Attribute', 'Реквизит1');
       assert.strictEqual(result.alreadyBorrowed, false);
 
       const actual = fs.readFileSync(file, 'utf-8');
-      assert.ok(!actual.includes('\r'), 'оболочка документа генерируется сервисом с LF, без CRLF');
+      // Новый файл пишется как выгрузка платформы (#165), вставка наследует его CRLF.
+      assert.ok(actual.startsWith(BOM) && !/(?<!\r)\n/.test(actual), 'оболочка документа — BOM и CRLF');
       assert.strictEqual(tabularSectionSlice(actual), tsBefore, 'блок ТЧ должен остаться байт-в-байт');
 
       const inserted = insertedBetween(snapshot, actual, at, at);
-      assert.match(inserted, /^\t\t\t<Attribute uuid="[0-9a-f-]{36}">\n/);
-      assert.ok(inserted.includes('\t\t\t\t\t<Name>Реквизит1</Name>\n'));
-      assert.ok(inserted.endsWith('\t\t\t</Attribute>\n'));
+      assert.match(inserted, /^\t\t\t<Attribute uuid="[0-9a-f-]{36}">\r\n/);
+      assert.ok(inserted.includes('\t\t\t\t\t<Name>Реквизит1</Name>\r\n'));
+      assert.ok(inserted.endsWith('\t\t\t</Attribute>\r\n'));
     });
 
     test('макет Макет после доимствования ТЧ регистрируется в главном ChildObjects документа', () => {
@@ -255,7 +256,7 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
       assert.strictEqual(result.alreadyBorrowed, false);
 
       const actual = fs.readFileSync(file, 'utf-8');
-      const expected = snapshot.slice(0, at) + '\t\t\t<Template>Макет</Template>\n' + snapshot.slice(at);
+      const expected = snapshot.slice(0, at) + '\t\t\t<Template>Макет</Template>\r\n' + snapshot.slice(at);
       assert.strictEqual(actual, expected);
     });
 
@@ -272,8 +273,8 @@ suite('CfeBorrowService — вложенные ChildObjects ТЧ', () => {
       assert.strictEqual(tabularSectionSlice(actual), tsBefore, 'блок ТЧ должен остаться байт-в-байт');
 
       const inserted = insertedBetween(snapshot, actual, at, at);
-      assert.match(inserted, /^\t\t\t<Command uuid="[0-9a-f-]{36}">\n/);
-      assert.ok(inserted.endsWith('\t\t\t</Command>\n'));
+      assert.match(inserted, /^\t\t\t<Command uuid="[0-9a-f-]{36}">\r\n/);
+      assert.ok(inserted.endsWith('\t\t\t</Command>\r\n'));
     });
 
     test('одноимённые элементы: реквизит объекта Реквизит1 не путается с одноимённой колонкой ТЧ и идемпотентен', () => {

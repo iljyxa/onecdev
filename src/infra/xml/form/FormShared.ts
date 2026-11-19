@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../../fs/NewExportFile';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { FormPurpose } from './types';
@@ -328,8 +329,7 @@ export function validateName(value: string, label: string): void {
 }
 
 export function writeNewTextFile(filePath: string, content: string): void {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `\uFEFF${content}`, 'utf-8');
+  writeNewExportFile(filePath, content);
 }
 
 export function unique(values: readonly string[]): string[] {

@@ -7,5 +7,7 @@
 # виде реальных выгрузок (тесты сохранения формата, см. CLAUDE.md/writeTextFilePreservingBomAndEol) —
 # git не должен трогать переводы строк внутри example/.
 example/** -text
+# Эталоны, снятые с выгрузки платформы, сравниваются байт-в-байт вместе с BOM и CRLF (#165).
+src/test/fixtures/borrowed-form/** -text
 # Снятый трафик crserver: машинные данные, построчный diff бесполезен.
 example/crs/** -diff linguist-generated

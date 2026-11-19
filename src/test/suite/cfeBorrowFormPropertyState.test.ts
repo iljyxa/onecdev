@@ -13,18 +13,15 @@ import { CfeBorrowService } from '../../infra/cfe/CfeBorrowService';
  * `ibcmd infobase config export --extension=EVOLC` на 8.3.27 (2.20) и 8.5.1 (2.21). Платформа
  * дописывает в `<InternalInfo>` состояние свойства «Форма» (Form/Extended), остальное совпадает.
  *
- * Нормализуются uuid формы (новый при каждом заимствовании), а также BOM и CRLF: новые файлы
- * проект пишет без BOM и с LF, платформа такой файл принимает.
+ * Нормализуется только uuid формы (новый при каждом заимствовании); BOM и EOL совпадают с
+ * выгрузкой платформы байт-в-байт (#165).
  */
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const FIXTURES = path.join(REPO_ROOT, 'src', 'test', 'fixtures', 'borrowed-form');
 
 function normalize(xml: string): string {
-  return xml
-    .replace(/^\uFEFF/, '')
-    .replace(/\r\n/g, '\n')
-    .replace(/<Form uuid="[0-9a-f-]+">/, '<Form uuid="UUID">');
+  return xml.replace(/<Form uuid="[0-9a-f-]+">/, '<Form uuid="UUID">');
 }
 
 suite('CfeBorrowService — дескриптор заимствованной формы как у выгрузки платформы (#161)', () => {
