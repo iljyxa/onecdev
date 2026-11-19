@@ -343,7 +343,12 @@ export function buildEffectivePropertyItemsForKeys(
     showMissingKeys: options?.showMissingKeys,
   });
 
-  const localByKey = new Map(localItems.map((item) => [item.key, item]));
+  // showMissingKeys достраивает отсутствующие ключи умолчаниями; у заимствованного
+  // элемента такое умолчание не локальное значение и не должно перекрывать базу (#146).
+  const localTags = topLevelPropertyTags(localXmlOrPropertiesInner);
+  const localByKey = new Map(
+    localItems.filter((item) => localTags.has(item.key)).map((item) => [item.key, item])
+  );
   const inheritedByKey = new Map(inheritedItems.map((item) => [item.key, item]));
   const result: ObjectPropertyItem[] = [];
 
@@ -364,6 +369,11 @@ export function buildEffectivePropertyItemsForKeys(
   }
 
   return result;
+}
+
+function topLevelPropertyTags(xmlOrPropertiesInner: string): Set<string> {
+  const propsInner = extractPropertiesInnerFromElement(xmlOrPropertiesInner) ?? xmlOrPropertiesInner;
+  return new Set(extractTopLevelPropertiesChildren(`<Properties>${propsInner}</Properties>`).map((child) => child.tag));
 }
 
 /** Свойства корневого объекта метаданных по его полному XML */
