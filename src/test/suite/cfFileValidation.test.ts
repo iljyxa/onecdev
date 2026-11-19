@@ -221,6 +221,8 @@ suite('CfFileValidation — guard-функции CF/CFE (реальные вре
       '.backup.2024-01-15.part', '.2024-01-15.part',
       '.hidden.part', '.Ext01.cfe.part', '.Ext01.cfe.123-456.part',
       '.Ext01.cfe.1-2-3.onecdev.part.bak', 'Ext01.cfe.1-2-3.onecdev.part', '.onecdev.part',
+      // Без точки между ведущей точкой и маркером имя построено не resolveDumpStagingPath.
+      '.x.onecdev.part', '..onecdev.part', '.notes\n.onecdev.part',
     ]) {
       assert.strictEqual(m().isDumpStagingFileName(name), false, name);
     }

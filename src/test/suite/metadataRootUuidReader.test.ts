@@ -79,14 +79,12 @@ suite('MetadataRootUuidReader (#117)', () => {
     assert.strictEqual(readMetadataRootUuid(text), '2c53bb9d-bda3-431e-95f5-0d4145c8ac74');
   });
 
-  test('повторы «--><!--» без корневого элемента разбираются за линейное время (CodeQL js/redos)', () => {
+  test('10 000 повторов «--><!--» без корневого элемента — null (CodeQL js/redos)', () => {
     // Прежний `<!--[\s\S]*?-->` давал экспоненциальный перебор: каждое «--><!--» могло быть и границей
-    // комментариев, и их содержимым. На 24 повторах старый вариант работал ~1 с, линейный — доли мс.
-    const text = '<MetaDataObject><!--' + '--><!--'.repeat(24);
-    const started = process.hrtime.bigint();
+    // комментариев, и их содержимым (24 повтора — уже ~1 с). На таком входе он не завершился бы никогда,
+    // поэтому регресс виден как зависание, а не как сравнение с порогом времени.
+    const text = '<MetaDataObject><!--' + '--><!--'.repeat(10_000);
     assert.strictEqual(readMetadataRootUuid(text), null);
-    const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
-    assert.ok(elapsedMs < 100, `разбор занял ${elapsedMs.toFixed(1)} мс`);
   });
 
   test('нет файла — null', () => {
