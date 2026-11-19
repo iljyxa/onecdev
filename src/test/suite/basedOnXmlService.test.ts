@@ -55,7 +55,79 @@ suite('BasedOnXmlService', () => {
     const cachedSnapshot = service.readSnapshot(root, 'Catalog', 'Клиенты', { includeReverse: false });
     assert.deepStrictEqual(cachedSnapshot.basedFor.map((item) => item.ref), ['Document.Заказ']);
   });
+  // #150: отказ писателя (нет блока <Properties>) раньше превращался в молчаливое
+  // `changed: false` — пользователь не узнавал, что ссылка не записана.
+  test('Отказ записи прямого ввода на основании возвращает ошибку с причиной', () => {
+    const root = createBasedOnFixture('onecdev-based-on-refused-');
+    const brokenPath = path.join(root, 'Catalogs', 'Клиенты.xml');
+    fs.writeFileSync(brokenPath, buildObjectXmlWithoutProperties('Catalog'), 'utf-8');
+    const before = fs.readFileSync(brokenPath, 'utf-8');
+
+    const result = new BasedOnXmlService().setBasedOn(root, 'Catalog', 'Клиенты', ['Document.Заказ']);
+
+    assert.strictEqual(result.changed, false);
+    assert.deepStrictEqual(result.changedFiles, []);
+    assert.strictEqual(result.errors.length, 1);
+    assert.ok(result.errors[0].includes('Catalog.Клиенты'), result.errors[0]);
+    assert.ok(result.errors[0].includes('<Properties>'), result.errors[0]);
+    assert.strictEqual(fs.readFileSync(brokenPath, 'utf-8'), before);
+  });
+
+  test('Повтор того же состава ввода на основании — без изменений и без ошибки', () => {
+    const root = createBasedOnFixture('onecdev-based-on-repeat-');
+    const service = new BasedOnXmlService();
+    const first = service.setBasedOn(root, 'Catalog', 'Клиенты', ['Document.Заказ']);
+    assert.strictEqual(first.changed, true);
+    assert.deepStrictEqual(first.errors, []);
+
+    const repeat = service.setBasedOn(root, 'Catalog', 'Клиенты', ['Document.Заказ']);
+    assert.deepStrictEqual(repeat, { changed: false, changedFiles: [], errors: [] });
+  });
+
+  test('Ввод на основании для объекта без файла — ошибка, а не молчание', () => {
+    const root = createBasedOnFixture('onecdev-based-on-missing-');
+    const result = new BasedOnXmlService().setBasedOn(root, 'Catalog', 'Несуществующий', ['Document.Заказ']);
+    assert.strictEqual(result.changed, false);
+    assert.strictEqual(result.errors.length, 1);
+    assert.ok(result.errors[0].includes('Catalog.Несуществующий'), result.errors[0]);
+  });
+
+  test('Обратный ввод: отказ одного объекта не мешает записи остальных и попадает в ошибки', () => {
+    const root = createBasedOnFixture('onecdev-based-on-reverse-refused-');
+    const brokenPath = path.join(root, 'Catalogs', 'Партнеры.xml');
+    fs.writeFileSync(brokenPath, buildObjectXmlWithoutProperties('Catalog'), 'utf-8');
+
+    const service = new BasedOnXmlService();
+    const result = service.setBasedFor(root, 'Catalog', 'Клиенты', ['Catalog.Партнеры', 'Document.Заказ']);
+
+    const orderPath = path.join(root, 'Documents', 'Заказ.xml');
+    assert.strictEqual(result.changed, true);
+    assert.deepStrictEqual(result.changedFiles, [orderPath]);
+    assert.strictEqual(result.errors.length, 1);
+    assert.ok(result.errors[0].includes('Catalog.Партнеры'), result.errors[0]);
+    assert.ok(fs.readFileSync(orderPath, 'utf-8').includes('Catalog.Клиенты'));
+  });
 });
+
+function createBasedOnFixture(prefix: string): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  fs.mkdirSync(path.join(root, 'Catalogs'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'Documents'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'Configuration.xml'), buildConfigXml(), 'utf-8');
+  fs.writeFileSync(path.join(root, 'Catalogs', 'Клиенты.xml'), buildObjectXml('Catalog', 'Клиенты'), 'utf-8');
+  fs.writeFileSync(path.join(root, 'Catalogs', 'Партнеры.xml'), buildObjectXml('Catalog', 'Партнеры'), 'utf-8');
+  fs.writeFileSync(path.join(root, 'Documents', 'Заказ.xml'), buildObjectXml('Document', 'Заказ'), 'utf-8');
+  return root;
+}
+
+function buildObjectXmlWithoutProperties(kind: 'Catalog' | 'Document'): string {
+  return `<?xml version="1.0" encoding="utf-8"?>
+<MetaDataObject>
+  <${kind}>
+    <ChildObjects/>
+  </${kind}>
+</MetaDataObject>`;
+}
 
 function buildConfigXml(): string {
   return `<?xml version="1.0" encoding="utf-8"?>

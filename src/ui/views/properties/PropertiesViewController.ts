@@ -761,6 +761,9 @@ export class PropertiesViewController {
     const result = key === 'BasedOn'
       ? this.basedOnService.setBasedOn(location.configRoot, objectKind, this.activeNode.textLabel, values)
       : this.basedOnService.setBasedFor(location.configRoot, objectKind, this.activeNode.textLabel, values);
+    if (result.errors.length > 0) {
+      void vscode.window.showErrorMessage(`Не удалось изменить ввод на основании: ${result.errors.join('; ')}`);
+    }
     if (result.changed) {
       this.host.refreshActiveView();
     }
