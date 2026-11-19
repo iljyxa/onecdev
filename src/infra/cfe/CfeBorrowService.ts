@@ -16,6 +16,7 @@ import {
   findNestingAwareElementRange,
   writeTextFilePreservingBomAndEol,
 } from '../xml/XmlUtils';
+import { resolveFormatRuleset } from '../xml/format/formatRegistry';
 
 /** Свойства CommonModule, которые копируются из источника в заимствованный объект */
 const COMMON_MODULE_PROPS = [
@@ -151,28 +152,6 @@ const GENERATED_TYPES: Record<string, GeneratedTypeDef[]> = {
     { prefix: 'DataProcessorManager', category: 'Manager' },
   ],
 };
-
-/** Пространства имён XML для MetaDataObject */
-const XMLNS_DECL = [
-  'xmlns="http://v8.1c.ru/8.3/MDClasses"',
-  'xmlns:app="http://v8.1c.ru/8.2/managed-application/core"',
-  'xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config"',
-  'xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi"',
-  'xmlns:ent="http://v8.1c.ru/8.1/data/enterprise"',
-  'xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform"',
-  'xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette"',
-  'xmlns:style="http://v8.1c.ru/8.1/data/ui/style"',
-  'xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system"',
-  'xmlns:v8="http://v8.1c.ru/8.1/data/core"',
-  'xmlns:v8ui="http://v8.1c.ru/8.1/data/ui"',
-  'xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web"',
-  'xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows"',
-  'xmlns:xen="http://v8.1c.ru/8.3/xcf/enums"',
-  'xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef"',
-  'xmlns:xr="http://v8.1c.ru/8.3/xcf/readable"',
-  'xmlns:xs="http://www.w3.org/2001/XMLSchema"',
-  'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
-].join(' ');
 
 export interface BorrowObjectResult {
   /** true — объект уже существовал в расширении (обновление не выполнялось) */
@@ -557,7 +536,7 @@ export class CfeBorrowService {
 
     const lines: string[] = [
       `<?xml version="1.0" encoding="UTF-8"?>`,
-      `<MetaDataObject ${XMLNS_DECL} version="${formatVersion}">`,
+      `<MetaDataObject ${resolveFormatRuleset(formatVersion).metaDataObjectXmlns} version="${formatVersion}">`,
       `\t<${typeName} uuid="${newUuid}">`,
       internalInfo,
       `\t\t<Properties>`,
@@ -592,9 +571,12 @@ export class CfeBorrowService {
     formatVersion: string
   ): string {
     const newUuid = this.newGuid();
+    // `includeFormUseInInterfaceCompatibilityMode` здесь не применяется: у заимствованной
+    // формы платформа не пишет `<UseInInterfaceCompatibilityMode>` ни в 2.20, ни в 2.21
+    // (выгрузка 8.3.27 и 8.5.1 расширения с заимствованной формой, #141).
     return [
       `<?xml version="1.0" encoding="UTF-8"?>`,
-      `<MetaDataObject ${XMLNS_DECL} version="${formatVersion}">`,
+      `<MetaDataObject ${resolveFormatRuleset(formatVersion).metaDataObjectXmlns} version="${formatVersion}">`,
       `\t<Form uuid="${newUuid}">`,
       `\t\t<InternalInfo/>`,
       `\t\t<Properties>`,
