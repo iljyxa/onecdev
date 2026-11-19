@@ -98,10 +98,11 @@ suite('SubsystemToolsService и CommandInterfaceService', () => {
       const ciService = new CommandInterfaceService();
       const result = ciService.edit({ ciPath: createSubsystemHome(), createIfMissing: true, operations: OPERATIONS });
 
+      // Файл создан в формате выгрузки платформы (CRLF, #165) — вставки наследуют его EOL.
       const xml = fs.readFileSync(result.ciPath, 'utf-8');
       for (const section of ['CommandsVisibility', 'CommandsPlacement', 'CommandsOrder', 'SubsystemsOrder', 'GroupsOrder']) {
-        assert.ok(xml.includes(`\n\t<${section}>\n\t\t<`), `секция ${section} обязана стоять на одном \\t`);
-        assert.ok(xml.includes(`\n\t</${section}>\n`), `закрытие ${section} обязано стоять на одном \\t`);
+        assert.ok(xml.includes(`\r\n\t<${section}>\r\n\t\t<`), `секция ${section} обязана стоять на одном \\t`);
+        assert.ok(xml.includes(`\r\n\t</${section}>\r\n`), `закрытие ${section} обязано стоять на одном \\t`);
       }
     });
 

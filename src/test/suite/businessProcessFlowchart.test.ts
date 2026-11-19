@@ -148,7 +148,17 @@ function buildGraphicalTemplate(version: string): string {
   const ensure: (dir: string, type: TemplateType, version: string, ruleset?: FormatRuleset) => string[] = ensureTemplateContentFiles;
   const created = ensure(dir, 'GraphicalSchema', version, resolveFormatRuleset(version));
   assert.strictEqual(created.length, 1, 'GraphicalSchema создаёт ровно один Ext/Template.xml');
-  return fs.readFileSync(created[0], 'utf-8');
+  return fromExportFile(fs.readFileSync(created[0], 'utf-8'));
+}
+
+/**
+ * Новый файл пишется в формате выгрузки платформы — BOM, CRLF, без завершающего перевода строки
+ * (#165). Для сравнения с выводом построителя файл сводится обратно к его стилю: LF и финальный `\n`.
+ */
+function fromExportFile(text: string): string {
+  assert.ok(text.startsWith('\uFEFF<?xml version="1.0" encoding="UTF-8"?>\r\n'), 'файл с BOM и CRLF');
+  assert.ok(text.endsWith('>'), 'без перевода строки после корня');
+  return `${text.slice(1).replace(/\r\n/g, '\n')}\n`;
 }
 
 function assertWellFormed(xml: string, label: string): void {
@@ -377,10 +387,10 @@ suite('Схема бизнес-процесса: MetadataXmlCreator.addRootObjec
     if (!reference) {
       this.skip();
     }
-    const normalized = reference.text.replace(/\r\n/g, '\n');
-    const head = normalized.slice(0, normalized.indexOf('</PrintParameters>') + '</PrintParameters>'.length);
+    // Байт-в-байт с эталоном, включая BOM и CRLF (#165).
+    const head = reference.text.slice(0, reference.text.indexOf('</PrintParameters>') + '</PrintParameters>'.length);
     const golden = GOLDEN_BusinessProcess21.files['BusinessProcesses/Тест/Ext/Flowchart.xml'];
-    assert.strictEqual(golden, `${head}\n\t<Items/>\n</GraphicalSchema>\n`);
+    assert.strictEqual(golden, `\uFEFF${head}\r\n\t<Items/>\r\n</GraphicalSchema>`);
   });
 });
 
@@ -406,7 +416,7 @@ suite('Макеты: ensureTemplateContentFiles × все 8 TemplateType (T-A1.9
       );
       for (const rel of EXPECTED[type].xml) {
         const text = fs.readFileSync(path.join(dir, rel), 'utf-8');
-        assert.strictEqual(text.split('\n')[0], '<?xml version="1.0" encoding="UTF-8"?>', `${type}: декларация`);
+        assert.ok(text.startsWith('\uFEFF<?xml version="1.0" encoding="UTF-8"?>\r\n'), `${type}: BOM, декларация, CRLF`);
       }
 
       // Пользователь уже мог наполнить макет — повторный вызов не вправе его затирать.

@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../fs/NewExportFile';
 import * as fs from 'fs';
 import * as path from 'path';
 import { XMLValidator } from 'fast-xml-parser';
@@ -94,8 +95,7 @@ export class CommandInterfaceService {
       if (!options.createIfMissing) {
         throw new Error(`CommandInterface.xml не найден: ${ciPath}`);
       }
-      fs.mkdirSync(path.dirname(ciPath), { recursive: true });
-      fs.writeFileSync(ciPath, buildEmptyCommandInterfaceXml(detectFormatVersion(path.dirname(ciPath))), 'utf-8');
+      writeNewExportFile(ciPath, buildEmptyCommandInterfaceXml(detectFormatVersion(path.dirname(ciPath))));
     }
 
     const original = fs.readFileSync(ciPath, 'utf-8');

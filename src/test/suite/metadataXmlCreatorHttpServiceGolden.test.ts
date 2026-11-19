@@ -96,8 +96,9 @@ suite('MetadataXmlCreator — байт-golden: HTTPService → URLTemplate → M
       '\t\t<ChildObjects/>',
       '\t</HTTPService>',
       '</MetaDataObject>',
-    ].join('\n');
-    assert.strictEqual(actual, expected, 'корень HTTPService не должен был измениться при добавлении дочерней вложенности');
+    ].join('\r\n');
+    // Новый файл — в формате выгрузки платформы: BOM, CRLF, без завершающего перевода строки (#165).
+    assert.strictEqual(actual, `\uFEFF${expected}`, 'корень HTTPService не должен был измениться при добавлении дочерней вложенности');
   });
 
   test('addChildElement(URLTemplate) в HTTPService: Name/Synonym/Comment/пустой <Template/> + <ChildObjects/>', () => {
@@ -128,7 +129,7 @@ suite('MetadataXmlCreator — байт-golden: HTTPService → URLTemplate → M
       '\t\t\t\t</Properties>',
       '\t\t\t\t<ChildObjects/>',
       '\t\t\t</URLTemplate>',
-    ].join('\n');
+    ].join('\r\n');
     assert.strictEqual(block, expectedBlock);
   });
 
@@ -164,7 +165,7 @@ suite('MetadataXmlCreator — байт-golden: HTTPService → URLTemplate → M
       '\t\t\t\t\t\t\t<Handler/>',
       '\t\t\t\t\t\t</Properties>',
       '\t\t\t\t\t</Method>',
-    ].join('\n');
+    ].join('\r\n');
     assert.strictEqual(methodBlock, expectedMethodBlock);
     assert.ok(!methodBlock.includes('ChildObjects'), 'Method не должен содержать <ChildObjects> в любом виде');
 

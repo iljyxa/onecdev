@@ -275,7 +275,8 @@ suite('CfeBorrowService: создание НОВЫХ файлов не регр�
     for (const file of [objectXml, formMeta, formXml]) {
       assert.strictEqual(XMLValidator.validate(fs.readFileSync(file, 'utf-8')), true, `${file}: не well-formed`);
     }
-    assert.strictEqual(fs.readFileSync(moduleBsl, 'utf-8'), '', 'Module.bsl создаётся пустым');
+    // Пустой модуль в формате выгрузки платформы — один BOM (#165).
+    assert.strictEqual(fs.readFileSync(moduleBsl, 'utf-8'), '\uFEFF', 'Module.bsl создаётся пустым');
 
     const objectText = fs.readFileSync(objectXml, 'utf-8');
     assert.ok(objectText.includes('<ObjectBelonging>Adopted</ObjectBelonging>'));
@@ -295,7 +296,7 @@ suite('CfeBorrowService: создание НОВЫХ файлов не регр�
     assert.strictEqual(result.alreadyBorrowed, false);
     const formDir = path.join(extDir, 'Catalogs', 'Клиенты', 'Forms');
     // Без Ext/Form.xml свойство «Форма» не расширяется — PropertyState Form/Extended не пишется (#161).
-    assert.ok(fs.readFileSync(path.join(formDir, 'ФормаСписка.xml'), 'utf-8').includes('\t\t<InternalInfo/>\n'));
+    assert.ok(fs.readFileSync(path.join(formDir, 'ФормаСписка.xml'), 'utf-8').includes('\t\t<InternalInfo/>\r\n'));
     assert.ok(!fs.existsSync(path.join(formDir, 'ФормаСписка', 'Ext')));
     assert.ok(!result.files.some((f) => f.endsWith('Form.xml') || f.endsWith('Module.bsl')));
   });

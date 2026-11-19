@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../../fs/NewExportFile';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -94,8 +95,7 @@ export function validateBspIdentifier(value: string): void {
 }
 
 export function writeNewTextFile(filePath: string, content: string): void {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `\ufeff${content}`, 'utf-8');
+  writeNewExportFile(filePath, content);
 }
 
 export function newUuid(): string {

@@ -184,12 +184,14 @@ suite('Генерация объектов по версии формата', ()
       const ruleset = resolveFormatRuleset(version);
       for (const kind of SA_KINDS) {
         const { xml } = generate(kind, version);
-        assert.ok(xml.includes(ruleset.standardAttributes(kind)), `${kind}@${version}: нет шаблона StandardAttributes`);
+        // Файл записан в CRLF, как выгрузка платформы (#165); шаблон ruleset — в LF.
+        const template = ruleset.standardAttributes(kind).replace(/\n/g, '\r\n');
+        assert.ok(xml.includes(template), `${kind}@${version}: нет шаблона StandardAttributes`);
       }
       for (const kind of STS_KINDS) {
         const { xml } = generate(kind, version);
         assert.ok(
-          xml.includes(ruleset.standardTabularSections(kind)),
+          xml.includes(ruleset.standardTabularSections(kind).replace(/\n/g, '\r\n')),
           `${kind}@${version}: нет шаблона StandardTabularSections`
         );
       }

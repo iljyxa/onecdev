@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../fs/NewExportFile';
 import * as fs from 'fs';
 import * as path from 'path';
 import { XMLValidator } from 'fast-xml-parser';
@@ -133,7 +134,7 @@ export class MxlTemplateService {
     if (previous) {
       writeTextFilePreservingBomAndEol(templatePath, previous, xml);
     } else {
-      fs.writeFileSync(templatePath, xml, 'utf-8');
+      writeNewExportFile(templatePath, xml);
     }
     return {
       templatePath,

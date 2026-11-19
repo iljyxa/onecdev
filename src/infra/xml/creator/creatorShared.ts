@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../../fs/NewExportFile';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -162,7 +163,7 @@ export function needsChildObjects(kind: MetaKind): boolean {
 export function ensureEmptyFile(filePath: string): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, '', 'utf-8');
+    writeNewExportFile(filePath, '');
   }
 }
 
@@ -176,7 +177,7 @@ export function writeTextFile(filePath: string, content: string): boolean {
   if (fs.existsSync(filePath)) {
     return false;
   }
-  fs.writeFileSync(filePath, content, 'utf-8');
+  writeNewExportFile(filePath, content);
   return true;
 }
 

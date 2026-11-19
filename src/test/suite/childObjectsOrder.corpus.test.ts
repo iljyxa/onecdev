@@ -151,11 +151,9 @@ suite('ChildObjects: порядок и декларация — снятие п�
       test(`${kind}: декларация сгенерированного корневого объекта байт-равна декларации реального файла из корпуса`, () => {
         const sample = scanOwnerFiles(kind).find((f) => f.tags !== null);
         assert.ok(sample, `${kind}: не нашлось ни одного файла с распознанным <ChildObjects> в корпусе`);
-        // Файлы корпуса нередко в CRLF (например example/2.21/src/cf/Catalogs/Валюты.xml) —
-        // снимаем BOM и хвостовой возврат каретки ПЕРЕД сравнением: EOL-стиль исходника
-        // не входит в проверяемое свойство (генератор всегда пишет LF), а сама декларация
-        // сравнивается побайтово без ослаблений.
-        const sampleDeclarationLine = sample.xml.split('\n')[0].replace(/^\uFEFF/, '').replace(/\r$/, '');
+        // Сравнивается первая строка вместе с BOM и CRLF: новый файл пишется в формате выгрузки
+        // платформы (#165), поэтому ослаблений нет.
+        const sampleDeclarationLine = sample.xml.split('\n')[0];
 
         const configRoot = newConfigRoot('2.21');
         const result = new MetadataXmlCreator().addRootObject({ configRoot, kind, name: 'ТестСвязки' });

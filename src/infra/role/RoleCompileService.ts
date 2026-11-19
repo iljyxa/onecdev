@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../fs/NewExportFile';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,8 +54,8 @@ export class RoleCompileService {
     const objects = parseRoleObjects(definition.objects ?? definition.rights ?? [], warnings);
     fs.mkdirSync(path.dirname(rightsPath), { recursive: true });
     fs.mkdirSync(rolesDir, { recursive: true });
-    fs.writeFileSync(metadataPath, buildRoleMetadataXml(definition, formatVersion), 'utf-8');
-    fs.writeFileSync(rightsPath, buildRightsXml(definition, objects, formatVersion), 'utf-8');
+    writeNewExportFile(metadataPath, buildRoleMetadataXml(definition, formatVersion));
+    writeNewExportFile(rightsPath, buildRightsXml(definition, objects, formatVersion));
     const changedFiles = [metadataPath, rightsPath];
 
     const configXmlPath = path.join(configDir, 'Configuration.xml');

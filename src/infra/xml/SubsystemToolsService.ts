@@ -1,3 +1,4 @@
+import { writeNewExportFile } from '../fs/NewExportFile';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -250,7 +251,7 @@ export class SubsystemToolsService {
 
     fs.mkdirSync(targetDir, { recursive: true });
     const uuid = crypto.randomUUID();
-    fs.writeFileSync(subsystemPath, buildSubsystemXml(definition, uuid, formatVersion), 'utf-8');
+    writeNewExportFile(subsystemPath, buildSubsystemXml(definition, uuid, formatVersion));
     const changedFiles = [subsystemPath];
 
     if (definition.children.length > 0) {
@@ -259,7 +260,7 @@ export class SubsystemToolsService {
       for (const child of definition.children) {
         const childPath = path.join(childRoot, `${child}.xml`);
         if (!fs.existsSync(childPath)) {
-          fs.writeFileSync(childPath, buildSubsystemXml({ ...definition, name: child, content: [], children: [] }, crypto.randomUUID(), formatVersion), 'utf-8');
+          writeNewExportFile(childPath, buildSubsystemXml({ ...definition, name: child, content: [], children: [] }, crypto.randomUUID(), formatVersion));
           changedFiles.push(childPath);
         }
       }

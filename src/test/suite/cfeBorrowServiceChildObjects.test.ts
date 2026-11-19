@@ -74,7 +74,7 @@ function expectedShell(c: ShellCase): string {
     '\t\t\t\t<xr:ValueId><uuid></xr:ValueId>',
     '\t\t\t</xr:GeneratedType>',
   ]);
-  return [
+  const lines = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     `<MetaDataObject ${XMLNS_DECL} version="2.21">`,
     `\t<${c.typeName} uuid="<uuid>">`,
@@ -90,15 +90,16 @@ function expectedShell(c: ShellCase): string {
     '\t\t<ChildObjects/>',
     `\t</${c.typeName}>`,
     '</MetaDataObject>',
-  ].join('\n');
+  ];
+  // Новый файл — в формате выгрузки платформы: BOM, CRLF, без завершающего перевода строки (#165).
+  return BOM + lines.join('\r\n');
 }
 
 /** Оболочка в формате до исправления: без `<ChildObjects/>`, BOM + CRLF, как после Конфигуратора. */
 function legacyShellWithoutChildObjects(c: ShellCase): string {
-  const shell = expectedShell(c)
-    .replace('\t\t<ChildObjects/>\n', '')
+  return expectedShell(c)
+    .replace('\t\t<ChildObjects/>\r\n', '')
     .replace(/<uuid>/g, '00000000-0000-4000-8000-000000000000');
-  return BOM + shell.replace(/\n/g, '\r\n');
 }
 
 /**
@@ -208,7 +209,7 @@ suite('CfeBorrowService — ChildObjects оболочки по META_TYPES (issue
         xml,
         expectedShell(c).replace(
           '\t\t<ChildObjects/>',
-          '\t\t<ChildObjects>\n\t\t\t<Form>ФормаЭлемента</Form>\n\t\t</ChildObjects>'
+          '\t\t<ChildObjects>\r\n\t\t\t<Form>ФормаЭлемента</Form>\r\n\t\t</ChildObjects>'
         )
       );
     } finally {
