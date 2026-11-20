@@ -29,3 +29,18 @@ coverage/**
 CLAUDE.md
 eslint.config.mjs
 .c8rc.json
+
+# vsce не читает .gitignore: локальные файлы рабочей копии разработчика исключаются
+# здесь явно, иначе попадают в VSIX (env.json может содержать строку подключения и пароли).
+env.json
+.onecdev/**
+.kilo/**
+.kilo
+.DS_Store
+**/.DS_Store
+*.vsix
+coverage-*/**
+coverage-*
+npm-debug.log*
+CLAUDE.local.md
+.coderabbit.yaml
