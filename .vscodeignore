@@ -19,6 +19,8 @@ vite.shared.ts
 src-ui/**
 scripts/**
 **/*.map
+# Служебные фрагменты сборки THIRD_PARTY_LICENSES; сам dist/THIRD_PARTY_LICENSES.txt идёт в VSIX.
+dist/third-party/**
 **/*.ts
 src/test/**
 coverage/**

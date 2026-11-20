@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
-import { aliases, nodeExternal } from './vite.shared';
+import { aliases, nodeExternal, thirdPartyLicensesPlugin } from './vite.shared';
 
 export default defineConfig({
+  plugins: [thirdPartyLicensesPlugin('node', 'dist')],
   resolve: {
     alias: aliases,
     conditions: ['node', 'require'],
