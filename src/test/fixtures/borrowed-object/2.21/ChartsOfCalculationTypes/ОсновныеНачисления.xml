@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.21">
+	<ChartOfCalculationTypes uuid="4ca888f9-5837-4bf0-a854-52adbfe19497">
+		<InternalInfo>
+			<xr:GeneratedType name="ChartOfCalculationTypesObject.ОсновныеНачисления" category="Object">
+				<xr:TypeId>2e4e2d55-d92f-4747-85bb-d687a01d9282</xr:TypeId>
+				<xr:ValueId>e134f2f8-f028-4313-95c2-c934f31b7a89</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesRef.ОсновныеНачисления" category="Ref">
+				<xr:TypeId>51aa5cf0-7093-48ee-9de9-00b6b4d7d64c</xr:TypeId>
+				<xr:ValueId>4d40c012-6961-4322-b545-f72de923f228</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesSelection.ОсновныеНачисления" category="Selection">
+				<xr:TypeId>69e6db17-693f-49a1-89b0-d53e8c25877f</xr:TypeId>
+				<xr:ValueId>d27031bd-88cf-4f01-a90c-482129210da9</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesList.ОсновныеНачисления" category="List">
+				<xr:TypeId>e516f35a-e8de-4cea-a133-b927ce02172d</xr:TypeId>
+				<xr:ValueId>c786122a-e710-4a2a-a6bc-f61c461def6e</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesManager.ОсновныеНачисления" category="Manager">
+				<xr:TypeId>2044e022-0d5b-41dd-81c7-7fedf59716c5</xr:TypeId>
+				<xr:ValueId>077d2515-d8da-4495-922a-d2c61082bc67</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DisplacingCalculationTypes.ОсновныеНачисления" category="DisplacingCalculationTypes">
+				<xr:TypeId>bfd1d49e-68df-4907-a5be-600551abe16c</xr:TypeId>
+				<xr:ValueId>0f112627-d19e-426b-af72-2600a5982fba</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DisplacingCalculationTypesRow.ОсновныеНачисления" category="DisplacingCalculationTypesRow">
+				<xr:TypeId>189ffb46-5bcc-4242-8437-95363f67b56b</xr:TypeId>
+				<xr:ValueId>7965ef68-d6b6-48f2-8efa-37675966e1a8</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="BaseCalculationTypes.ОсновныеНачисления" category="BaseCalculationTypes">
+				<xr:TypeId>3423c04d-8edb-4f6c-9d69-aa8da5bff76c</xr:TypeId>
+				<xr:ValueId>95dd4725-1505-4bb6-9a7b-7ae8f18b7c70</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="BaseCalculationTypesRow.ОсновныеНачисления" category="BaseCalculationTypesRow">
+				<xr:TypeId>e181e1f7-5aa3-45d2-8bcb-289fc3e04a17</xr:TypeId>
+				<xr:ValueId>de61c729-b5d8-48dd-8f72-0e3b703548d5</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="LeadingCalculationTypes.ОсновныеНачисления" category="LeadingCalculationTypes">
+				<xr:TypeId>53f4dcec-cbef-48f8-9948-2d79293033e1</xr:TypeId>
+				<xr:ValueId>1710dd11-9486-4b86-ba17-8f686104a26a</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="LeadingCalculationTypesRow.ОсновныеНачисления" category="LeadingCalculationTypesRow">
+				<xr:TypeId>408a11be-c709-47ca-bd63-8431f2069fcd</xr:TypeId>
+				<xr:ValueId>ae717dc8-88eb-4e80-ad0d-2f6d1af1ccc8</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ОсновныеНачисления</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>3bbd4e3f-08ae-4b5e-b04b-5391a03fec9d</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</ChartOfCalculationTypes>
+</MetaDataObject>

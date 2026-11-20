@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<FilterCriterion uuid="65b5a144-a12f-48e9-9c9c-7fbc5f9a8bdb">
+		<InternalInfo>
+			<xr:GeneratedType name="FilterCriterionManager.ДокументыКонтрагента" category="Manager">
+				<xr:TypeId>a10766b3-dcf4-41b4-9a86-c1c2b9439865</xr:TypeId>
+				<xr:ValueId>c94a82fe-6c42-45eb-bedd-d7b06a42a6b3</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="FilterCriterionList.ДокументыКонтрагента" category="List">
+				<xr:TypeId>c6ae3870-8052-4a89-bc70-003b625c762d</xr:TypeId>
+				<xr:ValueId>fc8cac21-ae76-4e8b-83df-a995d620c325</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ДокументыКонтрагента</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>41c0ef3a-22cf-486a-99c5-75db61092905</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</FilterCriterion>
+</MetaDataObject>

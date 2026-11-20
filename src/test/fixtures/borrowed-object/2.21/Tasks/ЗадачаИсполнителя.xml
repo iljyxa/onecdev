@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.21">
+	<Task uuid="6f3b898e-a650-4118-8b3d-b1f3014c8a09">
+		<InternalInfo>
+			<xr:GeneratedType name="TaskObject.ЗадачаИсполнителя" category="Object">
+				<xr:TypeId>57e0ad6e-0a74-4da0-be55-8109ce7875d4</xr:TypeId>
+				<xr:ValueId>a2a9a873-52fd-4801-99a6-bdf17892e4f5</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskRef.ЗадачаИсполнителя" category="Ref">
+				<xr:TypeId>29295c7b-e16a-40d7-b9db-5a8c5e87f166</xr:TypeId>
+				<xr:ValueId>b7247aef-6947-41a4-8f9c-5c43b62a9a02</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskSelection.ЗадачаИсполнителя" category="Selection">
+				<xr:TypeId>793c9168-1172-4080-b12e-fcaa65c46ce0</xr:TypeId>
+				<xr:ValueId>ba56e6f3-b07e-4028-9d40-671b3d416563</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskList.ЗадачаИсполнителя" category="List">
+				<xr:TypeId>56673fc6-8e5f-4db7-b270-04bcc8b52cbe</xr:TypeId>
+				<xr:ValueId>9335e37f-5dc5-4af3-bcad-8dc8c7386e27</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskManager.ЗадачаИсполнителя" category="Manager">
+				<xr:TypeId>f5b4eeaa-7497-4c7f-9094-1f5403cae619</xr:TypeId>
+				<xr:ValueId>f7056580-076e-4f80-9c13-e54697c7e994</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ЗадачаИсполнителя</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>bdca3331-a37f-456b-881c-79cf06c01ee0</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</Task>
+</MetaDataObject>

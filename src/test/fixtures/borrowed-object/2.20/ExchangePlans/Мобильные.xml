@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<ExchangePlan uuid="c2fda5f2-af29-4ec2-aa27-6f0af84c5777">
+		<InternalInfo>
+			<xr:ThisNode>5d5eaf21-7098-4f7e-9916-8a304d7a53ee</xr:ThisNode>
+			<xr:GeneratedType name="ExchangePlanObject.Мобильные" category="Object">
+				<xr:TypeId>030b9b71-2a25-4489-9c3a-564a1f1807cd</xr:TypeId>
+				<xr:ValueId>fc70cd61-a83b-4016-8464-14c43d8afc27</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ExchangePlanRef.Мобильные" category="Ref">
+				<xr:TypeId>32c077dd-70db-41c9-918b-031e93cb6f89</xr:TypeId>
+				<xr:ValueId>4b8a67a1-1571-466f-83bc-a153d2576d02</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ExchangePlanSelection.Мобильные" category="Selection">
+				<xr:TypeId>43865f7c-4da3-41db-b36c-0ed296173d0d</xr:TypeId>
+				<xr:ValueId>83d5eb5a-68cc-4a6d-87a4-3c7e3ab453a4</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ExchangePlanList.Мобильные" category="List">
+				<xr:TypeId>b6dfc0c0-c020-4a12-81e7-d16d13630a6a</xr:TypeId>
+				<xr:ValueId>3dfa5f1e-4b42-4e6b-92de-7a29768f022a</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ExchangePlanManager.Мобильные" category="Manager">
+				<xr:TypeId>17583ae8-4858-4b7c-9795-f2e20949ac03</xr:TypeId>
+				<xr:ValueId>2cdf8b5e-acd0-424e-b047-f2414277078d</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>Мобильные</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>2bc0f2f8-e0b5-4b04-ab9a-5300f8c273f5</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</ExchangePlan>
+</MetaDataObject>

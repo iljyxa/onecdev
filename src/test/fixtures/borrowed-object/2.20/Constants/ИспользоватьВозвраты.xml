@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<Constant uuid="8f488bbb-29a8-4795-b5a7-b31a822cfc9b">
+		<InternalInfo>
+			<xr:GeneratedType name="ConstantManager.ИспользоватьВозвраты" category="Manager">
+				<xr:TypeId>548622d7-a22c-4d1b-85f8-f9e9309f3c5a</xr:TypeId>
+				<xr:ValueId>7b6a0064-d27c-4137-a5c8-582287216e05</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ConstantValueManager.ИспользоватьВозвраты" category="ValueManager">
+				<xr:TypeId>97026837-57de-4991-bf64-55404d750e80</xr:TypeId>
+				<xr:ValueId>d410e58b-cd75-4a79-a7cd-91ee58c18910</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ConstantValueKey.ИспользоватьВозвраты" category="ValueKey">
+				<xr:TypeId>c69f8ded-31e4-40e3-b4ff-bcf2eac9dbe6</xr:TypeId>
+				<xr:ValueId>8f289476-ed91-4988-a1f5-bde24653920b</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ИспользоватьВозвраты</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>ec159757-9327-49df-b975-c7ff4bd0dd3e</ExtendedConfigurationObject>
+		</Properties>
+	</Constant>
+</MetaDataObject>

@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<ChartOfCalculationTypes uuid="116843f6-3215-487e-b2ff-71f83905618f">
+		<InternalInfo>
+			<xr:GeneratedType name="ChartOfCalculationTypesObject.ОсновныеНачисления" category="Object">
+				<xr:TypeId>ad3352a8-dc95-40b6-a2f3-5ae92f7927e8</xr:TypeId>
+				<xr:ValueId>2991922b-a378-4eeb-a86e-9acea9a0d02c</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesRef.ОсновныеНачисления" category="Ref">
+				<xr:TypeId>9720d9aa-18a8-4604-9f94-9a6046ff8412</xr:TypeId>
+				<xr:ValueId>4cf49ca2-e159-45b8-b44e-b1aed27c2607</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesSelection.ОсновныеНачисления" category="Selection">
+				<xr:TypeId>9a7bb865-3d35-4ae1-be0c-291d715c6247</xr:TypeId>
+				<xr:ValueId>c9cf63a4-2ecd-4984-bfb9-19b5420fadb0</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesList.ОсновныеНачисления" category="List">
+				<xr:TypeId>f1a0677c-71fd-4d06-a909-d28877db4153</xr:TypeId>
+				<xr:ValueId>c7771fd5-3af1-46e8-89be-c0d5d2eedbdc</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="ChartOfCalculationTypesManager.ОсновныеНачисления" category="Manager">
+				<xr:TypeId>530467d7-6a03-43bf-9e47-bcad59f15bb8</xr:TypeId>
+				<xr:ValueId>1d137b19-e679-4248-ae48-7221e6d6d779</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DisplacingCalculationTypes.ОсновныеНачисления" category="DisplacingCalculationTypes">
+				<xr:TypeId>68943efe-2a1c-42d0-8430-679dd0b6d1f3</xr:TypeId>
+				<xr:ValueId>302c78f1-2525-4fba-accf-65a3fd14c77c</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DisplacingCalculationTypesRow.ОсновныеНачисления" category="DisplacingCalculationTypesRow">
+				<xr:TypeId>bf4241c2-748d-4ada-8e8f-e4f9674ceddc</xr:TypeId>
+				<xr:ValueId>0335f591-8f1e-4f81-99ff-e8c7dab2467f</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="BaseCalculationTypes.ОсновныеНачисления" category="BaseCalculationTypes">
+				<xr:TypeId>cd509f40-c3f5-4da6-8fc8-81aac27d9ae5</xr:TypeId>
+				<xr:ValueId>22aeaa60-5d66-4457-a622-50157d943998</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="BaseCalculationTypesRow.ОсновныеНачисления" category="BaseCalculationTypesRow">
+				<xr:TypeId>0f2001d5-1fe5-4eb8-83d3-f89c86e1e82d</xr:TypeId>
+				<xr:ValueId>5099c6e6-991a-443a-9c8b-0fcd22629629</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="LeadingCalculationTypes.ОсновныеНачисления" category="LeadingCalculationTypes">
+				<xr:TypeId>f5d02477-b118-4c5c-a407-1a761a8f8c58</xr:TypeId>
+				<xr:ValueId>2a41b52c-a9e1-4fda-8758-6b43cd555dd6</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="LeadingCalculationTypesRow.ОсновныеНачисления" category="LeadingCalculationTypesRow">
+				<xr:TypeId>67a15f4c-8042-45cf-888c-20660292504a</xr:TypeId>
+				<xr:ValueId>2858c708-e842-4fbf-94a2-e7dc5bff8fdc</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ОсновныеНачисления</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>3bbd4e3f-08ae-4b5e-b04b-5391a03fec9d</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</ChartOfCalculationTypes>
+</MetaDataObject>
