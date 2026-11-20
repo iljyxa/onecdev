@@ -3,7 +3,7 @@ import path from 'node:path';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig, type Plugin } from 'vite';
 import type { OutputBundle, OutputChunk } from 'vite';
-import { aliases, type WebviewManifest } from './vite.shared';
+import { aliases, thirdPartyLicensesPlugin, type WebviewManifest } from './vite.shared';
 
 const entries = {
   ai: 'src-ui/apps/ai/main.ts',
@@ -102,7 +102,7 @@ export default defineConfig({
         isCustomElement: (tag) => tag.startsWith('vscode-'),
       },
     },
-  }), webviewManifestPlugin()],
+  }), webviewManifestPlugin(), thirdPartyLicensesPlugin('webview', 'dist')],
   build: {
     target: 'es2020',
     outDir: 'dist/ui',

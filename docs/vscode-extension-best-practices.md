@@ -178,6 +178,12 @@ LSP-клиентом (`vscode-languageclient`) и локальным MCP-сер�
   опциональные нативные аддоны, которые пакет грузит в `try/catch` (`cpu-features` у `ssh2`). Иначе
   `vsce package --no-dependencies` соберёт VSIX без зависимости, и активация упадёт на `require`.
   Инвариант проверяет `packageManifest.test.ts` по AST собранного `dist/`.
+- **Тексты лицензий вшитых пакетов — в VSIX.** Раз `node_modules` в пакет не попадает, уведомления
+  MIT/BSD/ISC собираются при сборке: плагин `thirdPartyLicensesPlugin` (`vite.shared.ts`) в обоих
+  прогонах Vite передаёт модули бандла (`moduleIds` чанков, `originalFileNames` ассетов — CSS и шрифты
+  в sourcemap не видны) в `scripts/third-party-licenses/thirdPartyLicenses.mjs`, тот пишет фрагмент
+  прогона в `dist/third-party/` (исключён `.vscodeignore`) и перерисовывает `dist/THIRD_PARTY_LICENSES.txt`.
+  Пакет без файла `LICENSE*`/`COPYING*` роняет сборку.
 - **SemVer: `vsce publish major|minor|patch`** автоинкрементит версию + git-tag.
   [vsce cli](https://vscode-docs.readthedocs.io/en/latest/tools/vscecli/)
 - **`vscode:prepublish` в `scripts` для сборки перед упаковкой.**

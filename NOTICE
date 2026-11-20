@@ -19,9 +19,10 @@ GNU General Public License версии 3 (GPL-3.0-only), полный текс�
 Сторонние компоненты, включаемые в сборку:
   - @vscode/codicons — шрифт и иконки Microsoft, лицензия CC-BY-4.0
     (https://github.com/microsoft/vscode-codicons), код — MIT.
-  - npm-зависимости (MIT, ISC, BSD-2-Clause, BSD-3-Clause, Unlicense) вшиваются
-    сборщиком в dist/. Тексты их лицензий находятся в исходных пакетах npm;
-    включение их в VSIX (THIRD_PARTY_LICENSES) — iljyxa/onecdev#115.
+  - npm-зависимости (MIT, ISC, BSD-3-Clause, BlueOak-1.0.0, Unlicense и др.)
+    вшиваются сборщиком в dist/. Перечень фактически вшитых пакетов с версиями
+    и полными текстами их лицензий формируется при сборке в файл
+    dist/THIRD_PARTY_LICENSES.txt и входит в VSIX.
 
 «1С», «1С:Предприятие» — товарные знаки ООО «1С». onecdev не является
 продуктом фирмы «1С» и не связан с ней.
