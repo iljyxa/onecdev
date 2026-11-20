@@ -11,6 +11,7 @@
  * `ok`/`wrap`/`wrapAsync`/`toolError`) — байт-в-байт по логике.
  */
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { resolveWritePathInsideRoot } from '../../../infra/fs/WorkspaceWritePath';
 import { SupportMode } from '../../../infra/support/SupportInfoService';
 import type { CommandServices } from '../../commands/_shared';
 import type { MetadataNode } from '../../tree/TreeNode';
@@ -18,6 +19,10 @@ import { CHANGES_FORBIDDEN_REASON } from '../../support/supportLockReason';
 import { resolveRepositoryEditProbePath } from '../../views/properties/propertyEditLock';
 
 type McpCommandServices = Omit<CommandServices, 'aiMcpViewProvider'>;
+
+/** Оговорка для описаний инструментов, принимающих путь записи (#174). */
+export const WORKSPACE_WRITE_PATH_HINT =
+  'Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.';
 
 /**
  * Общий шлюз мутаций и формат-хелперы, разделяемые всеми доменными модулями
@@ -104,6 +109,15 @@ export class McpMutationGate {
    */
   assertNodeContentEditable(node: MetadataNode): void {
     this.assertMetadataEditable(node.metaContext?.ownerObjectXmlPath ?? node.xmlPath, resolveRepositoryEditProbePath(node));
+  }
+
+  /**
+   * Путь, по которому инструмент СОЗДАЁТ или ПИШЕТ файлы, от агента принимается только внутри
+   * папки workspace (#174): клиент MCP может исполнять указания из недоверенного контента.
+   * Возвращает абсолютный путь — его и нужно передавать в сервис.
+   */
+  resolveWorkspaceWritePath(targetPath: string): string {
+    return resolveWritePathInsideRoot(targetPath, this.services.workspaceFolder.uri.fsPath);
   }
 
   afterMutation(filePaths: readonly string[]): void {

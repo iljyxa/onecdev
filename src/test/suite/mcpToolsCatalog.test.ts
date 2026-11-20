@@ -361,13 +361,13 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_create_epf',
     title: 'Создать внешнюю обработку EPF',
-    description: 'Создаёт минимальные XML-исходники внешней обработки: корневой XML, каталог Ext и ObjectModule.bsl.',
+    description: 'Создаёт минимальные XML-исходники внешней обработки: корневой XML, каталог Ext и ObjectModule.bsl. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: { name: false, synonym: true, outputDir: false },
   },
   {
     name: 'onecdev_create_erf',
     title: 'Создать внешний отчёт ERF',
-    description: 'Создаёт минимальные XML-исходники внешнего отчёта; опционально добавляет основную СКД и привязку MainDataCompositionSchema.',
+    description: 'Создаёт минимальные XML-исходники внешнего отчёта; опционально добавляет основную СКД и привязку MainDataCompositionSchema. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: { name: false, synonym: true, outputDir: false, withSkd: true },
   },
   {
@@ -379,13 +379,13 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_epf_bsp_init',
     title: 'Добавить регистрацию БСП',
-    description: 'Добавляет функцию СведенияОВнешнейОбработке в ObjectModule.bsl внешней обработки/отчёта и базовый обработчик команды.',
+    description: 'Добавляет функцию СведенияОВнешнейОбработке в ObjectModule.bsl внешней обработки/отчёта и базовый обработчик команды. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: { objectPath: false, kind: false, targets: true },
   },
   {
     name: 'onecdev_epf_bsp_add_command',
     title: 'Добавить команду БСП',
-    description: 'Добавляет команду в СведенияОВнешнейОбработке и создаёт/дополняет серверный, клиентский или печатный обработчик.',
+    description: 'Добавляет команду в СведенияОВнешнейОбработке и создаёт/дополняет серверный, клиентский или печатный обработчик. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: { objectPath: false, identifier: false, commandType: true, presentation: true, formModulePath: true },
   },
   {
@@ -502,7 +502,7 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_create_configuration',
     title: 'Создать пустую конфигурацию',
-    description: 'Создаёт scaffold CF: Configuration.xml и Languages/Русский.xml.',
+    description: 'Создаёт scaffold CF: Configuration.xml и Languages/Русский.xml. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: {
       name: false, synonym: true, outputDir: false, version: true,
       vendor: true, compatibilityMode: true,
@@ -511,7 +511,7 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_create_extension',
     title: 'Создать расширение',
-    description: 'Создаёт scaffold CFE: Configuration.xml, язык и опциональную основную роль.',
+    description: 'Создаёт scaffold CFE: Configuration.xml, язык и опциональную основную роль. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: {
       name: false, synonym: true, namePrefix: true, outputDir: false, purpose: true,
       version: true, vendor: true, compatibilityMode: true, configPath: true, noRole: true,
@@ -520,7 +520,7 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_dump_cf',
     title: 'Выгрузить конфигурацию в CF-файл',
-    description: 'Выгружает конфигурацию базы в бинарный файл через пакетный Конфигуратор: основную конфигурацию в .cf, расширение — в .cfe (если задан extensionName). Файл появляется на целевом пути только при успешном завершении; overwrite разрешает заменить существующий файл. Для выгрузки ВСЕХ расширений базы одной операцией используйте onecdev_dump_all_cfe — этот инструмент работает с одним объектом за вызов.',
+    description: 'Выгружает конфигурацию базы в бинарный файл через пакетный Конфигуратор: основную конфигурацию в .cf, расширение — в .cfe (если задан extensionName). Файл появляется на целевом пути только при успешном завершении; overwrite разрешает заменить существующий файл. Для выгрузки ВСЕХ расширений базы одной операцией используйте onecdev_dump_all_cfe — этот инструмент работает с одним объектом за вызов. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: { outputFile: false, extensionName: true, overwrite: true },
   },
   {
@@ -532,7 +532,7 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_dump_all_cfe',
     title: 'Выгрузить все расширения базы в CFE-файлы',
-    description: 'Выгружает КАЖДОЕ подключённое к базе расширение в отдельный .cfe-файл каталога outputDir. Список расширений берётся у самой базы; рядом с файлами пишется манифест cfe-dump.json, по которому загрузка восстанавливает исходные имена расширений (имя файла санитизируется необратимо). Отказ по отдельному расширению не останавливает операцию: такие расширения возвращаются в failed, их прежние файлы остаются нетронутыми. overwrite разрешает заменять уже существующие файлы каталога.',
+    description: 'Выгружает КАЖДОЕ подключённое к базе расширение в отдельный .cfe-файл каталога outputDir. Список расширений берётся у самой базы; рядом с файлами пишется манифест cfe-dump.json, по которому загрузка восстанавливает исходные имена расширений (имя файла санитизируется необратимо). Отказ по отдельному расширению не останавливает операцию: такие расширения возвращаются в failed, их прежние файлы остаются нетронутыми. overwrite разрешает заменять уже существующие файлы каталога. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: { outputDir: false, overwrite: true },
   },
   {
@@ -590,7 +590,7 @@ const EXPECTED_TOOLS: readonly ExpectedTool[] = [
   {
     name: 'onecdev_cfe_borrow',
     title: 'Заимствовать объект в расширение',
-    description: 'Заимствует объект, форму или дочерний элемент из CF в CFE через CfeBorrowService.',
+    description: 'Заимствует объект, форму или дочерний элемент из CF в CFE через CfeBorrowService. Пути записи — только внутри папки workspace: абсолютные или относительные от её корня; путь вне workspace отклоняется.',
     schemaKeys: {
       configRoot: false, extensionRoot: false, typeName: false, objectName: false,
       formName: true, childTag: true, childName: true,
@@ -765,6 +765,10 @@ function buildEmptyConfigXml(): string {
 
 function mkTmpDir(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+}
+
+function tmpWorkspaceFolder(root: string): vscode.WorkspaceFolder {
+  return { uri: vscode.Uri.file(root), name: 'tmp-workspace', index: 0 };
 }
 
 suite('V8McpServer — единый post-mutation гейт на репрезентативных доменах дробления', () => {
@@ -1085,7 +1089,8 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
   test('домен «внешние объекты»: onecdev_create_epf — успех запускает гейт (happy-path)', async () => {
     const outputDir = mkTmpDir('onecdev-catalog-epf-');
     const spy = createSpy();
-    const { tools } = registerAllTools(withSpiedGate(spy));
+    // Путь записи MCP обязан лежать в workspace (#174): workspace — сам временный каталог.
+    const { tools } = registerAllTools(withSpiedGate(spy, { workspaceFolder: tmpWorkspaceFolder(outputDir) }));
     const createEpf = tools.get('onecdev_create_epf');
     assert.ok(createEpf, 'onecdev_create_epf должен быть зарегистрирован');
     const result = await Promise.resolve(createEpf.handler({ name: 'ТестоваяОбработка', outputDir }));
@@ -1100,7 +1105,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
   test('домен «жизненный цикл»: onecdev_create_configuration — успех запускает гейт, конфликт с существующей — нет', async () => {
     const outputDir = mkTmpDir('onecdev-catalog-createcfg-');
     const spyOk = createSpy();
-    const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk));
+    const { tools: toolsOk } = registerAllTools(withSpiedGate(spyOk, { workspaceFolder: tmpWorkspaceFolder(outputDir) }));
     const createCfgOk = toolsOk.get('onecdev_create_configuration');
     assert.ok(createCfgOk, 'onecdev_create_configuration должен быть зарегистрирован');
     const okResult = await Promise.resolve(createCfgOk.handler({ name: 'ТестоваяКонфигурация', outputDir }));
@@ -1112,7 +1117,7 @@ suite('V8McpServer — единый post-mutation гейт на репрезен
     // Повторное создание в уже занятом каталоге — ensureNoConfiguration бросает
     // исключение (перехват в wrap), гейт не должен сработать.
     const spyFail = createSpy();
-    const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail));
+    const { tools: toolsFail } = registerAllTools(withSpiedGate(spyFail, { workspaceFolder: tmpWorkspaceFolder(outputDir) }));
     const createCfgFail = toolsFail.get('onecdev_create_configuration');
     assert.ok(createCfgFail);
     const failResult = await Promise.resolve(createCfgFail.handler({ name: 'ТестоваяКонфигурация2', outputDir }));
