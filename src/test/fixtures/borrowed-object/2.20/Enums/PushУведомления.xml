@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<Enum uuid="484bb686-f4e9-4c47-aaaa-582f5815e330">
+		<InternalInfo>
+			<xr:GeneratedType name="EnumRef.PushУведомления" category="Ref">
+				<xr:TypeId>1845b8ba-233a-49c7-a982-24106270a58d</xr:TypeId>
+				<xr:ValueId>468fe540-a19e-4a1a-bdf9-4ef9b5e27c85</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="EnumManager.PushУведомления" category="Manager">
+				<xr:TypeId>98247237-6f04-4e7e-8c43-597c12ae10d5</xr:TypeId>
+				<xr:ValueId>8f3a4895-0d6e-4c02-9bd8-cee9b78af331</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="EnumList.PushУведомления" category="List">
+				<xr:TypeId>9539f063-7f29-44dd-8e8c-3fcb6a97f68c</xr:TypeId>
+				<xr:ValueId>08f204c4-1d21-488b-9c33-27f9e9af5785</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>PushУведомления</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>2326c774-fbe4-4f3f-9bd2-ccb1658b6dbe</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</Enum>
+</MetaDataObject>

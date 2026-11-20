@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<InformationRegister uuid="1c77ac4a-0f47-4277-9f86-88a5ac83817a">
+		<InternalInfo>
+			<xr:GeneratedType name="InformationRegisterRecord.КонтактнаяИнформация" category="Record">
+				<xr:TypeId>e2dfd7cc-8399-4441-833e-73efc69d793c</xr:TypeId>
+				<xr:ValueId>bc23722c-fc90-47d2-b8b9-6ddc563f3ae9</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="InformationRegisterManager.КонтактнаяИнформация" category="Manager">
+				<xr:TypeId>e05b1209-1135-45dd-89e8-c6f7abbe5c98</xr:TypeId>
+				<xr:ValueId>481a8860-2e1d-4d54-ac75-f50a4f7eef6f</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="InformationRegisterSelection.КонтактнаяИнформация" category="Selection">
+				<xr:TypeId>8d74bfc5-8d2a-4313-a4ac-f4982549a7bb</xr:TypeId>
+				<xr:ValueId>1559f356-9bb6-4b09-94fb-3d3d030c5051</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="InformationRegisterList.КонтактнаяИнформация" category="List">
+				<xr:TypeId>17327af2-c59a-485f-9ee5-71bdd2932876</xr:TypeId>
+				<xr:ValueId>ac92db78-41f7-4203-83f6-55c1af55f501</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="InformationRegisterRecordSet.КонтактнаяИнформация" category="RecordSet">
+				<xr:TypeId>97e695f7-edeb-47c8-ae40-7213a4f10185</xr:TypeId>
+				<xr:ValueId>81d3a9e5-b589-4361-9051-f4dbb3a4dff3</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="InformationRegisterRecordKey.КонтактнаяИнформация" category="RecordKey">
+				<xr:TypeId>7860e575-5c08-487f-bdc8-86ac945a22fc</xr:TypeId>
+				<xr:ValueId>60284e56-8b35-40b6-a51d-bfb4784f1c98</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="InformationRegisterRecordManager.КонтактнаяИнформация" category="RecordManager">
+				<xr:TypeId>be55d2fc-e715-445e-97ba-11e09a42c5d7</xr:TypeId>
+				<xr:ValueId>7fa2cbc9-7af0-42c3-9eab-e42a0c452d3d</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>КонтактнаяИнформация</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>92ee4b4b-1dec-4bda-b802-d0c3383b86bb</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</InformationRegister>
+</MetaDataObject>

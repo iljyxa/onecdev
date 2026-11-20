@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<DocumentJournal uuid="a44d9d5f-4488-4f68-b539-60b01a12a39d">
+		<InternalInfo>
+			<xr:GeneratedType name="DocumentJournalSelection.ДокументыСклада" category="Selection">
+				<xr:TypeId>edc14500-af29-4271-8344-476f2f868923</xr:TypeId>
+				<xr:ValueId>6f0cede2-a273-40f9-b9b1-c9ce2701527f</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DocumentJournalList.ДокументыСклада" category="List">
+				<xr:TypeId>cef98c39-1513-43ab-86f4-37cf20f37f2b</xr:TypeId>
+				<xr:ValueId>4a25a406-5274-4fe3-b996-44bf03633b78</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DocumentJournalManager.ДокументыСклада" category="Manager">
+				<xr:TypeId>6b82ca11-b5b4-4bee-ba3f-e743e591da79</xr:TypeId>
+				<xr:ValueId>62da96e0-71de-4daf-b816-98a6c4ba03f9</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ДокументыСклада</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>deef0098-8734-451d-94ee-74c7f41cb0bc</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</DocumentJournal>
+</MetaDataObject>

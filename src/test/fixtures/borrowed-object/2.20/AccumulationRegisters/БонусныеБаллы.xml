@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<AccumulationRegister uuid="50e4386c-e095-4d55-9e34-f0707ecd29b5">
+		<InternalInfo>
+			<xr:GeneratedType name="AccumulationRegisterRecord.БонусныеБаллы" category="Record">
+				<xr:TypeId>af30429c-8ac8-43da-baeb-a2607618553d</xr:TypeId>
+				<xr:ValueId>496a1529-9707-46c1-8ca9-75f076237846</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="AccumulationRegisterManager.БонусныеБаллы" category="Manager">
+				<xr:TypeId>9f8a6fa4-c78e-46c9-b163-b90f632a81aa</xr:TypeId>
+				<xr:ValueId>58f3bf3e-d6d5-44ce-becf-0559088249e1</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="AccumulationRegisterSelection.БонусныеБаллы" category="Selection">
+				<xr:TypeId>32c9da98-74eb-4b43-9a9f-ea705f9f432f</xr:TypeId>
+				<xr:ValueId>761aa7d9-6cf5-4c1d-899b-c2cf4fec97eb</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="AccumulationRegisterList.БонусныеБаллы" category="List">
+				<xr:TypeId>a5dd0d30-48e5-481e-ab91-219694f99d51</xr:TypeId>
+				<xr:ValueId>bb18a423-f613-4000-a7ac-f54771a6c864</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="AccumulationRegisterRecordSet.БонусныеБаллы" category="RecordSet">
+				<xr:TypeId>d115e233-cd7b-4904-be99-69d764f65d5c</xr:TypeId>
+				<xr:ValueId>3c9134de-411b-41a2-a271-9421cecab329</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="AccumulationRegisterRecordKey.БонусныеБаллы" category="RecordKey">
+				<xr:TypeId>f693d2b2-7623-4833-b4f0-fe09f5242e21</xr:TypeId>
+				<xr:ValueId>92d44f15-8271-41a5-a142-cb47ecccf2c4</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>БонусныеБаллы</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>1c79a408-82bd-451b-92f0-9a4bdf18cb56</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</AccumulationRegister>
+</MetaDataObject>

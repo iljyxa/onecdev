@@ -13,6 +13,7 @@ import {
 } from '../xml/MainChildObjectsEditor';
 import {
   extractChildMetaElementXml,
+  extractMainChildObjectsInnerXml,
   writeTextFilePreservingBomAndEol,
 } from '../xml/XmlUtils';
 import { resolveFormatRuleset } from '../xml/format/formatRegistry';
@@ -28,129 +29,6 @@ const STRUCTURED_CHILD_TAGS = new Set<string>([
   'Attribute', 'AddressingAttribute', 'Dimension', 'Resource',
   'EnumValue', 'TabularSection', 'Command',
 ]);
-
-/**
- * Описание GeneratedType для блока InternalInfo.
- * Значения по типу объекта — порт аналогичной таблицы из cfe-borrow.py.
- */
-interface GeneratedTypeDef { prefix: string; category: string }
-const GENERATED_TYPES: Record<string, GeneratedTypeDef[]> = {
-  Catalog: [
-    { prefix: 'CatalogObject', category: 'Object' },
-    { prefix: 'CatalogRef', category: 'Ref' },
-    { prefix: 'CatalogSelection', category: 'Selection' },
-    { prefix: 'CatalogList', category: 'List' },
-    { prefix: 'CatalogManager', category: 'Manager' },
-  ],
-  Document: [
-    { prefix: 'DocumentObject', category: 'Object' },
-    { prefix: 'DocumentRef', category: 'Ref' },
-    { prefix: 'DocumentSelection', category: 'Selection' },
-    { prefix: 'DocumentList', category: 'List' },
-    { prefix: 'DocumentManager', category: 'Manager' },
-  ],
-  Enum: [
-    { prefix: 'EnumRef', category: 'Ref' },
-    { prefix: 'EnumManager', category: 'Manager' },
-    { prefix: 'EnumList', category: 'List' },
-  ],
-  Constant: [
-    { prefix: 'ConstantManager', category: 'Manager' },
-    { prefix: 'ConstantValueManager', category: 'ValueManager' },
-    { prefix: 'ConstantValueKey', category: 'ValueKey' },
-  ],
-  InformationRegister: [
-    { prefix: 'InformationRegisterRecord', category: 'Record' },
-    { prefix: 'InformationRegisterManager', category: 'Manager' },
-    { prefix: 'InformationRegisterSelection', category: 'Selection' },
-    { prefix: 'InformationRegisterList', category: 'List' },
-    { prefix: 'InformationRegisterRecordSet', category: 'RecordSet' },
-    { prefix: 'InformationRegisterRecordKey', category: 'RecordKey' },
-    { prefix: 'InformationRegisterRecordManager', category: 'RecordManager' },
-  ],
-  AccumulationRegister: [
-    { prefix: 'AccumulationRegisterRecord', category: 'Record' },
-    { prefix: 'AccumulationRegisterManager', category: 'Manager' },
-    { prefix: 'AccumulationRegisterSelection', category: 'Selection' },
-    { prefix: 'AccumulationRegisterList', category: 'List' },
-    { prefix: 'AccumulationRegisterRecordSet', category: 'RecordSet' },
-    { prefix: 'AccumulationRegisterRecordKey', category: 'RecordKey' },
-  ],
-  AccountingRegister: [
-    { prefix: 'AccountingRegisterRecord', category: 'Record' },
-    { prefix: 'AccountingRegisterManager', category: 'Manager' },
-    { prefix: 'AccountingRegisterSelection', category: 'Selection' },
-    { prefix: 'AccountingRegisterList', category: 'List' },
-    { prefix: 'AccountingRegisterRecordSet', category: 'RecordSet' },
-    { prefix: 'AccountingRegisterRecordKey', category: 'RecordKey' },
-  ],
-  CalculationRegister: [
-    { prefix: 'CalculationRegisterRecord', category: 'Record' },
-    { prefix: 'CalculationRegisterManager', category: 'Manager' },
-    { prefix: 'CalculationRegisterSelection', category: 'Selection' },
-    { prefix: 'CalculationRegisterList', category: 'List' },
-    { prefix: 'CalculationRegisterRecordSet', category: 'RecordSet' },
-    { prefix: 'CalculationRegisterRecordKey', category: 'RecordKey' },
-  ],
-  ChartOfAccounts: [
-    { prefix: 'ChartOfAccountsObject', category: 'Object' },
-    { prefix: 'ChartOfAccountsRef', category: 'Ref' },
-    { prefix: 'ChartOfAccountsSelection', category: 'Selection' },
-    { prefix: 'ChartOfAccountsList', category: 'List' },
-    { prefix: 'ChartOfAccountsManager', category: 'Manager' },
-  ],
-  ChartOfCharacteristicTypes: [
-    { prefix: 'ChartOfCharacteristicTypesObject', category: 'Object' },
-    { prefix: 'ChartOfCharacteristicTypesRef', category: 'Ref' },
-    { prefix: 'ChartOfCharacteristicTypesSelection', category: 'Selection' },
-    { prefix: 'ChartOfCharacteristicTypesList', category: 'List' },
-    { prefix: 'ChartOfCharacteristicTypesManager', category: 'Manager' },
-  ],
-  ChartOfCalculationTypes: [
-    { prefix: 'ChartOfCalculationTypesObject', category: 'Object' },
-    { prefix: 'ChartOfCalculationTypesRef', category: 'Ref' },
-    { prefix: 'ChartOfCalculationTypesSelection', category: 'Selection' },
-    { prefix: 'ChartOfCalculationTypesList', category: 'List' },
-    { prefix: 'ChartOfCalculationTypesManager', category: 'Manager' },
-    { prefix: 'DisplacingCalculationTypes', category: 'DisplacingCalculationTypes' },
-    { prefix: 'BaseCalculationTypes', category: 'BaseCalculationTypes' },
-    { prefix: 'LeadingCalculationTypes', category: 'LeadingCalculationTypes' },
-  ],
-  BusinessProcess: [
-    { prefix: 'BusinessProcessObject', category: 'Object' },
-    { prefix: 'BusinessProcessRef', category: 'Ref' },
-    { prefix: 'BusinessProcessSelection', category: 'Selection' },
-    { prefix: 'BusinessProcessList', category: 'List' },
-    { prefix: 'BusinessProcessManager', category: 'Manager' },
-  ],
-  Task: [
-    { prefix: 'TaskObject', category: 'Object' },
-    { prefix: 'TaskRef', category: 'Ref' },
-    { prefix: 'TaskSelection', category: 'Selection' },
-    { prefix: 'TaskList', category: 'List' },
-    { prefix: 'TaskManager', category: 'Manager' },
-  ],
-  ExchangePlan: [
-    { prefix: 'ExchangePlanObject', category: 'Object' },
-    { prefix: 'ExchangePlanRef', category: 'Ref' },
-    { prefix: 'ExchangePlanSelection', category: 'Selection' },
-    { prefix: 'ExchangePlanList', category: 'List' },
-    { prefix: 'ExchangePlanManager', category: 'Manager' },
-  ],
-  DocumentJournal: [
-    { prefix: 'DocumentJournalSelection', category: 'Selection' },
-    { prefix: 'DocumentJournalList', category: 'List' },
-    { prefix: 'DocumentJournalManager', category: 'Manager' },
-  ],
-  Report: [
-    { prefix: 'ReportObject', category: 'Object' },
-    { prefix: 'ReportManager', category: 'Manager' },
-  ],
-  DataProcessor: [
-    { prefix: 'DataProcessorObject', category: 'Object' },
-    { prefix: 'DataProcessorManager', category: 'Manager' },
-  ],
-};
 
 export interface BorrowObjectResult {
   /** true — объект уже существовал в расширении (обновление не выполнялось) */
@@ -209,8 +87,12 @@ export class CfeBorrowService {
       ? this.extractCommonModuleProps(sourceXml)
       : {};
 
+    // `<ChildObjects>` — по исходному объекту, а не по `childTags`: у критерия отбора,
+    // хранилища настроек, внешнего источника данных и сервиса интеграции дочерние только
+    // формы/макеты/таблицы, но без пустого блока платформа не загружает расширение (#170).
+    const withChildObjects = extractMainChildObjectsInnerXml(sourceXml) !== null;
     const borrowedXml = this.buildBorrowedObjectXml(
-      typeName, objectName, sourceUuid, formatVersion, commonModuleProps
+      typeName, objectName, sourceUuid, formatVersion, commonModuleProps, withChildObjects
     );
 
     const targetDir = path.join(extDir, folder);
@@ -495,8 +377,11 @@ export class CfeBorrowService {
     return props;
   }
 
-  private buildInternalInfo(typeName: string, objectName: string): string {
-    const types = GENERATED_TYPES[typeName] ?? [];
+  private buildInternalInfo(typeName: string, objectName: string, formatVersion: string): string {
+    // Набор типов — из ruleset формата, как у объекта основной конфигурации: заимствованный
+    // объект платформа выгружает с тем же составом, а без любого из них отбивает загрузку
+    // расширения («отсутствует один или более типов объекта», #170).
+    const types = resolveFormatRuleset(formatVersion).generatedTypes[typeName as MetaKind] ?? [];
     if (types.length === 0) {
       return '\t\t<InternalInfo/>';
     }
@@ -524,10 +409,11 @@ export class CfeBorrowService {
     objectName: string,
     sourceUuid: string,
     formatVersion: string,
-    commonModuleProps: Record<string, string>
+    commonModuleProps: Record<string, string>,
+    withChildObjects: boolean
   ): string {
     const newUuid = this.newGuid();
-    const internalInfo = this.buildInternalInfo(typeName, objectName);
+    const internalInfo = this.buildInternalInfo(typeName, objectName, formatVersion);
 
     const lines: string[] = [
       `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -548,9 +434,16 @@ export class CfeBorrowService {
       }
     }
 
+    // Пустые «Движения» платформа пишет у заимствованного документа сама, даже когда у
+    // исходного они заполнены (выгрузка 8.3.27 и 8.5.1); без тега цикл «загрузка → выгрузка»
+    // даёт diff (#170).
+    if (typeName === 'Document') {
+      lines.push(`\t\t\t<RegisterRecords/>`);
+    }
+
     lines.push(`\t\t</Properties>`);
 
-    if (this.hasChildObjects(typeName)) {
+    if (withChildObjects) {
       lines.push(`\t\t<ChildObjects/>`);
     }
 

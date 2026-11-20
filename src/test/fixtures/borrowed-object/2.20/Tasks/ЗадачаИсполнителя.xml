@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.20">
+	<Task uuid="ff45800a-54d5-4495-828c-7c337809e25f">
+		<InternalInfo>
+			<xr:GeneratedType name="TaskObject.ЗадачаИсполнителя" category="Object">
+				<xr:TypeId>4f1f94f7-26a1-4f79-a597-3ebd75f7c685</xr:TypeId>
+				<xr:ValueId>8a4db27b-ce44-4ee7-a82e-1d58e2385d1a</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskRef.ЗадачаИсполнителя" category="Ref">
+				<xr:TypeId>2ee22b92-6606-4067-9b44-44ed56cd6d49</xr:TypeId>
+				<xr:ValueId>62d928b3-e465-449b-8b93-972e99624a94</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskSelection.ЗадачаИсполнителя" category="Selection">
+				<xr:TypeId>2252f8b5-2992-4a3b-b40c-e0ac58c8e406</xr:TypeId>
+				<xr:ValueId>76b9b075-a3ad-4bf8-86f1-ad041e0dab40</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskList.ЗадачаИсполнителя" category="List">
+				<xr:TypeId>41b749e8-96fb-4917-aff5-cee5f1e2dcd0</xr:TypeId>
+				<xr:ValueId>8b74a0d8-ed9a-4222-bf7d-0db5e44e6a4c</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="TaskManager.ЗадачаИсполнителя" category="Manager">
+				<xr:TypeId>b66a2105-382b-4dd6-b495-2c55befdb9d5</xr:TypeId>
+				<xr:ValueId>8fdbe4d2-5bde-4981-b247-a2ce8f8e3fcd</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ЗадачаИсполнителя</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>bdca3331-a37f-456b-881c-79cf06c01ee0</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</Task>
+</MetaDataObject>

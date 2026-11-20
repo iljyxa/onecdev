@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.21">
+	<Catalog uuid="c3fcbf21-77b3-4489-89f2-44c3f17e4437">
+		<InternalInfo>
+			<xr:GeneratedType name="CatalogObject.АвансовыйОтчетПрисоединенныеФайлы" category="Object">
+				<xr:TypeId>aae99c6f-b710-47a2-8bc8-a72b22051190</xr:TypeId>
+				<xr:ValueId>28f071d8-094a-420f-a23b-68038c742f09</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="CatalogRef.АвансовыйОтчетПрисоединенныеФайлы" category="Ref">
+				<xr:TypeId>bc25418a-367e-4551-a9b5-9b6e4ccd2fce</xr:TypeId>
+				<xr:ValueId>68e83951-a00e-45ef-ba8b-5b87146576ed</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="CatalogSelection.АвансовыйОтчетПрисоединенныеФайлы" category="Selection">
+				<xr:TypeId>902df9ce-91e4-4b75-90f4-a62c548b39ee</xr:TypeId>
+				<xr:ValueId>3516c09b-9c08-40c7-8be5-0003c5681b72</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="CatalogList.АвансовыйОтчетПрисоединенныеФайлы" category="List">
+				<xr:TypeId>e273929e-9e20-45ab-80fd-4cd3189b652c</xr:TypeId>
+				<xr:ValueId>e21952e9-0669-46dc-86b7-149a0e0d79ee</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="CatalogManager.АвансовыйОтчетПрисоединенныеФайлы" category="Manager">
+				<xr:TypeId>b95235dd-25f4-410e-9a96-2f072de355e7</xr:TypeId>
+				<xr:ValueId>9a13399f-8644-435f-9f5d-3e1320dda192</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>АвансовыйОтчетПрисоединенныеФайлы</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>5f252b73-47ab-435c-a5c1-2ec96fb93491</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</Catalog>
+</MetaDataObject>

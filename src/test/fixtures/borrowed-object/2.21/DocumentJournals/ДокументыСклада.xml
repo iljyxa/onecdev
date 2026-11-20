@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<MetaDataObject xmlns="http://v8.1c.ru/8.3/MDClasses" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:cmi="http://v8.1c.ru/8.2/managed-application/cmi" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:pal="http://v8.1c.ru/8.1/data/ui/colors/palette" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xpr="http://v8.1c.ru/8.3/xcf/predef" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.21">
+	<DocumentJournal uuid="532f0eb5-f5cc-473a-99e6-c1163b11dadb">
+		<InternalInfo>
+			<xr:GeneratedType name="DocumentJournalSelection.ДокументыСклада" category="Selection">
+				<xr:TypeId>9c1d37a1-faf7-42fa-a4f2-ddc67db08697</xr:TypeId>
+				<xr:ValueId>4538a23e-c0ad-46f0-ba1e-8a41a78511f4</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DocumentJournalList.ДокументыСклада" category="List">
+				<xr:TypeId>89622bc4-1703-4983-b516-d6145b1305ee</xr:TypeId>
+				<xr:ValueId>464302d1-8cb8-450c-b683-2e35c0d93828</xr:ValueId>
+			</xr:GeneratedType>
+			<xr:GeneratedType name="DocumentJournalManager.ДокументыСклада" category="Manager">
+				<xr:TypeId>7afd2ad6-f561-449e-92dc-60754bdbb377</xr:TypeId>
+				<xr:ValueId>c9bc842d-1bdd-4cac-9802-50a9d19392f9</xr:ValueId>
+			</xr:GeneratedType>
+		</InternalInfo>
+		<Properties>
+			<ObjectBelonging>Adopted</ObjectBelonging>
+			<Name>ДокументыСклада</Name>
+			<Comment/>
+			<ExtendedConfigurationObject>deef0098-8734-451d-94ee-74c7f41cb0bc</ExtendedConfigurationObject>
+		</Properties>
+		<ChildObjects/>
+	</DocumentJournal>
+</MetaDataObject>
