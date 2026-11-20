@@ -1,5 +1,5 @@
 /**
- * Аналог `.claude/skills/form-info/scripts/form-info.py`.
+ * Аналог Python-скрипта скила form-info.
  * Структурно строит отчёт по форме: иерархия элементов, свойства,
  * AutoCommandBar, реквизиты, параметры, команды, события, BaseForm.
  */

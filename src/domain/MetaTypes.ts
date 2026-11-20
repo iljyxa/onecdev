@@ -252,10 +252,10 @@ export const META_TYPES: Readonly<Record<MetaKind, MetaTypeDef>> = {
     propertySchema: 'scheduledJob',
     pathSegment: 'РегламентныеЗадания', englishKind: 'ScheduledJob',
     repositoryClassId: '11bdaf85-d5ad-4d91-bb24-aa0eee139052' }),
-  // Bot / WebSocketClient / Interface / PaletteColor — не входят в таблицу §1.1
-  // плана MCP-канона; путей через MCP для них пока нет. pathSegment выставлен
-  // по той же конвенции CamelCase-множественного, чтобы потенциальные расширения
-  // плана не требовали повторной правки реестра. TODO: подтвердить названия,
+  // Bot / WebSocketClient / Interface / PaletteColor — не входят в таблицу корней
+  // канона MCP (`docs/mcp-paths.md`, 2.1); путей через MCP для них пока нет. pathSegment
+  // выставлен по той же конвенции CamelCase-множественного, чтобы расширение
+  // канона не требовало повторной правки реестра. TODO: подтвердить названия,
   // когда они появятся в MCP-таблицах.
   Bot: metaDef({ kind: 'Bot', label: 'Бот', pluralLabel: 'Боты',
     folder: 'Bots', icon: 'common', group: 'common', groupOrder: 100,

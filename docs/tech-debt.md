@@ -45,3 +45,16 @@
     видов (сейчас fail); #148 — неполный список стандартных реквизитов домена у
     `ChartOfCharacteristicTypes`/`CalculationRegister`; #149 — контракт MCP для структурных
     свойств. См. [xml-format-rulesets.md](./xml-format-rulesets.md).
+14. Старт и UI-поток: `Container.bootstrap` выполняется синхронно в `activate`, `reloadEntries` строит хеш-кэши
+    выгрузки на потоке активации (асинхронный старт заблокирован: `reloadEntries` зависит от готовности
+    кэшей, замечание — в `Container.reloadEntries`). На повторных активациях без правок выгрузки
+    `FileStatIndex` сводит работу к `statSync`, но первый запуск или потеря индекса — полное хеширование
+    (~7 с на 59 503 файлах), см. [architecture.md](./architecture.md#stat-индекс-рабочего-дерева-filestatindex).
+    `UniversalPanelViewProvider.refresh()` перестраивает DTO всего видимого дерева на каждое обновление —
+    кандидат на инкрементальную или порционную отправку.
+15. Дубли с расхождением поведения: TCP-проверка порта — `infra/agent/TcpPortWaiter.waitForTcpPort` (опрос
+    до таймаута, сокет 1 с) и `canConnect` в `infra/standalone/StandaloneServerService.ts` (одна попытка,
+    800 мс); DTO дерева `IconDto`/`TreeNodeDto` объявлены независимо в `ui/views/dto/`,
+    `ui/views/universal/_types.ts`, `UniversalPanelViewProvider.ts`, `ui/views/changes/changesDtoBuilder.ts`,
+    `SubsystemEditorViewProvider.ts` и зеркально в `src-ui/shared/types/`. Объединять — с выбором одного
+    поведения и общим контрактом протокола.

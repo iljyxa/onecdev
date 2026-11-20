@@ -16,7 +16,7 @@ import type { McpMetadataPathService } from './McpMetadataPathService';
  * {@link McpMetadataPathService.resolveNode}: они находят узел и возвращают
  * нужный сервису путь (XML объекта, Form.xml, Rights.xml, …).
  *
- * Канонические пути формируются по правилам §1 плана `MCP_REFACTORING_PLAN.md`.
+ * Канонические пути формируются по правилам раздела 1 канона `docs/mcp-paths.md`.
  */
 
 /**

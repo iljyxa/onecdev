@@ -1,5 +1,5 @@
 /**
- * Упрощённый порт `from-object` режима `.claude/skills/form-compile/scripts/form-compile.py`
+ * Упрощённый порт режима `from-object` Python-скрипта скила form-compile
  * (функции `generate_catalog_dsl` / `generate_document_dsl` /
  * `generate_information_register_dsl` / `generate_accumulation_register_dsl`).
  *

@@ -7,7 +7,7 @@
  * байт-в-байт: потребители (FormAddService/FormEditService/FormCompileService)
  * импортируют символы отсюда как раньше.
  *
- * Порт логики из `.claude/skills/form-compile/scripts/form-compile.py`
+ * Порт логики из Python-скрипта скила form-compile
  * (функции `emit_*`). Целиком детерминированные функции — состояния нет,
  * ID берутся из IdAllocator.
  */

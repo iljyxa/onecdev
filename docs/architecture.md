@@ -742,6 +742,23 @@ uuid); `b` — смысл не установлен, парсер и `SupportInf
   XML в базу (`cli/commands/importGitChanges.ts`, агент Конфигуратора `infra/agent/AgentOperationService.ts`)
   её не делают и полагаются на проверку правил поддержки платформой.
 
+### Динамическая панель (`onecdevDynamicPanel`)
+
+Webview-панель в собственном контейнере боковой панели «Дин. панель» показывает содержимое по текущему
+контексту: структуру активного модуля `.bsl`/`.os` или свойства выделенного узла навигатора. Отдельной
+вкладки свойств (`WebviewPanel`) нет — свойства живут только здесь.
+
+- Расширение — `src/ui/views/dynamic-panel/`: `DynamicPanelViewProvider` (webview), `DynamicPanelController`
+  (маршрутизатор контекста), `_types.ts` (состояние `DynamicPanelState` — `empty` / `module-structure` /
+  `properties`), `contexts/ModuleStructureContextHandler`.
+- Webview — `src-ui/apps/dynamic-panel/` (`DynamicPanelApp.vue` переключает представление по `state.kind`).
+- Переключение: клик по узлу дерева → свойства (через общий `PropertiesViewController`); фокус, набор текста
+  или смена вкладки в редакторе `.bsl`/`.os` → структура модуля. Программное открытие модуля сразу после
+  клика по узлу в течение окна приоритета свойств не переключает панель. Если редактор закрыт или не
+  относится к BSL, остаётся последнее состояние.
+- Символы модуля берутся из `vscode.executeDocumentSymbolProvider` (`bsl-analyzer`) с повторами, пока LSP не
+  готов; если он ничего не отдал — из собственного `lsp/BslDocumentSymbolProvider`.
+
 ## Граф зависимостей
 
 ```
