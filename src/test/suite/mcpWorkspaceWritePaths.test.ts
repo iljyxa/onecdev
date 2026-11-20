@@ -21,6 +21,8 @@ import { registerExternalObjectTools } from '../../ui/mcp/registration/McpExtern
 import { McpMutationGate } from '../../ui/mcp/registration/McpMutationGate';
 import type { McpRegistrationDeps } from '../../ui/mcp/registration/McpRegistrationDeps';
 
+const EXAMPLE_ROOT = path.resolve(__dirname, '../../../example');
+
 type ToolHandler = (args: Record<string, unknown>) => unknown;
 
 interface Harness {
@@ -183,6 +185,25 @@ suite('MCP-инструменты записи — только внутри wor
     });
     assertRejectedOutside(result);
     assert.deepStrictEqual(listFiles(outside), []);
+  });
+
+  test('onecdev_cfe_borrow: относительный extensionRoot внутри workspace — объект заимствуется', async () => {
+    // Основная конфигурация только читается — берётся прямо из example/; расширение, в которое
+    // идёт запись, копируется в workspace (тест не пишет в example/).
+    const configRoot = path.join(EXAMPLE_ROOT, '2.21', 'src', 'cf');
+    fs.cpSync(path.join(EXAMPLE_ROOT, '2.21', 'src', 'cfe', 'EVOLC'), path.join(workspace, 'EVOLC'), { recursive: true });
+    const result = await call(harness, 'onecdev_cfe_borrow', {
+      configRoot,
+      extensionRoot: 'EVOLC',
+      typeName: 'Catalog',
+      objectName: 'Банки',
+    });
+    assert.notStrictEqual(result.isError, true, text(result));
+    assert.ok(fs.existsSync(path.join(workspace, 'EVOLC', 'Catalogs', 'Банки.xml')));
+    assert.ok(harness.mutatedFiles.length > 0);
+    for (const file of harness.mutatedFiles) {
+      assert.ok(file.startsWith(path.join(workspace, 'EVOLC') + path.sep), file);
+    }
   });
 
   test('onecdev_dump_cf: outputFile вне workspace — отказ, конфигуратор не запускается', async () => {
