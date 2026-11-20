@@ -1,7 +1,7 @@
 /**
  * Каноническое именование путей и типов 1С для MCP-инструментов.
  *
- * Единый источник правды по §1-§2 плана `MCP_REFACTORING_PLAN.md`.
+ * Единый источник правды по разделам 1-3 канона `docs/mcp-paths.md`.
  * Все остальные модули, выдающие или парсящие MCP-пути, обязаны читать
  * данные отсюда. Файл — чистый домен: никаких импортов `vscode`/`fs`/`path`.
  *
@@ -240,9 +240,9 @@ export interface BaseTypeInfo {
 /**
  * Реестр базовых типов (без производных по конфигурации).
  *
- * Поле `xmlPrimitive` для `УникальныйИдентификатор` пока не указано — реальный
- * токен XML-сериализации в 1С 8.3 неизвестен и требует эмпирической проверки
- * (см. этап E2 плана). TODO: уточнить и проставить.
+ * У `УникальныйИдентификатор` и `ХранилищеЗначения` поля `xmlPrimitive` нет
+ * намеренно: их токены (`v8:UUID`, `v8:ValueStorage`) лежат вне пространства `xs:`
+ * и задаются в `NON_PRIMITIVE_XML_TOKEN` (`infra/xml/PlatformTypeRegistry.ts`).
  */
 export const BASE_TYPES: readonly BaseTypeInfo[] = [
   { russian: 'Строка',                  english: 'String',           xmlPrimitive: 'xs:string',       contexts: ['metadataAttribute', 'formAttribute'] },

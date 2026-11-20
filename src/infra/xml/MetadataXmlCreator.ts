@@ -31,7 +31,7 @@ export type { AddChildMetadataOptions, AddRootMetadataOptions, TemplateType };
 
 /**
  * Создаёт минимально полноценные XML-исходники метаданных внутри выгрузки.
- * Нужен runtime-расширению, чтобы не зависеть от локальных `.codex/skills`.
+ * Нужен runtime-расширению, чтобы не зависеть от Python-скриптов 1С-скилов.
  */
 export class MetadataXmlCreator {
   private readonly configEditor = new ConfigurationXmlEditor();

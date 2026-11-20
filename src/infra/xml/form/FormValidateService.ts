@@ -4,7 +4,7 @@
  * обработчики событий, callType, типы (cfg-префиксы), MainAttribute,
  * Title, и расширения (BaseForm + ID >= 1000000).
  *
- * Исторически — порт `.claude/skills/form-validate/scripts/form-validate.py`,
+ * Исторически — порт Python-скрипта скила form-validate,
  * но паритета с ним больше нет и он не подразумевается: набор правил здесь
  * правился по замерам на эталоне `example/` (пространства id, версия формата,
  * рекурсия `Items.*`, смягчение правил Action/AutoCommandBar). Скил
