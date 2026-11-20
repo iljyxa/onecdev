@@ -24,6 +24,7 @@ import { buildCfApplyTarget } from '../../commands/ext/CfFileTarget';
 import { runApplyDatabaseConfiguration } from '../../commands/ext/ExtensionCommandRunner';
 import type { ConfigurationOperationGuard } from '../../../infra/process/ConfigurationOperationGuard';
 import { CONFIGURATION_OPERATION_BUSY_MESSAGE } from '../../commands/ext/configurationOperationBusy';
+import { WORKSPACE_WRITE_PATH_HINT } from './McpMutationGate';
 import type { McpRegistrationDeps } from './McpRegistrationDeps';
 
 const ALLOWED_COMMANDS = [
@@ -67,7 +68,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
     'onecdev_create_configuration',
     {
       title: 'Создать пустую конфигурацию',
-      description: 'Создаёт scaffold CF: Configuration.xml и Languages/Русский.xml.',
+      description: `Создаёт scaffold CF: Configuration.xml и Languages/Русский.xml. ${WORKSPACE_WRITE_PATH_HINT}`,
       inputSchema: z.object({
         name: z.string(),
         synonym: z.string().optional(),
@@ -81,7 +82,8 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
       },
     },
     (args) => gate.wrap(() => {
-      const result = services.configurationScaffoldService.createConfiguration(args);
+      const outputDir = gate.resolveWorkspaceWritePath(args.outputDir);
+      const result = services.configurationScaffoldService.createConfiguration({ ...args, outputDir });
       // Сервис бросает исключение при провале (перехват в wrap); дошли сюда — успех.
       gate.afterMutationIfSucceeded(result.changedFiles);
       return result;
@@ -92,7 +94,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
     'onecdev_create_extension',
     {
       title: 'Создать расширение',
-      description: 'Создаёт scaffold CFE: Configuration.xml, язык и опциональную основную роль.',
+      description: `Создаёт scaffold CFE: Configuration.xml, язык и опциональную основную роль. ${WORKSPACE_WRITE_PATH_HINT}`,
       inputSchema: z.object({
         name: z.string(),
         synonym: z.string().optional(),
@@ -110,7 +112,8 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
       },
     },
     (args) => gate.wrap(() => {
-      const result = services.configurationScaffoldService.createExtension(args);
+      const outputDir = gate.resolveWorkspaceWritePath(args.outputDir);
+      const result = services.configurationScaffoldService.createExtension({ ...args, outputDir });
       // Сервис бросает исключение при провале (перехват в wrap); дошли сюда — успех.
       gate.afterMutationIfSucceeded(result.changedFiles);
       return result;
@@ -126,6 +129,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
         'расширение — в .cfe (если задан extensionName).',
         'Файл появляется на целевом пути только при успешном завершении; overwrite разрешает заменить существующий файл.',
         'Для выгрузки ВСЕХ расширений базы одной операцией используйте onecdev_dump_all_cfe — этот инструмент работает с одним объектом за вызов.',
+        WORKSPACE_WRITE_PATH_HINT,
       ].join(' '),
       inputSchema: z.object({
         outputFile: z.string(),
@@ -138,7 +142,8 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
         destructiveHint: false,
       },
     },
-    async ({ outputFile, extensionName, overwrite }) => gate.wrapAsync(async () => {
+    async ({ outputFile: requestedFile, extensionName, overwrite }) => gate.wrapAsync(async () => {
+      const outputFile = gate.resolveWorkspaceWritePath(requestedFile);
       const dumped = await withConfigurationOperationLock(services.configurationOperationGuard, 'MCP: выгрузка конфигурации в файл', () => runDumpConfigurationToCf({
         workspaceFolder: services.workspaceFolder,
         outputChannel: services.outputChannel,
@@ -231,6 +236,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
         'по которому загрузка восстанавливает исходные имена расширений (имя файла санитизируется необратимо).',
         'Отказ по отдельному расширению не останавливает операцию: такие расширения возвращаются в failed,',
         'их прежние файлы остаются нетронутыми. overwrite разрешает заменять уже существующие файлы каталога.',
+        WORKSPACE_WRITE_PATH_HINT,
       ].join(' '),
       inputSchema: z.object({
         outputDir: z.string(),
@@ -241,7 +247,8 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
         destructiveHint: false,
       },
     },
-    async ({ outputDir, overwrite }) => gate.wrapAsync(async () => withConfigurationOperationLock(services.configurationOperationGuard, 'MCP: выгрузка всех расширений в CFE', async () => {
+    async ({ outputDir: requestedDir, overwrite }) => gate.wrapAsync(async () => withConfigurationOperationLock(services.configurationOperationGuard, 'MCP: выгрузка всех расширений в CFE', async () => {
+      const outputDir = gate.resolveWorkspaceWritePath(requestedDir);
       const result = await runDumpAllExtensionsToCfe({
         workspaceFolder: services.workspaceFolder,
         outputChannel: services.outputChannel,
@@ -357,7 +364,7 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
     'onecdev_cfe_borrow',
     {
       title: 'Заимствовать объект в расширение',
-      description: 'Заимствует объект, форму или дочерний элемент из CF в CFE через CfeBorrowService.',
+      description: `Заимствует объект, форму или дочерний элемент из CF в CFE через CfeBorrowService. ${WORKSPACE_WRITE_PATH_HINT}`,
       inputSchema: z.object({
         configRoot: z.string(),
         extensionRoot: z.string(),
@@ -371,7 +378,8 @@ export function registerConfigLifecycleTools(server: McpServer, deps: McpRegistr
         destructiveHint: true,
       },
     },
-    ({ configRoot, extensionRoot, typeName, objectName, formName, childTag, childName }) => gate.wrap(() => {
+    ({ configRoot, extensionRoot: requestedRoot, typeName, objectName, formName, childTag, childName }) => gate.wrap(() => {
+      const extensionRoot = gate.resolveWorkspaceWritePath(requestedRoot);
       const result = formName
         ? services.cfeBorrowService.borrowForm(configRoot, extensionRoot, typeName, objectName, formName)
         : childTag && childName

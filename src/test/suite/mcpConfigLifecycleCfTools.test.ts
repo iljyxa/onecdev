@@ -116,14 +116,16 @@ function isErrorResult(result: unknown): boolean {
  * реально используемое поле (форматирование ok/error), поэтому это НАСТОЯЩИЙ
  * `McpMutationGate`, а не заглушка.
  */
-function createDeps(configurationOperationGuard = new ConfigurationOperationGuard()): McpRegistrationDeps {
+function createDeps(workspaceRoot: string, configurationOperationGuard = new ConfigurationOperationGuard()): McpRegistrationDeps {
+  // workspaceFolder нужен гейту: путь записи проверяется на вложенность в workspace (#174).
+  const services = { configurationOperationGuard, workspaceFolder: fakeWorkspaceFolder(workspaceRoot) };
   return {
-    services: { configurationOperationGuard },
+    services,
     xmlEditor: {},
     paths: {},
     properties: {},
     mutations: {},
-    gate: new McpMutationGate({} as never),
+    gate: new McpMutationGate(services as never),
   } as unknown as McpRegistrationDeps;
 }
 
@@ -140,8 +142,8 @@ suite('McpConfigLifecycleTools — onecdev_dump_cf/onecdev_load_cf', () => {
   setup(() => {
     server = createMockServer();
     guard = new ConfigurationOperationGuard();
-    registerConfigLifecycleTools(server as never, createDeps(guard));
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-mcp-cf-'));
+    registerConfigLifecycleTools(server as never, createDeps(tempDir, guard));
   });
 
   teardown(() => {
@@ -401,13 +403,14 @@ function createFakeDesignerExecutable(dir: string, variant: 'noop' | 'dump'): st
  * останется непокрытым (см. шапку файла).
  */
 function createDepsWithWorkspace(workspaceFolder: vscode.WorkspaceFolder, outputChannel: vscode.OutputChannel): McpRegistrationDeps {
+  const services = { workspaceFolder, outputChannel, configurationOperationGuard: new ConfigurationOperationGuard() };
   return {
-    services: { workspaceFolder, outputChannel, configurationOperationGuard: new ConfigurationOperationGuard() },
+    services,
     xmlEditor: {},
     paths: {},
     properties: {},
     mutations: {},
-    gate: new McpMutationGate({} as never),
+    gate: new McpMutationGate(services as never),
   } as unknown as McpRegistrationDeps;
 }
 

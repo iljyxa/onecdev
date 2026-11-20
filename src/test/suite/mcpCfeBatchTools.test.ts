@@ -122,13 +122,14 @@ function createDepsWithWorkspace(
 ): McpRegistrationDeps {
   const workspaceFolder: vscode.WorkspaceFolder = { uri: vscode.Uri.file(ws.root), name: 'mcp-cfe-batch-test', index: 0 };
   const outputChannel = { appendLine: () => undefined } as unknown as vscode.OutputChannel;
+  const services = { workspaceFolder, outputChannel, configurationOperationGuard };
   return {
-    services: { workspaceFolder, outputChannel, configurationOperationGuard },
+    services,
     xmlEditor: {},
     paths: {},
     properties: {},
     mutations: {},
-    gate: new McpMutationGate({} as never),
+    gate: new McpMutationGate(services as never),
   } as unknown as McpRegistrationDeps;
 }
 

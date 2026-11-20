@@ -7,6 +7,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod/v4';
 import { resolveObjectXmlByCanonical } from '../McpPathResolvers';
+import { WORKSPACE_WRITE_PATH_HINT } from './McpMutationGate';
 import type { McpRegistrationDeps } from './McpRegistrationDeps';
 
 export function registerExternalObjectTools(server: McpServer, deps: McpRegistrationDeps): void {
@@ -45,7 +46,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
     'onecdev_create_epf',
     {
       title: 'Создать внешнюю обработку EPF',
-      description: 'Создаёт минимальные XML-исходники внешней обработки: корневой XML, каталог Ext и ObjectModule.bsl.',
+      description: `Создаёт минимальные XML-исходники внешней обработки: корневой XML, каталог Ext и ObjectModule.bsl. ${WORKSPACE_WRITE_PATH_HINT}`,
       inputSchema: z.object({
         name: z.string(),
         synonym: z.string().optional(),
@@ -56,7 +57,8 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
       },
     },
     (args) => gate.wrap(() => {
-      const result = services.externalObjectService.createExternalDataProcessor(args);
+      const outputDir = gate.resolveWorkspaceWritePath(args.outputDir);
+      const result = services.externalObjectService.createExternalDataProcessor({ ...args, outputDir });
       // Сервис бросает исключение при провале (перехват в wrap); дошли сюда — успех.
       gate.afterMutationIfSucceeded(result.changedFiles);
       return result;
@@ -67,7 +69,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
     'onecdev_create_erf',
     {
       title: 'Создать внешний отчёт ERF',
-      description: 'Создаёт минимальные XML-исходники внешнего отчёта; опционально добавляет основную СКД и привязку MainDataCompositionSchema.',
+      description: `Создаёт минимальные XML-исходники внешнего отчёта; опционально добавляет основную СКД и привязку MainDataCompositionSchema. ${WORKSPACE_WRITE_PATH_HINT}`,
       inputSchema: z.object({
         name: z.string(),
         synonym: z.string().optional(),
@@ -79,7 +81,8 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
       },
     },
     (args) => gate.wrap(() => {
-      const result = services.externalObjectService.createExternalReport(args);
+      const outputDir = gate.resolveWorkspaceWritePath(args.outputDir);
+      const result = services.externalObjectService.createExternalReport({ ...args, outputDir });
       // Сервис бросает исключение при провале (перехват в wrap); дошли сюда — успех.
       gate.afterMutationIfSucceeded(result.changedFiles);
       return result;
@@ -104,7 +107,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
     'onecdev_epf_bsp_init',
     {
       title: 'Добавить регистрацию БСП',
-      description: 'Добавляет функцию СведенияОВнешнейОбработке в ObjectModule.bsl внешней обработки/отчёта и базовый обработчик команды.',
+      description: `Добавляет функцию СведенияОВнешнейОбработке в ObjectModule.bsl внешней обработки/отчёта и базовый обработчик команды. ${WORKSPACE_WRITE_PATH_HINT}`,
       inputSchema: z.object({
         objectPath: z.string(),
         kind: z.string(),
@@ -115,7 +118,8 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
       },
     },
     (args) => gate.wrap(() => {
-      const result = services.externalObjectService.initBspRegistration(args);
+      const objectPath = gate.resolveWorkspaceWritePath(args.objectPath);
+      const result = services.externalObjectService.initBspRegistration({ ...args, objectPath });
       // Сервис бросает исключение при провале (перехват в wrap); дошли сюда — успех.
       gate.afterMutationIfSucceeded(result.changedFiles);
       return result;
@@ -126,7 +130,7 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
     'onecdev_epf_bsp_add_command',
     {
       title: 'Добавить команду БСП',
-      description: 'Добавляет команду в СведенияОВнешнейОбработке и создаёт/дополняет серверный, клиентский или печатный обработчик.',
+      description: `Добавляет команду в СведенияОВнешнейОбработке и создаёт/дополняет серверный, клиентский или печатный обработчик. ${WORKSPACE_WRITE_PATH_HINT}`,
       inputSchema: z.object({
         objectPath: z.string(),
         identifier: z.string(),
@@ -139,7 +143,9 @@ export function registerExternalObjectTools(server: McpServer, deps: McpRegistra
       },
     },
     (args) => gate.wrap(() => {
-      const result = services.externalObjectService.addBspCommand(args);
+      const objectPath = gate.resolveWorkspaceWritePath(args.objectPath);
+      const formModulePath = args.formModulePath === undefined ? undefined : gate.resolveWorkspaceWritePath(args.formModulePath);
+      const result = services.externalObjectService.addBspCommand({ ...args, objectPath, formModulePath });
       // Сервис бросает исключение при провале (перехват в wrap); дошли сюда — успех.
       gate.afterMutationIfSucceeded(result.changedFiles);
       return result;
