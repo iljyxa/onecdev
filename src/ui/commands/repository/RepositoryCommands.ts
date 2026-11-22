@@ -17,7 +17,6 @@ import {
 import {
   askRecursiveMode,
   pickDisconnectForce,
-  pickUnlockForce,
   promptRepositoryVersion,
 } from './RepositoryCommandDialogs';
 import { type RepositoryCliCommandServices, runRepositoryCliCommand } from './RepositoryCommandRunner';
@@ -231,12 +230,10 @@ export function registerRepositoryCommands(
       if (recursive === undefined) {
         return;
       }
-      const force = await pickUnlockForce(label);
-      if (force === undefined) {
-        return;
-      }
 
-      if (await runRepositoryUnlockFlow(repositoryNode, { recursive, force }, services, deps) === 'done') {
+      // Правки живут в файлах выгрузки, а не в базе: для пользователя освобождение — всегда
+      // «отпустить объект». Без -force Конфигуратор лишь отказывает на изменённом в базе объекте (#190).
+      if (await runRepositoryUnlockFlow(repositoryNode, { recursive, force: true }, services, deps) === 'done') {
         refreshRepositoryUi(services);
       }
     }),

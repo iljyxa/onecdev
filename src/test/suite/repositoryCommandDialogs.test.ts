@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import {
   askRecursiveMode,
   pickDisconnectForce,
-  pickUnlockForce,
   promptRepositoryVersion,
   type RepositoryChoiceItem,
   validateRepositoryVersion,
@@ -52,7 +51,6 @@ suite('RepositoryCommandDialogs — диалоги команд хранилищ
 
   const choiceDialogs: readonly { readonly name: string; readonly subject: string; readonly run: () => Promise<boolean | undefined> }[] = [
     { name: 'askRecursiveMode', subject: 'Контрагенты', run: () => askRecursiveMode('Захват объектов', 'Контрагенты', true) },
-    { name: 'pickUnlockForce', subject: 'Контрагенты', run: () => pickUnlockForce('Контрагенты') },
     { name: 'pickDisconnectForce', subject: 'Основная конфигурация', run: () => pickDisconnectForce('Основная конфигурация') },
   ];
 
