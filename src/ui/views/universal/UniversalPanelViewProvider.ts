@@ -15,6 +15,11 @@ import { isWebviewCommandAllowed } from '../webview/webviewCommandGuard';
 import type { MetadataTreeProvider } from '../../tree/MetadataTreeProvider';
 import type { MetadataNode } from '../../tree/TreeNode';
 import { supportIndicatorOf, supportModeDtoOf, type SupportModeDto } from '../../support/supportLockReason';
+import { formatRepositoryLockTitle } from '../../tree/repositoryLockTitle';
+import type { RepositoryLockInfo } from '../../../infra/repository/RepositoryLockState';
+
+/** Пара SVG `src/icons/{light,dark}/<имя>.svg`: замок с человеком — объект захвачен другим. */
+export const REPOSITORY_FOREIGN_LOCK_ICON = 'repo-locked-foreign';
 
 // ── DTO-типы (зеркалят src-ui/shared/types) ──
 
@@ -548,23 +553,31 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       result.push(this.themeStateIcon(supportIndicator.icon, supportIndicator.title));
     }
 
-    // Подсказку (кто и когда захватил) готовит декорация дерева; без неё — прежний текст.
-    const lockTitle = node.repositoryLockTitle;
-    if (contextValue.includes('-repoForeignLocked')) {
-      result.push({ title: lockTitle ?? 'Захвачено другим пользователем', icon: codicon('account') });
-    } else if (contextValue.includes('-repoLocked')) {
-      result.push({ title: lockTitle ?? 'Захвачено в хранилище', icon: codicon('lock') });
-    } else if (contextValue.includes('-repoUnlocked')) {
-      result.push({ title: lockTitle ?? 'Не захвачено в хранилище', icon: codicon('unlock') });
-    } else if (contextValue.includes('-repoConnected')) {
+    // Замок отвечает на вопрос «могу ли я править здесь»: открыт только при своём захвате.
+    // Запрет правки (`-repoEditRestricted`) отдельной иконкой не дублируется — его и
+    // обозначает закрытый замок; суффикс нужен только меню (заимствование, перехватчик).
+    const lock = node.repositoryLock;
+    if (lock) {
+      result.push(this.repositoryLockStateIcon(lock));
+    } else if (contextValue.includes('-repoConnected') && (node.nodeKind === 'configuration' || node.nodeKind === 'extension')) {
       result.push({ title: 'Подключено к хранилищу', icon: codicon('database') });
     }
 
-    if (contextValue.includes('-repoEditRestricted')) {
-      result.push({ title: 'Редактирование запрещено хранилищем', icon: codicon('lock') });
-    }
-
     return result;
+  }
+
+  private repositoryLockStateIcon(lock: RepositoryLockInfo): TreeNodeStateIconDto {
+    const title = formatRepositoryLockTitle(lock);
+    switch (lock.state) {
+      case 'own':
+        return { title, icon: codicon('unlock') };
+      case 'foreign':
+        // В codicon нет замка с человеком: «захвачено другим» — своя пара SVG по темам.
+        return this.themeStateIcon(REPOSITORY_FOREIGN_LOCK_ICON, title);
+      case 'free':
+      case 'own-elsewhere':
+        return { title, icon: codicon('lock') };
+    }
   }
 
   private themeStateIcon(name: string, title: string): TreeNodeStateIconDto {

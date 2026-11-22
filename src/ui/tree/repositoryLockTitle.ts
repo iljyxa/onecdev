@@ -16,7 +16,7 @@ export function formatLockTimestamp(value: string): string {
 export function formatRepositoryLockTitle(info: RepositoryLockInfo): string {
   switch (info.state) {
     case 'free':
-      return 'Не захвачено в хранилище';
+      return 'Не захвачено в хранилище — захватите, чтобы редактировать';
     case 'own':
       if (info.syncedAt === undefined || info.user === undefined) {
         return 'Захвачено в хранилище';

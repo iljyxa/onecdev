@@ -1,10 +1,12 @@
 import * as assert from 'assert';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import { MetadataNode } from '../../ui/tree/TreeNode';
 import type { NodeKind } from '../../ui/tree/TreeNodeModel';
-import { UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
+import type { RepositoryLockInfo } from '../../infra/repository/RepositoryLockState';
+import { REPOSITORY_FOREIGN_LOCK_ICON, UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
 
 /**
  * Issue #61: получение конкретной версии из хранилища — отдельная команда контекстного
@@ -90,29 +92,106 @@ suite('UniversalPanelViewProvider — статусы захватов (issue #6)
     });
   }
 
-  function icons(contextValue: string, title?: string): { title: string; icon: unknown }[] {
-    const node = catalogNode(contextValue);
-    node.repositoryLockTitle = title;
-    return [...(createProvider() as unknown as StateIconsApi).buildStateIcons(node)];
+});
+
+/**
+ * Issue #186: на узле одна иконка хранилища — замок отвечает «могу ли я править здесь»:
+ * закрыт без своего захвата, открыт при своём, у чужого захвата — свой SVG «замок с человеком».
+ */
+suite('UniversalPanelViewProvider — иконка захвата в хранилище (issue #186)', () => {
+  /** Webview с тождественным asWebviewUri — чтобы увидеть, какую пару SVG выбрал провайдер. */
+  function provider(): StateIconsApi {
+    const instance = createProvider() as unknown as StateIconsApi & { view: unknown };
+    instance.view = { webview: { asWebviewUri: (uri: vscode.Uri) => uri } };
+    return instance;
   }
 
-  test('чужой захват: иконка account и подсказка держателя; без подсказки — общий текст', () => {
-    const foreign = icons('Catalog-hasXml-repoConnected-repoEditRestricted-repoUnlocked-repoForeignLocked', 'Захвачено: Petrov, 27.09.2026 10:00:00')[0];
-    assert.deepStrictEqual(foreign, { title: 'Захвачено: Petrov, 27.09.2026 10:00:00', icon: { kind: 'codicon', name: 'account' } });
-    assert.strictEqual(icons('Catalog-hasXml-repoConnected-repoUnlocked-repoForeignLocked')[0].title, 'Захвачено другим пользователем');
+  function svg(theme: 'light' | 'dark'): string {
+    return vscode.Uri.joinPath(vscode.Uri.file(EXTENSION_ROOT), 'src', 'icons', theme, `${REPOSITORY_FOREIGN_LOCK_ICON}.svg`).toString();
+  }
+
+  const owner = { rootMetaKind: 'Catalog' as NodeKind, ownerObjectXmlPath: CATALOG_XML };
+  const units: readonly [string, () => MetadataNode][] = [
+    ['объект', () => catalogNode('Catalog-hasXml')],
+    ['форма', () => new MetadataNode({ label: 'ФормаЭлемента', nodeKind: 'Form', xmlPath: CATALOG_XML, metaContext: owner }, vscode.TreeItemCollapsibleState.None)],
+    ['корень', () => rootNode('configuration', 'configuration-hasXml')],
+  ];
+  const states: readonly [RepositoryLockInfo, string, string, unknown][] = [
+    [{ state: 'free' }, '-repoEditRestricted-repoUnlocked', 'Не захвачено в хранилище — захватите, чтобы редактировать', { kind: 'codicon', name: 'lock' }],
+    [{ state: 'own', user: 'Admin', lockedAt: '2026-09-27T10:00:00', confirmed: true, syncedAt: '2026-09-27T10:00:00' },
+      '-repoEditAllowed-repoLocked', 'Захвачено: Admin, 27.09.2026 10:00:00', { kind: 'codicon', name: 'unlock' }],
+    [{ state: 'own-elsewhere', user: 'Admin', lockedAt: '2026-09-27T10:00:00' }, '-repoEditRestricted-repoUnlocked',
+      'Захвачено вашим пользователем Admin вне проекта, 27.09.2026 10:00:00 — захватите объект, чтобы редактировать', { kind: 'codicon', name: 'lock' }],
+    [{ state: 'foreign', user: 'Petrov', lockedAt: '2026-09-27T10:00:00' }, '-repoEditRestricted-repoUnlocked-repoForeignLocked',
+      'Захвачено: Petrov, 27.09.2026 10:00:00', 'foreign'],
+    [{ state: 'foreign', user: 'Petrov', observedAt: '2026-09-27T10:00:00' }, '-repoEditRestricted-repoUnlocked-repoForeignLocked',
+      'Захвачено: Petrov (по отказу захвата 27.09.2026 10:00:00)', 'foreign'],
+  ];
+  for (const [unit, make] of units) {
+    for (const [lock, suffix, title, icon] of states) {
+      test(`${unit}, ${lock.state}${'observedAt' in lock ? ' по отказу' : ''} → одна иконка «${title}»`, () => {
+        const node = make();
+        node.contextValue = `${String(node.contextValue)}-repoConnected${suffix}`;
+        node.repositoryLock = lock;
+        const expected = icon === 'foreign' ? { kind: 'asset', lightUri: svg('light'), darkUri: svg('dark') } : icon;
+        assert.deepStrictEqual(provider().buildStateIcons(node), [{ title, icon: expected }]);
+      });
+    }
+  }
+
+  test('пара SVG «захвачено другим» есть в обеих темах', () => {
+    for (const theme of ['light', 'dark'] as const) {
+      assert.ok(fs.existsSync(vscode.Uri.parse(svg(theme)).fsPath), theme);
+    }
   });
 
-  test('свой захват: подсказка с датой; без подсказки — прежний текст', () => {
-    assert.deepStrictEqual(icons('Catalog-hasXml-repoConnected-repoLocked', 'Захвачено: Admin, 27.09.2026 10:00:00')[0],
-      { title: 'Захвачено: Admin, 27.09.2026 10:00:00', icon: { kind: 'codicon', name: 'lock' } });
-    assert.strictEqual(icons('Catalog-hasXml-repoConnected-repoLocked')[0].title, 'Захвачено в хранилище');
+  test('без webview SVG «захвачено другим» не строится — иконка без изображения, подсказка остаётся', () => {
+    const node = catalogNode('Catalog-hasXml-repoConnected-repoEditRestricted-repoUnlocked-repoForeignLocked');
+    node.repositoryLock = { state: 'foreign', user: 'Petrov' };
+    assert.deepStrictEqual((createProvider() as unknown as StateIconsApi).buildStateIcons(node), [{ title: 'Захвачено: Petrov', icon: { kind: 'none' } }]);
   });
 
-  test('не захвачено: подсказка «вне проекта»; без подсказки — прежний текст', () => {
-    const title = 'Захвачено вашим пользователем Admin вне проекта — захватите объект, чтобы редактировать';
-    assert.deepStrictEqual(icons('Catalog-hasXml-repoConnected-repoUnlocked', title)[0], { title, icon: { kind: 'codicon', name: 'unlock' } });
-    assert.strictEqual(icons('Catalog-hasXml-repoConnected-repoUnlocked')[0].title, 'Не захвачено в хранилище');
+  const withoutLock: readonly [string, () => MetadataNode, string][] = [
+    ['реквизит', () => new MetadataNode({ label: 'ИНН', nodeKind: 'Attribute', xmlPath: CATALOG_XML, metaContext: owner }, vscode.TreeItemCollapsibleState.None),
+      'Attribute-hasXml-repoConnected-repoEditRestricted-repoUnlocked'],
+    ['группа «Справочники» (цель добавления в корень)', () => new MetadataNode({ label: 'Справочники', nodeKind: 'Catalog' }, vscode.TreeItemCollapsibleState.None),
+      'Catalog-repoConnected-repoEditRestricted-repoUnlocked-repoForeignLocked'],
+    ['группа «Реквизиты» (цель добавления в объект)', () => new MetadataNode({ label: 'Реквизиты', nodeKind: 'group-type' }, vscode.TreeItemCollapsibleState.None),
+      'group-type-repoConnected-repoEditRestricted'],
+  ];
+  for (const [name, make, contextValue] of withoutLock) {
+    test(`${name}: иконки хранилища нет`, () => {
+      const node = make();
+      node.contextValue = contextValue;
+      assert.deepStrictEqual(provider().buildStateIcons(node), []);
+    });
+  }
+
+  test('корень подключён, состояния захвата нет — «Подключено к хранилищу»; без подключения — ничего', () => {
+    assert.deepStrictEqual(provider().buildStateIcons(rootNode('configuration', 'configuration-hasXml-repoConnected')),
+      [{ title: 'Подключено к хранилищу', icon: { kind: 'codicon', name: 'database' } }]);
+    assert.deepStrictEqual(provider().buildStateIcons(rootNode('extension', 'extension-hasXml-repoDisconnected')), []);
   });
+
+  // Отображение сменилось, меню — нет: перехватчик (как и заимствование) скрыт по -repoEditRestricted,
+  // «Захватить»/«Освободить» — по -repoUnlocked/-repoLocked.
+  const menus: readonly [string, string, string[], string[]][] = [
+    ['не захвачено', 'Catalog-hasXml-fromCfe-repoConnected-repoEditRestricted-repoUnlocked',
+      ['onecdev.repository.lock'], ['onecdev.repository.unlock', 'onecdev.cfe.addMethodInterceptor']],
+    ['захвачено мной', 'Catalog-hasXml-fromCfe-repoConnected-repoEditAllowed-repoLocked',
+      ['onecdev.repository.unlock', 'onecdev.cfe.addMethodInterceptor'], ['onecdev.repository.lock']],
+  ];
+  for (const [name, contextValue, present, absent] of menus) {
+    test(`меню не меняется: ${name}`, () => {
+      const commands = createProvider().getNodeActions(catalogNode(contextValue)).map((action) => action.command);
+      for (const command of present) {
+        assert.ok(commands.includes(command), `${command} нет в ${commands.join(', ')}`);
+      }
+      for (const command of absent) {
+        assert.ok(!commands.includes(command), `${command} есть в ${commands.join(', ')}`);
+      }
+    });
+  }
 });
 
 /**

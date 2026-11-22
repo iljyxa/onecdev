@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Объект захвачен другим пользователем: закрытый замок с силуэтом человека -->
+  <!-- Дужка замка -->
+  <path d="M3 7 V5 A3 3 0 0 1 9 5 V7" fill="none" stroke="#C5C5C5" stroke-width="1.4" stroke-linecap="round"/>
+  <!-- Корпус замка -->
+  <rect x="1.5" y="7" width="9" height="7" rx="1.2" fill="#C5C5C5"/>
+  <!-- Человек: голова и плечи, с подложкой цвета фона для отделения от замка -->
+  <circle cx="12" cy="8.5" r="2.3" fill="#E8A23B" stroke="#1E1E1E" stroke-width="1"/>
+  <path d="M8 15.5 A4 3.6 0 0 1 16 15.5 Z" fill="#E8A23B" stroke="#1E1E1E" stroke-width="1" stroke-linejoin="round"/>
+</svg>

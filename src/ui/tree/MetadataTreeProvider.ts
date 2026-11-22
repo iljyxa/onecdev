@@ -21,7 +21,6 @@ import { MetadataNode } from './TreeNode';
 import { GitMetadataDecorationProvider } from './decorations/GitMetadataDecorationProvider';
 import { SUPPORT_CHANGES_FORBIDDEN_SUFFIX, SUPPORT_SUFFIX_RE, supportModeSuffix } from '../support/supportLockReason';
 import type { RepositoryLockInfo } from '../../infra/repository/RepositoryLockState';
-import { formatRepositoryLockTitle } from './repositoryLockTitle';
 import { pathKey } from '../../infra/fs/PathKey';
 
 /** Все суффиксы состояния хранилища в contextValue: снимаются перед повторной декорацией. */
@@ -290,7 +289,7 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
     /* c8 ignore next */
     const baseContextValue = (element.contextValue ?? '').replace(REPOSITORY_CONTEXT_SUFFIX_RE, '');
     element.contextValue = `${baseContextValue}-${state.connected ? 'repoConnected' : 'repoDisconnected'}`;
-    element.repositoryLockTitle = state.lock ? formatRepositoryLockTitle(state.lock) : undefined;
+    element.repositoryLock = state.ownUnit ? state.lock : undefined;
 
     if (!state.connected) {
       return;
@@ -311,6 +310,8 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
     connected: boolean;
     editRestricted?: boolean;
     lock?: RepositoryLockInfo;
+    /** Узел — самостоятельная единица хранилища, и `lock` — её собственный захват. */
+    ownUnit?: boolean;
   } | null {
     if (!this.repositoryService) {
       return null;
@@ -365,10 +366,11 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
     // Форма/макет объекта — отдельная единица хранилища: нерекурсивный захват владельца
     // её не захватывает, а захват самой единицы разрешает правку без захвата владельца.
     if (isSubordinateUnitNode(element)) {
-      return { connected: true, editRestricted: lock?.state !== 'own', lock };
+      return { connected: true, editRestricted: lock?.state !== 'own', lock, ownUnit: true };
     }
 
-    const ownerObjectXmlPath = this.isRootRepositoryNode(element)
+    const isRoot = this.isRootRepositoryNode(element);
+    const ownerObjectXmlPath = isRoot
       ? undefined
       : (element.metaContext?.ownerObjectXmlPath ?? element.xmlPath);
 
@@ -376,6 +378,8 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
       connected: true,
       editRestricted: this.repositoryService.isMetadataEditRestricted(target, ownerObjectXmlPath),
       lock,
+      // Части владельца (metaContext с владельцем) получают захват владельца — он не их собственный.
+      ownUnit: isRoot || !element.metaContext?.ownerObjectXmlPath,
     };
   }
 
