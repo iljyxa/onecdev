@@ -59,6 +59,10 @@ import { ProjectSecretStorage } from '../../infra/environment/ProjectSecretStora
 import { createArgsRecordingDesigner } from './support/argsRecordingDesigner';
 import { installFakeWebviewPanels } from './support/fakeWebviewPanel';
 import { RepositoryCommitViewProvider } from '../../ui/views/RepositoryCommitViewProvider';
+import type {
+  RepositoryConnectionFormData,
+  RepositoryConnectionSubmitOutcome,
+} from '../../ui/views/RepositoryConnectionViewProvider';
 import {
   DEFAULT_REPOSITORY_FILE_SYNC_DEPS,
   type RepositoryFileSyncDeps,
@@ -2200,6 +2204,8 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     let originals: Stubs;
     let dialogCalls: string[];
     let connectionFormCalls: number;
+    /** Ошибки, которые форма подключения/создания показала бы у себя (issue #184). */
+    let formErrors: string[];
     let cliCalls: { command: string; heldBy: string | undefined }[];
     let busyMessages: string[];
 
@@ -2219,6 +2225,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     setup(() => {
       dialogCalls = [];
       connectionFormCalls = 0;
+      formErrors = [];
       cliCalls = [];
       busyMessages = [];
       originals = {
@@ -2261,19 +2268,16 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
           findCommandSectionStorages: () => [],
         } as unknown as RepositoryService,
         repositoryConnectionViewProvider: {
-          show: () => {
+          // Форма отправлена один раз; исход операции решает, чем разрешится show() (issue #184).
+          show: async (_mode: string, _target: string, _initial: unknown,
+            onSubmit: (data: RepositoryConnectionFormData) => Promise<RepositoryConnectionSubmitOutcome<unknown>>) => {
             connectionFormCalls += 1;
-            return Promise.resolve({
-              repoPath: '/tmp/хранилище',
-              repoUser: 'Admin',
-              repoPassword: '',
-              forceBindAlreadyBindedUser: false,
-              forceReplaceCfg: false,
-              allowConfigurationChanges: false,
-              changesAllowedRule: '',
-              changesNotRecommendedRule: '',
-              noBind: false,
-            });
+            const outcome = await onSubmit({ repoPath: '/tmp/хранилище', repoUser: 'Admin', repoPassword: '' });
+            if (!outcome.ok) {
+              formErrors.push(outcome.error);
+              return undefined;
+            }
+            return outcome.value;
           },
         } as unknown as CommandServices['repositoryConnectionViewProvider'],
       });
@@ -2310,8 +2314,11 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
 
         assert.deepStrictEqual(cliCalls, [{ command: cli, heldBy: title }]);
         assert.deepStrictEqual(busyMessages, []);
-        assert.strictEqual(bridgeErrorMessages.length, 1);
-        assert.ok(bridgeErrorMessages[0].includes('хранилище недоступно'), bridgeErrorMessages[0]);
+        // Подключение и создание показывают ошибку в своей форме, остальные команды — уведомлением.
+        const inForm = cli === 'repository-bind' || cli === 'repository-create';
+        const shown = inForm ? formErrors : bridgeErrorMessages;
+        assert.deepStrictEqual([shown.length, (inForm ? bridgeErrorMessages : formErrors).length], [1, 0]);
+        assert.ok(shown[0].includes('хранилище недоступно'), shown[0]);
         assert.strictEqual(guard.isBusy, false);
       });
     });
