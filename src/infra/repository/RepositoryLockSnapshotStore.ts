@@ -16,6 +16,7 @@ import {
 import type { RepositoryTarget } from './RepositoryService';
 import { removePathWithRetries, type RemoveTree } from '../fs/PathRemoval';
 import { readDirOrEmpty } from './RepositoryTempCleanup';
+import { mkdirInsideServiceDir } from '../fs/WorkspaceTempDir';
 
 /**
  * Снимок объекта на момент захвата — «версия хранилища», к которой можно откатить
@@ -97,6 +98,7 @@ export class RepositoryLockSnapshotStore {
     const snapshotDir = this.resolveSnapshotDir(target, fullName);
     // Актуален только снимок последнего захвата — предыдущий затирается.
     this.invalidateSnapshot(snapshotDir);
+    mkdirInsideServiceDir(snapshotDir);
     const sources = new Map<string, string>();
     collectScopeFiles(sourceDir, scope).forEach((rel) => sources.set(rel, path.join(sourceDir, rel)));
     keepFromProject
@@ -274,7 +276,7 @@ export class RepositoryLockSnapshotStore {
       Object.entries({ ...hashScopeFiles(target.configRoot, ALL_SCOPE), ...overrides }).filter(([rel]) => !excluded.has(rel))
     );
     const manifest: RootManifest = { version: 1, hashes };
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    mkdirInsideServiceDir(path.dirname(filePath));
     fs.writeFileSync(filePath, `${JSON.stringify(manifest)}\n`, 'utf-8');
   }
 
@@ -297,7 +299,7 @@ export class RepositoryLockSnapshotStore {
       return;
     }
     const backupPath = path.join(backupDir, rel);
-    fs.mkdirSync(path.dirname(backupPath), { recursive: true });
+    mkdirInsideServiceDir(path.dirname(backupPath));
     fs.copyFileSync(projectPath, backupPath);
     result.backups.push({ rel, backupPath, projectPath });
   }

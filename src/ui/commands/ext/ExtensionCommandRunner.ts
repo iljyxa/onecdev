@@ -29,6 +29,7 @@ import { classifyPartialLoadRefusal, describeRepositoryLoadRefusal } from '../..
 import { collectSnapshotProjectFiles, syncDirectorySnapshot } from '../../../infra/agent/DirectorySnapshot';
 import { pathKey } from '../../../infra/fs/PathKey';
 import { parseJsonObjectText } from '../../../infra/fs/JsonTextFile';
+import { mkdirInsideServiceDir } from '../../../infra/fs/WorkspaceTempDir';
 
 type NodeArg = MetadataNode | { xmlPath?: string; nodeKind?: string; label?: string };
 
@@ -1149,7 +1150,7 @@ async function startAgentOperationService(
   if (agentSettings.autoStart) {
     agentProcess = new DesignerAgentProcess();
     const agentBaseDir = path.join(workspaceRoot, '.onecdev', 'agent');
-    fs.mkdirSync(agentBaseDir, { recursive: true });
+    mkdirInsideServiceDir(agentBaseDir);
     const args = buildAgentStartLogArgs(toDesignerAgentConnection(connection), agentSettings, agentBaseDir);
     outputChannel.appendLine(`[agent] Запуск конфигуратора: ${args.join(' ')}`);
     agentProcess.start({

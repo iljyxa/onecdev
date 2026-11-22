@@ -8,8 +8,64 @@ import { FS_RM_MAX_RETRIES, FS_RM_RETRY_DELAY_MS } from './PathRemoval';
  * кроме таких каталогов, — и создание, и подметание опираются на этот модуль.
  */
 
+const SERVICE_DIR_BASENAME = '.onecdev';
+
 function getWorkspaceServiceRoot(workspaceRoot: string): string {
-  return path.join(workspaceRoot, '.onecdev');
+  return path.join(workspaceRoot, SERVICE_DIR_BASENAME);
+}
+
+/**
+ * Собственный `.gitignore` служебного каталога: `*` игнорирует и содержимое, и сам файл,
+ * поэтому каталог не попадает в git без правки пользовательского `.gitignore` и при любом
+ * расположении корня репозитория (как `.pytest_cache`, `.ruff_cache`).
+ */
+export const SERVICE_DIR_GITIGNORE_NAME = '.gitignore';
+export const SERVICE_DIR_GITIGNORE_CONTENT = '# Создано onecdev: служебный каталог не хранится в git.\n*\n';
+
+/**
+ * Кладёт `.gitignore` в существующий служебный каталог, если его там нет. Существующий
+ * файл не перезаписывается: пользователь мог сознательно его изменить. `wx` вместо
+ * проверки существования — без гонки двух окон, создающих каталог одновременно.
+ * Возвращает true, если файл создан.
+ */
+export function ensureServiceDirSelfIgnored(serviceDir: string): boolean {
+  try {
+    fs.writeFileSync(path.join(serviceDir, SERVICE_DIR_GITIGNORE_NAME), SERVICE_DIR_GITIGNORE_CONTENT, { encoding: 'utf-8', flag: 'wx' });
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Для проектов, где `.onecdev/` появился до самоигнорирования: при активации досоздаёт
+ * `.gitignore`. Сам каталог не создаётся — расширение активируется и вне проектов 1С.
+ */
+export function ensureWorkspaceServiceDirIgnored(workspaceRoot: string): boolean {
+  const serviceDir = getWorkspaceServiceRoot(workspaceRoot);
+  return fs.existsSync(serviceDir) && ensureServiceDirSelfIgnored(serviceDir);
+}
+
+/**
+ * `mkdir -p` для каталогов внутри `.onecdev/`: служебный каталог создают разные писатели
+ * (кэши, хранилище, агент, автономный сервер), и каждый, кто может создать его первым,
+ * обязан сразу положить в него `.gitignore`. Путь вне служебного каталога (например,
+ * каталог данных сервера, выбранный пользователем) создаётся как обычно.
+ */
+export function mkdirInsideServiceDir(dir: string): void {
+  fs.mkdirSync(dir, { recursive: true });
+  for (let current = path.resolve(dir); ; current = path.dirname(current)) {
+    if (path.basename(current) === SERVICE_DIR_BASENAME) {
+      ensureServiceDirSelfIgnored(current);
+      return;
+    }
+    if (path.dirname(current) === current) {
+      return;
+    }
+  }
 }
 
 /**
@@ -54,7 +110,7 @@ export function getImportTempRoot(workspaceRoot: string): string {
 
 export function createImportTempDir(workspaceRoot: string, prefix: string): string {
   const tempParent = getImportTempRoot(workspaceRoot);
-  fs.mkdirSync(tempParent, { recursive: true });
+  mkdirInsideServiceDir(tempParent);
   return fs.mkdtempSync(path.join(tempParent, prefix));
 }
 

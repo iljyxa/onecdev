@@ -271,7 +271,7 @@ suite('Дедупликация temp+rename: кэши используют об�
     saveHashCache(projectRoot, snapshot);
     saveHashCache(projectRoot, { ...snapshot, files: { 'Catalogs/Тест.xml': 'hash-3' } });
     assert.deepStrictEqual(loadHashCache(projectRoot, scopeKey).files, { 'Catalogs/Тест.xml': 'hash-3' });
-    assert.strictEqual(listFilesRecursive(projectRoot).length, 1, 'в каталоге кэша должен остаться ровно один файл');
+    assert.strictEqual(listCacheFiles(projectRoot).length, 1, 'в каталоге кэша должен остаться ровно один файл');
   });
 
   test('saveMetadataCache: запись → чтение → эквивалентный снимок, повторная запись не оставляет мусора', () => {
@@ -296,7 +296,7 @@ suite('Дедупликация temp+rename: кэши используют об�
     const loaded = loadMetadataCache(projectRoot, 'atomic-scope');
     assert.ok(loaded, 'кэш не прочитался — снимок повреждён или отпечаток разошёлся');
     assert.deepStrictEqual(JSON.parse(JSON.stringify(loaded.root)), JSON.parse(JSON.stringify(snapshot.root)));
-    assert.strictEqual(listFilesRecursive(projectRoot).length, 1, 'в каталоге кэша должен остаться ровно один файл');
+    assert.strictEqual(listCacheFiles(projectRoot).length, 1, 'в каталоге кэша должен остаться ровно один файл');
   });
 
   test('собственной реализации temp+rename в HashCache.ts и MetadataCache.ts не осталось — оба зовут AtomicFileWriter', () => {
@@ -319,6 +319,15 @@ suite('Дедупликация temp+rename: кэши используют об�
     assert.ok(body.includes('writeFileAtomic'));
   });
 });
+
+/**
+ * Файлы кэша без `.onecdev/.gitignore`: его кладёт первое создание служебного каталога
+ * (#194), к temp+rename он отношения не имеет.
+ */
+function listCacheFiles(projectRoot: string): string[] {
+  const ownIgnore = path.join(projectRoot, '.onecdev', '.gitignore');
+  return listFilesRecursive(projectRoot).filter((file) => file !== ownIgnore);
+}
 
 function listFilesRecursive(dir: string): string[] {
   const out: string[] = [];

@@ -14,6 +14,7 @@ import {
 import type { Logger } from '../support/Logger';
 import { LEGACY_SERVICE_DIR_NAME } from '../fs/LegacyServiceDirMigration';
 import { parseJsonObjectText } from '../fs/JsonTextFile';
+import { mkdirInsideServiceDir } from '../fs/WorkspaceTempDir';
 
 export type StandaloneServerState = 'unconfigured' | 'running' | 'unresponsive' | 'stopped' | 'stale' | 'busy';
 
@@ -208,7 +209,7 @@ export class StandaloneServerService {
 
   save(input: SaveStandaloneServerSettingsInput): StandaloneServerSettingsSnapshot {
     const normalized = normalizeSettingsInput(input, this.getServerRoot());
-    fs.mkdirSync(this.getServerRoot(), { recursive: true });
+    mkdirInsideServiceDir(this.getServerRoot());
     fs.mkdirSync(normalized.dataPath, { recursive: true });
     fs.mkdirSync(normalized.databasePath, { recursive: true });
     fs.writeFileSync(this.getSettingsPath(), `${JSON.stringify(normalized, null, 2)}\n`, 'utf-8');
@@ -234,7 +235,7 @@ export class StandaloneServerService {
       const ibsrvPath = this.resolveIbsrvPath(settings);
       fs.mkdirSync(settings.dataPath, { recursive: true });
       fs.mkdirSync(settings.databasePath, { recursive: true });
-      fs.mkdirSync(path.dirname(this.getLogPath()), { recursive: true });
+      mkdirInsideServiceDir(path.dirname(this.getLogPath()));
       this.clearStalePid();
 
       const args = buildServerArgs(settings, this.getLockPath());
@@ -532,7 +533,7 @@ export class StandaloneServerService {
   }
 
   private writeLastExitInfo(info: LastExitInfo): void {
-    fs.mkdirSync(this.getServerRoot(), { recursive: true });
+    mkdirInsideServiceDir(this.getServerRoot());
     fs.writeFileSync(this.getLastExitPath(), `${JSON.stringify(info, null, 2)}\n`, 'utf-8');
   }
 
@@ -683,7 +684,7 @@ function buildServerUrl(settings: StandaloneServerSettings): string {
 }
 
 function appendStandaloneLog(logPath: string, message: string): void {
-  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+  mkdirInsideServiceDir(path.dirname(logPath));
   fs.appendFileSync(logPath, `${message}\n`, 'utf-8');
 }
 

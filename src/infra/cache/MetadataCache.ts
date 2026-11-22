@@ -12,6 +12,7 @@ import { getObjectLocationFromXml, resolveObjectXmlPath } from '../fs/MetaPathRe
 import { findObjectXmlInFolder } from '../fs/ObjectLocation';
 import { parseConfigXml, parseObjectXml, readTemplateTypeFromXml } from '../xml';
 import { pathKey } from '../fs/PathKey';
+import { mkdirInsideServiceDir } from '../fs/WorkspaceTempDir';
 
 export type MetadataCacheSingleClickAction = 'openTemplateContent';
 
@@ -145,7 +146,7 @@ function fingerprintMatches(saved: PartialFingerprint | undefined, current: Meta
 
 export function saveMetadataCache(projectRoot: string, snapshot: MetadataCacheSnapshot): void {
   const filePath = getMetadataCacheFilePath(projectRoot, snapshot.scopeKey);
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  mkdirInsideServiceDir(path.dirname(filePath));
   // Отпечаток пересчитываем здесь, в единой точке, уже ПОСЛЕ того как мутации ФС применены
   // (объект добавлен/переименован/удалён), чтобы updateMetadataCacheAfter* писали актуальное состояние.
   const persisted: MetadataCacheSnapshot = { ...snapshot, fingerprint: computeFingerprint(snapshot.rootPath) };
