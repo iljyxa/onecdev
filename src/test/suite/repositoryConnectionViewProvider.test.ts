@@ -43,11 +43,11 @@ function controllableSubmit(): {
   handler: (data: RepositoryConnectionFormData) => Promise<RepositoryConnectionSubmitOutcome<string>>;
   calls: RepositoryConnectionFormData[];
   finish: (outcome: RepositoryConnectionSubmitOutcome<string>) => void;
-  fail: (error: Error) => void;
+  fail: (error: unknown) => void;
 } {
   const calls: RepositoryConnectionFormData[] = [];
   let finish: (outcome: RepositoryConnectionSubmitOutcome<string>) => void = () => undefined;
-  let fail: (error: Error) => void = () => undefined;
+  let fail: (error: unknown) => void = () => undefined;
   return {
     calls,
     handler: (data) => {
@@ -125,17 +125,19 @@ suite('RepositoryConnectionViewProvider — форма не закрываетс
     assert.strictEqual(submit.calls.length, 2);
   });
 
-  test('исключение onSubmit показывается в форме как ошибка', async () => {
-    const submit = controllableSubmit();
-    const outcome = track(provider.show('create', 'ТорговыйУчет', undefined, submit.handler));
-    const [panel] = panels.panels;
+  for (const thrown of [new Error('сбой'), 'сбой']) {
+    test(`исключение onSubmit (${typeof thrown}) показывается в форме как ошибка`, async () => {
+      const submit = controllableSubmit();
+      const outcome = track(provider.show('create', 'ТорговыйУчет', undefined, submit.handler));
+      const [panel] = panels.panels;
 
-    panel.receive(submitMessage);
-    submit.fail(new Error('сбой'));
+      panel.receive(submitMessage);
+      submit.fail(thrown);
 
-    assert.deepStrictEqual(await outcome(), { settled: false });
-    assert.deepStrictEqual(panel.posted, [{ type: 'error', message: 'сбой' }]);
-  });
+      assert.deepStrictEqual(await outcome(), { settled: false });
+      assert.deepStrictEqual(panel.posted, [{ type: 'error', message: 'сбой' }]);
+    });
+  }
 
   test('отмена без операции возвращает undefined и закрывает форму', async () => {
     const submit = controllableSubmit();
