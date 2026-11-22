@@ -209,6 +209,8 @@ export class StandaloneServerService {
 
   save(input: SaveStandaloneServerSettingsInput): StandaloneServerSettingsSnapshot {
     const normalized = normalizeSettingsInput(input, this.getServerRoot());
+    // Единственная точка, создающая каталог сервера: старт и журналы требуют сохранённых
+    // настроек, поэтому `.onecdev/.gitignore` к ним уже лежит.
     mkdirInsideServiceDir(this.getServerRoot());
     fs.mkdirSync(normalized.dataPath, { recursive: true });
     fs.mkdirSync(normalized.databasePath, { recursive: true });
@@ -235,7 +237,7 @@ export class StandaloneServerService {
       const ibsrvPath = this.resolveIbsrvPath(settings);
       fs.mkdirSync(settings.dataPath, { recursive: true });
       fs.mkdirSync(settings.databasePath, { recursive: true });
-      mkdirInsideServiceDir(path.dirname(this.getLogPath()));
+      fs.mkdirSync(path.dirname(this.getLogPath()), { recursive: true });
       this.clearStalePid();
 
       const args = buildServerArgs(settings, this.getLockPath());
@@ -533,7 +535,7 @@ export class StandaloneServerService {
   }
 
   private writeLastExitInfo(info: LastExitInfo): void {
-    mkdirInsideServiceDir(this.getServerRoot());
+    fs.mkdirSync(this.getServerRoot(), { recursive: true });
     fs.writeFileSync(this.getLastExitPath(), `${JSON.stringify(info, null, 2)}\n`, 'utf-8');
   }
 
@@ -684,7 +686,7 @@ function buildServerUrl(settings: StandaloneServerSettings): string {
 }
 
 function appendStandaloneLog(logPath: string, message: string): void {
-  mkdirInsideServiceDir(path.dirname(logPath));
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
   fs.appendFileSync(logPath, `${message}\n`, 'utf-8');
 }
 
