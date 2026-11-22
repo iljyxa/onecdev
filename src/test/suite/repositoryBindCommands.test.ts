@@ -10,7 +10,11 @@ import type { RepositoryBindDeps } from '../../ui/commands/repository/Repository
 import { decodeLogFile, type RepositoryCliRequest, type RepositoryCliResult } from '../../ui/commands/repository/RepositoryCommandRunner';
 import { registerRepositoryCommands } from '../../ui/commands/repository/RepositoryCommands';
 import { DEFAULT_REPOSITORY_FILE_SYNC_DEPS, type RepositoryFileSyncDeps } from '../../ui/commands/repository/RepositoryFileSyncShared';
-import type { RepositoryConnectionFormData } from '../../ui/views/RepositoryConnectionViewProvider';
+import type {
+  RepositoryConnectionFormData,
+  RepositoryConnectionSubmitHandler,
+  RepositoryConnectionSubmitOutcome,
+} from '../../ui/views/RepositoryConnectionViewProvider';
 import {
   BIND_LOCKS_ROOT,
   createLockWorkspace,
@@ -59,6 +63,8 @@ suite('RepositoryCommands — подключение и создание хра�
   let postSyncCalls: RepositoryTarget[];
   let formData: RepositoryConnectionFormData;
   let cliResult: RepositoryCliResult;
+  /** Исходы `onSubmit`: ошибка уходит в форму, а не уведомлением (issue #184). */
+  let submitOutcomes: RepositoryConnectionSubmitOutcome<unknown>[];
 
   suiteSetup(() => {
     context = { subscriptions: [] } as unknown as vscode.ExtensionContext;
@@ -88,6 +94,7 @@ suite('RepositoryCommands — подключение и создание хра�
     errors = [];
     cliRequests = [];
     postSyncCalls = [];
+    submitOutcomes = [];
     formData = { repoPath: scenarioFixturePath(BIND_LOCKS_ROOT, '8.5.1'), repoUser: 'Petrov', repoPassword: '123' };
     cliResult = { status: 'done', output: readFixture('bind-own-locks.out.txt') };
     const guard = new ConfigurationOperationGuard();
@@ -100,7 +107,14 @@ suite('RepositoryCommands — подключение и создание хра�
         outputChannel: { appendLine: () => undefined } as unknown as vscode.OutputChannel,
         treeProvider: { refresh: () => undefined } as unknown as CommandServices['treeProvider'],
         refreshActionsView: () => undefined,
-        repositoryConnectionViewProvider: { show: () => Promise.resolve(formData) } as unknown as CommandServices['repositoryConnectionViewProvider'],
+        // Форма отправлена один раз; при неуспехе пользователь закрывает её — show() → undefined.
+        repositoryConnectionViewProvider: {
+          show: async (_mode: string, _target: string, _initial: unknown, onSubmit: RepositoryConnectionSubmitHandler<unknown>) => {
+            const outcome = await onSubmit(formData);
+            submitOutcomes.push(outcome);
+            return outcome.ok ? outcome.value : undefined;
+          },
+        } as unknown as CommandServices['repositoryConnectionViewProvider'],
       } as unknown as CommandServices,
       deps: {
         ...DEFAULT_REPOSITORY_FILE_SYNC_DEPS,
@@ -141,13 +155,45 @@ suite('RepositoryCommands — подключение и создание хра�
     assert.deepStrictEqual(errors, []);
   });
 
-  test('connect: отказ «Конфигурация не пустая!» — подсказка про -ForceReplaceCfg, пост-синхронизации нет', async () => {
+  test('connect: отказ «Конфигурация не пустая!» — ошибка с подсказкой про -ForceReplaceCfg уходит в форму, пост-синхронизации нет', async () => {
     cliResult = { status: 'failed', message: 'Ошибка при подключении к хранилищу: Ошибка подключения', output: readFixture('bind-not-empty.out.txt') };
+    formData = { ...formData, forceReplaceCfg: false };
     await vscode.commands.executeCommand('onecdev.repository.connect', node());
-    assert.strictEqual(errors.length, 1);
-    assert.ok(errors[0].includes('(-ForceReplaceCfg)'), errors[0]);
+    assert.deepStrictEqual(errors, []);
+    assert.strictEqual(submitOutcomes.length, 1);
+    const [outcome] = submitOutcomes;
+    const error = outcome.ok ? '' : outcome.error;
+    assert.ok(error.startsWith('Ошибка подключения "ТорговыйУчет" к хранилищу.'), error);
+    assert.ok(error.includes('(-ForceReplaceCfg)'), error);
+    assert.deepStrictEqual(cliRequests.map((item) => item.request.extraArgs), [['-ForceBindAlreadyBindedUser']]);
     assert.deepStrictEqual(postSyncCalls, []);
     assert.strictEqual(ws.service.hasBinding(ws.target), false);
+  });
+
+  test('connect: флаги принудительности по умолчанию включены, опции создания не передаются (issues #184, #185)', async () => {
+    formData = { ...formData, noBind: true, allowConfigurationChanges: true, changesAllowedRule: 'ObjectNotSupported' };
+    await vscode.commands.executeCommand('onecdev.repository.connect', node());
+    assert.deepStrictEqual(cliRequests.map((item) => item.request.extraArgs), [['-ForceBindAlreadyBindedUser', '-ForceReplaceCfg']]);
+    assert.strictEqual(ws.service.isConnected(ws.target), true);
+  });
+
+  test('connect: пустой путь — ошибка проверки в форме, Конфигуратор не запускается', async () => {
+    formData = { ...formData, repoPath: '  ' };
+    await vscode.commands.executeCommand('onecdev.repository.connect', node());
+    assert.deepStrictEqual(submitOutcomes, [{ ok: false, error: 'Нужно указать путь к хранилищу или адрес сервера.' }]);
+    assert.deepStrictEqual(cliRequests, []);
+    assert.deepStrictEqual(errors, []);
+  });
+
+  test('create: правила поддержки — только с разрешением изменений, опции подключения не передаются (issue #185)', async () => {
+    formData = { ...formData, forceBindAlreadyBindedUser: true, changesAllowedRule: 'ObjectNotSupported' };
+    await vscode.commands.executeCommand('onecdev.repository.create', node());
+    formData = { ...formData, allowConfigurationChanges: true, noBind: true };
+    await vscode.commands.executeCommand('onecdev.repository.create', node());
+    assert.deepStrictEqual(cliRequests.map((item) => item.request.extraArgs), [
+      [],
+      ['-AllowConfigurationChanges', '-ChangesAllowedRule', 'ObjectNotSupported', '-ChangesNotRecommendedRule', 'ObjectNotEditable', '-NoBind'],
+    ]);
   });
 
   for (const noBind of [true, false]) {

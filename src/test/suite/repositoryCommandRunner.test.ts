@@ -700,6 +700,33 @@ suite('RepositoryCommandRunner — runRepositoryCliCommand: внедрение e
     assert.strictEqual(describeBindFailureHint(decodeLogFile(fs.readFileSync(scenarioFixturePath(BIND_LOCKS_ROOT, '8.3.27', 'bind-own-locks.out.txt')))), undefined);
   });
 
+  test('reportFailure получает любой неуспех вместо уведомлений: форма показывает его сама (issue #184)', async () => {
+    const reported: string[] = [];
+    const options = { ...baseOptions(), failureHint: () => 'подсказка', reportFailure: (message: string) => { reported.push(message); } };
+    const busyGuard = new ConfigurationOperationGuard();
+    const notified: string[] = [];
+
+    const results = [
+      await runRepositoryCliCommand(options, services, () => Promise.resolve({ status: 'failed', message: 'сбой' })),
+      await runRepositoryCliCommand(options, services, () => Promise.resolve({ status: 'interrupted', message: 'отменено' })),
+      await runRepositoryCliCommand({ ...options, afterSuccess: () => { throw new Error('после успеха'); } }, services,
+        () => Promise.resolve({ status: 'done' })),
+      await busyGuard.runExclusive('Обновление', () => runRepositoryCliCommand(options,
+        { ...services, configurationOperationGuard: busyGuard }, () => Promise.resolve({ status: 'done' }),
+        (message) => { notified.push(message); })),
+    ];
+
+    assert.deepStrictEqual(results.map((result) => (typeof result === 'boolean' ? result : result.acquired && result.value)),
+      [false, false, false, false]);
+    assert.deepStrictEqual(reported, [
+      'Ошибка привязки\nсбой\nподсказка',
+      'Привязка: отменено',
+      'Ошибка привязки\nпосле успеха',
+      'Привязка: уже выполняется операция "Обновление". Дождитесь её завершения.',
+    ]);
+    assert.deepStrictEqual([infoMessageCalls, errorMessageCalls, notified], [[], [], []]);
+  });
+
   test('execute не передан — по умолчанию используется executeRepositoryCli (совпадает с прежним поведением: нет env.json → failed)', async () => {
     const result = await runRepositoryCliCommand(baseOptions(), services);
     assert.strictEqual(result, false);

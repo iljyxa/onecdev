@@ -6,14 +6,7 @@ import {
   ensureTargetUpdatedBeforeCommit,
   refreshRepositoryUi,
 } from './RepositoryDatabaseSync';
-import {
-  completeRepositoryBind,
-  DEFAULT_REPOSITORY_BIND_DEPS,
-  describeBindFailureHint,
-  type RepositoryBindDeps,
-  validateBindingForm,
-  resolveConnectionInitialBinding,
-} from './RepositoryBindFlow';
+import { DEFAULT_REPOSITORY_BIND_DEPS, type RepositoryBindDeps } from './RepositoryBindFlow';
 import {
   askRecursiveMode,
   pickDisconnectForce,
@@ -21,6 +14,7 @@ import {
   promptRepositoryVersion,
 } from './RepositoryCommandDialogs';
 import { type RepositoryCliCommandServices, runRepositoryCliCommand } from './RepositoryCommandRunner';
+import { runRepositoryConnectionCommand } from './RepositoryConnectionCommands';
 import {
   DEFAULT_REPOSITORY_FILE_SYNC_DEPS,
   ensureRepositoryGuardFree,
@@ -58,106 +52,14 @@ export function registerRepositoryCommands(
   bindDeps: RepositoryBindDeps = DEFAULT_REPOSITORY_BIND_DEPS
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('onecdev.repository.connect', async (node: NodeArg) => {
-      const resolved = requireFreeRootTarget(services, deps, node, 'Подключение к хранилищу', false);
-      if (!resolved) {
-        return;
-      }
-      const { target, title } = resolved;
-
-      const formData = await services.repositoryConnectionViewProvider.show(
-        'connect',
-        target.displayName,
-        await resolveConnectionInitialBinding(target, services.repositoryService, bindDeps.notifyWarning)
-      );
-      if (!formData) {
-        return;
-      }
-
-      const validation = validateBindingForm(formData);
-      if (!validation.ok) {
-        void vscode.window.showErrorMessage(validation.errorMessage);
-        return;
-      }
-
-      let bindOutput = '';
-      const ok = await runRepositoryCliCommand({
-        command: 'repository-bind',
-        target,
-        bindingOverride: validation.binding,
-        extraArgs: [
-          ...(formData.forceBindAlreadyBindedUser ? ['-ForceBindAlreadyBindedUser'] : []),
-          ...(formData.forceReplaceCfg ? ['-ForceReplaceCfg'] : []),
-        ],
-        progressTitle: title,
-        progressStartMessage: 'Подключаю конфигурацию к хранилищу...',
-        successMessage: `Конфигурация "${target.displayName}" подключена к хранилищу.`,
-        errorTitle: `Ошибка подключения "${target.displayName}" к хранилищу.`,
-        failureOperation: 'подключении к хранилищу',
-        failureHint: describeBindFailureHint,
-        afterSuccess: async (output) => {
-          bindOutput = output;
-          await services.repositoryService.saveBinding(target, validation.binding);
-          services.repositoryService.setConnected(target, true);
-          refreshRepositoryUi(services);
-        },
-      }, toCliServices(services), deps.runRepositoryCli, deps.notifyBusy);
-
-      if (ok) {
-        await completeRepositoryBind({ target, repoUser: validation.binding.repoUser, bindOutput }, services, bindDeps);
-      }
-    }),
-
-    vscode.commands.registerCommand('onecdev.repository.create', async (node: NodeArg) => {
-      const resolved = requireFreeRootTarget(services, deps, node, 'Создание хранилища', false);
-      if (!resolved) {
-        return;
-      }
-      const { target, title } = resolved;
-
-      const formData = await services.repositoryConnectionViewProvider.show(
-        'create',
-        target.displayName,
-        await resolveConnectionInitialBinding(target, services.repositoryService, bindDeps.notifyWarning)
-      );
-      if (!formData) {
-        return;
-      }
-
-      const validation = validateBindingForm(formData);
-      if (!validation.ok) {
-        void vscode.window.showErrorMessage(validation.errorMessage);
-        return;
-      }
-
-      let bindOutput = '';
-      const ok = await runRepositoryCliCommand({
-        command: 'repository-create',
-        target,
-        bindingOverride: validation.binding,
-        extraArgs: [
-          ...(formData.allowConfigurationChanges ? ['-AllowConfigurationChanges'] : []),
-          ...(formData.changesAllowedRule ? ['-ChangesAllowedRule', formData.changesAllowedRule] : []),
-          ...(formData.changesNotRecommendedRule ? ['-ChangesNotRecommendedRule', formData.changesNotRecommendedRule] : []),
-          ...(formData.noBind ? ['-NoBind'] : []),
-        ],
-        progressTitle: title,
-        progressStartMessage: 'Создаю хранилище конфигурации...',
-        successMessage: `Хранилище для "${target.displayName}" создано.`,
-        errorTitle: `Ошибка создания хранилища для "${target.displayName}".`,
-        failureOperation: 'создании хранилища',
-        afterSuccess: async (output) => {
-          bindOutput = output;
-          await services.repositoryService.saveBinding(target, validation.binding);
-          services.repositoryService.setConnected(target, !formData.noBind);
-          refreshRepositoryUi(services);
-        },
-      }, toCliServices(services), deps.runRepositoryCli, deps.notifyBusy);
-
-      if (ok && !formData.noBind) {
-        await completeRepositoryBind({ target, repoUser: validation.binding.repoUser, bindOutput }, services, bindDeps);
-      }
-    }),
+    ...(['connect', 'create'] as const).map((mode) =>
+      vscode.commands.registerCommand(`onecdev.repository.${mode}`, async (node: NodeArg) => {
+        const resolved = requireFreeRootTarget(services, deps, node,
+          mode === 'connect' ? 'Подключение к хранилищу' : 'Создание хранилища', false);
+        if (resolved) {
+          await runRepositoryConnectionCommand(mode, resolved, services, deps, bindDeps);
+        }
+      })),
 
     vscode.commands.registerCommand('onecdev.repository.disconnect', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Отключение от хранилища', true);

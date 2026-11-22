@@ -67,6 +67,12 @@ interface RepositoryCliRunOptions {
    * вывода, а распознаваемый случай (например, непустая конфигурация при привязке) бывает выше.
    */
   failureHint?: (output: string) => string | undefined;
+  /**
+   * Получатель сообщения о неуспехе вместо уведомлений: форма подключения (issue #184) показывает
+   * причину сама и остаётся открытой. Получает и занятость guard'а, и прерывание, и ошибку
+   * `afterSuccess` — любой исход, после которого команда вернёт `false`.
+   */
+  reportFailure?: (message: string) => void;
 }
 
 let statusBarItem: vscode.StatusBarItem | undefined;
@@ -259,19 +265,25 @@ export async function runRepositoryCliCommand(
     progressStartMessage: options.progressStartMessage,
     failureOperation: options.failureOperation,
   }, services));
+  const report = options.reportFailure;
   if (!exclusive.acquired) {
     services.outputChannel.appendLine(`[repository][busy] ${options.progressTitle}: пропущено, выполняется "${exclusive.heldBy}"`);
-    notifyBusy(`${options.progressTitle}: уже выполняется операция "${exclusive.heldBy}". Дождитесь её завершения.`);
+    (report ?? notifyBusy)(`${options.progressTitle}: уже выполняется операция "${exclusive.heldBy}". Дождитесь её завершения.`);
     return false;
   }
   const result = exclusive.value;
   if (result.status === 'interrupted') {
-    void vscode.window.showInformationMessage(`${options.progressTitle}: ${result.message}`);
+    const message = `${options.progressTitle}: ${result.message}`;
+    if (report) {
+      report(message);
+    } else {
+      void vscode.window.showInformationMessage(message);
+    }
     return false;
   }
   if (result.status === 'failed') {
     const hint = options.failureHint?.([result.output, result.message].join('\n'));
-    await vscode.window.showErrorMessage(`${options.errorTitle}\n${result.message}${hint ? `\n${hint}` : ''}`);
+    await reportError(`${options.errorTitle}\n${result.message}${hint ? `\n${hint}` : ''}`, report);
     return false;
   }
   try {
@@ -279,13 +291,21 @@ export async function runRepositoryCliCommand(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     services.outputChannel.appendLine(`[repository][error] ${message}`);
-    await vscode.window.showErrorMessage(`${options.errorTitle}\n${message}`);
+    await reportError(`${options.errorTitle}\n${message}`, report);
     return false;
   }
   if (options.showSuccessMessage !== false) {
     void vscode.window.showInformationMessage(options.successMessage);
   }
   return true;
+}
+
+async function reportError(message: string, report: ((message: string) => void) | undefined): Promise<void> {
+  if (report) {
+    report(message);
+    return;
+  }
+  await vscode.window.showErrorMessage(message);
 }
 
 export function resolveRepositoryTarget(
