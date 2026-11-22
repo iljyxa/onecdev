@@ -6,7 +6,9 @@ import type {
 } from '../../../infra/environment';
 import { WebviewHtmlFactory } from '../webview/WebviewHtmlFactory';
 
+/** Зеркало `ProjectEnvironmentUiMessage` (`src-ui/shared/types/environment.ts`): разные tsconfig-проекты. */
 type ProjectEnvironmentMessage =
+  | { readonly type: 'ready' }
   | { readonly type: 'refresh' }
   | ({ readonly type: 'save' } & SaveProjectEnvironmentInput);
 
@@ -85,6 +87,12 @@ export class ProjectEnvironmentViewProvider implements vscode.Disposable {
       if (message.type === 'refresh') {
         this.postStatus('loading', 'Обновляю списки баз и платформ...');
         this.refresh();
+        return;
+      }
+      if (message.type !== 'save') {
+        // `ready` после монтирования и неизвестные типы — не сохранение: иначе открытие панели
+        // сохраняет пустую форму и даёт ложную ошибку «база не найдена» (issue #182).
+        // Свежий снимок webview получит от loadSnapshot, запущенного в show().
         return;
       }
 

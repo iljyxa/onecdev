@@ -6,7 +6,9 @@ import type {
 } from '../../../infra/standalone';
 import { WebviewHtmlFactory } from '../webview/WebviewHtmlFactory';
 
+/** Зеркало `StandaloneServerUiMessage` (`src-ui/shared/types/standalone.ts`): разные tsconfig-проекты. */
 type StandaloneServerMessage =
+  | { readonly type: 'ready' }
   | { readonly type: 'refresh' }
   | ({ readonly type: 'save' } & SaveStandaloneServerSettingsInput);
 
@@ -71,6 +73,11 @@ export class StandaloneServerViewProvider implements vscode.Disposable {
       if (message.type === 'refresh') {
         this.postState(this.service.getSettingsSnapshot(true));
         this.postStatus('idle', '');
+        return;
+      }
+      if (message.type !== 'save') {
+        // `ready` после монтирования и неизвестные типы — не сохранение: иначе открытие панели
+        // перезаписывает настройки сервера пустой формой (issue #182).
         return;
       }
 
