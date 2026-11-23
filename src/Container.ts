@@ -15,6 +15,8 @@ import { isWorkspaceServicePath } from './infra/fs/WorkspaceTempDir';
 import { ConfigurationOperationGuard } from './infra/process/ConfigurationOperationGuard';
 import { sweepStaleOperationTemp } from './infra/process/StaleOperationTempSweep';
 import { MetadataTreeProvider } from './ui/tree/MetadataTreeProvider';
+import { WorkingSetFilterController } from './ui/tree/WorkingSetFilterController';
+import { UnloadedChangesScanner } from './infra/cache/UnloadedChangesScanner';
 import { registerCommands } from './ui/commands/CommandRegistry';
 import type { CommandServices } from './ui/commands/_shared';
 import { PropertiesViewController } from './ui/views/properties/PropertiesViewController';
@@ -156,6 +158,7 @@ export class Container {
   readonly aiMcpViewProvider: AiMcpViewProvider;
   readonly lspManager: LspManager;
   readonly changeDetector: ConfigurationChangeDetector;
+  readonly workingSetFilterController: WorkingSetFilterController;
 
   private changeStateTimer: NodeJS.Timeout | undefined;
   private treeCacheTimer: NodeJS.Timeout | undefined;
@@ -326,6 +329,14 @@ export class Container {
       isProjectInitialized: () => this.isProjectInitialized(),
       getStandaloneServerStatus: () => this.standaloneServerService.getStatus(),
     });
+    this.workingSetFilterController = new WorkingSetFilterController({
+      scanner: new UnloadedChangesScanner(workspaceFolder.uri.fsPath),
+      treeProvider: this.treeProvider,
+      repositoryService: this.repositoryService,
+      onDidChangeStatus: () => this.universalPanelViewProvider.refresh(),
+      log: (message) => this.outputChannel.appendLine(message),
+    });
+    context.subscriptions.push(this.workingSetFilterController);
     this.universalPanelViewProvider = new UniversalPanelViewProvider(context.extensionUri, {
       state: context.workspaceState,
       treeProvider: this.treeProvider,
@@ -337,6 +348,7 @@ export class Container {
       getProcessingState: () => this.treeProcessingState,
       gitMetadataStatusService: this.gitMetadataStatusService,
       refreshActionsView: () => this.refreshActionsView(),
+      workingSetFilter: this.workingSetFilterController,
       log: (message) => this.outputChannel.appendLine(message),
     });
     context.subscriptions.push(this.universalPanelViewProvider);
@@ -464,6 +476,7 @@ export class Container {
     }
     this.restartLspOnRootsChange(entries);
     this.refreshChangedConfigurationState();
+    void this.workingSetFilterController.rescan();
     const hasCfe = entries.some((e) => e.kind === 'cfe');
     void vscode.commands.executeCommand('setContext', 'onecdev.hasCfeEntries', hasCfe);
     this.outputChannel.appendLine(`[init] Найдено конфигураций: ${String(entries.length)}`);
@@ -709,11 +722,32 @@ export class Container {
       false
     );
 
+    const hashCacheWatcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(this.workspaceFolder, '.onecdev/cache/*.json')
+    );
+    const onHashCacheChange = (uri: vscode.Uri): void => {
+      // Запись эталона бывает и без правки исходников, например при освобождении
+      // объекта. Изменения stat-индекса самого фильтра не должны запускать пересчёт.
+      if (/^[a-f0-9]{40}\.json$/.test(path.basename(uri.fsPath))) {
+        void this.workingSetFilterController.rescan();
+      }
+    };
+    this.context.subscriptions.push(
+      hashCacheWatcher,
+      hashCacheWatcher.onDidCreate(onHashCacheChange),
+      hashCacheWatcher.onDidChange(onHashCacheChange),
+      hashCacheWatcher.onDidDelete(onHashCacheChange),
+    );
+
     const onSourceChange = (uri: vscode.Uri) => {
       if (isWorkspaceServicePath(this.workspaceFolder.uri.fsPath, uri.fsPath)) {
         return;
       }
       this.scheduleChangedConfigurationStateRefresh(uri);
+      // Пока открыто окно операции с базой, её записи учтёт полный пересчёт по его закрытии.
+      if (!this.cleanWindow.isOpenFor(uri.fsPath)) {
+        this.workingSetFilterController.notifyFileChanged(uri.fsPath);
+      }
       if (path.extname(uri.fsPath).toLowerCase() === '.xml') {
         this.basedOnXmlService.invalidate();
         this.scheduleTreeCacheRefresh(uri.fsPath);
@@ -933,6 +967,8 @@ export class Container {
     this.cleanWindowSettleTimer = setTimeout(() => {
       this.cleanWindowSettleTimer = undefined;
       this.refreshChangedConfigurationState();
+      // Операция с базой обновила хеш-кэш — базовую линию фильтра «изменённые и захваченные».
+      void this.workingSetFilterController.rescan();
     }, ConfigurationCleanWindow.defaultDurationMs + 1_000);
     const clean = new Set(rootPaths.map((item) => pathKey(item)));
     this.changedConfigurations = this.changedConfigurations.filter(

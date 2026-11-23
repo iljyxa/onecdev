@@ -317,6 +317,11 @@ export class RepositoryService {
     return this.lockStateStore.isRootLocked(target);
   }
 
+  /** Явно захваченные мной единицы цели — для фильтра дерева «изменённые и захваченные». */
+  listOwnLockedFullNames(target: RepositoryTarget): string[] {
+    return this.lockStateStore.listOwnLockedFullNames(target);
+  }
+
   /** Состояние захвата объекта с учётом опроса сервера — для подсказок и декораций дерева. */
   getLockInfo(target: RepositoryTarget, fullName: string): RepositoryLockInfo {
     return this.lockStateStore.getLockInfo(target, fullName);

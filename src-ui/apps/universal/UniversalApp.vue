@@ -3,7 +3,7 @@ import { ref, shallowRef, watchEffect, onMounted, onUnmounted } from 'vue';
 import { MessageBus } from '@ui-shared/api/messageBus';
 import type { HostToUiMessage } from '@ui-shared/protocol/hostMessages';
 import type { TreeNodeDto, TreeNodeActionDto } from '@ui-shared/types/tree';
-import type { UniversalPanelState, StandaloneServerStatusDto } from './main';
+import type { UniversalPanelState, StandaloneServerStatusDto, WorkingSetFilterStatusDto } from './main';
 import UniversalTree from '@ui-shared/components/tree/UniversalTree.vue';
 import UniversalSearchBox from './UniversalSearchBox.vue';
 import UniversalProcessingOverlay from './UniversalProcessingOverlay.vue';
@@ -22,6 +22,9 @@ const processing = ref(props.initialState?.processing ?? false);
 const processingTitle = ref(props.initialState?.processingTitle ?? '');
 const processingMessage = ref(props.initialState?.processingMessage ?? '');
 const searchQuery = ref(props.initialState?.searchQuery ?? '');
+const workingSetFilter = ref<WorkingSetFilterStatusDto>(
+  props.initialState?.workingSetFilter ?? { active: false, pending: false },
+);
 const openNodeIds = ref<IdMap>(toIdMap(props.initialState?.openNodeIds));
 const loadingNodeIds = ref<IdMap>(Object.freeze({}));
 const rootNodes = ref<TreeNodeDto[]>([...(props.initialState?.rootNodes ?? [])]);
@@ -158,6 +161,14 @@ function onSearch(query: string): void {
   });
 }
 
+function onToggleWorkingSetFilter(): void {
+  props.messageBus.send({
+    type: 'request',
+    requestId: 'toggleWorkingSetFilter',
+    name: 'toggleWorkingSetFilter',
+  });
+}
+
 function onClearSearch(): void {
   searchQuery.value = '';
   onSearch('');
@@ -217,6 +228,7 @@ function handleHostMessage(msg: HostToUiMessage): void {
     if (state.processingTitle !== undefined) processingTitle.value = state.processingTitle;
     if (state.processingMessage !== undefined) processingMessage.value = state.processingMessage;
     if (state.searchQuery !== undefined) searchQuery.value = state.searchQuery;
+    if (state.workingSetFilter !== undefined) workingSetFilter.value = state.workingSetFilter;
     if (state.openNodeIds) openNodeIds.value = toIdMap(state.openNodeIds);
     if (state.selectedNodeId !== undefined) selectedNodeId.value = state.selectedNodeId;
     if (state.rootNodes) {
@@ -336,6 +348,16 @@ onUnmounted(() => {
           <button type="button" title="ИИ и MCP" aria-label="ИИ и MCP" @click="sendCommand('onecdev.openAiSettings')">
             <span class="ai-mark" aria-hidden="true">AI</span>
           </button>
+          <button
+            type="button"
+            :class="{ active: workingSetFilter.active }"
+            title="Только изменённые и захваченные"
+            aria-label="Только изменённые и захваченные"
+            :aria-pressed="workingSetFilter.active"
+            @click="onToggleWorkingSetFilter"
+          >
+            <span :class="['codicon', workingSetFilter.active ? 'codicon-filter-filled' : 'codicon-filter']" aria-hidden="true" />
+          </button>
           <button class="group-right" type="button" title="Обновить изменённые конфигурации" aria-label="Обновить изменённые конфигурации" @click="sendCommand('onecdev.updateChangedConfigurations')">
             <span class="codicon codicon-database" aria-hidden="true" />
           </button>
@@ -359,6 +381,9 @@ onUnmounted(() => {
           @search="onSearch"
           @clear="onClearSearch"
         />
+        <div v-if="workingSetFilter.active && workingSetFilter.message" class="tree-message" role="status">
+          {{ workingSetFilter.message }}
+        </div>
       </template>
     </section>
 
@@ -445,6 +470,17 @@ button {
 button:hover {
   background: var(--vscode-toolbar-hoverBackground);
   outline: 1px solid var(--vscode-toolbar-hoverOutline, transparent);
+}
+button.active {
+  color: var(--vscode-inputOption-activeForeground, var(--vscode-icon-foreground));
+  background: var(--vscode-inputOption-activeBackground, var(--vscode-toolbar-activeBackground));
+  border-color: var(--vscode-inputOption-activeBorder, transparent);
+}
+.tree-message {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  overflow-wrap: anywhere;
 }
 .ai-mark {
   font-size: 11px;

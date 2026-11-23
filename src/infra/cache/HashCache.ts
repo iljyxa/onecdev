@@ -8,6 +8,7 @@ export interface HashCacheSnapshot {
   schemaVersion: 1;
   scopeKey: string;
   generatedAt: string;
+  initializedLocally?: true;
   files: Record<string, string>;
 }
 
@@ -58,6 +59,7 @@ export function loadHashCache(projectRoot: string, scopeKey: string): HashCacheS
       scopeKey,
       generatedAt: typeof parsed.generatedAt === 'string' ? parsed.generatedAt : '',
       files: parsed.files,
+      ...(parsed.initializedLocally === true ? { initializedLocally: true } : {}),
     };
   } catch {
     return { schemaVersion: CACHE_SCHEMA_VERSION, scopeKey, generatedAt: '', files: {} };
@@ -206,7 +208,10 @@ export function patchHashCacheEntries(
     }
   }
   const deleted = deletedFiles.map((relativeFile) => relativeFile.replace(/\\/g, '/'));
-  saveHashCache(projectRoot, patchHashSnapshot(previous, changedHashes, deleted));
+  saveHashCache(projectRoot, {
+    ...patchHashSnapshot(previous, changedHashes, deleted),
+    initializedLocally: previous.initializedLocally,
+  });
 }
 
 export function collectCurrentHashes(configDir: string, relativePaths: string[]): Record<string, string> {
@@ -248,7 +253,15 @@ function getCacheFilePath(projectRoot: string, scopeKey: string): string {
 }
 
 export function computeFileHash(filePath: string): string {
-  const content = fs.readFileSync(filePath);
+  return hashFileContent(fs.readFileSync(filePath));
+}
+
+/** Асинхронный двойник `computeFileHash` — для пересчётов вне команды пользователя. */
+export async function computeFileHashAsync(filePath: string): Promise<string> {
+  return hashFileContent(await fs.promises.readFile(filePath));
+}
+
+function hashFileContent(content: Buffer): string {
   const oneShotHash = Reflect.get(crypto, 'hash');
   if (typeof oneShotHash === 'function') {
     return oneShotHash('sha1', content, 'hex');
@@ -284,6 +297,52 @@ export function walkSupportedFiles(
       }
     }
   }
+}
+
+/**
+ * Асинхронный обход с ограничением числа открываемых файлов. Каталоги
+ * ставятся в очередь, чтобы их обработчики не запускали новые пачки параллельно.
+ */
+export async function walkSupportedFilesAsync(
+  rootDir: string,
+  visitor: (fullPath: string, relativePath: string) => Promise<void>
+): Promise<void> {
+  const pending = [rootDir];
+  for (let currentDir = pending.pop(); currentDir !== undefined; currentDir = pending.pop()) {
+    let entries: fs.Dirent[];
+    try {
+      entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
+    } catch (error) {
+      if (!isMissingSnapshotPath(error)) {
+        throw error;
+      }
+      continue;
+    }
+
+    const visits: Promise<void>[] = [];
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(fullPath);
+        continue;
+      }
+
+      const relativePath = path.relative(rootDir, fullPath).replace(/\\/g, '/');
+      if (isSupportedConfigFile(relativePath)) {
+        visits.push(visitor(fullPath, relativePath));
+        if (visits.length === 8) {
+          await Promise.all(visits);
+          visits.length = 0;
+        }
+      }
+    }
+    await Promise.all(visits);
+  }
+}
+
+export function isMissingSnapshotPath(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === 'ENOENT' || code === 'ENOTDIR';
 }
 
 function sortUnique(items: string[]): string[] {

@@ -99,7 +99,7 @@ export class ConfigurationChangeDetector {
         reportStatus?.(`Инициализация хеш-кэша: ${scope.name}`);
         const startedAt = this.startTiming();
         const built = this.buildSnapshot(scope.scopeKey, entry.rootPath);
-        saveHashCache(this.projectRoot, built.snapshot);
+        saveHashCache(this.projectRoot, { ...built.snapshot, initializedLocally: true });
         this.reportTiming('hash-cache', scope.name, startedAt, built);
         entryCreated = true;
       }

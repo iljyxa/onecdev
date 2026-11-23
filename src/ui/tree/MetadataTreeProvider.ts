@@ -18,6 +18,8 @@ import { buildNode } from './nodes/_base';
 import { getNodeDescriptor } from './nodes/index';
 import { getIconUris } from './presentation/icon';
 import { MetadataNode } from './TreeNode';
+import { filterTreeBySearch, filterTreeByWorkingSet } from './TreeNodeFilters';
+import type { WorkingSetIndex } from '../../infra/repository/WorkingSetIndex';
 import { GitMetadataDecorationProvider } from './decorations/GitMetadataDecorationProvider';
 import { SUPPORT_CHANGES_FORBIDDEN_SUFFIX, SUPPORT_SUFFIX_RE, supportModeSuffix } from '../support/supportLockReason';
 import type { RepositoryLockInfo } from '../../infra/repository/RepositoryLockState';
@@ -33,6 +35,7 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
   private roots: MetadataNode[] = [];
   private parentByNode = new WeakMap<MetadataNode, MetadataNode>();
   private searchQuery = '';
+  private workingSet: WorkingSetIndex | undefined;
 
   constructor(
     private entries: ConfigEntry[],
@@ -140,6 +143,12 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
   setSearchQuery(query: string): void {
     const nextQuery = query.trim();
     this.searchQuery = nextQuery.length > 2 ? nextQuery : '';
+    this.onDidChangeTreeDataEmitter.fire(undefined);
+  }
+
+  /** Включает фильтр «изменённые и захваченные» по готовому индексу; `undefined` — выключает. */
+  setWorkingSetFilter(index: WorkingSetIndex | undefined): void {
+    this.workingSet = index;
     this.onDidChangeTreeDataEmitter.fire(undefined);
   }
 
@@ -452,62 +461,9 @@ export class MetadataTreeProvider implements vscode.TreeDataProvider<MetadataNod
   }
 
   private getVisibleRoots(): MetadataNode[] {
-    if (!this.searchQuery) {
-      return this.roots;
-    }
-
-    return this.filterNodes(this.roots, this.normalizeSearchText(this.searchQuery));
-  }
-
-  private filterNodes(nodes: MetadataNode[], normalizedQuery: string): MetadataNode[] {
-    const result: MetadataNode[] = [];
-
-    for (const node of nodes) {
-      const nodeMatches = this.normalizeSearchText(node.textLabel).includes(normalizedQuery);
-      if (nodeMatches && node.xmlPath) {
-        result.push(this.cloneNode(node, vscode.TreeItemCollapsibleState.None));
-        continue;
-      }
-
-      const children = node.childrenLoader ? this.filterNodes(node.childrenLoader(), normalizedQuery) : [];
-      if (children.length > 0) {
-        result.push(this.cloneNode(
-          node,
-          vscode.TreeItemCollapsibleState.Expanded,
-          () => children
-        ));
-        continue;
-      }
-
-      if (nodeMatches) {
-        result.push(this.cloneNode(
-          node,
-          node.collapsibleState ?? vscode.TreeItemCollapsibleState.None
-        ));
-      }
-    }
-
-    return result;
-  }
-
-  private cloneNode(
-    node: MetadataNode,
-    collapsibleState: vscode.TreeItemCollapsibleState,
-    childrenLoader?: () => MetadataNode[]
-  ): MetadataNode {
-    const clone = new MetadataNode({
-      ...node.model,
-      childrenLoader,
-    }, collapsibleState);
-
-    clone.command = node.command;
-    clone.tooltip = node.tooltip;
-    clone.resourceUri = node.resourceUri;
-    return clone;
-  }
-
-  private normalizeSearchText(value: string): string {
-    return value.toLocaleLowerCase('ru-RU');
+    // Оба фильтра активны — пересечение: текстовый поиск идёт по уже отобранному рабочему набору.
+    const roots = this.workingSet ? filterTreeByWorkingSet(this.roots, this.workingSet) : this.roots;
+    return this.searchQuery ? filterTreeBySearch(roots, this.searchQuery) : roots;
   }
 
   private buildConfigNode(entry: ConfigEntry): { node: MetadataNode; rebuiltCache: boolean } {
