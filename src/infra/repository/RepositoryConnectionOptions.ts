@@ -65,8 +65,12 @@ export interface RepositoryConnectionFormDescription {
   readonly supportRules: readonly RepositorySupportRuleOption[];
 }
 
-const CONNECT_OPTIONS: readonly RepositoryOptionDescriptor[] = [
-  {
+/**
+ * Таблицы описаний по `id`: компилятор проверяет, что у каждого `id` есть описание нужного вида,
+ * поэтому значение по умолчанию берётся без поиска и приведения типа (issue #203).
+ */
+const FLAG_OPTIONS: { readonly [K in RepositoryFlagOptionId]: RepositoryFlagOptionDescriptor & { readonly id: K } } = {
+  forceBindAlreadyBindedUser: {
     kind: 'flag',
     id: 'forceBindAlreadyBindedUser',
     label: 'Принудительно перепривязать пользователя хранилища',
@@ -75,7 +79,7 @@ const CONNECT_OPTIONS: readonly RepositoryOptionDescriptor[] = [
     // Обычный сценарий — переподключение базы, когда пользователь уже привязан к другой базе.
     defaultValue: true,
   },
-  {
+  forceReplaceCfg: {
     kind: 'flag',
     id: 'forceReplaceCfg',
     label: 'Принудительно заменить конфигурацию',
@@ -83,10 +87,7 @@ const CONNECT_OPTIONS: readonly RepositoryOptionDescriptor[] = [
       + 'Изменения в базе, не помещённые в хранилище, будут потеряны.',
     defaultValue: true,
   },
-];
-
-const CREATE_OPTIONS: readonly RepositoryOptionDescriptor[] = [
-  {
+  allowConfigurationChanges: {
     kind: 'flag',
     id: 'allowConfigurationChanges',
     label: 'Разрешить изменения конфигурации',
@@ -94,7 +95,17 @@ const CREATE_OPTIONS: readonly RepositoryOptionDescriptor[] = [
       + 'хранилища платформа включает возможность изменений и применяет к объектам поставщика правила ниже.',
     defaultValue: false,
   },
-  {
+  noBind: {
+    kind: 'flag',
+    id: 'noBind',
+    label: 'Не привязывать проект к хранилищу',
+    hint: 'Хранилище создаётся, но текущая база к нему не подключается, и проект не помечается подключённым.',
+    defaultValue: false,
+  },
+};
+
+const RULE_OPTIONS: { readonly [K in RepositoryRuleOptionId]: RepositoryRuleOptionDescriptor & { readonly id: K } } = {
+  changesAllowedRule: {
     kind: 'rule',
     id: 'changesAllowedRule',
     label: 'Правило для объектов с правилом поставки «Изменения разрешены»',
@@ -102,7 +113,7 @@ const CREATE_OPTIONS: readonly RepositoryOptionDescriptor[] = [
     defaultValue: 'ObjectIsEditableSupportEnabled',
     requires: 'allowConfigurationChanges',
   },
-  {
+  changesNotRecommendedRule: {
     kind: 'rule',
     id: 'changesNotRecommendedRule',
     label: 'Правило для объектов с правилом поставки «Изменения не рекомендуются»',
@@ -110,13 +121,18 @@ const CREATE_OPTIONS: readonly RepositoryOptionDescriptor[] = [
     defaultValue: 'ObjectNotEditable',
     requires: 'allowConfigurationChanges',
   },
-  {
-    kind: 'flag',
-    id: 'noBind',
-    label: 'Не привязывать проект к хранилищу',
-    hint: 'Хранилище создаётся, но текущая база к нему не подключается, и проект не помечается подключённым.',
-    defaultValue: false,
-  },
+};
+
+const CONNECT_OPTIONS: readonly RepositoryOptionDescriptor[] = [
+  FLAG_OPTIONS.forceBindAlreadyBindedUser,
+  FLAG_OPTIONS.forceReplaceCfg,
+];
+
+const CREATE_OPTIONS: readonly RepositoryOptionDescriptor[] = [
+  FLAG_OPTIONS.allowConfigurationChanges,
+  RULE_OPTIONS.changesAllowedRule,
+  RULE_OPTIONS.changesNotRecommendedRule,
+  FLAG_OPTIONS.noBind,
 ];
 
 export function describeRepositoryConnectionForm(mode: RepositoryConnectionMode): RepositoryConnectionFormDescription {
@@ -126,19 +142,16 @@ export function describeRepositoryConnectionForm(mode: RepositoryConnectionMode)
   };
 }
 
-const ALL_OPTIONS = [...CONNECT_OPTIONS, ...CREATE_OPTIONS];
-
 /** Значение флага формы; не заданный явно флаг берёт значение по умолчанию своего описания. */
 function flag(values: RepositoryConnectionOptionValues, id: RepositoryFlagOptionId): boolean {
-  const option = ALL_OPTIONS.find((item) => item.id === id) as RepositoryFlagOptionDescriptor;
-  return values[id] ?? option.defaultValue;
+  return values[id] ?? FLAG_OPTIONS[id].defaultValue;
 }
 
 /** Допустимое значение правила; постороннее заменяется значением по умолчанию, а не уходит в Конфигуратор. */
 function rule(values: RepositoryConnectionOptionValues, id: RepositoryRuleOptionId): RepositorySupportRule {
   const value = values[id];
   const known = REPOSITORY_SUPPORT_RULES.find((item) => item.value === value);
-  return known?.value ?? (ALL_OPTIONS.find((item) => item.id === id) as RepositoryRuleOptionDescriptor).defaultValue;
+  return known?.value ?? RULE_OPTIONS[id].defaultValue;
 }
 
 export function buildRepositoryBindArgs(values: RepositoryConnectionOptionValues): string[] {

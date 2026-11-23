@@ -38,15 +38,9 @@ function browseRepoPath(): void {
   });
 }
 
+// Поля проверяет только расширение (`validateBindingForm`): его ошибка и так приходит в форму (#184),
+// а своя проверка формы расходилась с ним текстами и обработкой пробелов (#203).
 function submit(): void {
-  if (!repoPath.value) {
-    error.value = 'Укажите путь к хранилищу';
-    return;
-  }
-  if (!repoUser.value) {
-    error.value = 'Укажите пользователя хранилища';
-    return;
-  }
   error.value = '';
   loading.value = true;
 
