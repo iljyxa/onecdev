@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import { MetadataNode } from '../../ui/tree/TreeNode';
 import type { NodeKind } from '../../ui/tree/TreeNodeModel';
+import { getObjectHandler } from '../../ui/tree/nodeBuilders';
 import { UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
 
 /**
@@ -11,6 +12,8 @@ import { UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPa
  * а справочные «Структура / Валидировать» (вместе с видовыми info/validate) и «Свойства» — последними.
  * Остальные действия сохраняют взаимный порядок. Меню корня конфигурации этим порядком не затрагивается.
  * Меню строит приватный `getNodeActions`; узлы — над настоящими XML из `example/2.21/src/cf`.
+ * Доступ к приватному методу — через приведение типа: публичный путь (`resolveWebviewView`) требует
+ * собранного webview и не даёт подставить узел с нужным контекстом.
  */
 
 const EXTENSION_ROOT = path.resolve(__dirname, '../../../');
@@ -33,13 +36,31 @@ function createProvider(): NodeActionsApi {
   return new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), services) as unknown as NodeActionsApi;
 }
 
+function actionsOf(node: MetadataNode): string[] {
+  return createProvider().getNodeActions(node).map((action) => action.command);
+}
+
 function menu(nodeKind: NodeKind, relXml: string, contextValue: string): string[] {
   const node = new MetadataNode(
     { label: path.basename(relXml, '.xml'), nodeKind, xmlPath: path.join(CF_ROOT, relXml) },
     vscode.TreeItemCollapsibleState.None
   );
   node.contextValue = contextValue;
-  return createProvider().getNodeActions(node).map((action) => action.command);
+  return actionsOf(node);
+}
+
+/** Дочерние узлы справочника, собранные настоящим строителем дерева (контекст и команда клика — как в панели). */
+function catalogChildren(): MetadataNode[] {
+  const handler = getObjectHandler('Catalog');
+  assert.ok(handler, 'нет строителя узлов справочника');
+  const [catalog] = handler.buildTreeNodes({ configRoot: CF_ROOT, configKind: 'cf', namePrefix: '', names: ['Контрагенты'] });
+  return (catalog.childrenLoader?.() ?? []).flatMap((group) => [group, ...(group.childrenLoader?.() ?? [])]);
+}
+
+function childOfKind(nodeKind: NodeKind): MetadataNode {
+  const found = catalogChildren().find((child) => child.nodeKind === nodeKind);
+  assert.ok(found, `у справочника Контрагенты нет дочернего узла ${nodeKind}`);
+  return found;
 }
 
 suite('UniversalPanelViewProvider — порядок меню объекта метаданных (issue #188)', () => {
@@ -146,10 +167,97 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
     ]);
   });
 
-  test('корень конфигурации — порядок прежний: «Свойства» перед командами хранилища', () => {
-    const commands = menu('configuration', 'Configuration.xml', 'configuration-hasXml-repoConnected');
-    assert.strictEqual(commands[0], 'onecdev.configuration.info', commands.join(', '));
-    assert.ok(commands.indexOf('onecdev.showProperties') < commands.indexOf('onecdev.repository.commit'), commands.join(', '));
-    assert.ok(!commands.includes('onecdev.metadata.info'), commands.join(', '));
+  test('объект со скрытыми «Свойствами»: справочная группа последней, «Свойства» нет', () => {
+    const node = new MetadataNode(
+      { label: 'Контрагенты', nodeKind: 'Catalog', xmlPath: path.join(CF_ROOT, 'Catalogs/Контрагенты.xml'), hidePropertiesCommand: true },
+      vscode.TreeItemCollapsibleState.None
+    );
+    node.contextValue = 'Catalog-hasXml';
+    assert.deepStrictEqual(actionsOf(node), [
+      'onecdev.openObjectModule',
+      'onecdev.openManagerModule',
+      'onecdev.help.add',
+      'onecdev.form.add',
+      'onecdev.openXmlFile',
+      'onecdev.metadata.info',
+      'onecdev.metadata.validate',
+    ]);
+  });
+
+  test('реквизит справочника: справочная группа и «Свойства» в конце', () => {
+    assert.deepStrictEqual(actionsOf(childOfKind('Attribute')), [
+      'onecdev.help.add',
+      'onecdev.openXmlFile',
+      'onecdev.metadata.info',
+      'onecdev.metadata.validate',
+      'onecdev.showProperties',
+    ]);
+  });
+
+  test('форма справочника: модуль формы (команда клика) первым', () => {
+    assert.deepStrictEqual(actionsOf(childOfKind('Form')), [
+      'onecdev.openFormModule',
+      'onecdev.help.add',
+      'onecdev.openXmlFile',
+      'onecdev.metadata.info',
+      'onecdev.metadata.validate',
+      'onecdev.form.info',
+      'onecdev.form.validate',
+      'onecdev.showProperties',
+    ]);
+  });
+
+  test('макет справочника: MXL/СКД перед «Свойства»', () => {
+    assert.deepStrictEqual(actionsOf(childOfKind('Template')), [
+      'onecdev.openXmlFile',
+      'onecdev.metadata.info',
+      'onecdev.metadata.validate',
+      'onecdev.mxl.info',
+      'onecdev.mxl.validate',
+      'onecdev.skd.info',
+      'onecdev.skd.validate',
+      'onecdev.showProperties',
+    ]);
+  });
+
+  test('команда справочника: модуль команды (команда клика) первым', () => {
+    assert.deepStrictEqual(actionsOf(childOfKind('Command')), [
+      'onecdev.openCommandModule',
+      'onecdev.help.add',
+      'onecdev.openXmlFile',
+      'onecdev.metadata.info',
+      'onecdev.metadata.validate',
+      'onecdev.showProperties',
+    ]);
+  });
+
+  test('группа без XML: ни модулей, ни справочной группы, ни «Свойства»', () => {
+    assert.deepStrictEqual(actionsOf(childOfKind('group-type')), []);
+  });
+
+  test('корень конфигурации — порядок прежний: «Свойства» сразу за «Открыть XML», до команд хранилища', () => {
+    assert.deepStrictEqual(menu('configuration', 'Configuration.xml', 'configuration-hasXml-repoConnected'), [
+      'onecdev.configuration.info',
+      'onecdev.configuration.validate',
+      'onecdev.showConfigActions',
+      'onecdev.importConfigurationFromDb',
+      'onecdev.updateConfigurationInDb',
+      'onecdev.dumpConfigurationToCf',
+      'onecdev.loadConfigurationFromCf',
+      'onecdev.openXmlFile',
+      'onecdev.showProperties',
+      'onecdev.repository.create',
+      'onecdev.repository.refreshLocks',
+      'onecdev.repository.history',
+      'onecdev.repository.disconnect',
+      'onecdev.repository.addUser',
+      'onecdev.repository.copyUsers',
+      'onecdev.repository.dump',
+      'onecdev.repository.report',
+      'onecdev.repository.setLabel',
+      'onecdev.repository.commit',
+      'onecdev.repository.update',
+      'onecdev.repository.updateToVersion',
+    ]);
   });
 });

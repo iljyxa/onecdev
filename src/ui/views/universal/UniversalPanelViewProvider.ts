@@ -777,14 +777,11 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     const add = (command: string, title: string, icon: IconDto) => {
       if (!actions.some((a) => a.command === command)) {actions.push({ command, title, icon });}
     };
-    // Меню корня конфигурации/расширения строится по своим правилам (#187); порядок
-    // «модули сверху, справочные действия и „Свойства“ внизу» — только для объектов (#188).
-    const isObject = Boolean(node.xmlPath) && !/^(configuration|extension)-hasXml/.test(ctxValue);
-    if (isObject) {
-      this.addModuleActions(node, add);
-    }
+    const isRoot = /^(configuration|extension)-hasXml/.test(ctxValue);
+    // Самое частое действие — открыть модуль — первым (#188). У корня и узлов без XML модулей нет.
+    this.addModuleActions(node, add);
 
-    if (node.xmlPath && /^configuration-hasXml|^extension-hasXml/.test(ctxValue)) {
+    if (node.xmlPath && isRoot) {
       add('onecdev.configuration.info', 'Информация', codicon('info'));
       add('onecdev.configuration.validate', 'Валидировать', codicon('check'));
       add('onecdev.showConfigActions', 'Команды конфигурации/расширения', codicon('tools'));
@@ -823,11 +820,9 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       }
       add('onecdev.openXmlFile', 'Открыть XML', codicon('file-code'));
     }
-    if (!isObject) {
-      this.addModuleActions(node, add);
-      if (node.xmlPath && !node.hidePropertiesCommand) {
-        add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
-      }
+    if (isRoot) {
+      // Меню корня перестраивается отдельно (#187): «Свойства» пока на прежнем месте, до хранилища.
+      this.addPropertiesAction(node, add);
     }
     if (node.addMetadataTarget) {
       add('onecdev.addMetadata', 'Добавить', codicon('add'));
@@ -841,7 +836,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     if (ctxValue.includes('-repoLocked')) {
       add('onecdev.repository.unlock', 'Освободить в хранилище', codicon('unlock'));
     }
-    if (/^(configuration|extension)-hasXml/.test(ctxValue)) {
+    if (isRoot) {
       this.addRepoRootActions(ctxValue, add);
     }
     if (
@@ -857,13 +852,18 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
         add('onecdev.repository.objectHistory', 'История в хранилище', codicon('history'));
       }
     }
-    if (isObject) {
+    if (node.xmlPath && !isRoot) {
       this.addObjectInfoActions(node, add);
-      if (!node.hidePropertiesCommand) {
-        add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
-      }
     }
+    // У корня уже добавлено выше — `add` не дублирует пункт.
+    this.addPropertiesAction(node, add);
     return actions;
+  }
+
+  private addPropertiesAction(node: MetadataNode, add: (command: string, title: string, icon: IconDto) => void): void {
+    if (node.xmlPath && !node.hidePropertiesCommand) {
+      add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
+    }
   }
 
   /** Справочные действия объекта: общая структура/валидация и видовые пары «информация/валидация». */
