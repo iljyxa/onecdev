@@ -777,6 +777,12 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     const add = (command: string, title: string, icon: IconDto) => {
       if (!actions.some((a) => a.command === command)) {actions.push({ command, title, icon });}
     };
+    // Меню корня конфигурации/расширения строится по своим правилам (#187); порядок
+    // «модули сверху, справочные действия и „Свойства“ внизу» — только для объектов (#188).
+    const isObject = Boolean(node.xmlPath) && !/^(configuration|extension)-hasXml/.test(ctxValue);
+    if (isObject) {
+      this.addModuleActions(node, add);
+    }
 
     if (node.xmlPath && /^configuration-hasXml|^extension-hasXml/.test(ctxValue)) {
       add('onecdev.configuration.info', 'Информация', codicon('info'));
@@ -805,29 +811,6 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       add('onecdev.borrowToExtension', 'Добавить в расширение', codicon('add'));
     }
     if (node.xmlPath) {
-      if (!/^(configuration|extension)-hasXml/.test(ctxValue)) {
-        add('onecdev.metadata.info', 'Структура объекта', codicon('info'));
-        add('onecdev.metadata.validate', 'Валидировать объект', codicon('check'));
-      }
-      if (node.nodeKind === 'Role') {
-        add('onecdev.role.info', 'Права роли', codicon('shield'));
-        add('onecdev.role.validate', 'Валидировать роль', codicon('verified'));
-      }
-      if (node.nodeKind === 'Subsystem') {
-        add('onecdev.subsystem.info', 'Информация о подсистеме', codicon('symbol-namespace'));
-        add('onecdev.subsystem.validate', 'Валидировать подсистему', codicon('verified'));
-        add('onecdev.interface.validate', 'Валидировать командный интерфейс', codicon('list-tree'));
-      }
-      if (node.nodeKind === 'Template' || node.nodeKind === 'CommonTemplate') {
-        add('onecdev.mxl.info', 'MXL: структура', codicon('table'));
-        add('onecdev.mxl.validate', 'MXL: валидировать', codicon('check'));
-        add('onecdev.skd.info', 'СКД: структура', codicon('symbol-structure'));
-        add('onecdev.skd.validate', 'СКД: валидировать', codicon('verified'));
-      }
-      if (node.nodeKind === 'Form' || node.nodeKind === 'CommonForm') {
-        add('onecdev.form.info', 'Форма: структура', codicon('symbol-structure'));
-        add('onecdev.form.validate', 'Форма: валидировать', codicon('verified'));
-      }
       if (this.canAddHelp(node)) {
         add('onecdev.help.add', 'Добавить справку', codicon('book'));
       }
@@ -840,9 +823,11 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       }
       add('onecdev.openXmlFile', 'Открыть XML', codicon('file-code'));
     }
-    this.addModuleActions(node, add);
-    if (node.xmlPath && !node.hidePropertiesCommand) {
-      add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
+    if (!isObject) {
+      this.addModuleActions(node, add);
+      if (node.xmlPath && !node.hidePropertiesCommand) {
+        add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
+      }
     }
     if (node.addMetadataTarget) {
       add('onecdev.addMetadata', 'Добавить', codicon('add'));
@@ -872,7 +857,38 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
         add('onecdev.repository.objectHistory', 'История в хранилище', codicon('history'));
       }
     }
+    if (isObject) {
+      this.addObjectInfoActions(node, add);
+      if (!node.hidePropertiesCommand) {
+        add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
+      }
+    }
     return actions;
+  }
+
+  /** Справочные действия объекта: общая структура/валидация и видовые пары «информация/валидация». */
+  private addObjectInfoActions(node: MetadataNode, add: (command: string, title: string, icon: IconDto) => void): void {
+    add('onecdev.metadata.info', 'Структура объекта', codicon('info'));
+    add('onecdev.metadata.validate', 'Валидировать объект', codicon('check'));
+    if (node.nodeKind === 'Role') {
+      add('onecdev.role.info', 'Права роли', codicon('shield'));
+      add('onecdev.role.validate', 'Валидировать роль', codicon('verified'));
+    }
+    if (node.nodeKind === 'Subsystem') {
+      add('onecdev.subsystem.info', 'Информация о подсистеме', codicon('symbol-namespace'));
+      add('onecdev.subsystem.validate', 'Валидировать подсистему', codicon('verified'));
+      add('onecdev.interface.validate', 'Валидировать командный интерфейс', codicon('list-tree'));
+    }
+    if (node.nodeKind === 'Template' || node.nodeKind === 'CommonTemplate') {
+      add('onecdev.mxl.info', 'MXL: структура', codicon('table'));
+      add('onecdev.mxl.validate', 'MXL: валидировать', codicon('check'));
+      add('onecdev.skd.info', 'СКД: структура', codicon('symbol-structure'));
+      add('onecdev.skd.validate', 'СКД: валидировать', codicon('verified'));
+    }
+    if (node.nodeKind === 'Form' || node.nodeKind === 'CommonForm') {
+      add('onecdev.form.info', 'Форма: структура', codicon('symbol-structure'));
+      add('onecdev.form.validate', 'Форма: валидировать', codicon('verified'));
+    }
   }
 
   private canAddHelp(node: MetadataNode): boolean {
