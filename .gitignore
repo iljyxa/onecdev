@@ -2,6 +2,9 @@
 .cursor/
 .vscode/
 .codex
+!/.codex/
+/.codex/*
+!/.codex/agents/
 .onecdev/
 .kilo
 env.json

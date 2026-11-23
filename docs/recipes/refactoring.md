@@ -8,6 +8,6 @@
 
 1. Бизнес-логику — в `infra/<область>/<Service>.ts` без `vscode` и shell.
 2. Тест на реальных XML-фикстурах или временной структуре выгрузки.
-3. Если нужно человеку в UI — команда в `ui/commands/**` + действие в `UniversalPanelViewProvider.getNodeActions()`.
+3. Если нужно человеку в UI — команда в `ui/commands/**` + пункт в `collectNodeActions()` (`ui/views/universal/nodeContextMenu.ts`) в подходящей секции меню.
 4. Если меняет конфигурацию/расширение — MCP-инструмент в `V8McpServer.registerTools()` + запись в `EXTENSION_MCP_TOOLS`.
 5. Обновить кэш/дерево/статус через общий post-mutation путь.

@@ -290,7 +290,7 @@ hash-кэша — файлы XML-выгрузки проекта при загр
   `-ResultFile` (тот же file-handoff, что у `list-db-extensions`);
 - `ui/commands/ext/CfeBatchCommandRunner.ts` (спавн CLI, разбор отчёта) →
   `CfeBatchCommands.ts` (диалоги; команды `onecdev.dumpAllExtensionsToCfe`/
-  `onecdev.loadAllExtensionsFromCfe`) и пункты в `getNodeActions` на узле
+  `onecdev.loadAllExtensionsFromCfe`) и пункты в `collectNodeActions` (подменю «Файлы») на узле
   `extensions-root` (пакетные операции работают со ВСЕЙ базой — место им на
   контейнере расширений, не на корне конфигурации и не на одном расширении);
 - MCP `onecdev_dump_all_cfe`/`onecdev_load_all_cfe`

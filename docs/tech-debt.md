@@ -58,9 +58,3 @@
     `ui/views/universal/_types.ts`, `UniversalPanelViewProvider.ts`, `ui/views/changes/changesDtoBuilder.ts`,
     `SubsystemEditorViewProvider.ts` и зеркально в `src-ui/shared/types/`. Объединять — с выбором одного
     поведения и общим контрактом протокола.
-16. `ui/views/universal/UniversalPanelViewProvider.ts` (~990 строк) превышает порог God-объекта (запрет №17,
-    ~800): в одном классе — жизненный цикл webview, протокол сообщений, DTO дерева и построение контекстного
-    меню узла (`getNodeActions` и правила `canAdd*`/`canBorrow`/`addModuleActions`/`addObjectInfoActions`).
-    Кандидат на вынос — построитель действий узла в отдельный модуль `ui/views/universal/` (чистая
-    функция над узлом и признаком «есть расширения»), после чего тесты меню обойдутся без доступа к
-    приватному методу. Меню корня конфигурации/расширения перестраивается в #187 — удобный момент.

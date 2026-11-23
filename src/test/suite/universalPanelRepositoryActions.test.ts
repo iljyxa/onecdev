@@ -7,11 +7,12 @@ import { MetadataNode } from '../../ui/tree/TreeNode';
 import type { NodeKind } from '../../ui/tree/TreeNodeModel';
 import type { RepositoryLockInfo } from '../../infra/repository/RepositoryLockState';
 import { REPOSITORY_FOREIGN_LOCK_ICON, UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
+import { collectNodeActions } from '../../ui/views/universal/nodeContextMenu';
 
 /**
  * Issue #61: получение конкретной версии из хранилища — отдельная команда контекстного
  * меню узла, стоящая сразу за обычным «Получить из хранилища», и только у узлов с
- * активным подключением к хранилищу. Меню строит приватный `getNodeActions`.
+ * активным подключением к хранилищу. Состав меню — `collectNodeActions` (`nodeContextMenu.ts`).
  */
 
 const EXTENSION_ROOT = path.resolve(__dirname, '../../../');
@@ -19,20 +20,21 @@ const CATALOG_XML = path.join(EXTENSION_ROOT, 'example', '2.21', 'src', 'cf', 'C
 
 type UniversalServices = ConstructorParameters<typeof UniversalPanelViewProvider>[1];
 
-interface NodeActionsApi {
-  getNodeActions(node: MetadataNode): readonly { command: string }[];
+/** Пункты меню узла плоским списком — условия появления не зависят от раскладки по подменю. */
+function commandsOf(node: MetadataNode): string[] {
+  return collectNodeActions(node, { getEntries: () => [] }).map((action) => action.command);
 }
 
-function createProvider(): NodeActionsApi {
+function createProvider(): UniversalPanelViewProvider {
   const services = {
     state: { get: () => undefined, update: () => Promise.resolve(), keys: () => [] },
-    // Настоящий провайдер без конфигураций: getNodeActions спрашивает у него, есть ли расширения.
+    // Настоящий провайдер без конфигураций: меню спрашивает у него, есть ли расширения.
     treeProvider: new MetadataTreeProvider([], vscode.Uri.file(EXTENSION_ROOT), EXTENSION_ROOT),
     setTreeMessage: () => undefined,
     isProjectInitialized: () => true,
     refreshActionsView: () => undefined,
   } as unknown as UniversalServices;
-  return new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), services) as unknown as NodeActionsApi;
+  return new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), services);
 }
 
 function catalogNode(contextValue: string): MetadataNode {
@@ -43,7 +45,7 @@ function catalogNode(contextValue: string): MetadataNode {
 
 suite('UniversalPanelViewProvider — команда «Получить версию из хранилища…» (issue #61)', () => {
   test('узел подключён к хранилищу — updateToVersion сразу после repository.update', () => {
-    const commands = createProvider().getNodeActions(catalogNode('Catalog-hasXml-repoConnected-repoUnlocked')).map((action) => action.command);
+    const commands = commandsOf(catalogNode('Catalog-hasXml-repoConnected-repoUnlocked'));
 
     const updateIndex = commands.indexOf('onecdev.repository.update');
     assert.ok(updateIndex >= 0, commands.join(', '));
@@ -51,7 +53,7 @@ suite('UniversalPanelViewProvider — команда «Получить верс
   });
 
   test('узел без подключения к хранилищу — ни получения, ни получения версии', () => {
-    const commands = createProvider().getNodeActions(catalogNode('Catalog-hasXml')).map((action) => action.command);
+    const commands = commandsOf(catalogNode('Catalog-hasXml'));
 
     assert.ok(!commands.includes('onecdev.repository.update'), commands.join(', '));
     assert.ok(!commands.includes('onecdev.repository.updateToVersion'), commands.join(', '));
@@ -76,7 +78,7 @@ suite('UniversalPanelViewProvider — статусы захватов (issue #6)
   ];
   for (const [title, node] of withRefresh) {
     test(`refreshLocks есть: ${title}`, () => {
-      const commands = createProvider().getNodeActions(node).map((action) => action.command);
+      const commands = commandsOf(node);
       assert.ok(commands.includes('onecdev.repository.refreshLocks'), commands.join(', '));
     });
   }
@@ -87,7 +89,7 @@ suite('UniversalPanelViewProvider — статусы захватов (issue #6)
   ];
   for (const [title, node] of withoutRefresh) {
     test(`refreshLocks нет: ${title}`, () => {
-      const commands = createProvider().getNodeActions(node).map((action) => action.command);
+      const commands = commandsOf(node);
       assert.ok(!commands.includes('onecdev.repository.refreshLocks'), commands.join(', '));
     });
   }
@@ -183,7 +185,7 @@ suite('UniversalPanelViewProvider — иконка захвата в храни�
   ];
   for (const [name, contextValue, present, absent] of menus) {
     test(`меню не меняется: ${name}`, () => {
-      const commands = createProvider().getNodeActions(catalogNode(contextValue)).map((action) => action.command);
+      const commands = commandsOf(catalogNode(contextValue));
       for (const command of present) {
         assert.ok(commands.includes(command), `${command} нет в ${commands.join(', ')}`);
       }
@@ -221,7 +223,7 @@ suite('UniversalPanelViewProvider — история хранилища (issue #
       const want = connected ? expected : 'none';
       test(`${name}, ${connected ? 'подключено' : 'не подключено'} → ${want}`, () => {
         const ctx = connected ? `${base}-repoConnected-repoUnlocked` : `${base}-repoDisconnected`;
-        const commands = createProvider().getNodeActions(node(kind, ctx, metaContext)).map((action) => action.command);
+        const commands = commandsOf(node(kind, ctx, metaContext));
         const actual = ['history', 'objectHistory'].filter((c) => commands.includes(`onecdev.repository.${c}`));
         assert.deepStrictEqual(actual, want === 'none' ? [] : [want], commands.join(', '));
       });

@@ -1,43 +1,24 @@
 import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import { MetadataNode } from '../../ui/tree/TreeNode';
 import type { NodeKind } from '../../ui/tree/TreeNodeModel';
 import { getObjectHandler } from '../../ui/tree/nodeBuilders';
-import { UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
+import { buildNodeMenu } from '../../ui/views/universal/nodeContextMenu';
+import { flattenMenu } from './support/universalPanelHarness';
 
 /**
  * Issue #188: в меню объекта метаданных самые частые действия — открыть модуль — идут первыми,
  * а справочные «Структура / Валидировать» (вместе с видовыми info/validate) и «Свойства» — последними.
  * Остальные действия сохраняют взаимный порядок. Меню корня конфигурации этим порядком не затрагивается.
- * Меню строит приватный `getNodeActions`; узлы — над настоящими XML из `example/2.21/src/cf`.
- * Доступ к приватному методу — через приведение типа: публичный путь (`resolveWebviewView`) требует
- * собранного webview и не даёт подставить узел с нужным контекстом.
+ * Проверяется порядок листьев меню с учётом групп и подменю.
  */
 
 const EXTENSION_ROOT = path.resolve(__dirname, '../../../');
 const CF_ROOT = path.join(EXTENSION_ROOT, 'example', '2.21', 'src', 'cf');
 
-type UniversalServices = ConstructorParameters<typeof UniversalPanelViewProvider>[1];
-
-interface NodeActionsApi {
-  getNodeActions(node: MetadataNode): readonly { command: string }[];
-}
-
-function createProvider(): NodeActionsApi {
-  const services = {
-    state: { get: () => undefined, update: () => Promise.resolve(), keys: () => [] },
-    treeProvider: new MetadataTreeProvider([], vscode.Uri.file(EXTENSION_ROOT), EXTENSION_ROOT),
-    setTreeMessage: () => undefined,
-    isProjectInitialized: () => true,
-    refreshActionsView: () => undefined,
-  } as unknown as UniversalServices;
-  return new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), services) as unknown as NodeActionsApi;
-}
-
 function actionsOf(node: MetadataNode): string[] {
-  return createProvider().getNodeActions(node).map((action) => action.command);
+  return flattenMenu(buildNodeMenu(node, { getEntries: () => [] })).map((action) => action.command);
 }
 
 function menu(nodeKind: NodeKind, relXml: string, contextValue: string): string[] {
@@ -63,14 +44,14 @@ function childOfKind(nodeKind: NodeKind): MetadataNode {
   return found;
 }
 
-suite('UniversalPanelViewProvider — порядок меню объекта метаданных (issue #188)', () => {
+suite('Навигатор — порядок меню объекта метаданных (issue #188)', () => {
   test('справочник в хранилище: модули сверху, хранилище посередине, «Структура/Валидировать/Свойства» в конце', () => {
     assert.deepStrictEqual(menu('Catalog', 'Catalogs/Контрагенты.xml', 'Catalog-hasXml-repoConnected-repoUnlocked'), [
       'onecdev.openObjectModule',
       'onecdev.openManagerModule',
-      'onecdev.help.add',
-      'onecdev.form.add',
       'onecdev.openXmlFile',
+      'onecdev.form.add',
+      'onecdev.help.add',
       'onecdev.repository.lock',
       'onecdev.repository.commit',
       'onecdev.repository.update',
@@ -86,9 +67,9 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
     assert.deepStrictEqual(menu('InformationRegister', 'InformationRegisters/КурсыВалют.xml', 'InformationRegister-hasXml'), [
       'onecdev.openManagerModule',
       'onecdev.openRecordSetModule',
-      'onecdev.help.add',
-      'onecdev.form.add',
       'onecdev.openXmlFile',
+      'onecdev.form.add',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.showProperties',
@@ -98,8 +79,8 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
   test('константа: модуль константы первым', () => {
     assert.deepStrictEqual(menu('Constant', 'Constants/ИспользоватьВозвраты.xml', 'Constant-hasXml'), [
       'onecdev.openConstantModule',
-      'onecdev.help.add',
       'onecdev.openXmlFile',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.showProperties',
@@ -109,8 +90,8 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
   test('общий модуль: «Открыть модуль» первым', () => {
     assert.deepStrictEqual(menu('CommonModule', 'CommonModules/GoogleПереводчик.xml', 'CommonModule-hasXml'), [
       'onecdev.openCommonModuleCode',
-      'onecdev.help.add',
       'onecdev.openXmlFile',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.showProperties',
@@ -130,8 +111,8 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
 
   test('подсистема: информация и обе валидации — в конечной группе перед «Свойства»', () => {
     assert.deepStrictEqual(menu('Subsystem', 'Subsystems/Закупки.xml', 'Subsystem-hasXml'), [
-      'onecdev.help.add',
       'onecdev.openXmlFile',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.subsystem.info',
@@ -157,8 +138,8 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
   test('общая форма: модуль формы первым, «Форма: структура/валидировать» — перед «Свойства»', () => {
     assert.deepStrictEqual(menu('CommonForm', 'CommonForms/АЛКОВводРеквизитовОП.xml', 'CommonForm-hasXml'), [
       'onecdev.openFormModule',
-      'onecdev.help.add',
       'onecdev.openXmlFile',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.form.info',
@@ -176,9 +157,9 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
     assert.deepStrictEqual(actionsOf(node), [
       'onecdev.openObjectModule',
       'onecdev.openManagerModule',
-      'onecdev.help.add',
-      'onecdev.form.add',
       'onecdev.openXmlFile',
+      'onecdev.form.add',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
     ]);
@@ -186,8 +167,8 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
 
   test('реквизит справочника: справочная группа и «Свойства» в конце', () => {
     assert.deepStrictEqual(actionsOf(childOfKind('Attribute')), [
-      'onecdev.help.add',
       'onecdev.openXmlFile',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.showProperties',
@@ -197,8 +178,8 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
   test('форма справочника: модуль формы (команда клика) первым', () => {
     assert.deepStrictEqual(actionsOf(childOfKind('Form')), [
       'onecdev.openFormModule',
-      'onecdev.help.add',
       'onecdev.openXmlFile',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.form.info',
@@ -223,8 +204,8 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
   test('команда справочника: модуль команды (команда клика) первым', () => {
     assert.deepStrictEqual(actionsOf(childOfKind('Command')), [
       'onecdev.openCommandModule',
-      'onecdev.help.add',
       'onecdev.openXmlFile',
+      'onecdev.help.add',
       'onecdev.metadata.info',
       'onecdev.metadata.validate',
       'onecdev.showProperties',
@@ -235,29 +216,4 @@ suite('UniversalPanelViewProvider — порядок меню объекта м�
     assert.deepStrictEqual(actionsOf(childOfKind('group-type')), []);
   });
 
-  test('корень конфигурации — порядок прежний: «Свойства» сразу за «Открыть XML», до команд хранилища', () => {
-    assert.deepStrictEqual(menu('configuration', 'Configuration.xml', 'configuration-hasXml-repoConnected'), [
-      'onecdev.configuration.info',
-      'onecdev.configuration.validate',
-      'onecdev.showConfigActions',
-      'onecdev.importConfigurationFromDb',
-      'onecdev.updateConfigurationInDb',
-      'onecdev.dumpConfigurationToCf',
-      'onecdev.loadConfigurationFromCf',
-      'onecdev.openXmlFile',
-      'onecdev.showProperties',
-      'onecdev.repository.create',
-      'onecdev.repository.refreshLocks',
-      'onecdev.repository.history',
-      'onecdev.repository.disconnect',
-      'onecdev.repository.addUser',
-      'onecdev.repository.copyUsers',
-      'onecdev.repository.dump',
-      'onecdev.repository.report',
-      'onecdev.repository.setLabel',
-      'onecdev.repository.commit',
-      'onecdev.repository.update',
-      'onecdev.repository.updateToVersion',
-    ]);
-  });
 });

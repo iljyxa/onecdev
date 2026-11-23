@@ -152,9 +152,10 @@ export interface MetaTypeDef {
 **`UniversalPanelViewProvider` (`src/ui/views/universal/`) — основной UI навигатора** (HTML/Vue-webview: дерево, поиск, контекстное меню, операции). Нативный `MetadataTreeProvider` (`ui/tree/`) существует только как источник данных (`treeProvider.getChildren()`); сам TreeView-виджет — атавизм и **не основной UI**.
 
 Следствия:
-- Контекстное меню узлов формируется в `UniversalPanelViewProvider.getNodeActions()` / `addModuleActions()`, **а не** через `package.json → contributes.menus`.
+- Контекстное меню узлов формируется в `ui/views/universal/nodeContextMenu.ts`, **а не** через `package.json → contributes.menus`: `collectNodeActions()` решает, какие пункты есть у узла, и относит каждый к секции; `NODE_MENU_LAYOUT` — единственная таблица порядка групп и подменю («База», «Файлы», «Хранилище», «Проверка»). Webview (`AppContextMenu.vue`) только рисует готовое дерево `{group, children}` из `TreeNodeActionDto`.
+- Новый пункт меню узла — `add(<секция>, …)` в `collectNodeActions`; новая группа или подменю — запись в `NODE_MENU_LAYOUT`, не правка шаблона webview.
 - Источник правды для команд узла — `META_TYPES.modules`, читаемый через `MODULE_SLOT_ACTIONS`.
-- Новая команда узла: добавить в `MODULE_SLOT_ACTIONS` (в `UniversalPanelViewProvider.ts`) + зарегистрировать в `CommandRegistry`. Правка `package.json → menus` — опциональна (для нативного TreeView).
+- Новая команда узла: добавить в `MODULE_SLOT_ACTIONS` (в `nodeContextMenu.ts`) + зарегистрировать в `CommandRegistry`. Правка `package.json → menus` — опциональна (для нативного TreeView).
 
 ### Webview (`src-ui/`)
 
@@ -216,8 +217,8 @@ Vue-приложения (сборка `vite.webview.config.ts`, проверк�
 11. **Не вешать синхронный I/O на getters, tooltip, decoration и hot path дерева.**
 12. **Не терять формат XML.** Любой редактор существующего XML сохраняет BOM и стиль переводов строк исходного файла (`writeTextFilePreservingBomAndEol`). **Ловушка:** в `originalContent` передаётся текст, прочитанный ДО замены (отдельная константа перед `replace`), а не уже изменённый — иначе эталон стиля берётся с результата, и сохранение BOM/EOL становится пустой операцией (прецедент — `CfeBorrowService`). Новый файл выгрузки пишется через `writeNewExportFile` (`infra/fs/NewExportFile.ts`) в формате платформы — BOM + CRLF, у XML без завершающего EOL (#165).
 13. **Справочники свойств не живут в UI** — только в `infra/xml/PropertySchema.ts` (или спец-реестре infra); UI рендерит готовое.
-14. **Команды контекстного меню не хардкодятся в `UniversalPanelViewProvider`** — `addModuleActions` читает `META_TYPES[kind].modules` через `MODULE_SLOT_ACTIONS`.
-15. **Нативный TreeView — не основной UI**; не дублировать логику меню в `package.json`, если она есть в `addModuleActions`.
+14. **Команды контекстного меню не хардкодятся в `UniversalPanelViewProvider`** — меню собирает `nodeContextMenu.ts`: пункты модулей — из `META_TYPES[kind].modules` через `MODULE_SLOT_ACTIONS`, раскладка — `NODE_MENU_LAYOUT`.
+15. **Нативный TreeView — не основной UI**; не дублировать логику меню в `package.json`, если она есть в `nodeContextMenu.ts`.
 16. **MCP-инструменты принимают только канон** (см. [mcp-paths.md](./mcp-paths.md)).
 17. **God-объектов быть не должно.** Порог-ориентир — **~800 строк** на файл производственного кода; превышение требует либо явного обоснования, либо декомпозиции. Дробить **по ответственности/домену, а не механически по строкам**. Каноничные приёмы: регистрация MCP-инструментов дробится по доменам (`src/ui/mcp/registration/*`, образец — `McpAddToolsRegistration`); диспетчер `switch (kind)` заменяется **таблицей** `Record<MetaKind, …>` — данные типа в `META_TYPES`, XML-литералы формата в спец-реестре `infra/` (параллельные словари вне `META_TYPES` запрещены, см. п.2); класс-фасад остаётся тонким, логика — в module-level функциях/подмодулях того же слоя. **Любое дробление XML-генератора обязано сохранять байт-в-байт выход** (BOM/EOL/порядок атрибутов/самозакрытие, см. п.12) и предваряться байт-golden-тестом; декомпозиция `MetadataXmlCreator`/`FormBuilders` без такого эталона — запрещена (идёт вслепую).
 18. **Внутри аренды `ConfigurationOperationGuard` (или любой другой эксклюзивной операции) уведомления показываются без `await`.** `await vscode.window.showInformationMessage(...)`/`showWarningMessage(...)` до `release()` держит guard занятым до закрытия нотификации пользователем — любая параллельная операция всё это время отбивается сообщением «уже выполняется», хотя фактически ничего не выполняется.
