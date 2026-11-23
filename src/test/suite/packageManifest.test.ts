@@ -121,6 +121,25 @@ suite('Package manifest', () => {
     assert.deepStrictEqual(lines.filter((line) => line.startsWith('!node_modules')), []);
   });
 
+  // release.yml берёт текст релиза из раздела `## [<версия>]` CHANGELOG.md: без раздела текущей версии
+  // выпуск по тегу упадёт уже после того, как тег поставлен.
+  test('CHANGELOG.md содержит непустой раздел версии из package.json', () => {
+    const { version } = readJson('package.json') as { version: string };
+    const lines = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf-8').split(/\r?\n/);
+    const start = lines.findIndex((line) => line.startsWith(`## [${version}]`));
+
+    assert.ok(start >= 0, `в CHANGELOG.md нет раздела «## [${version}]»`);
+    const end = lines.findIndex((line, index) => index > start && line.startsWith('## '));
+    const body = lines.slice(start + 1, end < 0 ? undefined : end).filter((line) => line.trim() !== '');
+    assert.ok(body.length > 0, `раздел «## [${version}]» CHANGELOG.md пуст`);
+  });
+
+  test('скрипт package собирает VSIX без node_modules', () => {
+    const manifest = readJson('package.json') as { scripts?: Record<string, string> };
+
+    assert.strictEqual(manifest.scripts?.package, 'vsce package --no-dependencies');
+  });
+
   test('прямые webview-импорты указаны как прямые зависимости', () => {
     const manifest = readJson('package.json') as { dependencies?: Record<string, string> };
 

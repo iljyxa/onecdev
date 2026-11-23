@@ -192,6 +192,12 @@ LSP-клиентом (`vscode-languageclient`) и локальным MCP-сер�
 - **strict TS + lint без warnings как gate перед публикацией.**
   **[совпадает с CLAUDE.md: `npm run compile` / `lint --max-warnings=0`]**
 - **Вести `CHANGELOG.md`** — Marketplace показывает его на странице расширения.
+  **Проект:** выпуск — по тегу `v<версия>` на merge-коммите в `main`: `.github/workflows/release.yml`
+  сверяет тег с `package.json`, собирает VSIX `npm run package` (`vsce package --no-dependencies`) и
+  создаёт GitHub Release с текстом раздела `## [<версия>]` из `CHANGELOG.md`; при старшей версии `0` —
+  pre-release. Раздел текущей версии в `CHANGELOG.md` проверяет `packageManifest.test.ts`, поэтому
+  подъём версии в `package.json` идёт в одном PR с разделом CHANGELOG. Тег ставится только с
+  подтверждения пользователя, как и merge в `main`.
 
 ---
 

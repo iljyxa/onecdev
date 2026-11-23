@@ -1,0 +1,82 @@
+# Выпуск по тегу v<версия>: сборка VSIX и GitHub Release с текстом из раздела CHANGELOG.md.
+# Тег ставится на merge-коммит в main после зелёного QA-гейта, поэтому тесты здесь не повторяются.
+name: Выпуск
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Тег и package.json расходятся — VSIX получит не ту версию, что в имени релиза.
+      - name: Версия тега совпадает с package.json
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v${version}" != "${TAG}" ]; then
+            echo "::error::Тег ${TAG} не совпадает с версией package.json ${version}"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      # Тот же раздел проверяет packageManifest.test.ts; пустой текст — ошибка, а не релиз без описания.
+      - name: Текст релиза из CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v header="## [${VERSION}]" '
+            index($0, header) == 1 { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > "${RUNNER_TEMP}/notes.md"
+          if ! grep -q '[^[:space:]]' "${RUNNER_TEMP}/notes.md"; then
+            echo "::error::В CHANGELOG.md нет раздела «## [${VERSION}]» или он пуст"
+            exit 1
+          fi
+
+      # --ignore-scripts: нативные аддоны ssh2 в VSIX не нужны — бандл самодостаточен.
+      - name: Зависимости
+        run: npm ci --ignore-scripts
+
+      # vscode:prepublish пересобирает dist/ с нуля, включая THIRD_PARTY_LICENSES.
+      - name: Сборка VSIX
+        run: npm run package
+
+      # Пока старшая версия 0 (и для версий с суффиксом вида -beta) — pre-release.
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          prerelease=()
+          case "${VERSION}" in
+            0.*|*-*) prerelease=(--prerelease) ;;
+          esac
+          gh release create "${TAG}" "onecdev-${VERSION}.vsix" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "onecdev ${VERSION}" \
+            --notes-file "${RUNNER_TEMP}/notes.md" \
+            --verify-tag \
+            "${prerelease[@]}"
