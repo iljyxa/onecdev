@@ -283,7 +283,7 @@ function canBorrow(node: MetadataNode, ctxValue: string, ctx: NodeMenuContext): 
   if (!node.xmlPath || /^(configuration|extension|extensions-root|group-)/.test(ctxValue)) {return false;}
   if (ctxValue.includes('-fromCfe') || ctxValue.includes('-repoEditRestricted')) {return false;}
   const entries = ctx.getEntries();
-  return entries.some((e) => e.kind === 'cfe') && isMainConf(node, entries);
+  return entries.some((e) => e.kind === 'cfe') && isMainConf(node.metaContext?.ownerObjectXmlPath ?? node.xmlPath, entries);
 }
 
 function canAddCfeInterceptor(node: MetadataNode, ctxValue: string): boolean {
@@ -297,8 +297,8 @@ function canAddCfeInterceptor(node: MetadataNode, ctxValue: string): boolean {
   return Boolean(def?.modules?.length);
 }
 
-function isMainConf(node: MetadataNode, entries: readonly ConfigEntry[]): boolean {
-  const src = node.metaContext?.ownerObjectXmlPath ?? node.xmlPath ?? '';
+/** Узел из основной конфигурации: ближайший охватывающий корень реестра — `cf`. */
+function isMainConf(src: string, entries: readonly ConfigEntry[]): boolean {
   const entry = entries
     .filter((e) => isInside(src, e.rootPath))
     .sort((a, b) => b.rootPath.length - a.rootPath.length)

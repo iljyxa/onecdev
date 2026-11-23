@@ -199,6 +199,35 @@ suite('Контекстное меню узла — группы и подмен
     assert.deepStrictEqual(topLevel(menu), ['onecdev.addMetadata']);
   });
 
+  test('собственная команда узла открытия — в группе «open» рядом с модулями', () => {
+    const node = makeNode('CommonModule', 'CommonModule-hasXml');
+    node.command = { command: 'onecdev.openCommonModuleCode', title: 'Открыть модуль' };
+    const open = menuOf(node).filter((item) => item.group === 'open').map((item) => item.command);
+    assert.deepStrictEqual(open, ['onecdev.showProperties', 'onecdev.openXmlFile', 'onecdev.openCommonModuleCode']);
+  });
+
+  test('форма: перехватчик в расширении, заимствование в основной конфигурации — по объекту-владельцу', () => {
+    const owner = { rootMetaKind: 'Catalog' as NodeKind, ownerObjectXmlPath: CATALOG_XML };
+    const formXml = path.join(CF_ROOT, 'Catalogs', 'Валюты', 'Forms', 'ФормаЭлемента.xml');
+    const form = (contextValue: string): MetadataNode => {
+      const node = new MetadataNode({ label: 'ФормаЭлемента', nodeKind: 'Form', xmlPath: formXml, metaContext: owner }, vscode.TreeItemCollapsibleState.None);
+      node.contextValue = contextValue;
+      return node;
+    };
+    const editOf = (node: MetadataNode): string[] => menuOf(node).filter((item) => item.group === 'edit').map((item) => item.command);
+    assert.deepStrictEqual(editOf(form('Form-hasXml-fromCfe')), ['onecdev.help.add', 'onecdev.cfe.addMethodInterceptor']);
+    assert.deepStrictEqual(editOf(form('Form-hasXml')), ['onecdev.help.add', 'onecdev.borrowToExtension']);
+  });
+
+  test('узел без contextValue: меню строится по модели узла, без хранилища', () => {
+    const node = makeNode('Catalog', 'Catalog-hasXml');
+    node.contextValue = undefined;
+    assert.deepStrictEqual(topLevel(menuOf(node)), [
+      'onecdev.showProperties', 'onecdev.openXmlFile', 'onecdev.openObjectModule', 'onecdev.openManagerModule',
+      'onecdev.form.add', 'onecdev.help.add', 'onecdev.borrowToExtension', '▸ Проверка',
+    ]);
+  });
+
   test('пункт-подменю не исполняется из webview: его id не проходит guard команд', () => {
     const menu = menuOf(makeNode('configuration', 'configuration-hasXml-repoConnected-repoUnlocked'));
     const allCommands = flattenMenu(menu).map((item) => item.command);
