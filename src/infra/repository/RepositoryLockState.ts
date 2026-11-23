@@ -466,7 +466,7 @@ export class RepositoryLockState {
   private save(state: RepositoryStateFile): void {
     this.revision += 1;
     const filePath = this.getStateFilePath();
-    mkdirInsideServiceDir(path.dirname(filePath));
+    mkdirInsideServiceDir(this.workspaceRoot, path.dirname(filePath));
     fs.writeFileSync(filePath, `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
     // Файл только что записан; mtime отсутствует лишь при гонке с внешним удалением.
     /* c8 ignore next */

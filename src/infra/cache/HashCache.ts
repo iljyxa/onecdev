@@ -93,7 +93,7 @@ export function createHashSnapshot(scopeKey: string, files: Record<string, strin
  */
 export function saveHashCache(projectRoot: string, snapshot: HashCacheSnapshot): void {
   const filePath = getCacheFilePath(projectRoot, snapshot.scopeKey);
-  mkdirInsideServiceDir(path.dirname(filePath));
+  mkdirInsideServiceDir(projectRoot, path.dirname(filePath));
   // Общий примитив temp+rename (infra/fs/AtomicFileWriter): прерывание записи
   // не должно оставить битый JSON в кэше. Собственной копии здесь нет
   // сознательно — их уже было две, и каждая следующая расходилась бы с общей.

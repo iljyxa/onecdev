@@ -146,7 +146,7 @@ function fingerprintMatches(saved: PartialFingerprint | undefined, current: Meta
 
 export function saveMetadataCache(projectRoot: string, snapshot: MetadataCacheSnapshot): void {
   const filePath = getMetadataCacheFilePath(projectRoot, snapshot.scopeKey);
-  mkdirInsideServiceDir(path.dirname(filePath));
+  mkdirInsideServiceDir(projectRoot, path.dirname(filePath));
   // Отпечаток пересчитываем здесь, в единой точке, уже ПОСЛЕ того как мутации ФС применены
   // (объект добавлен/переименован/удалён), чтобы updateMetadataCacheAfter* писали актуальное состояние.
   const persisted: MetadataCacheSnapshot = { ...snapshot, fingerprint: computeFingerprint(snapshot.rootPath) };

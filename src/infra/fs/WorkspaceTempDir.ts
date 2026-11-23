@@ -50,21 +50,25 @@ export function ensureWorkspaceServiceDirIgnored(workspaceRoot: string): boolean
 }
 
 /**
- * `mkdir -p` для каталогов внутри `.onecdev/`: служебный каталог создают разные писатели
- * (кэши, хранилище, агент, автономный сервер), и каждый, кто может создать его первым,
- * обязан сразу положить в него `.gitignore`. Путь вне служебного каталога (например,
- * каталог данных сервера, выбранный пользователем) создаётся как обычно.
+ * `mkdir -p` для каталогов служебного `.onecdev/` рабочей области: его создают разные
+ * писатели (кэши, хранилище, агент, автономный сервер), и каждый, кто может создать его
+ * первым, обязан сразу положить в него `.gitignore`. Служебный каталог берётся от
+ * `workspaceRoot`, а не ищется среди предков пути: чужой `.onecdev` выше рабочей области
+ * не наш. Путь вне служебного каталога создаётся как обычно.
+ *
+ * Сбой записи `.gitignore` не прерывает вызывающего: это побочный эффект, и запись кэша
+ * или состояния захватов из-за него теряться не должна; при следующей активации
+ * `ensureWorkspaceServiceDirIgnored` повторит попытку и запишет причину в журнал.
  */
-export function mkdirInsideServiceDir(dir: string): void {
+export function mkdirInsideServiceDir(workspaceRoot: string, dir: string): void {
   fs.mkdirSync(dir, { recursive: true });
-  for (let current = path.resolve(dir); ; current = path.dirname(current)) {
-    if (path.basename(current) === SERVICE_DIR_BASENAME) {
-      ensureServiceDirSelfIgnored(current);
-      return;
-    }
-    if (path.dirname(current) === current) {
-      return;
-    }
+  if (!isInsideWorkspaceServiceDir(workspaceRoot, dir)) {
+    return;
+  }
+  try {
+    ensureServiceDirSelfIgnored(getWorkspaceServiceRoot(workspaceRoot));
+  } catch {
+    // Причина попадёт в журнал активации — см. комментарий к функции.
   }
 }
 
@@ -110,7 +114,7 @@ export function getImportTempRoot(workspaceRoot: string): string {
 
 export function createImportTempDir(workspaceRoot: string, prefix: string): string {
   const tempParent = getImportTempRoot(workspaceRoot);
-  mkdirInsideServiceDir(tempParent);
+  mkdirInsideServiceDir(workspaceRoot, tempParent);
   return fs.mkdtempSync(path.join(tempParent, prefix));
 }
 

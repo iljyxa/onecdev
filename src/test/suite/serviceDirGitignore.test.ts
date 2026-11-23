@@ -34,7 +34,7 @@ suite('Служебный каталог .onecdev — самоигнориров
 
   test('создание вложенного каталога создаёт и .onecdev/.gitignore с *', () => {
     const dir = path.join(serviceDir, 'meta');
-    mkdirInsideServiceDir(dir);
+    mkdirInsideServiceDir(root, dir);
 
     assert.ok(fs.statSync(dir).isDirectory());
     assert.strictEqual(fs.readFileSync(ignoreFile, 'utf-8'), SERVICE_DIR_GITIGNORE_CONTENT);
@@ -42,7 +42,7 @@ suite('Служебный каталог .onecdev — самоигнориров
   });
 
   test('создание самого .onecdev тоже кладёт .gitignore', () => {
-    mkdirInsideServiceDir(serviceDir);
+    mkdirInsideServiceDir(root, serviceDir);
     assert.strictEqual(fs.readFileSync(ignoreFile, 'utf-8'), SERVICE_DIR_GITIGNORE_CONTENT);
   });
 
@@ -50,7 +50,7 @@ suite('Служебный каталог .onecdev — самоигнориров
     fs.mkdirSync(serviceDir);
     fs.writeFileSync(ignoreFile, 'своё\n', 'utf-8');
 
-    mkdirInsideServiceDir(path.join(serviceDir, 'cache'));
+    mkdirInsideServiceDir(root, path.join(serviceDir, 'cache'));
     assert.strictEqual(ensureServiceDirSelfIgnored(serviceDir), false);
     assert.strictEqual(ensureWorkspaceServiceDirIgnored(root), false);
 
@@ -59,10 +59,36 @@ suite('Служебный каталог .onecdev — самоигнориров
 
   test('каталог вне .onecdev создаётся без .gitignore', () => {
     const dir = path.join(root, 'server-data', 'db');
-    mkdirInsideServiceDir(dir);
+    mkdirInsideServiceDir(root, dir);
 
     assert.ok(fs.statSync(dir).isDirectory());
     assert.deepStrictEqual(fs.readdirSync(path.join(root, 'server-data')), ['db']);
+  });
+
+  test('чужой .onecdev выше рабочей области не получает .gitignore', () => {
+    const workspace = path.join(serviceDir, 'projects', 'demo');
+    const dir = path.join(workspace, 'src', 'cf');
+    mkdirInsideServiceDir(workspace, dir);
+
+    assert.ok(fs.statSync(dir).isDirectory());
+    assert.ok(!fs.existsSync(ignoreFile), 'предок с именем .onecdev — не служебный каталог этой рабочей области');
+  });
+
+  test('сбой записи .gitignore не прерывает создание каталога', function () {
+    // Запрет записи в .onecdev даёт настоящий EACCES; у администратора/на Windows
+    // права каталога его не ограничивают — проверять там нечего.
+    if (process.platform === 'win32' || process.getuid?.() === 0) {
+      this.skip();
+    }
+    const dir = path.join(serviceDir, 'meta');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.chmodSync(serviceDir, 0o555);
+    try {
+      assert.doesNotThrow(() => mkdirInsideServiceDir(root, dir));
+      assert.ok(!fs.existsSync(ignoreFile));
+    } finally {
+      fs.chmodSync(serviceDir, 0o755);
+    }
   });
 
   test('активация: существующий .onecdev без .gitignore получает его, повтор — без изменений', () => {
@@ -104,7 +130,7 @@ suite('Служебный каталог .onecdev — самоигнориров
 
   test('git без пользовательского .gitignore игнорирует содержимое .onecdev и сам .gitignore', () => {
     execFileSync('git', ['init', '-q'], { cwd: root });
-    mkdirInsideServiceDir(path.join(serviceDir, 'meta'));
+    mkdirInsideServiceDir(root, path.join(serviceDir, 'meta'));
     fs.writeFileSync(path.join(serviceDir, 'meta', 'x.json'), '{}', 'utf-8');
     fs.writeFileSync(path.join(root, 'Configuration.xml'), '<x/>', 'utf-8');
 

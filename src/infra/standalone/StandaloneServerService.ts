@@ -211,7 +211,7 @@ export class StandaloneServerService {
     const normalized = normalizeSettingsInput(input, this.getServerRoot());
     // Единственная точка, создающая каталог сервера: старт и журналы требуют сохранённых
     // настроек, поэтому `.onecdev/.gitignore` к ним уже лежит.
-    mkdirInsideServiceDir(this.getServerRoot());
+    mkdirInsideServiceDir(this.workspaceRoot, this.getServerRoot());
     fs.mkdirSync(normalized.dataPath, { recursive: true });
     fs.mkdirSync(normalized.databasePath, { recursive: true });
     fs.writeFileSync(this.getSettingsPath(), `${JSON.stringify(normalized, null, 2)}\n`, 'utf-8');
