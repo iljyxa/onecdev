@@ -109,7 +109,8 @@ domain ← никто;  infra ← domain;  ui ← domain, infra;  lsp ← infra 
   ТОЛЬКО одна запись в нём. **`MetaPathResolver`** — все пути XML и BSL-модулей. **`Container.bootstrap()`** —
   composition root, сервисы создаются только там.
 - **Основной UI — webview `UniversalPanelViewProvider`** (`ui/views/universal/`), а не нативный TreeView;
-  контекстное меню — `getNodeActions()`/`addModuleActions()` через `MODULE_SLOT_ACTIONS`, не `package.json`.
+  контекстное меню — `ui/views/universal/nodeContextMenu.ts` (пункты — `collectNodeActions`, группы и
+  подменю — `NODE_MENU_LAYOUT`, модули — `MODULE_SLOT_ACTIONS`), не `package.json`.
 - Генерация XML привязана к версии формата через ruleset (`infra/xml/format/`, текущий — 2.21).
 - Детали контрактов (поля `MetaTypeDef`, порядок bootstrap, webview) —
   [project-rules.md](./docs/project-rules.md#архитектура).

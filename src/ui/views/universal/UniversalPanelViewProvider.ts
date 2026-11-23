@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import type {
   GitMetadataStatusService,
@@ -6,8 +5,7 @@ import type {
   MetadataGitDecorationTarget,
 } from '../../../infra/git/GitMetadataStatusService';
 import type { StandaloneServerStatus } from '../../../infra/standalone';
-import { META_TYPES } from '../../../domain/MetaTypes';
-import { canShowRepositoryHistory } from '../../../infra/repository/history/RepositoryHistoryTarget';
+import { buildNodeMenu, type NodeMenuItemDto } from './nodeContextMenu';
 import { getIconUris } from '../../tree/presentation/icon';
 import { WebviewHtmlFactory } from '../webview/WebviewHtmlFactory';
 import { resolveWebviewLocalResourceRoots } from '../webview/webviewResourceRoots';
@@ -30,12 +28,7 @@ interface IconDto {
   readonly darkUri?: string;
 }
 
-interface TreeNodeActionDto {
-  readonly id: string;
-  readonly label: string;
-  readonly command: string;
-  readonly icon?: IconDto;
-}
+type TreeNodeActionDto = NodeMenuItemDto;
 
 interface TreeNodeStateIconDto {
   readonly title: string;
@@ -107,7 +100,7 @@ interface WebviewMessage {
   readonly payload?: unknown;
 }
 
-// ── Действия слотов модулей ──
+// ── Встроенные (inline) действия узла ──
 
 interface TreeAction {
   readonly command: string;
@@ -115,18 +108,6 @@ interface TreeAction {
   readonly icon: IconDto;
 }
 
-const MODULE_SLOT_ACTIONS: Partial<Record<string, { command: string; title: string; icon: IconDto }>> = {
-  Object:       { command: 'onecdev.openObjectModule',    title: 'Открыть модуль объекта',   icon: codicon('code') },
-  Manager:      { command: 'onecdev.openManagerModule',   title: 'Открыть модуль менеджера', icon: codicon('code') },
-  ValueManager: { command: 'onecdev.openConstantModule',  title: 'Открыть модуль константы', icon: codicon('code') },
-  RecordSet:    { command: 'onecdev.openRecordSetModule', title: 'Открыть модуль записи',    icon: codicon('code') },
-  Service:      { command: 'onecdev.openServiceModule',   title: 'Открыть модуль сервиса',   icon: codicon('code') },
-  CommonModule: { command: 'onecdev.openCommonModuleCode', title: 'Открыть модуль',          icon: codicon('code') },
-  CommonCommand:{ command: 'onecdev.openCommandModule',   title: 'Открыть модуль команды',   icon: codicon('code') },
-  CommonForm:   { command: 'onecdev.openFormModule',      title: 'Открыть модуль формы',     icon: codicon('code') },
-  ChildForm:    { command: 'onecdev.openFormModule',      title: 'Открыть модуль формы',     icon: codicon('code') },
-  ChildCommand: { command: 'onecdev.openCommandModule',   title: 'Открыть модуль команды',   icon: codicon('code') },
-};
 
 const FALLBACK_HTML =
   '<!DOCTYPE html><html lang="ru"><body style="font-family:var(--vscode-font-family);padding:12px">' +
@@ -522,10 +503,9 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     return 'unknown';
   }
 
-  /** Действия узла повторяют меню старой HTML-панели из main. */
+  /** Меню узла с группами и подменю — раскладка в `nodeContextMenu.ts` (#187). */
   private buildActions(node: MetadataNode): TreeNodeActionDto[] {
-    const raw = this.getNodeActions(node);
-    return raw.map((a) => ({ id: a.command, label: a.title, command: a.command, icon: a.icon }));
+    return buildNodeMenu(node, { getEntries: () => this.services.treeProvider.getEntries() });
   }
 
   private buildInlineActions(node: MetadataNode): TreeNodeActionDto[] {
@@ -765,186 +745,6 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       pid: status.pid ?? undefined,
       name: status.settings.name,
     };
-  }
-
-  // ═══════════════════════════════════════════════════════
-  // Ниже — методы из оригинального провайдера (логика действий)
-  // ═══════════════════════════════════════════════════════
-
-  private getNodeActions(node: MetadataNode): TreeAction[] {
-    const ctxValue = node.contextValue ?? '';
-    const actions: TreeAction[] = [];
-    const add = (command: string, title: string, icon: IconDto) => {
-      if (!actions.some((a) => a.command === command)) {actions.push({ command, title, icon });}
-    };
-
-    if (node.xmlPath && /^configuration-hasXml|^extension-hasXml/.test(ctxValue)) {
-      add('onecdev.configuration.info', 'Информация', codicon('info'));
-      add('onecdev.configuration.validate', 'Валидировать', codicon('check'));
-      add('onecdev.showConfigActions', 'Команды конфигурации/расширения', codicon('tools'));
-      add('onecdev.importConfigurationFromDb', 'Импортировать из базы', codicon('cloud-download'));
-      add('onecdev.updateConfigurationInDb', 'Обновить в базе', codicon('sync'));
-      add('onecdev.dumpConfigurationToCf', 'Выгрузить в файл', codicon('package'));
-      add('onecdev.loadConfigurationFromCf', 'Загрузить из файла', codicon('folder-opened'));
-    }
-    if (ctxValue.startsWith('extensions-root')) {
-      add('onecdev.connectExtension', 'Подключить расширение', codicon('plug'));
-      // Пакетные операции работают со ВСЕЙ базой, поэтому их место — узел-контейнер
-      // расширений, а не корень конфигурации и не конкретное расширение.
-      add('onecdev.dumpAllExtensionsToCfe', 'Выгрузить все расширения в файлы', codicon('archive'));
-      add('onecdev.loadAllExtensionsFromCfe', 'Загрузить все расширения из файлов', codicon('cloud-upload'));
-    }
-    if (ctxValue.startsWith('extension-hasXml')) {
-      add('onecdev.compileAndUpdateExtensionInDb', 'Полное обновление расширения в БД', codicon('cloud-upload'));
-      add('onecdev.cfe.analyzeExtension', 'Анализ расширения', codicon('inspect'));
-    }
-    if (this.canAddCfeInterceptor(node, ctxValue)) {
-      add('onecdev.cfe.addMethodInterceptor', 'Добавить перехватчик', codicon('symbol-method'));
-    }
-    if (this.canBorrow(node, ctxValue)) {
-      add('onecdev.borrowToExtension', 'Добавить в расширение', codicon('add'));
-    }
-    if (node.xmlPath) {
-      if (!/^(configuration|extension)-hasXml/.test(ctxValue)) {
-        add('onecdev.metadata.info', 'Структура объекта', codicon('info'));
-        add('onecdev.metadata.validate', 'Валидировать объект', codicon('check'));
-      }
-      if (node.nodeKind === 'Role') {
-        add('onecdev.role.info', 'Права роли', codicon('shield'));
-        add('onecdev.role.validate', 'Валидировать роль', codicon('verified'));
-      }
-      if (node.nodeKind === 'Subsystem') {
-        add('onecdev.subsystem.info', 'Информация о подсистеме', codicon('symbol-namespace'));
-        add('onecdev.subsystem.validate', 'Валидировать подсистему', codicon('verified'));
-        add('onecdev.interface.validate', 'Валидировать командный интерфейс', codicon('list-tree'));
-      }
-      if (node.nodeKind === 'Template' || node.nodeKind === 'CommonTemplate') {
-        add('onecdev.mxl.info', 'MXL: структура', codicon('table'));
-        add('onecdev.mxl.validate', 'MXL: валидировать', codicon('check'));
-        add('onecdev.skd.info', 'СКД: структура', codicon('symbol-structure'));
-        add('onecdev.skd.validate', 'СКД: валидировать', codicon('verified'));
-      }
-      if (node.nodeKind === 'Form' || node.nodeKind === 'CommonForm') {
-        add('onecdev.form.info', 'Форма: структура', codicon('symbol-structure'));
-        add('onecdev.form.validate', 'Форма: валидировать', codicon('verified'));
-      }
-      if (this.canAddHelp(node)) {
-        add('onecdev.help.add', 'Добавить справку', codicon('book'));
-      }
-      if (node.nodeKind !== 'Form' && node.nodeKind !== 'CommonForm' && this.canAddForm(node)) {
-        add('onecdev.form.add', 'Добавить форму', codicon('window'));
-      }
-      if (node.nodeKind === 'DataProcessor' || node.nodeKind === 'Report') {
-        add('onecdev.epf.bspInit', 'БСП: регистрация', codicon('symbol-key'));
-        add('onecdev.epf.bspAddCommand', 'БСП: добавить команду', codicon('add'));
-      }
-      add('onecdev.openXmlFile', 'Открыть XML', codicon('file-code'));
-    }
-    this.addModuleActions(node, add);
-    if (node.xmlPath && !node.hidePropertiesCommand) {
-      add('onecdev.showProperties', 'Свойства', codicon('list-unordered'));
-    }
-    if (node.addMetadataTarget) {
-      add('onecdev.addMetadata', 'Добавить', codicon('add'));
-    }
-    if (node.canRemoveMetadata) {
-      add('onecdev.removeMetadata', 'Удалить', codicon('trash'));
-    }
-    if (ctxValue.includes('-repoUnlocked')) {
-      add('onecdev.repository.lock', 'Захватить в хранилище', codicon('lock'));
-    }
-    if (ctxValue.includes('-repoLocked')) {
-      add('onecdev.repository.unlock', 'Освободить в хранилище', codicon('unlock'));
-    }
-    if (/^(configuration|extension)-hasXml/.test(ctxValue)) {
-      this.addRepoRootActions(ctxValue, add);
-    }
-    if (
-      ctxValue.includes('-repoConnected') &&
-      !ctxValue.startsWith('extensions-root') &&
-      !ctxValue.startsWith('group-common') &&
-      !ctxValue.startsWith('group-type')
-    ) {
-      add('onecdev.repository.commit', 'Поместить в хранилище', codicon('cloud-upload'));
-      add('onecdev.repository.update', 'Получить из хранилища', codicon('cloud-download'));
-      add('onecdev.repository.updateToVersion', 'Получить версию из хранилища…', codicon('history'));
-      if (!/^(configuration|extension)-/.test(ctxValue) && canShowRepositoryHistory(node)) {
-        add('onecdev.repository.objectHistory', 'История в хранилище', codicon('history'));
-      }
-    }
-    return actions;
-  }
-
-  private canAddHelp(node: MetadataNode): boolean {
-    return Boolean(node.xmlPath && !['configuration', 'extension', 'Role', 'Template', 'CommonTemplate'].includes(node.nodeKind));
-  }
-
-  private canAddForm(node: MetadataNode): boolean {
-    return Boolean(node.xmlPath && ['Document', 'Catalog', 'DataProcessor', 'Report', 'InformationRegister', 'AccumulationRegister', 'ChartOfAccounts', 'ChartOfCharacteristicTypes', 'ExchangePlan', 'BusinessProcess', 'Task'].includes(node.nodeKind));
-  }
-
-  private addModuleActions(node: MetadataNode, add: (command: string, title: string, icon: IconDto) => void): void {
-    if (!node.xmlPath) {return;}
-    if (node.command?.command) {
-      add(node.command.command, node.command.title, codicon('code'));
-    }
-    const def = (META_TYPES as Record<string, { modules?: readonly string[] } | undefined>)[node.nodeKind];
-    for (const slot of def?.modules ?? []) {
-      const action = MODULE_SLOT_ACTIONS[slot];
-      if (action) {add(action.command, action.title, action.icon);}
-    }
-  }
-
-  private canBorrow(node: MetadataNode, ctxValue: string): boolean {
-    if (!node.xmlPath || !this.services.treeProvider.getEntries().some((e) => e.kind === 'cfe')) {return false;}
-    return (
-      this.isMainConf(node) &&
-      !/^(configuration|extension|extensions-root|group-)/.test(ctxValue) &&
-      !ctxValue.includes('-fromCfe') &&
-      !ctxValue.includes('-repoEditRestricted')
-    );
-  }
-
-  private canAddCfeInterceptor(node: MetadataNode, ctxValue: string): boolean {
-    if (!node.xmlPath || ctxValue.includes('-repoEditRestricted') || !ctxValue.includes('-fromCfe')) {
-      return false;
-    }
-    if (node.nodeKind === 'Form') {
-      return true;
-    }
-    const def = (META_TYPES as Record<string, { modules?: readonly string[] } | undefined>)[node.nodeKind];
-    return Boolean(def?.modules?.length);
-  }
-
-  private isMainConf(node: MetadataNode): boolean {
-    const src = node.metaContext?.ownerObjectXmlPath ?? node.xmlPath;
-    if (!src) {return false;}
-    const entry = this.services.treeProvider.getEntries()
-      .filter((e) => this.isInside(src, e.rootPath))
-      .sort((a, b) => b.rootPath.length - a.rootPath.length)
-      .at(0);
-    return entry?.kind === 'cf';
-  }
-
-  private isInside(filePath: string, rootPath: string): boolean {
-    const rel = path.relative(path.resolve(rootPath), path.resolve(filePath));
-    return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
-  }
-
-  private addRepoRootActions(ctxValue: string, add: (command: string, title: string, icon: IconDto) => void): void {
-    if (ctxValue.includes('-repoDisconnected')) {
-      add('onecdev.repository.connect', 'Подключить к хранилищу', codicon('plug'));
-    }
-    add('onecdev.repository.create', 'Создать хранилище', codicon('database'));
-    if (!ctxValue.includes('-repoConnected')) {return;}
-    add('onecdev.repository.refreshLocks', 'Обновить статусы захватов', codicon('refresh'));
-    add('onecdev.repository.history', 'История хранилища', codicon('history'));
-    add('onecdev.repository.disconnect', 'Отключить от хранилища', codicon('debug-disconnect'));
-    add('onecdev.repository.addUser', 'Добавить пользователя хранилища', codicon('person-add'));
-    add('onecdev.repository.copyUsers', 'Скопировать пользователей', codicon('organization'));
-    add('onecdev.repository.dump', 'Выгрузить конфигурацию из хранилища', codicon('archive'));
-    add('onecdev.repository.report', 'Построить отчет по хранилищу', codicon('graph'));
-    add('onecdev.repository.setLabel', 'Установить метку версии', codicon('tag'));
   }
 
   private resolveGitStatus(node: MetadataNode): MetadataGitDecorationStatus | undefined {
