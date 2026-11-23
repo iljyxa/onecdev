@@ -34,6 +34,7 @@ interface HarnessOptions {
   readonly extension?: boolean;
   readonly repository?: boolean;
   readonly controller?: Partial<WorkingSetFilterControllerDeps>;
+  readonly afterScan?: () => Promise<void>;
 }
 
 async function createHarness(options: HarnessOptions = {}): Promise<Harness> {
@@ -53,8 +54,16 @@ async function createHarness(options: HarnessOptions = {}): Promise<Harness> {
     repositoryService
   );
   const logs: string[] = [];
+  const scanner = new UnloadedChangesScanner(ws.workspaceRoot);
   const controller = new WorkingSetFilterController({
-    scanner: new UnloadedChangesScanner(ws.workspaceRoot),
+    scanner: {
+      async scan(entry) {
+        const snapshot = await scanner.scan(entry);
+        await options.afterScan?.();
+        return snapshot;
+      },
+      refreshFiles: (current, files) => scanner.refreshFiles(current, files),
+    },
     treeProvider,
     repositoryService,
     onDidChangeStatus: () => undefined,
@@ -274,6 +283,34 @@ suite('#189 фильтр дерева «изменённые и захвачен
     await waitFor(() => !controller.getStatus().pending, 'полный пересчёт не завершился');
     const catalogs = child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники');
     assert.deepStrictEqual(labels(treeProvider, catalogs).sort(), ['Банки', 'Валюты', 'ПричиныВозврата', 'Склады']);
+  });
+
+  test('правка после снимка во время полного пересчёта попадает в дерево', async () => {
+    let snapshotReady = false;
+    let finishScan!: () => void;
+    const scanPaused = new Promise<void>((resolve) => { finishScan = resolve; });
+    harness = await createHarness({
+      afterScan: () => {
+        snapshotReady = true;
+        return scanPaused;
+      },
+    });
+    const { treeProvider, controller } = harness;
+    saveBaseline(harness);
+
+    const scan = controller.toggle();
+    try {
+      await waitFor(() => snapshotReady, 'снимок не готов');
+      const modulePath = cfFile(harness, ...OBJECT_MODULE);
+      edit(modulePath);
+      controller.notifyFileChanged(modulePath);
+      controller.flushFileChanges();
+    } finally {
+      finishScan();
+      await scan;
+    }
+    const catalogs = child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники');
+    assert.deepStrictEqual(labels(treeProvider, catalogs), ['ПричиныВозврата']);
   });
 
   test('расширение без службы хранилища; устаревший пересчёт отбрасывается', async () => {

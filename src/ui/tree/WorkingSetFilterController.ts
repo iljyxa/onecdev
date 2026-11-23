@@ -115,7 +115,13 @@ export class WorkingSetFilterController {
       }
     }
     this.pending = false;
-    this.applyIndex();
+    // За время обхода уже прочитанные файлы могли измениться.
+    this.clearFileTimer();
+    if (this.pendingFiles.size > 0) {
+      this.flushFileChanges();
+    } else {
+      this.applyIndex();
+    }
   }
 
   /** Событие файла выгрузки; пересчёт — пачкой после паузы. */
@@ -135,11 +141,11 @@ export class WorkingSetFilterController {
 
   /** Точечный пересчёт по накопленным событиям файлов. */
   flushFileChanges(): void {
-    const files = [...this.pendingFiles];
-    this.pendingFiles.clear();
-    if (!this.active || this.pending || files.length === 0) {
+    if (!this.active || this.pending || this.pendingFiles.size === 0) {
       return;
     }
+    const files = [...this.pendingFiles];
+    this.pendingFiles.clear();
     if (files.length > (this.deps.maxIncrementalFiles ?? DEFAULT_MAX_INCREMENTAL_FILES)) {
       void this.rescan();
       return;
