@@ -7,11 +7,39 @@ import RepositoryConnectionApp from './RepositoryConnectionApp.vue';
 /** Режим диалога: подключение или создание хранилища */
 export type ConnectionMode = 'connect' | 'create';
 
+/**
+ * Опция формы. Состав по режиму, подписи, подсказки и значения по умолчанию задаёт host
+ * (`infra/repository/RepositoryConnectionOptions.ts`); форма их только рисует.
+ */
+export type RepositoryOptionDto =
+  | {
+    readonly kind: 'flag';
+    readonly id: string;
+    readonly label: string;
+    readonly hint: string;
+    readonly defaultValue: boolean;
+  }
+  | {
+    readonly kind: 'rule';
+    readonly id: string;
+    readonly label: string;
+    readonly hint: string;
+    readonly defaultValue: string;
+    /** Флаг, без которого правило скрыто и не отправляется. */
+    readonly requires: string;
+  };
+
+export interface RepositoryConnectionFormDto {
+  readonly options: readonly RepositoryOptionDto[];
+  readonly supportRules: readonly { readonly value: string; readonly label: string }[];
+}
+
 /** Начальное состояние, переданное host-провайдером */
 export interface RepositoryConnectionState {
   readonly mode: ConnectionMode;
   readonly target: string;
   readonly initialBinding: RepositoryBindingDto | null;
+  readonly form: RepositoryConnectionFormDto;
 }
 
 /** DTO ранее сохранённых параметров подключения (без пароля) */

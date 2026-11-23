@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { computed, reactive, ref, onMounted, onUnmounted } from 'vue';
 import { MessageBus } from '@ui-shared/api/messageBus';
 import type { HostToUiMessage } from '@ui-shared/protocol/hostMessages';
-import type { RepositoryConnectionState, RepositoryBindingDto, ConnectionMode } from './main';
+import type { RepositoryConnectionState, ConnectionMode, RepositoryOptionDto } from './main';
 
 const props = defineProps<{
   initialState: RepositoryConnectionState | null;
@@ -19,12 +19,16 @@ const repoPasswordSet = ref(props.initialState?.initialBinding?.repoPasswordSet 
 const loading = ref(false);
 const error = ref('');
 
-const forceBindAlreadyBindedUser = ref(false);
-const forceReplaceCfg = ref(false);
-const allowConfigurationChanges = ref(false);
-const changesAllowedRule = ref('allow');
-const changesNotRecommendedRule = ref('dontAllow');
-const noBind = ref(false);
+// Опции текущего режима: набор, подписи и значения по умолчанию приходят от host (issues #184, #185).
+const options: readonly RepositoryOptionDto[] = props.initialState?.form.options ?? [];
+const supportRules = props.initialState?.form.supportRules ?? [];
+const values = reactive<Record<string, boolean | string>>(
+  Object.fromEntries(options.map((option) => [option.id, option.defaultValue]))
+);
+// Правило показывается и отправляется только при включённом флаге, от которого оно зависит.
+const visibleOptions = computed(() =>
+  options.filter((option) => option.kind === 'flag' || values[option.requires] === true)
+);
 
 function browseRepoPath(): void {
   props.messageBus.send({
@@ -50,12 +54,7 @@ function submit(): void {
     repoPath: repoPath.value,
     repoUser: repoUser.value,
     repoPassword: repoPassword.value,
-    forceBindAlreadyBindedUser: forceBindAlreadyBindedUser.value,
-    forceReplaceCfg: forceReplaceCfg.value,
-    allowConfigurationChanges: allowConfigurationChanges.value,
-    changesAllowedRule: changesAllowedRule.value,
-    changesNotRecommendedRule: changesNotRecommendedRule.value,
-    noBind: noBind.value,
+    ...Object.fromEntries(visibleOptions.value.map((option) => [option.id, values[option.id]])),
   };
 
   props.messageBus.send({
@@ -149,41 +148,32 @@ onUnmounted(() => {
       />
     </div>
 
-    <template v-if="mode === 'connect'">
+    <template v-if="options.length > 0">
       <vscode-divider></vscode-divider>
 
-      <vscode-checkbox :checked="forceBindAlreadyBindedUser" :disabled="loading" @change="(e: Event) => forceBindAlreadyBindedUser = (e.target as HTMLInputElement).checked">
-        Принудительно перепривязать пользователя хранилища
-      </vscode-checkbox>
-
-      <vscode-checkbox :checked="forceReplaceCfg" :disabled="loading" @change="(e: Event) => forceReplaceCfg = (e.target as HTMLInputElement).checked">
-        Принудительно заменить конфигурацию
-      </vscode-checkbox>
-
-      <vscode-checkbox :checked="allowConfigurationChanges" :disabled="loading" @change="(e: Event) => allowConfigurationChanges = (e.target as HTMLInputElement).checked">
-        Разрешить изменения конфигурации
-      </vscode-checkbox>
-
-      <vscode-checkbox :checked="noBind" :disabled="loading" @change="(e: Event) => noBind = (e.target as HTMLInputElement).checked">
-        Не привязывать проект к хранилищу
-      </vscode-checkbox>
-
-      <div class="form-field" v-if="allowConfigurationChanges">
-        <label class="field-label">Правило для разрешённых изменений</label>
-        <vscode-single-select :value="changesAllowedRule" :disabled="loading" @change="(e: Event) => changesAllowedRule = (e.target as HTMLSelectElement).value">
-          <vscode-option value="allow">Разрешить</vscode-option>
-          <vscode-option value="dontAllow">Не разрешать</vscode-option>
-          <vscode-option value="withWarning">С предупреждением</vscode-option>
-        </vscode-single-select>
-      </div>
-
-      <div class="form-field">
-        <label class="field-label">Правило для нерекомендуемых изменений</label>
-        <vscode-single-select :value="changesNotRecommendedRule" :disabled="loading" @change="(e: Event) => changesNotRecommendedRule = (e.target as HTMLSelectElement).value">
-          <vscode-option value="dontAllow">Не разрешать</vscode-option>
-          <vscode-option value="allow">Разрешить</vscode-option>
-          <vscode-option value="withWarning">С предупреждением</vscode-option>
-        </vscode-single-select>
+      <div v-for="option in visibleOptions" :key="option.id" class="form-option">
+        <vscode-checkbox
+          v-if="option.kind === 'flag'"
+          :checked="values[option.id] === true"
+          :disabled="loading"
+          :title="option.hint"
+          @change="(e: Event) => values[option.id] = (e.target as HTMLInputElement).checked"
+        >
+          {{ option.label }}
+        </vscode-checkbox>
+        <template v-else>
+          <label class="field-label" :for="option.id">{{ option.label }}</label>
+          <vscode-single-select
+            :id="option.id"
+            :value="values[option.id]"
+            :disabled="loading"
+            :title="option.hint"
+            @change="(e: Event) => values[option.id] = (e.target as HTMLSelectElement).value"
+          >
+            <vscode-option v-for="rule in supportRules" :key="rule.value" :value="rule.value">{{ rule.label }}</vscode-option>
+          </vscode-single-select>
+        </template>
+        <p class="option-hint">{{ option.hint }}</p>
       </div>
     </template>
 
@@ -191,7 +181,7 @@ onUnmounted(() => {
 
     <div class="form-actions">
       <vscode-button @click="submit" :disabled="loading">
-        {{ loading ? 'Подключение...' : mode === 'connect' ? 'Подключиться' : 'Создать' }}
+        {{ loading ? (mode === 'connect' ? 'Подключение...' : 'Создание...') : mode === 'connect' ? 'Подключиться' : 'Создать' }}
       </vscode-button>
       <vscode-button appearance="secondary" @click="cancel" :disabled="loading">
         Отмена
@@ -257,7 +247,24 @@ onUnmounted(() => {
   outline: 1px solid var(--vscode-focusBorder);
 }
 
+.form-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-hint {
+  margin: 0 0 0 26px;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.form-option vscode-single-select + .option-hint {
+  margin-left: 0;
+}
+
 .form-error {
+  white-space: pre-line;
   background: var(--vscode-inputValidation-errorBackground);
   border: 1px solid var(--vscode-inputValidation-errorBorder);
   color: var(--vscode-errorForeground);

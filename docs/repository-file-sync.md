@@ -450,6 +450,20 @@ VRS `bad-request` → protocol).
 («Конфигурация не пустая!», `isRepositoryBindNotEmptyFailure`) даёт подсказку `describeBindFailureHint`
 через `failureHint` у `runRepositoryCliCommand` — повторить с `-ForceReplaceCfg`.
 
+**Форма подключения и создания хранилища** (issues #184, #185). `RepositoryConnectionViewProvider.show(mode,
+target, initialBinding, onSubmit)` не закрывает форму по отправке: данные уходят в `onSubmit`
+(`ui/commands/repository/RepositoryConnectionCommands.ts` — проверка полей и `runRepositoryCliCommand` с
+`reportFailure`), неуспех возвращается в форму сообщением `{ type: 'error' }` с сохранёнными полями, форма
+закрывается только успехом, «Отменой» или закрытием вкладки. Закрытая во время операции вкладка операцию не
+прерывает: `show()` разрешается её исходом, ошибка уходит уведомлением. `completeRepositoryBind` идёт уже
+после закрытия формы. Состав опций по режиму, подписи, подсказки, значения по умолчанию и аргументы
+Конфигуратора — `infra/repository/RepositoryConnectionOptions.ts`: в `connect` только
+`-ForceBindAlreadyBindedUser`/`-ForceReplaceCfg` (оба включены по умолчанию — обычный сценарий —
+переподключение), в `create` — `-AllowConfigurationChanges`, правила поддержки (только вместе с ним) и
+`-NoBind`. Правила — значения платформы `ObjectNotEditable`/`ObjectIsEditableSupportEnabled`/
+`ObjectNotSupported`: прежние `allow`/`dontAllow` для конфигурации на поддержке 8.5.1 и 8.3.27 отвергают
+(код 1, хранилище не создаётся).
+
 **Отметка чужого захвата по отказу захвата.** При `failed` в потоке `lock` (`RepositoryLockSync.ts`) строки
 вида `Объект захвачен для редактирования другим пользователем: <Имя> (<Пользователь>)` из вывода `/Out`
 (`RepositoryLockOutputParser.ts`) помечают объект как «захвачен другим: `<пользователь>`» — **только для
