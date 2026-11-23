@@ -2,7 +2,7 @@
   "name": "onecdev",
   "displayName": "onecdev — разработка на 1С:Предприятие",
   "description": "Редактор конфигураций и расширений 1С:Предприятие — навигация по метаданным, LSP для BSL, работа с XML-выгрузкой",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "iljyxa",
   "license": "GPL-3.0-only",
   "icon": "icon.png",
@@ -947,7 +947,8 @@
     "coverage:changed": "node scripts/patch-coverage.mjs",
     "pretest": "npm run typecheck && npm run build:node && npm run build:webview && npm run test:compile",
     "pretest:e2e": "npm run build && npm run test:compile",
-    "test:e2e": "node ./out/test/e2e/runE2ETests.js"
+    "test:e2e": "node ./out/test/e2e/runE2ETests.js",
+    "package": "vsce package --no-dependencies"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -958,6 +959,7 @@
     "@types/vscode": "^1.85.0",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.1.1",
     "acorn": "^8.18.0",
     "c8": "^11.0.0",
     "eslint": "^10.3.0",
