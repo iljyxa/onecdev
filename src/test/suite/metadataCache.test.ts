@@ -7,13 +7,14 @@ import {
   buildMetadataCacheScopeKey,
   buildMetadataCacheSnapshot,
   type MetadataCacheNode,
+  loadMetadataCache,
   saveMetadataCache,
   updateMetadataCacheForChangedFiles,
 } from '../../infra/cache/MetadataCache';
 import { getObjectLocationFromXml } from '../../infra/fs/MetaPathResolver';
 import { parseConfigXml } from '../../infra/xml';
 import { MetadataXmlCreator } from '../../infra/xml/MetadataXmlCreator';
-import { skipWithoutCorpus } from './support/corpus';
+import { EXAMPLE_GENERATIONS, skipWithoutCorpus } from './support/corpus';
 
 const EXAMPLE_CFE_ROOT = path.resolve(__dirname, '../../../example/2.21/src/cfe');
 const EXAMPLE_CF = path.resolve(__dirname, '../../../example/2.20/src/cf');
@@ -40,6 +41,41 @@ suite('MetadataCache', () => {
   suiteSetup(function () {
     skipWithoutCorpus(this);
   });
+
+  for (const [generation, rootPath] of Object.entries(EXAMPLE_GENERATIONS)) {
+    test(`Компактный снимок восстанавливает исходное дерево ${generation}`, function () {
+      skipWithoutCorpus(this, path.join(rootPath, 'Configuration.xml'));
+      const entry: ConfigEntry = { rootPath, kind: generation === 'cfe21' ? 'cfe' : 'cf' };
+      const configXml = path.join(rootPath, 'Configuration.xml');
+      const scope = buildMetadataCacheScopeKey(entry, parseConfigXml(configXml));
+      const snapshot = buildMetadataCacheSnapshot(scope, entry);
+      const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-compact-'));
+      try {
+        saveMetadataCache(projectRoot, snapshot);
+        const cacheDir = path.join(projectRoot, '.onecdev', 'meta');
+        const file = path.join(cacheDir, fs.readdirSync(cacheDir)[0]);
+        const json = fs.readFileSync(file, 'utf8');
+        const bytes = Buffer.byteLength(json);
+        const { root } = JSON.parse(json) as { root: unknown };
+        const storedTree = JSON.stringify(root);
+        for (const field of ['gitDecorationTarget', 'addMetadataTarget', 'metaContext', 'decorationPath']) {
+          assert.ok(!storedTree.includes(`"${field}":`), field);
+        }
+        assert.ok(!storedTree.includes(JSON.stringify(rootPath).slice(1, -1)));
+        const count = (node: MetadataCacheNode): number => 1 + node.children.reduce((n, child) => n + count(child), 0);
+        assert.ok(bytes <= count(snapshot.root) * 173, `${String(bytes)} байт на ${String(count(snapshot.root))} узлов`);
+        assert.ok(bytes * 3 <= Buffer.byteLength(JSON.stringify(snapshot)));
+        assert.deepStrictEqual(loadMetadataCache(projectRoot, scope), snapshot);
+        fs.writeFileSync(file, JSON.stringify({ ...snapshot, schemaVersion: 17 }));
+        assert.strictEqual(loadMetadataCache(projectRoot, scope), null);
+        const rebuilt = updateMetadataCacheForChangedFiles(projectRoot, entry, [configXml]);
+        assert.strictEqual(rebuilt?.updatedPartially, false);
+        assert.deepStrictEqual(loadMetadataCache(projectRoot, scope)?.root, snapshot.root);
+      } finally {
+        fs.rmSync(projectRoot, { recursive: true, force: true });
+      }
+    });
+  }
 
   test('Для объектов с плоским XML Git-декорация учитывает XML и каталог объекта', function () {
     // Проверяем инвариант на любой доступной конфигурации: либо CFE из example/2.21/src/cfe,
