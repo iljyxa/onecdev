@@ -7,6 +7,7 @@ import { findConfigurations } from '../../infra/fs/ConfigLocator';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import { formatRepositoryLockTitle } from '../../ui/tree/repositoryLockTitle';
 import type { MetadataNode } from '../../ui/tree/TreeNode';
+import { REPOSITORY_FOREIGN_LOCK_ICON, UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
 import { createLockWorkspace, lockFixturePath, must, type LockWorkspace } from './support/repositoryLockFixtures';
 
 /**
@@ -166,5 +167,67 @@ suite('MetadataTreeProvider — чужие захваты с сервера (iss
       assert.ok(String(item.contextValue).includes('-repoDisconnected'), String(item.contextValue));
       assert.ok(!String(item.contextValue).includes('-repoForeignLocked'), String(item.contextValue));
     }
+  });
+});
+
+/**
+ * Issue #186: иконки панели из узлов, декорированных настоящим опросом хранилища, — связка
+ * «декорация дерева → DTO панели» целиком. asWebviewUri тождественный: настоящего webview
+ * в тестовом окружении нет, а проверяется выбор пары SVG, а не преобразование URI.
+ */
+suite('UniversalPanelViewProvider — иконки захвата по реальной декорации дерева (issue #186)', () => {
+  let harness: TreeHarness;
+  setup(async () => {
+    harness = await createTree();
+    assert.strictEqual((await harness.ws.service.lockStatus.syncTarget(harness.ws.target)).status, 'synced');
+  });
+  teardown(() => harness.dispose());
+
+  interface StateIcons { buildStateIcons(node: MetadataNode): { title: string; icon: unknown }[] }
+  function panel(): StateIcons {
+    const services = {
+      state: { get: () => undefined, update: () => Promise.resolve(), keys: () => [] },
+      treeProvider: harness.treeProvider,
+      setTreeMessage: () => undefined,
+      isProjectInitialized: () => true,
+      refreshActionsView: () => undefined,
+    } as unknown as ConstructorParameters<typeof UniversalPanelViewProvider>[1];
+    const instance = new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), services) as unknown as StateIcons & { view: unknown };
+    instance.view = { webview: { asWebviewUri: (uri: vscode.Uri) => uri } };
+    return instance;
+  }
+
+  function svg(theme: 'light' | 'dark'): string {
+    return vscode.Uri.joinPath(vscode.Uri.file(EXTENSION_ROOT), 'src', 'icons', theme, `${REPOSITORY_FOREIGN_LOCK_ICON}.svg`).toString();
+  }
+
+  function icons(...labels: string[]): { title: string; icon: unknown }[] {
+    return panel().buildStateIcons(decorate(harness.treeProvider, findPath(harness.treeProvider, ...labels)));
+  }
+
+  test('чужой захват (Банки) — одна иконка «замок с человеком» обеих тем и подсказка держателя', () => {
+    const result = icons('ТорговыйУчет', 'Справочники', 'Банки');
+    assert.strictEqual(result.length, 1, JSON.stringify(result));
+    assert.deepStrictEqual(result[0].icon, { kind: 'asset', lightUri: svg('light'), darkUri: svg('dark') });
+    assert.match(result[0].title, /^Захвачено: Petrov, /);
+  });
+
+  test('свой вне проекта (Контрагенты) — закрытый замок; после своего захвата — открытый', async () => {
+    const before = icons('ТорговыйУчет', 'Справочники', 'Контрагенты');
+    assert.strictEqual(before.length, 1, JSON.stringify(before));
+    assert.deepStrictEqual(before[0].icon, { kind: 'codicon', name: 'lock' });
+    assert.match(before[0].title, /вне проекта.*захватите объект, чтобы редактировать$/);
+
+    const { ws } = harness;
+    ws.service.lockState.applyLock(ws.target, { anchor: 'Справочник.Контрагенты', members: ['Справочник.Контрагенты'], mode: 'object' });
+    await ws.service.lockStatus.syncTarget(ws.target);
+    const after = icons('ТорговыйУчет', 'Справочники', 'Контрагенты');
+    assert.strictEqual(after.length, 1, JSON.stringify(after));
+    assert.deepStrictEqual(after[0].icon, { kind: 'codicon', name: 'unlock' });
+    assert.match(after[0].title, /^Захвачено: Admin, /);
+  });
+
+  test('группа «Справочники» (цель добавления в корень) — без иконки хранилища', () => {
+    assert.deepStrictEqual(icons('ТорговыйУчет', 'Справочники'), []);
   });
 });
