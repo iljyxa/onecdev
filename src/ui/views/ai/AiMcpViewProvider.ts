@@ -40,7 +40,9 @@ export interface AiMcpSnapshot {
   };
 }
 
+/** Зеркало `AiMcpUiMessage` (`src-ui/shared/types/ai.ts`): разные tsconfig-проекты. */
 type AiMcpViewMessage =
+  | { readonly type: 'ready' }
   | { readonly type: 'refresh' }
   | { readonly type: 'save'; readonly settings: AiMcpSaveSettings }
   | { readonly type: 'startExtensionMcp' }
@@ -235,7 +237,11 @@ export class AiMcpViewProvider implements vscode.Disposable {
         this.postState();
         return;
       }
-      await vscode.commands.executeCommand('onecdev.installAiSkills');
+      if (message.type === 'installAiSkills') {
+        await vscode.commands.executeCommand('onecdev.installAiSkills');
+      }
+      // `ready` после монтирования и неизвестные типы игнорируются: раньше они попадали сюда
+      // и каждое открытие панели запускало установку ИИ-ролей (issue #182).
     } catch (error) {
       const text = error instanceof Error ? error.message : String(error);
       this.outputChannel.appendLine(`[ai-mcp][error] ${text}`);

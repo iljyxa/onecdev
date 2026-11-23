@@ -232,7 +232,7 @@ function refresh(): void {
   props.messageBus.send({ type: 'refresh' });
 }
 
-function send(type: Exclude<AiMcpUiMessage['type'], 'save' | 'refresh'>): void {
+function send(type: Exclude<AiMcpUiMessage['type'], 'ready' | 'save' | 'refresh'>): void {
   props.messageBus.send({ type });
 }
 

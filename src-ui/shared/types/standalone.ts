@@ -36,7 +36,9 @@ export interface SaveStandaloneServerSettingsInput {
   readonly scheduleJobs: StandaloneServerSwitch;
 }
 
+/** `ready` шлёт `main.ts` после монтирования; хост его не обрабатывает как действие панели (issue #182). */
 export type StandaloneServerUiMessage =
+  | { readonly type: 'ready' }
   | { readonly type: 'refresh' }
   | ({ readonly type: 'save' } & SaveStandaloneServerSettingsInput);
 

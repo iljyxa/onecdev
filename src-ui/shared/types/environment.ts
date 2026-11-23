@@ -35,7 +35,9 @@ export interface SaveProjectEnvironmentInput {
   readonly dbPassword: string;
 }
 
+/** `ready` шлёт `main.ts` после монтирования; хост его не обрабатывает как действие панели (issue #182). */
 export type ProjectEnvironmentUiMessage =
+  | { readonly type: 'ready' }
   | { readonly type: 'refresh' }
   | ({ readonly type: 'save' } & SaveProjectEnvironmentInput);
 

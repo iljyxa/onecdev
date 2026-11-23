@@ -81,7 +81,9 @@ export interface AiMcpSnapshot {
   };
 }
 
+/** `ready` шлёт `main.ts` после монтирования; хост его не обрабатывает как действие панели (issue #182). */
 export type AiMcpUiMessage =
+  | { readonly type: 'ready' }
   | { readonly type: 'refresh' }
   | { readonly type: 'save'; readonly settings: AiMcpSaveSettings }
   | { readonly type: 'startExtensionMcp' }
