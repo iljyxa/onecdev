@@ -23,8 +23,8 @@
   см. [architecture.md](../architecture.md#паттерн-бинарный-обмен-cfcfe-через-пакетный-конфигуратор-dumpcfgloadcfg))
   → тонкая UI-обёртка `ui/commands/ext/CfFileCommandRunner.ts` (переиспользует
   `resolveConnectionFromSettings`/`runInternalCliCommand` из `ExtensionCommandRunner`, как импорт/
-  обновление) → диалоги в `ui/commands/ext/CfFileCommands.ts` + пункт в `getNodeActions` (не
-  `addModuleActions` — это действие корневого узла конфигурации/расширения, а не слот модуля) →
+  обновление) → диалоги в `ui/commands/ext/CfFileCommands.ts` + пункт в `collectNodeActions` (`nodeContextMenu.ts`, секция `db`/`file`; не
+  `MODULE_SLOT_ACTIONS` — это действие корневого узла конфигурации/расширения, а не слот модуля) →
   MCP-инструмент в `McpConfigLifecycleTools.ts`, зовущий ТОТ ЖЕ `CfFileCommandRunner`. Любая мутирующая
   операция такого рода берёт общий `ConfigurationOperationGuard` (`services.configurationOperationGuard`,
   см. рецепт «Новая операция, запускающая Конфигуратор…») — она работает с той же базой, что импорт/обновление конфигураций,

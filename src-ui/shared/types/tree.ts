@@ -6,13 +6,19 @@ export type OwnershipKind = 'own' | 'borrowed' | 'unknown';
 /** Режим поддержки объекта */
 export type SupportMode = 'none' | 'editable' | 'locked' | 'removed';
 
-/** Действие, доступное для узла дерева */
+/**
+ * Действие, доступное для узла дерева. Раскладку меню задаёт host (`nodeContextMenu.ts`):
+ * соседние пункты с разной `group` разделяются линией, пункт с `children` — подменю
+ * (его `command` пустой, выбрать можно только лист).
+ */
 export interface TreeNodeActionDto {
   readonly id: string;
   readonly label: string;
   readonly icon?: IconDto;
   readonly command: string;
   readonly enabled?: boolean;
+  readonly group?: string;
+  readonly children?: readonly TreeNodeActionDto[];
 }
 
 /** Служебная иконка состояния узла: поддержка, хранилище, ограничения */

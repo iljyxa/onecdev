@@ -2,10 +2,10 @@
  * Новое требование пользователя: пункты меню выгрузки/загрузки CF-файла
  * должны быть в контекстном меню КОРНЕВОГО узла конфигурации/расширения, а не
  * только доступны из палитры команд. Контекстное меню в этом проекте строится
- * в `UniversalPanelViewProvider.getNodeActions()` (приватный метод), а НЕ через
+ * в `nodeContextMenu.ts` (через приватный `UniversalPanelViewProvider.buildActions`), а НЕ через
  * `package.json → contributes.menus` (запрет №14 CLAUDE.md).
  *
- * `getNodeActions` — приватный метод, поэтому дёргаем его через ЕДИНСТВЕННЫЙ
+ * Меню узла собирается приватно, поэтому дёргаем его через ЕДИНСТВЕННЫЙ
  * публичный путь, которым он реально исполняется: `resolveWebviewView`
  * (реальный `WebviewHtmlFactory`, читающий собранный `dist/ui/manifest.json`)
  * встраивает начальное состояние дерева (`rootNodes[].actions`) в HTML;
@@ -57,6 +57,12 @@ interface ActionDto {
   readonly label: string;
   readonly command: string;
   readonly icon?: { readonly kind: string; readonly name?: string };
+  readonly children?: readonly ActionDto[];
+}
+
+/** Листья меню в порядке показа: подменю раскрываются на месте (#187). */
+function leaves(actions: readonly ActionDto[]): ActionDto[] {
+  return actions.flatMap((action) => (action.children ? leaves(action.children) : [action]));
 }
 
 interface TreeNodeDtoLike {
@@ -137,7 +143,7 @@ function findChildrenLoaded(posted: readonly unknown[], nodeId: string): Childre
 }
 
 function actionCommands(node: TreeNodeDtoLike): string[] {
-  return node.actions.map((a) => a.command);
+  return leaves(node.actions).map((a) => a.command);
 }
 
 suite('UniversalPanelViewProvider — пункты меню CF-файла в контекстном меню корня (новое требование)', () => {
@@ -216,8 +222,8 @@ suite('UniversalPanelViewProvider — пункты меню CF-файла в к�
     const configRoot = initialState.state.rootNodes.find((n) => n.kind === 'configuration');
     assert.ok(configRoot, `в корнях дерева не найден узел kind==='configuration': ${JSON.stringify(initialState.state.rootNodes)}`);
 
-    const dumpAction = configRoot.actions.find((a) => a.command === DUMP_COMMAND_ID);
-    const loadAction = configRoot.actions.find((a) => a.command === LOAD_COMMAND_ID);
+    const dumpAction = leaves(configRoot.actions).find((a) => a.command === DUMP_COMMAND_ID);
+    const loadAction = leaves(configRoot.actions).find((a) => a.command === LOAD_COMMAND_ID);
     assert.ok(dumpAction, `узел конфигурации должен получить пункт меню ${DUMP_COMMAND_ID}, реально: ${JSON.stringify(actionCommands(configRoot))}`);
     assert.ok(loadAction, `узел конфигурации должен получить пункт меню ${LOAD_COMMAND_ID}, реально: ${JSON.stringify(actionCommands(configRoot))}`);
     assert.ok(dumpAction.label.trim().length > 0, 'у пункта выгрузки должен быть непустой заголовок');
@@ -239,8 +245,8 @@ suite('UniversalPanelViewProvider — пункты меню CF-файла в к�
     const extensionNode = childrenMsg.children.find((c) => c.kind === 'extension');
     assert.ok(extensionNode, `среди детей контейнера расширений не найден узел kind==='extension': ${JSON.stringify(childrenMsg.children)}`);
 
-    const dumpAction = extensionNode.actions.find((a) => a.command === DUMP_COMMAND_ID);
-    const loadAction = extensionNode.actions.find((a) => a.command === LOAD_COMMAND_ID);
+    const dumpAction = leaves(extensionNode.actions).find((a) => a.command === DUMP_COMMAND_ID);
+    const loadAction = leaves(extensionNode.actions).find((a) => a.command === LOAD_COMMAND_ID);
     assert.ok(dumpAction, `узел расширения должен получить пункт меню ${DUMP_COMMAND_ID}, реально: ${JSON.stringify(actionCommands(extensionNode))}`);
     assert.ok(loadAction, `узел расширения должен получить пункт меню ${LOAD_COMMAND_ID}, реально: ${JSON.stringify(actionCommands(extensionNode))}`);
     assert.ok(dumpAction.label.trim().length > 0, 'у пункта выгрузки должен быть непустой заголовок');

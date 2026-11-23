@@ -145,7 +145,7 @@ LSP-клиентом (`vscode-languageclient`) и локальным MCP-сер�
   **[совпадает с CLAUDE.md: запрет №3 + `CommandRegistry`]**
 
 > Примечание для onecdev: основной UI — webview `UniversalPanelViewProvider`, контекстное меню узлов
-> формируется в коде (`getNodeActions`/`MODULE_SLOT_ACTIONS`), а не через `contributes.menus`. См.
+> формируется в коде (`nodeContextMenu.ts`: `collectNodeActions`/`NODE_MENU_LAYOUT`/`MODULE_SLOT_ACTIONS`), а не через `contributes.menus`. См.
 > `CLAUDE.md` (раздел про основной UI). Правила выше про `contributes` применяются к нативному TreeView.
 
 ---

@@ -1,6 +1,6 @@
 /**
  * Обвязка для тестов контекстного меню `UniversalPanelViewProvider`
- * (`getNodeActions` — приватный метод, поэтому он дёргается через единственный
+ * (меню узла собирается приватно, поэтому оно снимается через единственный
  * публичный путь: `resolveWebviewView` встраивает начальное состояние дерева
  * (`rootNodes[].actions`) в HTML, а дочерние узлы приходят сообщением
  * `childrenLoaded` — то же самое, что делает `universalPanelCfFileMenu.test.ts`).
@@ -32,6 +32,13 @@ export interface ActionDto {
   readonly label: string;
   readonly command: string;
   readonly icon?: { readonly kind: string; readonly name?: string };
+  readonly group?: string;
+  readonly children?: readonly ActionDto[];
+}
+
+/** Листья меню узла в порядке показа: подменю раскрываются на месте (#187). */
+export function flattenMenu(actions: readonly ActionDto[]): ActionDto[] {
+  return actions.flatMap((action) => (action.children ? flattenMenu(action.children) : [action]));
 }
 
 export interface TreeNodeDtoLike {
@@ -54,6 +61,8 @@ interface ChildrenLoadedMessage {
 
 export interface UniversalPanelFixture {
   readonly rootNodes: readonly TreeNodeDtoLike[];
+  /** Сообщение webview → host (как `MessageBus.send`). */
+  send(message: unknown): void;
   /** Загружает дочерние узлы через протокол webview и возвращает их (как это делает UI при раскрытии). */
   loadChildren(nodeId: string): Promise<readonly TreeNodeDtoLike[]>;
   /** Отправляет request webview → расширение (как UI по кнопке). */
@@ -170,6 +179,7 @@ export function createUniversalPanelFixture(): UniversalPanelFixture {
       requestCounter += 1;
       messageEmitter.fire({ type: 'request', requestId: `${name}-${String(requestCounter)}`, name, payload });
     },
+    send: (message: unknown) => messageEmitter.fire(message),
     loadChildren: async (nodeId: string) => {
       requestCounter += 1;
       messageEmitter.fire({ type: 'request', requestId: `load-${String(requestCounter)}`, name: 'loadChildren', payload: { nodeId } });

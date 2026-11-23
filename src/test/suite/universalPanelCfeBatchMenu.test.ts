@@ -2,7 +2,7 @@
  * Пункты меню пакетной выгрузки/загрузки ВСЕХ расширений в CFE-файлы должны
  * быть в контекстном меню узла-контейнера расширений (`extensions-root`), и
  * ТОЛЬКО там. Контекстное меню формируется в
- * `UniversalPanelViewProvider.getNodeActions()` (запрет №14 CLAUDE.md — не
+ * `nodeContextMenu.ts` (через `UniversalPanelViewProvider.buildActions`) (запрет №14 CLAUDE.md — не
  * через `package.json → menus`), приватный метод достижим лишь через
  * начальное состояние и `childrenLoaded` (см. `support/universalPanelHarness.ts`).
  *
@@ -17,6 +17,7 @@
 import * as assert from 'assert';
 import {
   createUniversalPanelFixture,
+  flattenMenu,
   type TreeNodeDtoLike,
   type UniversalPanelFixture,
 } from './support/universalPanelHarness';
@@ -28,7 +29,7 @@ const SINGLE_DUMP_COMMAND_ID = 'onecdev.dumpConfigurationToCf';
 const SINGLE_LOAD_COMMAND_ID = 'onecdev.loadConfigurationFromCf';
 
 function commandsOf(node: TreeNodeDtoLike): string[] {
-  return node.actions.map((action) => action.command);
+  return flattenMenu(node.actions).map((action) => action.command);
 }
 
 suite('UniversalPanelViewProvider — пункты меню пакетной выгрузки/загрузки всех расширений', function () {
@@ -56,7 +57,7 @@ suite('UniversalPanelViewProvider — пункты меню пакетной в�
     assert.ok(extensionsRoot, `в корнях дерева не найден контейнер расширений: ${JSON.stringify(fixture.rootNodes.map((n) => n.kind))}`);
 
     for (const commandId of [DUMP_ALL_COMMAND_ID, LOAD_ALL_COMMAND_ID]) {
-      const action = extensionsRoot.actions.find((item) => item.command === commandId);
+      const action = flattenMenu(extensionsRoot.actions).find((item) => item.command === commandId);
       assert.ok(action, `у extensions-root нет пункта ${commandId}, реально: ${JSON.stringify(commandsOf(extensionsRoot))}`);
       assert.ok(action.label.trim().length > 0, `у ${commandId} пустой заголовок`);
       assert.ok(action.icon, `у ${commandId} нет иконки`);
