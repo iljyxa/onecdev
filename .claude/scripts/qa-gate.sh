@@ -92,7 +92,7 @@ COVERED=1
 COVERAGE_BASE_REF="$MERGE_BASE" "${RUN[@]}" npm run coverage:changed >>"$LOG" 2>&1
 code=$?
 gate="coverage:changed (npm test под c8)"
-if [ $code -eq 2 ] && grep -q 'production-файлов относительно базы НЕ НАЙДЕНО' "$LOG"; then
+if [ "$code" -ne 0 ] && grep -Fq 'production-файлов относительно базы НЕ НАЙДЕНО' "$LOG"; then
   # Правки только в тестах/фикстурах/сборке/Container.ts: покрывать нечего, нужен лишь регресс.
   # coverage:changed отказывает до запуска тестов, так что прогон здесь не дублируется.
   COVERED=0
