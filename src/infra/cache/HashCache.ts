@@ -248,7 +248,15 @@ function getCacheFilePath(projectRoot: string, scopeKey: string): string {
 }
 
 export function computeFileHash(filePath: string): string {
-  const content = fs.readFileSync(filePath);
+  return hashFileContent(fs.readFileSync(filePath));
+}
+
+/** Асинхронный двойник `computeFileHash` — для пересчётов вне команды пользователя. */
+export async function computeFileHashAsync(filePath: string): Promise<string> {
+  return hashFileContent(await fs.promises.readFile(filePath));
+}
+
+function hashFileContent(content: Buffer): string {
   const oneShotHash = Reflect.get(crypto, 'hash');
   if (typeof oneShotHash === 'function') {
     return oneShotHash('sha1', content, 'hex');
@@ -284,6 +292,40 @@ export function walkSupportedFiles(
       }
     }
   }
+}
+
+/**
+ * Асинхронный двойник `walkSupportedFiles`: каталоги читаются через fs.promises, а
+ * файлы одного каталога обходятся параллельно. Нужен пересчётам, которые идут в
+ * фоне (фильтр дерева), — синхронный обход десятков тысяч файлов блокировал бы
+ * Extension Host.
+ */
+export async function walkSupportedFilesAsync(
+  rootDir: string,
+  visitor: (fullPath: string, relativePath: string) => Promise<void>
+): Promise<void> {
+  const visitDir = async (currentDir: string): Promise<void> => {
+    let entries: fs.Dirent[];
+    try {
+      entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
+    } catch {
+      // Каталог удалён во время обхода (или корня нет вовсе) — для снапшота это
+      // то же, что пустой каталог.
+      return;
+    }
+    await Promise.all(entries.map(async (entry) => {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        await visitDir(fullPath);
+        return;
+      }
+      const relativePath = path.relative(rootDir, fullPath).replace(/\\/g, '/');
+      if (isSupportedConfigFile(relativePath)) {
+        await visitor(fullPath, relativePath);
+      }
+    }));
+  };
+  await visitDir(rootDir);
 }
 
 function sortUnique(items: string[]): string[] {

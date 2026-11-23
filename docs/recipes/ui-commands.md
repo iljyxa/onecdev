@@ -20,6 +20,14 @@
 - **Новый сервис инфры:** класс в `infra/<подпапка>/<Имя>Service.ts` без `vscode`, `Logger` через конструктор → создать в `Container.bootstrap` → тест на пример из `example/`.
 - **Новая возможность LSP:** встроенных провайдеров нет; completion/hover/diagnostics добавляются в `bsl-analyzer`, здесь проверяется только интеграция `LspManager`.
 - **Новая настройка:** `package.json → contributes.configuration.properties` с префиксом `onecdev.<область>.<ключ>`, `description` на русском → читать только через `vscode.workspace.getConfiguration('onecdev')` в UI/Container → при рантайм-влиянии подписка на `onDidChangeConfiguration`.
+- **Новый фильтр видимого дерева** (рядом с текстовым поиском и «изменённые и захваченные», #189): обход и
+  копирование узлов — `ui/tree/TreeNodeFilters.ts`, включение — поле фильтра в `MetadataTreeProvider`
+  (`getVisibleRoots` применяет фильтры по очереди: их пересечение); сопоставление узла с данными — в `infra/`
+  строковыми операциями, без I/O на узел (запрет №11). Фильтр «изменённые и захваченные»: сканер хеш-кэша
+  `infra/cache/UnloadedChangesScanner.ts` (async-снапшот через stat-индекс) → `infra/repository/WorkingSetIndex.ts`
+  (ключ — полное имя единицы хранилища) → `ui/tree/WorkingSetFilterController.ts` (события файлов из watcher'а
+  `Container`, `onDidChangeLocks`, полный пересчёт после операций с базой) → панель: request
+  `toggleWorkingSetFilter` и поле состояния `workingSetFilter`.
 - **Новый watcher:** `FileSystemWatcher` — только в `Container` или `ui/support/`; обработчик делегирует в сервис.
 
 - **Открытие BSL-модулей:** только реальные `file://` документы (виртуальная схема `onec://` удалена).

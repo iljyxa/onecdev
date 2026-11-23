@@ -163,6 +163,15 @@ export class RepositoryLockState {
     return scope !== undefined && !isForeignLocked(scope, fullName) && isLockedLocally(scope, fullName);
   }
 
+  /**
+   * Единицы, захваченные мной явно (без чужих). Рекурсивный захват корня на объекты
+   * не раскрывается: иначе «захваченным» оказалось бы всё дерево.
+   */
+  listOwnLockedFullNames(target: RepositoryTarget): string[] {
+    const scope = this.readScope(target);
+    return scope ? scope.lockedFullNames.filter((fullName) => !isForeignLocked(scope, fullName)) : [];
+  }
+
   isRootLocked(target: RepositoryTarget): boolean {
     const scope = this.readScope(target);
     const root = getRootLockName(target);

@@ -17,6 +17,7 @@ import type { MetadataNode } from '../../tree/TreeNode';
 import { supportIndicatorOf, supportModeDtoOf, type SupportModeDto } from '../../support/supportLockReason';
 import { formatRepositoryLockTitle } from '../../tree/repositoryLockTitle';
 import type { RepositoryLockInfo } from '../../../infra/repository/RepositoryLockState';
+import type { WorkingSetFilterController, WorkingSetFilterStatus } from '../../tree/WorkingSetFilterController';
 
 /** Пара SVG `src/icons/{light,dark}/<имя>.svg`: замок с человеком — объект захвачен другим. */
 export const REPOSITORY_FOREIGN_LOCK_ICON = 'repo-locked-foreign';
@@ -66,6 +67,7 @@ interface UniversalPanelState {
   readonly processingTitle?: string;
   readonly processingMessage?: string;
   readonly searchQuery: string;
+  readonly workingSetFilter: WorkingSetFilterStatus;
   readonly openNodeIds: readonly string[];
   readonly selectedNodeId?: string;
   readonly rootNodes: readonly TreeNodeDto[];
@@ -88,6 +90,7 @@ interface UniversalPanelServices {
   readonly getProcessingState: () => UniversalPanelProcessingState;
   readonly gitMetadataStatusService: GitMetadataStatusService;
   readonly refreshActionsView: () => void;
+  readonly workingSetFilter: Pick<WorkingSetFilterController, 'getStatus' | 'toggle'>;
   readonly log?: (message: string) => void;
 }
 
@@ -299,6 +302,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       processingTitle: processingState.title,
       processingMessage: processingState.message,
       searchQuery: this.services.treeProvider.getSearchQuery(),
+      workingSetFilter: this.services.workingSetFilter.getStatus(),
       openNodeIds: [...this.currentOpenNodeIds],
       selectedNodeId: this.currentSelectedNodeId,
       rootNodes: this.cachedRootNodes,
@@ -318,6 +322,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
         processingTitle: processingState.title,
         processingMessage: processingState.message,
         searchQuery: this.services.treeProvider.getSearchQuery(),
+        workingSetFilter: this.services.workingSetFilter.getStatus(),
         openNodeIds: [...this.currentOpenNodeIds],
         selectedNodeId: this.currentSelectedNodeId,
         rootNodes: this.cachedRootNodes,
@@ -395,6 +400,13 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       const query = typeof payload === 'string' ? payload : (p?.query ?? '');
       this.applySearch(query);
       this.postState();
+      return;
+    }
+
+    if (name === 'toggleWorkingSetFilter') {
+      // Состояние панели публикует контроллер (onDidChangeStatus) — и при включении,
+      // и по окончании асинхронного пересчёта.
+      await this.services.workingSetFilter.toggle();
       return;
     }
 

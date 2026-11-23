@@ -20,6 +20,8 @@ import type { ConfigEntry } from '../../../infra/fs/ConfigLocator';
 import { GitMetadataStatusService } from '../../../infra/git/GitMetadataStatusService';
 import { MetadataTreeProvider } from '../../../ui/tree/MetadataTreeProvider';
 import { UniversalPanelViewProvider } from '../../../ui/views/universal/UniversalPanelViewProvider';
+import { UnloadedChangesScanner } from '../../../infra/cache/UnloadedChangesScanner';
+import { WorkingSetFilterController } from '../../../ui/tree/WorkingSetFilterController';
 
 const EXTENSION_ROOT = path.resolve(__dirname, '../../../../');
 const CF_ROOT = path.resolve(EXTENSION_ROOT, 'example/2.20/src/cf');
@@ -54,6 +56,10 @@ export interface UniversalPanelFixture {
   readonly rootNodes: readonly TreeNodeDtoLike[];
   /** Загружает дочерние узлы через протокол webview и возвращает их (как это делает UI при раскрытии). */
   loadChildren(nodeId: string): Promise<readonly TreeNodeDtoLike[]>;
+  /** Отправляет request webview → расширение (как UI по кнопке). */
+  sendRequest(name: string, payload?: unknown): void;
+  /** Все сообщения, отправленные провайдером в webview. */
+  readonly postedMessages: readonly unknown[];
   dispose(): void;
 }
 
@@ -115,6 +121,14 @@ export function createUniversalPanelFixture(): UniversalPanelFixture {
     logPath: '',
   };
 
+  // Контроллер и провайдер ссылаются друг на друга: провайдер создаётся следующим.
+  const providerRef: { current?: UniversalPanelViewProvider } = {};
+  // Реальный контроллер фильтра: у фикстур `example/` в временном проекте нет хеш-кэша.
+  const workingSetFilter = new WorkingSetFilterController({
+    scanner: new UnloadedChangesScanner(cacheRoot),
+    treeProvider,
+    onDidChangeStatus: () => providerRef.current?.refresh(),
+  });
   const provider = new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), {
     state: createFakeMemento(),
     treeProvider,
@@ -125,7 +139,9 @@ export function createUniversalPanelFixture(): UniversalPanelFixture {
     getProcessingState: () => ({ active: false }),
     gitMetadataStatusService: new GitMetadataStatusService(EXTENSION_ROOT),
     refreshActionsView: () => undefined,
+    workingSetFilter,
   });
+  providerRef.current = provider;
 
   const postedMessages: unknown[] = [];
   const messageEmitter = new vscode.EventEmitter<unknown>();
@@ -149,6 +165,11 @@ export function createUniversalPanelFixture(): UniversalPanelFixture {
   let requestCounter = 0;
   return {
     rootNodes: initialState.state.rootNodes,
+    postedMessages,
+    sendRequest: (name: string, payload?: unknown) => {
+      requestCounter += 1;
+      messageEmitter.fire({ type: 'request', requestId: `${name}-${String(requestCounter)}`, name, payload });
+    },
     loadChildren: async (nodeId: string) => {
       requestCounter += 1;
       messageEmitter.fire({ type: 'request', requestId: `load-${String(requestCounter)}`, name: 'loadChildren', payload: { nodeId } });
@@ -175,6 +196,7 @@ export function createUniversalPanelFixture(): UniversalPanelFixture {
       return children.length > 0 ? children : [...finalChunk.children];
     },
     dispose: () => {
+      workingSetFilter.dispose();
       treeProvider.dispose();
       fs.rmSync(cacheRoot, { recursive: true, force: true });
     },

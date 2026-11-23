@@ -40,6 +40,8 @@ import { buildCfApplyTarget } from '../../ui/commands/ext/CfFileTarget';
 import { GitMetadataStatusService } from '../../infra/git/GitMetadataStatusService';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import { UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
+import { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
+import { WorkingSetFilterController } from '../../ui/tree/WorkingSetFilterController';
 import { tryRequireProductionModule } from './support/tryRequireProductionModule';
 import { skipWithoutCorpus } from './support/corpus';
 
@@ -187,6 +189,11 @@ suite('UniversalPanelViewProvider — пункты меню CF-файла в к�
       // ровно так же ведёт себя настоящий навигатор вне git-репозитория.
       gitMetadataStatusService: new GitMetadataStatusService(EXTENSION_ROOT),
       refreshActionsView: () => undefined,
+      workingSetFilter: new WorkingSetFilterController({
+        scanner: new UnloadedChangesScanner(EXTENSION_ROOT),
+        treeProvider,
+        onDidChangeStatus: () => undefined,
+      }),
     });
 
     fakeWebview = createFakeWebview();

@@ -2,9 +2,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   computeFileHash,
+  computeFileHashAsync,
   createHashSnapshot,
   resolveHashCacheFileStem,
   walkSupportedFiles,
+  walkSupportedFilesAsync,
   type HashCacheSnapshot,
 } from './HashCache';
 import { writeFileAtomic } from '../fs/AtomicFileWriter';
@@ -118,35 +120,80 @@ export function buildHashSnapshotWithStatIndex(
   previous: FileStatIndex,
   nowMs: number
 ): HashSnapshotWithStatIndex {
-  const previousFiles: Partial<Record<string, FileStatEntry>> = previous.files;
-  const hashes: Record<string, string> = {};
-  const indexFiles: Record<string, FileStatEntry> = {};
-  let hashedCount = 0;
-
+  const accumulator = new StatIndexSnapshotAccumulator(previous, nowMs);
   walkSupportedFiles(configDir, (fullPath, relativePath) => {
     // stat — до чтения содержимого: если файл изменится между stat и чтением,
     // индекс запомнит старый stat, и следующий проход перехеширует файл.
     const stat = fs.statSync(fullPath);
-    const previousEntry = previousFiles[relativePath];
-    let hash: string;
-    if (isFileStatEntryReusable(previousEntry, stat)) {
-      hash = previousEntry.hash;
-    } else {
-      hash = computeFileHash(fullPath);
-      hashedCount += 1;
-    }
-    hashes[relativePath] = hash;
-    if (!isRacyFileStat(stat, nowMs)) {
-      indexFiles[relativePath] = { size: stat.size, mtimeMs: stat.mtimeMs, ctimeMs: stat.ctimeMs, hash };
-    }
+    const hash = accumulator.reusableHash(relativePath, stat) ?? computeFileHash(fullPath);
+    accumulator.record(relativePath, stat, hash);
   });
+  return accumulator.finish(scopeKey);
+}
 
-  return {
-    snapshot: createHashSnapshot(scopeKey, hashes),
-    index: { schemaVersion: FILE_STAT_INDEX_SCHEMA_VERSION, scopeKey, files: indexFiles },
-    indexChanged: !hasSameEntries(previousFiles, indexFiles),
-    hashedCount,
-  };
+/**
+ * Асинхронный двойник `buildHashSnapshotWithStatIndex` с тем же результатом: для
+ * фоновых пересчётов, которые не должны блокировать Extension Host.
+ */
+export async function buildHashSnapshotWithStatIndexAsync(
+  scopeKey: string,
+  configDir: string,
+  previous: FileStatIndex,
+  nowMs: number
+): Promise<HashSnapshotWithStatIndex> {
+  const accumulator = new StatIndexSnapshotAccumulator(previous, nowMs);
+  await walkSupportedFilesAsync(configDir, async (fullPath, relativePath) => {
+    let stat: fs.Stats;
+    let hash: string;
+    try {
+      stat = await fs.promises.stat(fullPath);
+      hash = accumulator.reusableHash(relativePath, stat) ?? await computeFileHashAsync(fullPath);
+    } catch {
+      // Файл удалён между чтением каталога и stat/чтением: в снапшот не попадает,
+      // как если бы обход начался мгновением позже.
+      return;
+    }
+    accumulator.record(relativePath, stat, hash);
+  });
+  return accumulator.finish(scopeKey);
+}
+
+/** Общая для sync/async построителей логика «stat совпал → хеш из индекса». */
+class StatIndexSnapshotAccumulator {
+  private readonly previousFiles: Partial<Record<string, FileStatEntry>>;
+  private readonly hashes: Record<string, string> = {};
+  private readonly indexFiles: Record<string, FileStatEntry> = {};
+  private hashedCount = 0;
+
+  constructor(previous: FileStatIndex, private readonly nowMs: number) {
+    this.previousFiles = previous.files;
+  }
+
+  /** Хеш из индекса, если stat файла не изменился; иначе файл нужно перехешировать. */
+  reusableHash(relativePath: string, stat: fs.Stats): string | undefined {
+    const previousEntry = this.previousFiles[relativePath];
+    if (isFileStatEntryReusable(previousEntry, stat)) {
+      return previousEntry.hash;
+    }
+    this.hashedCount += 1;
+    return undefined;
+  }
+
+  record(relativePath: string, stat: fs.Stats, hash: string): void {
+    this.hashes[relativePath] = hash;
+    if (!isRacyFileStat(stat, this.nowMs)) {
+      this.indexFiles[relativePath] = { size: stat.size, mtimeMs: stat.mtimeMs, ctimeMs: stat.ctimeMs, hash };
+    }
+  }
+
+  finish(scopeKey: string): HashSnapshotWithStatIndex {
+    return {
+      snapshot: createHashSnapshot(scopeKey, this.hashes),
+      index: { schemaVersion: FILE_STAT_INDEX_SCHEMA_VERSION, scopeKey, files: this.indexFiles },
+      indexChanged: !hasSameEntries(this.previousFiles, this.indexFiles),
+      hashedCount: this.hashedCount,
+    };
+  }
 }
 
 function getStatIndexFilePath(projectRoot: string, scopeKey: string): string {

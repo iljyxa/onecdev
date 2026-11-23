@@ -18,12 +18,20 @@ export interface StandaloneServerStatusDto {
   readonly name?: string;
 }
 
+/** Фильтр дерева «изменённые и захваченные» (`WorkingSetFilterController.getStatus`). */
+export interface WorkingSetFilterStatusDto {
+  readonly active: boolean;
+  readonly pending: boolean;
+  readonly message?: string;
+}
+
 export interface UniversalPanelState {
   readonly initialized: boolean;
   readonly processing: boolean;
   readonly processingTitle?: string;
   readonly processingMessage?: string;
   readonly searchQuery: string;
+  readonly workingSetFilter?: WorkingSetFilterStatusDto;
   readonly openNodeIds: readonly string[];
   readonly selectedNodeId?: string;
   readonly rootNodes: readonly TreeNodeDto[];
