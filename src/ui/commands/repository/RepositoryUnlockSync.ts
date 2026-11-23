@@ -118,7 +118,9 @@ export async function runRepositoryUnlockFlow(
     }
   }
   reportSnapshotFailures(deps, objectLabel, snapshotFailures);
-  deps.notifyInfo(`Объекты «${objectLabel}» освобождены.`);
+  deps.notifyInfo(options.force
+    ? `Объекты «${objectLabel}» освобождены, непомещённые изменения в базе отменены.`
+    : `Объекты «${objectLabel}» освобождены.`);
   return 'done';
 }
 

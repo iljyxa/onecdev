@@ -1072,6 +1072,8 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     let cliResult: RepositoryCliResult;
     let treeRefreshes: number;
     let actionsRefreshes: number;
+    let infoNotices: string[];
+    let errorNotices: string[];
 
     function catalogNode(withLabel: boolean): NodeArg {
       return {
@@ -1103,6 +1105,8 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       cliResult = { status: 'done' };
       treeRefreshes = 0;
       actionsRefreshes = 0;
+      infoNotices = [];
+      errorNotices = [];
 
       originals = { showQuickPick: vscode.window.showQuickPick, showInputBox: vscode.window.showInputBox };
       stubsRef.showQuickPick = ((items: readonly { value: boolean }[]) => {
@@ -1130,9 +1134,9 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
         confirmRollback: notCalled('confirmRollback'),
         openDiffs: notCalled('openDiffs'),
         notifyBusy: () => undefined,
-        notifyInfo: () => undefined,
+        notifyInfo: (message) => { infoNotices.push(message); },
         notifyWarning: () => undefined,
-        notifyError: () => undefined,
+        notifyError: (message) => { errorNotices.push(message); },
         isFileSyncEnabled: () => false,
         getDirtyFilePaths: () => [],
       };
@@ -1161,7 +1165,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
 
     const cases: { command: string; cli: string; answers: boolean[]; input?: string }[] = [
       { command: 'onecdev.repository.lock', cli: 'repository-lock', answers: [false] },
-      { command: 'onecdev.repository.unlock', cli: 'repository-unlock', answers: [false, true] },
+      { command: 'onecdev.repository.unlock', cli: 'repository-unlock', answers: [false] },
       { command: 'onecdev.repository.update', cli: 'repository-update', answers: [true] },
       { command: 'onecdev.repository.updateToVersion', cli: 'repository-update', answers: [true], input: ' 125 ' },
       { command: 'onecdev.repository.commit', cli: 'repository-commit', answers: [] },
@@ -1282,10 +1286,37 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       });
     });
 
+    /**
+     * Issue #190: правки живут в файлах выгрузки, поэтому освобождение для пользователя — всегда
+     * «отпустить объект»; вариант без ключа давал только отказ Конфигуратора.
+     */
+    test('repository.unlock: единственный вопрос — рекурсия, «-Force» передаётся всегда, уведомление об отмене изменений в базе (issue #190)', async () => {
+      pickAnswers = [false];
+
+      await vscode.commands.executeCommand('onecdev.repository.unlock', catalogNode(true));
+
+      assert.strictEqual(quickPickCalls, 1);
+      assert.strictEqual(cliRequests.length, 1);
+      assert.ok(cliRequests[0].extraArgs.includes('-Force'), cliRequests[0].extraArgs.join(' '));
+      assert.deepStrictEqual(infoNotices, ['Объекты «Контрагенты» освобождены, непомещённые изменения в базе отменены.']);
+      assert.deepStrictEqual(errorNotices, []);
+    });
+
+    test('repository.unlock: отказ Конфигуратора сообщается ошибкой, об освобождении не сообщается (issue #190)', async () => {
+      pickAnswers = [false];
+      cliResult = { status: 'failed', message: 'Ошибка освобождения объектов в хранилище' };
+
+      await vscode.commands.executeCommand('onecdev.repository.unlock', catalogNode(true));
+
+      assert.ok(cliRequests[0].extraArgs.includes('-Force'), cliRequests[0].extraArgs.join(' '));
+      assert.strictEqual(errorNotices.length, 1);
+      assert.ok(errorNotices[0].includes('Ошибка освобождения объектов в хранилище'), errorNotices[0]);
+      assert.deepStrictEqual(infoNotices, []);
+    });
+
     ([
       { command: 'onecdev.repository.lock', answers: [undefined], input: '' },
       { command: 'onecdev.repository.unlock', answers: [undefined], input: '' },
-      { command: 'onecdev.repository.unlock', answers: [false, undefined], input: '' },
       { command: 'onecdev.repository.update', answers: [undefined], input: '' },
       { command: 'onecdev.repository.updateToVersion', answers: [], input: undefined },
       { command: 'onecdev.repository.updateToVersion', answers: [undefined], input: '5' },
@@ -1339,7 +1370,7 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     /** Команда и ответы на её вопросы, кроме вопроса о рекурсии. */
     const leafCommands: { command: string; answers: boolean[]; input?: string }[] = [
       { command: 'onecdev.repository.lock', answers: [] },
-      { command: 'onecdev.repository.unlock', answers: [false] },
+      { command: 'onecdev.repository.unlock', answers: [] },
       { command: 'onecdev.repository.update', answers: [] },
       { command: 'onecdev.repository.updateToVersion', answers: [], input: '7' },
     ];

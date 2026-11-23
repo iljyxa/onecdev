@@ -35,23 +35,6 @@ export async function askRecursiveMode(
   ]);
 }
 
-export function pickUnlockForce(nodeLabel: string): Promise<boolean | undefined> {
-  return pickRepositoryChoice('Освобождение объектов', `Как освободить «${nodeLabel}»?`, [
-    {
-      label: 'Освободить',
-      description: 'без -force',
-      detail: 'Если объект изменён в базе и не помещён, Конфигуратор откажет («Объект … был изменён») и ничего не освободит.',
-      value: false,
-    },
-    {
-      label: 'Освободить с отменой изменений',
-      description: '-force',
-      detail: 'Непомещённые изменения в базе будут потеряны: объект в базе вернётся к версии хранилища.',
-      value: true,
-    },
-  ]);
-}
-
 export function pickDisconnectForce(displayName: string): Promise<boolean | undefined> {
   return pickRepositoryChoice('Отключение от хранилища', `Как отключить «${displayName}» от хранилища?`, [
     {

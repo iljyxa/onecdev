@@ -212,7 +212,10 @@ suite('Снимок best-effort: отмена захвата и повторны
       assert.strictEqual(unlocked, 'done');
       assert.deepStrictEqual(harness.notices.errors, []);
       assert.strictEqual(harness.notices.warnings.length, 1);
-      assert.ok(harness.notices.info.some((message) => message.includes('освобождены')));
+      // Об отмене непомещённых изменений сообщается только при -force (issue #190).
+      assert.ok(harness.notices.info.includes(force
+        ? 'Объекты «ФормаСписка» освобождены, непомещённые изменения в базе отменены.'
+        : 'Объекты «ФормаСписка» освобождены.'), harness.notices.info.join('\n'));
       assert.ok(!harness.outputLines.some((line) => line.includes('[error]')), harness.outputLines.join('\n'));
       const [discardWarn] = warnLines(harness);
       assert.ok(discardWarn.includes(FORM) && discardWarn.includes(snapshotDir(harness)) && discardWarn.includes('EPERM'), discardWarn);
