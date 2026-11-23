@@ -9,6 +9,7 @@ import {
   buildMetadataCacheSnapshot,
   loadMetadataCache,
   saveMetadataCache,
+  updateMetadataCacheAfterAdd,
   updateMetadataCacheForChangedFiles,
   type MetadataCacheNode,
   type MetadataCacheSnapshot,
@@ -84,6 +85,67 @@ function listCacheFiles(projectRoot: string): string[] {
 }
 
 suite('MetadataCache — целостность (C3/M4/M5)', () => {
+  test('поступивший после Configuration.xml файл объекта добавляется в сохранённую ветку', () => {
+    const rootPath = makeTempConfigRoot('onecdev-cache-incomplete-');
+    try {
+      const creator = new MetadataXmlCreator();
+      assert.ok(creator.addRootObject({ configRoot: rootPath, kind: 'Catalog', name: 'Товары' }).success);
+      const entry: ConfigEntry = { rootPath, kind: 'cf' };
+      const scope = buildMetadataCacheScopeKey(entry, parseConfigXml(path.join(rootPath, 'Configuration.xml')));
+      const xml = path.join(rootPath, 'Catalogs', 'Товары.xml');
+      const content = fs.readFileSync(xml);
+      fs.unlinkSync(xml);
+      saveMetadataCache(rootPath, buildMetadataCacheSnapshot(scope, entry));
+      fs.writeFileSync(xml, content);
+      const result = updateMetadataCacheAfterAdd(rootPath, entry, {
+        kind: 'root', targetKind: 'Catalog', configRoot: rootPath, configKind: 'cf',
+      }, 'Товары');
+      assert.ok(result.updatedPartially);
+      assert.deepStrictEqual(loadMetadataCache(rootPath, scope)?.root, buildMetadataCacheSnapshot(scope, entry).root);
+
+      // При неполной выгрузке файл может существовать до появления XML объекта.
+      fs.writeFileSync(xml, '<MetaDataObject/>');
+      const incomplete = buildMetadataCacheSnapshot(scope, entry);
+      assert.strictEqual(findNode(incomplete.root, n => n.xmlPath === xml)?.name, 'Товары');
+      const changed = updateMetadataCacheAfterAdd(rootPath, entry, {
+        kind: 'child', childTag: 'Attribute', ownerObjectXmlPath: xml,
+      }, 'Артикул');
+      assert.ok(changed.updatedPartially);
+      assert.deepStrictEqual(loadMetadataCache(rootPath, scope)?.root, incomplete.root);
+
+      fs.writeFileSync(xml, '<MetaDataObject><Catalog><Properties><Name>Товары</Name></Properties></Catalog></MetaDataObject>');
+      const refreshed = updateMetadataCacheForChangedFiles(rootPath, entry, [xml]);
+      assert.ok(refreshed?.updatedPartially);
+      assert.deepStrictEqual(loadMetadataCache(rootPath, scope)?.root, refreshed.snapshot.root);
+      assert.strictEqual(findNode(refreshed.snapshot.root, n => n.xmlPath === xml)?.tooltip, undefined);
+    } finally {
+      fs.rmSync(rootPath, { recursive: true, force: true });
+    }
+  });
+
+  test('кэш сохраняет конечный узел при циклической ссылке между подсистемами', () => {
+    const rootPath = makeTempConfigRoot('onecdev-cache-cycle-');
+    try {
+      const configXml = path.join(rootPath, 'Configuration.xml');
+      fs.writeFileSync(configXml, buildConfigXml().replace('<ChildObjects/>',
+        '<ChildObjects><Subsystem>Продажи</Subsystem></ChildObjects>'));
+      const subsystemDir = path.join(rootPath, 'Subsystems');
+      fs.mkdirSync(subsystemDir);
+      const xml = path.join(subsystemDir, 'Продажи.xml');
+      fs.writeFileSync(xml, '<MetaDataObject><Subsystem><Properties><Name>Продажи</Name></Properties>' +
+        '<ChildObjects><Subsystem>../../Продажи</Subsystem></ChildObjects></Subsystem></MetaDataObject>');
+      const entry: ConfigEntry = { rootPath, kind: 'cf' };
+      const snapshot = buildMetadataCacheSnapshot('cycle', entry);
+      const terminal = findNode(snapshot.root, n => n.label.endsWith('(цикл)'));
+      assert.strictEqual(terminal?.xmlPath, xml);
+      assert.deepStrictEqual(terminal.children, []);
+      saveMetadataCache(rootPath, snapshot);
+      assert.deepStrictEqual(loadMetadataCache(rootPath, 'cycle')?.root, snapshot.root);
+    } finally {
+      fs.rmSync(rootPath, { recursive: true, force: true });
+    }
+  });
+
   suite('C3 — свежесть кэша', () => {
     test('loadMetadataCache возвращает снимок, если ФС не менялась с момента сохранения', () => {
       const configRoot = makeTempConfigRoot('onecdev-cache-fresh-ok-');

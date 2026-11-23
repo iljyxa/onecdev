@@ -158,8 +158,8 @@ interface NodeDescriptor {
 (`domain/MetaObject.ts`): для ТЧ там лежат колонки (`Attribute`), для
 `URLTemplate` — методы (`Method`). Узел дерева для контейнера строится
 **симметрично в двух источниках**:
-- `infra/cache/MetadataCache.ts` — `buildTabularSectionNode`/`buildUrlTemplateNode`,
-  фактический источник дерева основного UI (webview `UniversalPanelViewProvider`);
+- `infra/cache/MetadataCache.ts` собирает дочерние элементы из XML, а `MetadataCacheFormat.ts`
+  восстанавливает контекст контейнера для основного UI (webview `UniversalPanelViewProvider`);
 - `ui/tree/nodeBuilders/metaObjectTreeBuilder.ts` — те же билдеры для нативного
   `TreeView` и панели свойств.
 
@@ -309,3 +309,11 @@ commit/diff). Она держит свою модель данных измен�
 (`src-ui/shared/components/tree/UniversalTree*.vue`), что и у `UniversalPanelViewProvider`.
 Подробности, включая ограничения синтеза для удалённых объектов и производительность поиска узла, — в
 [git-metadata-changes.md](./git-metadata-changes.md#известные-ограничения).
+
+## Дисковый кэш дерева
+
+Снимок `.onecdev/meta/<hash>.json` версии 18 хранит пути XML относительно корня выгрузки
+с разделителем `/`. Для плоского объекта снимок также фиксирует наличие соседнего каталога.
+При построении из XML и при чтении снимка один конструктор восстанавливает абсолютные пути,
+git-декорации, цели добавления и контекст владельца. Раскрытие ветки использует дерево в памяти.
+При смене версии схемы или отпечатка выгрузки расширение пересобирает снимок из XML.
