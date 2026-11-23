@@ -10,7 +10,7 @@ suite('repositoryLockTitle (issue #6)', () => {
   });
 
   const cases: [string, RepositoryLockInfo, string][] = [
-    ['свободен', { state: 'free' }, 'Не захвачено в хранилище'],
+    ['свободен', { state: 'free' }, 'Не захвачено в хранилище — захватите, чтобы редактировать'],
     ['свой без опроса', { state: 'own' }, 'Захвачено в хранилище'],
     ['свой с датой', { state: 'own', user: 'Admin', lockedAt: '2026-09-27T10:00:00', confirmed: true, syncedAt: '2026-09-27T12:00:00' }, 'Захвачено: Admin, 27.09.2026 10:00:00'],
     ['свой подтверждён без даты', { state: 'own', user: 'Admin', confirmed: true, syncedAt: '2026-09-27T12:00:00' }, 'Захвачено: Admin'],

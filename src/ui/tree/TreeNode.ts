@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import type { RepositoryLockInfo } from '../../infra/repository/RepositoryLockState';
 import type { MetaTreeNodeContext, NodeKind, TreeNodeModel } from './TreeNodeModel';
 
 export { getNodeKindLabel } from './TreeNodeModel';
@@ -11,10 +12,12 @@ export type { AddMetadataTarget, MetaTreeNodeContext, NodeKind, TreeNodeModel } 
  */
 export class MetadataNode extends vscode.TreeItem {
   /**
-   * Подсказка иконки состояния захвата в хранилище (кто и когда захватил). Заполняется
-   * декорацией дерева; без неё панель показывает прежний текст состояния.
+   * Состояние захвата собственной единицы хранилища узла — корня, объекта, формы или макета.
+   * Заполняется декорацией дерева. У частей владельца (реквизит, табличная часть, команда) и
+   * групп-целей добавления не задаётся: своего захвата у них нет, замок виден на владельце или
+   * корне, хотя суффиксы `-repoLocked`/`-repoUnlocked` для меню у них остаются.
    */
-  repositoryLockTitle?: string;
+  repositoryLock?: RepositoryLockInfo;
 
   constructor(
     public readonly model: TreeNodeModel,

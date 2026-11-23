@@ -5,7 +5,9 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { findConfigurations } from '../../infra/fs/ConfigLocator';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
+import { formatRepositoryLockTitle } from '../../ui/tree/repositoryLockTitle';
 import type { MetadataNode } from '../../ui/tree/TreeNode';
+import { REPOSITORY_FOREIGN_LOCK_ICON, UniversalPanelViewProvider } from '../../ui/views/universal/UniversalPanelViewProvider';
 import { createLockWorkspace, lockFixturePath, must, type LockWorkspace } from './support/repositoryLockFixtures';
 
 /**
@@ -51,6 +53,11 @@ function findPath(treeProvider: MetadataTreeProvider, ...labels: string[]): Meta
   return must(node, labels.join('/'));
 }
 
+/** Подсказка иконки захвата узла; узел без собственного захвата — undefined. */
+function lockTitle(node: MetadataNode): string | undefined {
+  return node.repositoryLock ? formatRepositoryLockTitle(node.repositoryLock) : undefined;
+}
+
 function decorate(treeProvider: MetadataTreeProvider, node: MetadataNode): MetadataNode {
   treeProvider.getTreeItem(node);
   return node;
@@ -74,9 +81,9 @@ suite('MetadataTreeProvider — чужие захваты с сервера (iss
     assert.ok(context.includes('-repoUnlocked-repoForeignLocked'), context);
     assert.ok(!context.includes('-repoLocked'), context);
     assert.ok(context.includes('-repoEditRestricted'), context);
-    assert.match(String(banks.repositoryLockTitle), /^Захвачено: Petrov, \d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}$/);
+    assert.match(String(lockTitle(banks)), /^Захвачено: Petrov, \d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}$/);
     assert.ok(String(root.contextValue).includes('-repoForeignLocked'), String(root.contextValue));
-    assert.match(String(root.repositoryLockTitle), /^Захвачено: Petrov, /);
+    assert.match(String(lockTitle(root)), /^Захвачено: Petrov, /);
   });
 
   test('форма и макет Контрагентов — чужие, сам справочник и ФормаСписка — свои вне проекта', () => {
@@ -94,21 +101,43 @@ suite('MetadataTreeProvider — чужие захваты с сервера (iss
     };
     for (const node of [nested('Form', 'ФормаЭлемента'), nested('Template', 'ЗагрузкаИзФайла')]) {
       assert.ok(String(node.contextValue).includes('-repoForeignLocked'), String(node.contextValue));
-      assert.match(String(node.repositoryLockTitle), /^Захвачено: Petrov/);
+      assert.match(String(lockTitle(node)), /^Захвачено: Petrov/);
     }
     for (const node of [kontragenty, nested('Form', 'ФормаСписка')]) {
       assert.ok(String(node.contextValue).includes('-repoUnlocked'), String(node.contextValue));
       assert.ok(!String(node.contextValue).includes('-repoForeignLocked'), String(node.contextValue));
-      assert.match(String(node.repositoryLockTitle), /^Захвачено вашим пользователем Admin вне проекта, /);
+      assert.match(String(lockTitle(node)), /^Захвачено вашим пользователем Admin вне проекта, /);
     }
   });
 
-  test('группа «Справочники» (добавление в корень) отражает чужой захват корня', () => {
+  test('группа «Справочники» (добавление в корень): суффиксы чужого захвата корня для меню, своего захвата нет (#186)', () => {
     const { treeProvider } = harness;
     const catalogs = decorate(treeProvider, findPath(treeProvider, 'ТорговыйУчет', 'Справочники'));
     assert.ok(catalogs.addMetadataTarget?.kind === 'root', 'у группы — цель добавления в корень');
     assert.ok(String(catalogs.contextValue).includes('-repoUnlocked-repoForeignLocked'), String(catalogs.contextValue));
-    assert.match(String(catalogs.repositoryLockTitle), /^Захвачено: Petrov/);
+    assert.strictEqual(catalogs.repositoryLock, undefined);
+  });
+
+  test('реквизит (суффикс захвата владельца для меню) и табличная часть — своего захвата нет; владелец — свой (#186)', () => {
+    const { treeProvider } = harness;
+    const kontragenty = decorate(treeProvider, findPath(treeProvider, 'ТорговыйУчет', 'Справочники', 'Контрагенты'));
+    assert.strictEqual(kontragenty.repositoryLock?.state, 'own-elsewhere');
+    const parts: MetadataNode[] = [];
+    const queue = [...treeProvider.getChildren(kontragenty)];
+    for (let node = queue.shift(); node; node = queue.shift()) {
+      if (node.nodeKind === 'Attribute' || node.nodeKind === 'TabularSection') {
+        parts.push(decorate(treeProvider, node));
+      }
+      queue.push(...treeProvider.getChildren(node));
+    }
+    assert.deepStrictEqual([...new Set(parts.map((node) => node.nodeKind))].sort(), ['Attribute', 'TabularSection']);
+    for (const node of parts) {
+      // Табличная часть — цель добавления реквизитов: суффикса захвата у неё нет и не было.
+      if (node.nodeKind === 'Attribute') {
+        assert.ok(String(node.contextValue).includes('-repoUnlocked'), String(node.contextValue));
+      }
+      assert.strictEqual(node.repositoryLock, undefined, label(node));
+    }
   });
 
   test('свой захват с датой после захвата и опроса; повторный getTreeItem не накапливает суффиксы', async () => {
@@ -122,20 +151,83 @@ suite('MetadataTreeProvider — чужие захваты с сервера (iss
     assert.strictEqual(String(node.contextValue), first);
     assert.ok(first.includes('-repoLocked') && !first.includes('-repoUnlocked'), first);
     assert.strictEqual((first.match(/-repo/g) ?? []).length, 3, first);
-    assert.match(String(node.repositoryLockTitle), /^Захвачено: Admin, \d{2}\.\d{2}\.\d{4}/);
+    assert.match(String(lockTitle(node)), /^Захвачено: Admin, \d{2}\.\d{2}\.\d{4}/);
   });
 
-  test('после отключения подсказка захвата снимается — у объекта и у группы добавления в корень', () => {
+  test('после отключения состояние захвата снимается — у объекта, корня и группы добавления в корень', () => {
     const { treeProvider, ws } = harness;
     const node = decorate(treeProvider, findPath(treeProvider, 'ТорговыйУчет', 'Справочники', 'Контрагенты'));
     const catalogs = decorate(treeProvider, findPath(treeProvider, 'ТорговыйУчет', 'Справочники'));
-    assert.ok(node.repositoryLockTitle && catalogs.repositoryLockTitle);
+    const root = decorate(treeProvider, findPath(treeProvider, 'ТорговыйУчет'));
+    assert.ok(node.repositoryLock && root.repositoryLock);
     ws.service.setConnected(ws.target, false);
-    for (const item of [node, catalogs]) {
+    for (const item of [node, catalogs, root]) {
       decorate(treeProvider, item);
-      assert.strictEqual(item.repositoryLockTitle, undefined);
+      assert.strictEqual(item.repositoryLock, undefined);
       assert.ok(String(item.contextValue).includes('-repoDisconnected'), String(item.contextValue));
       assert.ok(!String(item.contextValue).includes('-repoForeignLocked'), String(item.contextValue));
     }
+  });
+});
+
+/**
+ * Issue #186: иконки панели из узлов, декорированных настоящим опросом хранилища, — связка
+ * «декорация дерева → DTO панели» целиком. asWebviewUri тождественный: настоящего webview
+ * в тестовом окружении нет, а проверяется выбор пары SVG, а не преобразование URI.
+ */
+suite('UniversalPanelViewProvider — иконки захвата по реальной декорации дерева (issue #186)', () => {
+  let harness: TreeHarness;
+  setup(async () => {
+    harness = await createTree();
+    assert.strictEqual((await harness.ws.service.lockStatus.syncTarget(harness.ws.target)).status, 'synced');
+  });
+  teardown(() => harness.dispose());
+
+  interface StateIcons { buildStateIcons(node: MetadataNode): { title: string; icon: unknown }[] }
+  function panel(): StateIcons {
+    const services = {
+      state: { get: () => undefined, update: () => Promise.resolve(), keys: () => [] },
+      treeProvider: harness.treeProvider,
+      setTreeMessage: () => undefined,
+      isProjectInitialized: () => true,
+      refreshActionsView: () => undefined,
+    } as unknown as ConstructorParameters<typeof UniversalPanelViewProvider>[1];
+    const instance = new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), services) as unknown as StateIcons & { view: unknown };
+    instance.view = { webview: { asWebviewUri: (uri: vscode.Uri) => uri } };
+    return instance;
+  }
+
+  function svg(theme: 'light' | 'dark'): string {
+    return vscode.Uri.joinPath(vscode.Uri.file(EXTENSION_ROOT), 'src', 'icons', theme, `${REPOSITORY_FOREIGN_LOCK_ICON}.svg`).toString();
+  }
+
+  function icons(...labels: string[]): { title: string; icon: unknown }[] {
+    return panel().buildStateIcons(decorate(harness.treeProvider, findPath(harness.treeProvider, ...labels)));
+  }
+
+  test('чужой захват (Банки) — одна иконка «замок с человеком» обеих тем и подсказка держателя', () => {
+    const result = icons('ТорговыйУчет', 'Справочники', 'Банки');
+    assert.strictEqual(result.length, 1, JSON.stringify(result));
+    assert.deepStrictEqual(result[0].icon, { kind: 'asset', lightUri: svg('light'), darkUri: svg('dark') });
+    assert.match(result[0].title, /^Захвачено: Petrov, /);
+  });
+
+  test('свой вне проекта (Контрагенты) — закрытый замок; после своего захвата — открытый', async () => {
+    const before = icons('ТорговыйУчет', 'Справочники', 'Контрагенты');
+    assert.strictEqual(before.length, 1, JSON.stringify(before));
+    assert.deepStrictEqual(before[0].icon, { kind: 'codicon', name: 'lock' });
+    assert.match(before[0].title, /вне проекта.*захватите объект, чтобы редактировать$/);
+
+    const { ws } = harness;
+    ws.service.lockState.applyLock(ws.target, { anchor: 'Справочник.Контрагенты', members: ['Справочник.Контрагенты'], mode: 'object' });
+    await ws.service.lockStatus.syncTarget(ws.target);
+    const after = icons('ТорговыйУчет', 'Справочники', 'Контрагенты');
+    assert.strictEqual(after.length, 1, JSON.stringify(after));
+    assert.deepStrictEqual(after[0].icon, { kind: 'codicon', name: 'unlock' });
+    assert.match(after[0].title, /^Захвачено: Admin, /);
+  });
+
+  test('группа «Справочники» (цель добавления в корень) — без иконки хранилища', () => {
+    assert.deepStrictEqual(icons('ТорговыйУчет', 'Справочники'), []);
   });
 });
