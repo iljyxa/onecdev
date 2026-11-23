@@ -42,3 +42,6 @@ coverage-*
 npm-debug.log*
 CLAUDE.local.md
 .coderabbit.yaml
+
+# Исходник icon.png (сборка PNG описана в нём самом); рантайму не нужен.
+src/icons/onecdev.svg
