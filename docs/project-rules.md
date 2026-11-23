@@ -152,9 +152,10 @@ export interface MetaTypeDef {
 **`UniversalPanelViewProvider` (`src/ui/views/universal/`) — основной UI навигатора** (HTML/Vue-webview: дерево, поиск, контекстное меню, операции). Нативный `MetadataTreeProvider` (`ui/tree/`) существует только как источник данных (`treeProvider.getChildren()`); сам TreeView-виджет — атавизм и **не основной UI**.
 
 Следствия:
-- Контекстное меню узлов формируется в `UniversalPanelViewProvider.getNodeActions()` / `addModuleActions()`, **а не** через `package.json → contributes.menus`.
+- Контекстное меню узлов формируется в `ui/views/universal/nodeContextMenu.ts`, **а не** через `package.json → contributes.menus`: `collectNodeActions()` решает, какие пункты есть у узла, и относит каждый к секции; `NODE_MENU_LAYOUT` — единственная таблица порядка групп и подменю («База», «Файлы», «Хранилище», «Проверка»). Webview (`AppContextMenu.vue`) только рисует готовое дерево `{group, children}` из `TreeNodeActionDto`.
+- Новый пункт меню узла — `add(<секция>, …)` в `collectNodeActions`; новая группа или подменю — запись в `NODE_MENU_LAYOUT`, не правка шаблона webview.
 - Источник правды для команд узла — `META_TYPES.modules`, читаемый через `MODULE_SLOT_ACTIONS`.
-- Новая команда узла: добавить в `MODULE_SLOT_ACTIONS` (в `UniversalPanelViewProvider.ts`) + зарегистрировать в `CommandRegistry`. Правка `package.json → menus` — опциональна (для нативного TreeView).
+- Новая команда узла: добавить в `MODULE_SLOT_ACTIONS` (в `nodeContextMenu.ts`) + зарегистрировать в `CommandRegistry`. Правка `package.json → menus` — опциональна (для нативного TreeView).
 
 ### Webview (`src-ui/`)
 
