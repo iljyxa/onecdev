@@ -157,8 +157,7 @@ export class WorkingSetFilterController {
     try {
       return await this.deps.scanner.scan(entry);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.deps.log?.(`[working-set] Не удалось посчитать изменения ${entry.rootPath}: ${message}`);
+      this.deps.log?.(`[working-set] Не удалось посчитать изменения ${entry.rootPath}: ${String(error)}`);
       return undefined;
     }
   }

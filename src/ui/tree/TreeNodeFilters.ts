@@ -32,8 +32,7 @@ function filterByWorkingSet(
   for (const node of nodes) {
     let nodeConfigRoot = configRoot;
     if (node.nodeKind === 'configuration' || node.nodeKind === 'extension') {
-      // XML корня — `<корень выгрузки>/Configuration.xml`, задаётся при построении дерева всегда.
-      nodeConfigRoot = path.dirname(node.xmlPath ?? '');
+      nodeConfigRoot = configRootOf(node);
       if (!index.hasUnits(nodeConfigRoot)) {
         continue;
       }
@@ -43,7 +42,7 @@ function filterByWorkingSet(
     const match = nodeConfigRoot ? index.matchNode(nodeConfigRoot, node.model) : undefined;
     if (match && !match.hasMarkedDescendants) {
       if (match.marked) {
-        result.push(cloneTreeNode(node, node.collapsibleState ?? vscode.TreeItemCollapsibleState.None, node.childrenLoader));
+        result.push(cloneTreeNode(node, collapsibleStateOf(node), node.childrenLoader));
       }
       continue;
     }
@@ -52,7 +51,7 @@ function filterByWorkingSet(
     if (children.length > 0) {
       result.push(cloneTreeNode(node, vscode.TreeItemCollapsibleState.Expanded, () => children));
     } else if (match?.marked) {
-      result.push(cloneTreeNode(node, node.collapsibleState ?? vscode.TreeItemCollapsibleState.None, node.childrenLoader));
+      result.push(cloneTreeNode(node, collapsibleStateOf(node), node.childrenLoader));
     }
   }
   return result;
@@ -79,10 +78,7 @@ function filterBySearchText(nodes: readonly MetadataNode[], normalizedQuery: str
     }
 
     if (nodeMatches) {
-      result.push(cloneTreeNode(
-        node,
-        node.collapsibleState ?? vscode.TreeItemCollapsibleState.None
-      ));
+      result.push(cloneTreeNode(node, collapsibleStateOf(node)));
     }
   }
 
@@ -103,6 +99,19 @@ function cloneTreeNode(
   clone.tooltip = node.tooltip;
   clone.resourceUri = node.resourceUri;
   return clone;
+}
+
+/** Корень выгрузки по узлу корня: его XML — `<корень>/Configuration.xml`. */
+function configRootOf(node: MetadataNode): string {
+  // XML корня задаётся при построении дерева всегда; `?? ''` — только для типа модели.
+  /* c8 ignore next */
+  return path.dirname(node.xmlPath ?? '');
+}
+
+/** `MetadataNode` задаёт состояние в конструкторе всегда; у `TreeItem` поле необязательно. */
+function collapsibleStateOf(node: MetadataNode): vscode.TreeItemCollapsibleState {
+  /* c8 ignore next */
+  return node.collapsibleState ?? vscode.TreeItemCollapsibleState.None;
 }
 
 function normalizeSearchText(value: string): string {

@@ -141,6 +141,17 @@ suite('#189 фильтр дерева «изменённые и захвачен
     const object = child(treeProvider, catalogs, 'ПричиныВозврата');
     assert.strictEqual(object.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
     assert.ok(treeProvider.getChildren(object).length > 0, 'дети отмеченного объекта доступны целиком');
+
+    // Пауза и порог пачки по умолчанию: событие ждёт таймера, явный сброс пересчитывает сразу,
+    // а dispose гасит оставшийся таймер.
+    controller.notifyFileChanged(cfFile(harness, ...CURRENCY_MANAGER));
+    edit(cfFile(harness, ...CURRENCY_MANAGER));
+    controller.flushFileChanges();
+    assert.deepStrictEqual(
+      labels(treeProvider, child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники')),
+      ['Валюты', 'ПричиныВозврата']
+    );
+    controller.notifyFileChanged(cfFile(harness, ...CURRENCY_MANAGER));
   });
 
   test('изменена форма: владелец раскрыт до формы, остальные формы и части скрыты', async () => {
@@ -175,6 +186,11 @@ suite('#189 фильтр дерева «изменённые и захвачен
     const root = child(treeProvider, undefined, 'ТорговыйУчет');
     assert.strictEqual(root.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed, 'захват корня не раскрывает дерево');
     assert.ok(labels(treeProvider, root).includes('Справочники'), 'корень раскрывается вручную целиком');
+
+    // Захват единицы, которой нет в выгрузке: корень — предок, но ветки к ней нет.
+    ws.service.setLocked(ws.target, ['Справочник.УжеУдалён'], true);
+    const rootWithMissing = child(treeProvider, undefined, 'ТорговыйУчет');
+    assert.strictEqual(rootWithMissing.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
   });
 
   test('хеш-кэша нет: сообщение «нет данных о загрузке в базу», фильтр по изменённым не применяется', async () => {
@@ -202,6 +218,9 @@ suite('#189 фильтр дерева «изменённые и захвачен
     treeProvider.setSearchQuery('Валют');
     const catalogs = child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники');
     assert.deepStrictEqual(labels(treeProvider, catalogs), ['Валюты']);
+    treeProvider.setSearchQuery('Справочники');
+    const group = child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники');
+    assert.strictEqual(group.collapsibleState, vscode.TreeItemCollapsibleState.Expanded, 'группа без XML совпала по подписи');
     treeProvider.clearSearchQuery();
 
     saveBaseline(harness);
@@ -273,6 +292,13 @@ suite('#189 фильтр дерева «изменённые и захвачен
     assert.deepStrictEqual(labels(treeProvider), ['Расширения']);
     const extension = child(treeProvider, child(treeProvider, undefined, 'Расширения'), 'EVOLC');
     assert.deepStrictEqual(labels(treeProvider, child(treeProvider, extension, 'Справочники')), ['ев_РабочийПроцесс']);
+
+    // Событие файла основной конфигурации не трогает расширение.
+    const modulePath = cfFile(harness, ...OBJECT_MODULE);
+    edit(modulePath);
+    controller.notifyFileChanged(modulePath);
+    controller.flushFileChanges();
+    assert.deepStrictEqual(labels(treeProvider), ['ТорговыйУчет', 'Расширения']);
   });
 
   test('сбой подсчёта конфигурации пишется в лог, остальной фильтр работает', async () => {
@@ -307,6 +333,12 @@ suite('#189 панель навигатора — переключатель ф�
       const last = states()[states().length - 1].state.workingSetFilter;
       assert.ok(last.message?.includes('нет данных о загрузке в базу'), last.message);
       assert.ok(states().some((item) => item.state.workingSetFilter.pending), 'пока идёт пересчёт — pending');
+
+      fixture.sendRequest('refreshStandaloneStatus');
+      await waitFor(
+        () => fixture.postedMessages.some((item) => (item as { type?: string }).type === 'standaloneStatus'),
+        'остальные запросы панели обрабатываются как прежде'
+      );
     } finally {
       fixture.dispose();
     }

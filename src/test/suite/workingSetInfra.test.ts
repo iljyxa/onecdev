@@ -17,6 +17,7 @@ import {
 } from '../../infra/cache/FileStatIndex';
 import { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
 import { CONFIGURATION_ROOT_LOCK_NAME } from '../../infra/repository/RepositoryObjectNames';
+import { RepositoryLockState } from '../../infra/repository/RepositoryLockState';
 import type { RepositoryTarget } from '../../infra/repository/RepositoryService';
 import { WorkingSetIndex } from '../../infra/repository/WorkingSetIndex';
 
@@ -164,6 +165,17 @@ suite('#189 WorkingSetIndex — изменения и захваты как ед
   });
 });
 
+suite('#189 RepositoryLockState.listOwnLockedFullNames', () => {
+  test('цели без состояния захватов — пустой список', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-own-locks-'));
+    try {
+      assert.deepStrictEqual(new RepositoryLockState(root).listOwnLockedFullNames(TARGET), []);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 suite('#189 UnloadedChangesScanner — не загруженные в базу изменения', () => {
   let ws: Workspace;
   setup(() => { ws = createWorkspace(); });
@@ -228,6 +240,11 @@ suite('#189 UnloadedChangesScanner — не загруженные в базу �
     const deleted = scanner.refreshFiles(reverted, [modulePath, created]);
     assert.deepStrictEqual([...deleted.deleted], ['Catalogs/ПричиныВозврата/Ext/ObjectModule.bsl']);
     assert.strictEqual(deleted.changed.size, 0, 'событие о файле, которого нет ни на диске, ни в базе, игнорируется');
+
+    const directoryNamedLikeXml = path.join(ws.configRoot, 'Catalogs', 'Каталог.xml');
+    fs.mkdirSync(directoryNamedLikeXml);
+    const afterDirectory = scanner.refreshFiles(deleted, [directoryNamedLikeXml]);
+    assert.strictEqual(afterDirectory.changed.size, 0, 'каталог — не файл выгрузки');
   });
 
   test('сбой записи stat-индекса не обрывает подсчёт', async () => {
