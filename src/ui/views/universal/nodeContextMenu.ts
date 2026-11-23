@@ -110,7 +110,7 @@ export function collectNodeActions(node: MetadataNode, ctx: NodeMenuContext): No
   };
   const isRoot = Boolean(node.xmlPath) && ROOT_WITH_XML.test(ctxValue);
 
-  addOpenActions(node, add);
+  addOpenActions(node, isRoot, add);
   addEditActions(node, ctxValue, ctx, add);
 
   if (isRoot) {
@@ -157,19 +157,25 @@ export function buildNodeMenu(node: MetadataNode, ctx: NodeMenuContext): NodeMen
   return menu;
 }
 
-function addOpenActions(node: MetadataNode, add: AddAction): void {
+function addOpenActions(node: MetadataNode, isRoot: boolean, add: AddAction): void {
   if (!node.xmlPath) {return;}
-  if (!node.hidePropertiesCommand) {
-    add('open', 'onecdev.showProperties', 'Свойства', codicon('list-unordered'));
-  }
-  add('open', 'onecdev.openXmlFile', 'Открыть XML', codicon('file-code'));
-  if (node.command?.command) {
-    add('open', node.command.command, node.command.title, codicon('code'));
+  if (isRoot) {
+    addPropertiesAction(node, 'open', add);
   }
   const def = (META_TYPES as Record<string, { modules?: readonly string[] } | undefined>)[node.nodeKind];
   for (const slot of def?.modules ?? []) {
     const action = MODULE_SLOT_ACTIONS[slot];
     if (action) {add('open', action.command, action.title, action.icon);}
+  }
+  add('open', 'onecdev.openXmlFile', 'Открыть XML', codicon('file-code'));
+  if (node.command?.command) {
+    add('open', node.command.command, node.command.title, codicon('code'));
+  }
+}
+
+function addPropertiesAction(node: MetadataNode, section: 'open' | 'check', add: AddAction): void {
+  if (!node.hidePropertiesCommand) {
+    add(section, 'onecdev.showProperties', 'Свойства', codicon('list-unordered'));
   }
 }
 
@@ -269,6 +275,7 @@ function addCheckActions(node: MetadataNode, ctxValue: string, isRoot: boolean, 
     add('check', 'onecdev.form.info', 'Форма: структура', codicon('symbol-structure'));
     add('check', 'onecdev.form.validate', 'Форма: валидировать', codicon('verified'));
   }
+  if (!isRoot) {addPropertiesAction(node, 'check', add);}
 }
 
 function canAddHelp(node: MetadataNode): boolean {

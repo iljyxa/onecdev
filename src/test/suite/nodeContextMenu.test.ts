@@ -132,14 +132,13 @@ suite('Контекстное меню узла — группы и подмен
     assert.deepStrictEqual(withSeparators(submenu(menu, 'Файлы')), ['dumpAllExtensionsToCfe', 'loadAllExtensionsFromCfe']);
   });
 
-  test('справочник: свойства, XML и модули сверху, правка отдельной группой, хранилище и проверка — в подменю', () => {
+  test('справочник: модули и XML сверху, правка отдельной группой, хранилище и проверка — в подменю', () => {
     const menu = menuOf(makeNode('Catalog', 'Catalog-hasXml-repoConnected-repoUnlocked'));
     assertWellFormed(menu);
     assert.deepStrictEqual(topLevel(menu), [
-      'onecdev.showProperties',
-      'onecdev.openXmlFile',
       'onecdev.openObjectModule',
       'onecdev.openManagerModule',
+      'onecdev.openXmlFile',
       'onecdev.form.add',
       'onecdev.help.add',
       'onecdev.borrowToExtension',
@@ -149,7 +148,7 @@ suite('Контекстное меню узла — группы и подмен
     assert.deepStrictEqual(withSeparators(submenu(menu, 'Хранилище')), [
       'repository.lock', 'repository.commit', 'repository.update', 'repository.updateToVersion', 'repository.objectHistory',
     ]);
-    assert.deepStrictEqual(withSeparators(submenu(menu, 'Проверка')), ['metadata.info', 'metadata.validate']);
+    assert.deepStrictEqual(withSeparators(submenu(menu, 'Проверка')), ['metadata.info', 'metadata.validate', 'showProperties']);
   });
 
   test('без расширений в реестре «Добавить в расширение» нет; без хранилища нет и подменю «Хранилище»', () => {
@@ -177,7 +176,7 @@ suite('Контекстное меню узла — группы и подмен
     test(`${kind}: профильные проверки — в «Проверка»`, () => {
       const menu = menuOf(makeNode(kind, `${kind}-hasXml`));
       assertWellFormed(menu);
-      assert.deepStrictEqual(withSeparators(submenu(menu, 'Проверка')), expected);
+      assert.deepStrictEqual(withSeparators(submenu(menu, 'Проверка')), [...expected, 'showProperties']);
     });
   }
 
@@ -203,7 +202,16 @@ suite('Контекстное меню узла — группы и подмен
     const node = makeNode('CommonModule', 'CommonModule-hasXml');
     node.command = { command: 'onecdev.openCommonModuleCode', title: 'Открыть модуль' };
     const open = menuOf(node).filter((item) => item.group === 'open').map((item) => item.command);
-    assert.deepStrictEqual(open, ['onecdev.showProperties', 'onecdev.openXmlFile', 'onecdev.openCommonModuleCode']);
+    assert.deepStrictEqual(open, ['onecdev.openCommonModuleCode', 'onecdev.openXmlFile']);
+  });
+
+  test('текстовый макет: «Открыть XML» остаётся перед «Открыть макет»', () => {
+    const node = makeNode('CommonTemplate', 'CommonTemplate-hasXml');
+    node.command = { command: 'onecdev.openTemplateContent', title: 'Открыть макет' };
+    assert.deepStrictEqual(topLevel(menuOf(node)).slice(0, 2), [
+      'onecdev.openXmlFile',
+      'onecdev.openTemplateContent',
+    ]);
   });
 
   test('форма: перехватчик в расширении, заимствование в основной конфигурации — по объекту-владельцу', () => {
@@ -223,7 +231,7 @@ suite('Контекстное меню узла — группы и подмен
     const node = makeNode('Catalog', 'Catalog-hasXml');
     node.contextValue = undefined;
     assert.deepStrictEqual(topLevel(menuOf(node)), [
-      'onecdev.showProperties', 'onecdev.openXmlFile', 'onecdev.openObjectModule', 'onecdev.openManagerModule',
+      'onecdev.openObjectModule', 'onecdev.openManagerModule', 'onecdev.openXmlFile',
       'onecdev.form.add', 'onecdev.help.add', 'onecdev.borrowToExtension', '▸ Проверка',
     ]);
   });
