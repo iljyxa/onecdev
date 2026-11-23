@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { AgentConfigurationTarget } from '../../domain/agent';
+import { mkdirInsideServiceDir } from '../fs/WorkspaceTempDir';
 
 export interface AgentWorkspacePaths {
   readonly projectRoot: string;
@@ -43,7 +44,7 @@ export class AgentWorkspaceService {
 
   ensureWorkspace(sessionId: string, target: AgentConfigurationTarget): AgentWorkspacePaths {
     const workspace = this.resolveWorkspace(sessionId, target);
-    fs.mkdirSync(workspace.sessionsRoot, { recursive: true });
+    mkdirInsideServiceDir(this.projectRoot, workspace.sessionsRoot);
     fs.mkdirSync(workspace.workspaceRoot, { recursive: true });
     fs.mkdirSync(workspace.listsRoot, { recursive: true });
     fs.mkdirSync(workspace.exchangeRoot, { recursive: true });
@@ -53,7 +54,7 @@ export class AgentWorkspaceService {
 
   writeListFile(operationId: string, relativeFiles: readonly string[]): string {
     const listPath = path.join(this.getAgentFileRoot(), 'lists', `${sanitizePathPart(operationId)}.txt`);
-    fs.mkdirSync(path.dirname(listPath), { recursive: true });
+    mkdirInsideServiceDir(this.projectRoot, path.dirname(listPath));
     const normalized = relativeFiles.map(normalizeRelativeFilePath);
     fs.writeFileSync(listPath, `\uFEFF${normalized.join('\n')}`, 'utf-8');
     return listPath;
@@ -68,7 +69,7 @@ export class AgentWorkspaceService {
    */
   writeObjectNamesFile(operationId: string, fullNames: readonly string[]): string {
     const listPath = path.join(this.getAgentFileRoot(), 'lists', `${sanitizePathPart(operationId)}.txt`);
-    fs.mkdirSync(path.dirname(listPath), { recursive: true });
+    mkdirInsideServiceDir(this.projectRoot, path.dirname(listPath));
     const normalized = fullNames
       .map((name) => name.replace(/[\r\n]+/g, ' ').trim())
       .filter(Boolean);

@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { writeFileAtomic } from '../fs/AtomicFileWriter';
+import { mkdirInsideServiceDir } from '../fs/WorkspaceTempDir';
 
 export interface HashCacheSnapshot {
   schemaVersion: 1;
@@ -92,7 +93,7 @@ export function createHashSnapshot(scopeKey: string, files: Record<string, strin
  */
 export function saveHashCache(projectRoot: string, snapshot: HashCacheSnapshot): void {
   const filePath = getCacheFilePath(projectRoot, snapshot.scopeKey);
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  mkdirInsideServiceDir(projectRoot, path.dirname(filePath));
   // Общий примитив temp+rename (infra/fs/AtomicFileWriter): прерывание записи
   // не должно оставить битый JSON в кэше. Собственной копии здесь нет
   // сознательно — их уже было две, и каждая следующая расходилась бы с общей.

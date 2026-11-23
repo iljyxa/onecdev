@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { SERVICE_DIR_GITIGNORE_CONTENT } from '../../infra/fs/WorkspaceTempDir';
 import { StandaloneServerService } from '../../infra/standalone/StandaloneServerService';
 import type { Logger } from '../../infra/support/Logger';
 
@@ -68,5 +69,22 @@ suite('StandaloneServerService — настройки после перенос�
     const settings = readSettings();
     assert.strictEqual(settings.dataPath, serverRoot);
     assert.strictEqual(settings.databasePath, path.join(serverRoot, 'db-data'));
+  });
+
+  test('сохранение настроек создаёт .onecdev/.gitignore — каталог сервера не попадает в git (#194)', () => {
+    fs.rmSync(path.join(root, '.onecdev'), { recursive: true, force: true });
+    new StandaloneServerService(root, new TestLogger()).save({
+      ibsrvPath: '',
+      platformPath: '',
+      databasePath: '',
+      httpAddress: 'localhost',
+      httpPort: 8314,
+      httpBase: '/',
+      name: 'onecdev',
+      distributeLicenses: 'allow',
+      scheduleJobs: 'allow',
+    });
+    assert.ok(fs.existsSync(path.join(serverRoot, 'settings.json')));
+    assert.strictEqual(fs.readFileSync(path.join(root, '.onecdev', '.gitignore'), 'utf-8'), SERVICE_DIR_GITIGNORE_CONTENT);
   });
 });

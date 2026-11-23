@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getRepositoryUnitAncestors, getRootLockName, isRootLockName } from './RepositoryObjectNames';
 import type { RepositoryTarget } from './RepositoryService';
+import { mkdirInsideServiceDir } from '../fs/WorkspaceTempDir';
 
 /**
  * Состояние цели в `state.json`. Формат остаётся `version: 2`: новые поля
@@ -465,7 +466,7 @@ export class RepositoryLockState {
   private save(state: RepositoryStateFile): void {
     this.revision += 1;
     const filePath = this.getStateFilePath();
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    mkdirInsideServiceDir(this.workspaceRoot, path.dirname(filePath));
     fs.writeFileSync(filePath, `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
     // Файл только что записан; mtime отсутствует лишь при гонке с внешним удалением.
     /* c8 ignore next */

@@ -14,6 +14,7 @@ import {
 import type { Logger } from '../support/Logger';
 import { LEGACY_SERVICE_DIR_NAME } from '../fs/LegacyServiceDirMigration';
 import { parseJsonObjectText } from '../fs/JsonTextFile';
+import { mkdirInsideServiceDir } from '../fs/WorkspaceTempDir';
 
 export type StandaloneServerState = 'unconfigured' | 'running' | 'unresponsive' | 'stopped' | 'stale' | 'busy';
 
@@ -208,7 +209,9 @@ export class StandaloneServerService {
 
   save(input: SaveStandaloneServerSettingsInput): StandaloneServerSettingsSnapshot {
     const normalized = normalizeSettingsInput(input, this.getServerRoot());
-    fs.mkdirSync(this.getServerRoot(), { recursive: true });
+    // Единственная точка, создающая каталог сервера: старт и журналы требуют сохранённых
+    // настроек, поэтому `.onecdev/.gitignore` к ним уже лежит.
+    mkdirInsideServiceDir(this.workspaceRoot, this.getServerRoot());
     fs.mkdirSync(normalized.dataPath, { recursive: true });
     fs.mkdirSync(normalized.databasePath, { recursive: true });
     fs.writeFileSync(this.getSettingsPath(), `${JSON.stringify(normalized, null, 2)}\n`, 'utf-8');
