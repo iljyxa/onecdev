@@ -64,6 +64,9 @@ function controllableSubmit(): {
 
 const submitMessage = { type: 'command', command: 'submit', payload: FORM_DATA };
 
+/** Ответ на отправку во время операции: форма остаётся в «Подключение…», операция идёт (issue #203). */
+const OPERATION_IN_PROGRESS = { type: 'status', kind: 'loading', message: 'Операция уже выполняется' };
+
 suite('RepositoryConnectionViewProvider — форма не закрывается до успеха (issue #184)', () => {
   const windowRef = vscode.window as Pick<typeof vscode.window, 'showErrorMessage'>;
   let originalShowError: typeof vscode.window.showErrorMessage;
@@ -113,7 +116,7 @@ suite('RepositoryConnectionViewProvider — форма не закрываетс
 
     assert.deepStrictEqual(await outcome(), { settled: false });
     assert.strictEqual(panel.isDisposed(), false);
-    assert.deepStrictEqual(panel.posted, [{ type: 'error', message: 'Неверный пароль' }]);
+    assert.deepStrictEqual(panel.posted, [OPERATION_IN_PROGRESS, { type: 'error', message: 'Неверный пароль' }]);
     assert.deepStrictEqual(submit.calls, [FORM_DATA]);
     assert.deepStrictEqual(notifications, []);
 
@@ -148,6 +151,35 @@ suite('RepositoryConnectionViewProvider — форма не закрываетс
     assert.deepStrictEqual(await outcome(), { settled: true, value: undefined });
     assert.strictEqual(panels.panels[0].isDisposed(), true);
     assert.deepStrictEqual(submit.calls, []);
+  });
+
+  test('повторная отправка во время операции: форме подтверждается, что операция идёт (issue #203)', async () => {
+    const submit = controllableSubmit();
+    const outcome = track(provider.show('connect', 'ТорговыйУчет', undefined, submit.handler));
+    const [panel] = panels.panels;
+
+    panel.receive(submitMessage);
+    panel.receive(submitMessage);
+
+    assert.deepStrictEqual(panel.posted, [OPERATION_IN_PROGRESS]);
+    assert.strictEqual(submit.calls.length, 1);
+    submit.finish({ ok: true, value: 'готово' });
+    assert.deepStrictEqual(await outcome(), { settled: true, value: 'готово' });
+  });
+
+  test('отправка без ожидающего вызова не запускает операцию (issue #203)', async () => {
+    const submit = controllableSubmit();
+    const outcome = track(provider.show('connect', 'ТорговыйУчет', undefined, submit.handler));
+    const [panel] = panels.panels;
+    panel.receive({ type: 'command', command: 'cancel' });
+    assert.deepStrictEqual(await outcome(), { settled: true, value: undefined });
+
+    // Запоздавшее сообщение уже закрытой формы: вызов завершён, операция не начинается.
+    panel.receive(submitMessage);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.deepStrictEqual(submit.calls, []);
+    assert.deepStrictEqual(panel.posted, []);
   });
 
   test('отмена во время операции игнорируется: исход операции решает', async () => {

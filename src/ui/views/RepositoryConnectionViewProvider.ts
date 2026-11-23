@@ -6,8 +6,6 @@ import {
 } from '../../infra/repository/RepositoryConnectionOptions';
 import { WebviewHtmlFactory } from './webview/WebviewHtmlFactory';
 
-export type ConnectionMode = RepositoryConnectionMode;
-
 export interface RepositoryBinding {
   readonly repoPath: string;
   readonly repoUser: string;
@@ -66,7 +64,7 @@ export class RepositoryConnectionViewProvider implements vscode.Disposable {
    * @returns Значение успешного `onSubmit` или `undefined` при отмене.
    */
   show<T>(
-    mode: ConnectionMode,
+    mode: RepositoryConnectionMode,
     target: string,
     initialBinding: RepositoryBinding | undefined,
     onSubmit: RepositoryConnectionSubmitHandler<T>
@@ -143,8 +141,15 @@ export class RepositoryConnectionViewProvider implements vscode.Disposable {
   }
 
   private async submit(data: RepositoryConnectionFormData): Promise<void> {
+    // Отправку, которую провайдер не берёт в работу, нельзя пропускать молча: форма уже показывает
+    // «Подключение…» и без ответа осталась бы в нём навсегда (issue #203).
+    if (this.submitting) {
+      void this.panel?.webview.postMessage({ type: 'status', kind: 'loading', message: 'Операция уже выполняется' });
+      return;
+    }
     const pending = this.pending;
-    if (!pending || this.submitting) {
+    if (!pending) {
+      // Вызов уже завершён (отменой или закрытием), значит и форма закрыта: ответ ей не нужен.
       return;
     }
     this.submitting = true;
