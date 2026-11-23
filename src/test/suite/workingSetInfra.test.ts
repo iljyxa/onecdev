@@ -276,6 +276,32 @@ suite('#189 асинхронный снапшот хешей через stat-и�
     assert.strictEqual(again.indexChanged, false);
   });
 
+  test('число файлов, обрабатываемых одновременно, ограничено во всей выгрузке', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    const visited = new Set<string>();
+    await walkSupportedFilesAsync(ws.configRoot, async (_full, relative) => {
+      ++inFlight;
+      peak = Math.max(peak, inFlight);
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      visited.add(relative);
+      --inFlight;
+    });
+    assert.ok(peak <= 8, `на пике обрабатывается ${String(peak)} файлов`);
+    assert.deepStrictEqual(visited, new Set(Object.keys(buildHashSnapshot('тест', ws.configRoot).files)));
+  });
+
+  test('ошибка чтения файла и ошибка обхода каталога передаются вызывающему коду', async () => {
+    const loop = path.join(ws.configRoot, 'Петля.bsl');
+    fs.symlinkSync(loop, loop);
+    await assert.rejects(
+      buildHashSnapshotWithStatIndexAsync('тест', ws.configRoot, createEmptyFileStatIndex('тест'), Date.now()),
+      { code: 'ELOOP' }
+    );
+    await assert.rejects(walkSupportedFilesAsync(loop, () => Promise.resolve()), { code: 'ELOOP' });
+    await walkSupportedFilesAsync(path.join(ws.configRoot, 'Configuration.xml'), () => Promise.resolve());
+  });
+
   test('висячая ссылка и отсутствующий корень не ломают обход', async () => {
     const dangling = path.join(ws.configRoot, 'Catalogs', 'Висячая.bsl');
     fs.symlinkSync(path.join(ws.configRoot, 'нет-такого.bsl'), dangling);

@@ -154,8 +154,12 @@ export class RepositoryLockState {
   clearScope(target: RepositoryTarget): void {
     const state = this.load();
     const scopeKey = buildRepositoryScopeKey(target);
+    const previous = state.scopes[scopeKey] as RepositoryScopeState | undefined;
     state.scopes = Object.fromEntries(Object.entries(state.scopes).filter(([key]) => key !== scopeKey));
     this.save(state);
+    if (previous) {
+      this.emit(target, collectLocalLockNames(previous));
+    }
   }
 
   isLocked(target: RepositoryTarget, fullName: string): boolean {

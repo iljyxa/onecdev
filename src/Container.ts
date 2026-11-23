@@ -722,6 +722,23 @@ export class Container {
       false
     );
 
+    const hashCacheWatcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(this.workspaceFolder, '.onecdev/cache/*.json')
+    );
+    const onHashCacheChange = (uri: vscode.Uri): void => {
+      // Запись эталона бывает и без правки исходников, например при освобождении
+      // объекта. Изменения stat-индекса самого фильтра не должны запускать пересчёт.
+      if (/^[a-f0-9]{40}\.json$/.test(path.basename(uri.fsPath))) {
+        void this.workingSetFilterController.rescan();
+      }
+    };
+    this.context.subscriptions.push(
+      hashCacheWatcher,
+      hashCacheWatcher.onDidCreate(onHashCacheChange),
+      hashCacheWatcher.onDidChange(onHashCacheChange),
+      hashCacheWatcher.onDidDelete(onHashCacheChange),
+    );
+
     const onSourceChange = (uri: vscode.Uri) => {
       if (isWorkspaceServicePath(this.workspaceFolder.uri.fsPath, uri.fsPath)) {
         return;

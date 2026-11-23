@@ -170,11 +170,15 @@ export class WorkingSetFilterController {
 
   private applyIndex(): void {
     const sources: WorkingSetSource[] = [];
-    for (const changes of this.changes.values()) {
-      const target = this.resolveTarget(changes);
+    for (const entry of this.deps.treeProvider.getEntries()) {
+      const changes = this.changes.get(pathKey(entry.rootPath));
+      const target = this.resolveTarget(entry, changes?.name);
+      if (!target) {
+        continue;
+      }
       sources.push({
         target,
-        changedRelativePaths: changes.changed,
+        changedRelativePaths: changes?.changed ?? [],
         ownLockedFullNames: this.listOwnLocks(target),
       });
     }
@@ -183,14 +187,14 @@ export class WorkingSetFilterController {
     this.deps.onDidChangeStatus();
   }
 
-  private resolveTarget(changes: UnloadedChanges): RepositoryTarget {
-    const resolved = this.deps.repositoryService?.resolveTargetByConfigRoot(changes.entry.rootPath);
-    return resolved ?? {
-      configRoot: changes.entry.rootPath,
-      configKind: changes.entry.kind,
-      extensionName: changes.entry.kind === 'cfe' ? changes.name : undefined,
-      displayName: changes.name,
-    };
+  private resolveTarget(entry: ConfigEntry, name: string | undefined): RepositoryTarget | undefined {
+    const resolved = this.deps.repositoryService?.resolveTargetByConfigRoot(entry.rootPath);
+    return resolved ?? (name === undefined ? undefined : {
+      configRoot: entry.rootPath,
+      configKind: entry.kind,
+      extensionName: entry.kind === 'cfe' ? name : undefined,
+      displayName: name,
+    });
   }
 
   private listOwnLocks(target: RepositoryTarget): string[] {

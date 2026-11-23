@@ -26,8 +26,9 @@
   строковыми операциями, без I/O на узел (запрет №11). Фильтр «изменённые и захваченные»: сканер хеш-кэша
   `infra/cache/UnloadedChangesScanner.ts` (async-снапшот через stat-индекс) → `infra/repository/WorkingSetIndex.ts`
   (ключ — полное имя единицы хранилища) → `ui/tree/WorkingSetFilterController.ts` (события файлов из watcher'а
-  `Container`, `onDidChangeLocks`, полный пересчёт после операций с базой) → панель: request
-  `toggleWorkingSetFilter` и поле состояния `workingSetFilter`.
+  `Container`, `onDidChangeLocks`, полный пересчёт при обновлении хеш-кэша) → панель: request
+  `toggleWorkingSetFilter` и поле состояния `workingSetFilter`. Кэш, созданный при первом открытии проекта,
+  помечается отдельно и не служит эталоном для фильтра до операции с базой.
 - **Новый watcher:** `FileSystemWatcher` — только в `Container` или `ui/support/`; обработчик делегирует в сервис.
 
 - **Открытие BSL-модулей:** только реальные `file://` документы (виртуальная схема `onec://` удалена).

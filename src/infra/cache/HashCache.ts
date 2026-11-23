@@ -8,6 +8,7 @@ export interface HashCacheSnapshot {
   schemaVersion: 1;
   scopeKey: string;
   generatedAt: string;
+  initializedLocally?: true;
   files: Record<string, string>;
 }
 
@@ -58,6 +59,7 @@ export function loadHashCache(projectRoot: string, scopeKey: string): HashCacheS
       scopeKey,
       generatedAt: typeof parsed.generatedAt === 'string' ? parsed.generatedAt : '',
       files: parsed.files,
+      ...(parsed.initializedLocally === true ? { initializedLocally: true } : {}),
     };
   } catch {
     return { schemaVersion: CACHE_SCHEMA_VERSION, scopeKey, generatedAt: '', files: {} };
@@ -206,7 +208,10 @@ export function patchHashCacheEntries(
     }
   }
   const deleted = deletedFiles.map((relativeFile) => relativeFile.replace(/\\/g, '/'));
-  saveHashCache(projectRoot, patchHashSnapshot(previous, changedHashes, deleted));
+  saveHashCache(projectRoot, {
+    ...patchHashSnapshot(previous, changedHashes, deleted),
+    initializedLocally: previous.initializedLocally,
+  });
 }
 
 export function collectCurrentHashes(configDir: string, relativePaths: string[]): Record<string, string> {
@@ -295,37 +300,49 @@ export function walkSupportedFiles(
 }
 
 /**
- * Асинхронный двойник `walkSupportedFiles`: каталоги читаются через fs.promises, а
- * файлы одного каталога обходятся параллельно. Нужен пересчётам, которые идут в
- * фоне (фильтр дерева), — синхронный обход десятков тысяч файлов блокировал бы
- * Extension Host.
+ * Асинхронный обход с ограничением числа открываемых файлов. Каталоги
+ * ставятся в очередь, чтобы их обработчики не запускали новые пачки параллельно.
  */
 export async function walkSupportedFilesAsync(
   rootDir: string,
   visitor: (fullPath: string, relativePath: string) => Promise<void>
 ): Promise<void> {
-  const visitDir = async (currentDir: string): Promise<void> => {
+  const pending = [rootDir];
+  for (let currentDir = pending.pop(); currentDir !== undefined; currentDir = pending.pop()) {
     let entries: fs.Dirent[];
     try {
       entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
-    } catch {
-      // Каталог удалён во время обхода (или корня нет вовсе) — для снапшота это
-      // то же, что пустой каталог.
-      return;
+    } catch (error) {
+      if (!isMissingSnapshotPath(error)) {
+        throw error;
+      }
+      continue;
     }
-    await Promise.all(entries.map(async (entry) => {
+
+    const visits: Promise<void>[] = [];
+    for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name);
       if (entry.isDirectory()) {
-        await visitDir(fullPath);
-        return;
+        pending.push(fullPath);
+        continue;
       }
+
       const relativePath = path.relative(rootDir, fullPath).replace(/\\/g, '/');
       if (isSupportedConfigFile(relativePath)) {
-        await visitor(fullPath, relativePath);
+        visits.push(visitor(fullPath, relativePath));
+        if (visits.length === 8) {
+          await Promise.all(visits);
+          visits.length = 0;
+        }
       }
-    }));
-  };
-  await visitDir(rootDir);
+    }
+    await Promise.all(visits);
+  }
+}
+
+export function isMissingSnapshotPath(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === 'ENOENT' || code === 'ENOTDIR';
 }
 
 function sortUnique(items: string[]): string[] {

@@ -39,7 +39,7 @@ export class UnloadedChangesScanner {
     const info = parseConfigXml(path.join(entry.rootPath, 'Configuration.xml'));
     const scopeKey = buildMetadataCacheScopeKey(entry, info);
     const previous = loadHashCache(this.projectRoot, scopeKey);
-    if (Object.keys(previous.files).length === 0) {
+    if (previous.initializedLocally || Object.keys(previous.files).length === 0) {
       return { entry, name: info.name, hasBaseline: false, changed: new Set(), deleted: new Set(), baseline: {} };
     }
 

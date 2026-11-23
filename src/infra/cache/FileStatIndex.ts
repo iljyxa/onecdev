@@ -4,6 +4,7 @@ import {
   computeFileHash,
   computeFileHashAsync,
   createHashSnapshot,
+  isMissingSnapshotPath,
   resolveHashCacheFileStem,
   walkSupportedFiles,
   walkSupportedFilesAsync,
@@ -148,9 +149,11 @@ export async function buildHashSnapshotWithStatIndexAsync(
     try {
       stat = await fs.promises.stat(fullPath);
       hash = accumulator.reusableHash(relativePath, stat) ?? await computeFileHashAsync(fullPath);
-    } catch {
-      // Файл удалён между чтением каталога и stat/чтением: в снапшот не попадает,
-      // как если бы обход начался мгновением позже.
+    } catch (error) {
+      if (!isMissingSnapshotPath(error)) {
+        throw error;
+      }
+      // Файл удалён между чтением каталога и stat/чтением.
       return;
     }
     accumulator.record(relativePath, stat, hash);

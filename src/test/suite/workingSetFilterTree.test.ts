@@ -2,9 +2,10 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { buildHashSnapshot, buildScopeKey, saveHashCache } from '../../infra/cache/HashCache';
+import { buildHashSnapshot, buildScopeKey, patchHashCacheEntries, saveHashCache } from '../../infra/cache/HashCache';
 import { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
 import { findConfigurations } from '../../infra/fs/ConfigLocator';
+import { ConfigurationChangeDetector } from '../../infra/fs/ConfigurationChangeDetector';
 import { CONFIGURATION_ROOT_LOCK_NAME } from '../../infra/repository/RepositoryObjectNames';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import type { MetadataNode } from '../../ui/tree/TreeNode';
@@ -200,6 +201,10 @@ suite('#189 фильтр дерева «изменённые и захвачен
     ws.service.setLocked(ws.target, ['Справочник.УжеУдалён'], true);
     const rootWithMissing = child(treeProvider, undefined, 'ТорговыйУчет');
     assert.strictEqual(rootWithMissing.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
+
+    await ws.service.clearBinding(ws.target);
+    assert.deepStrictEqual(labels(treeProvider), [], 'отключение удаляет захваты из активного фильтра');
+    await ws.service.clearBinding(ws.target);
   });
 
   test('хеш-кэша нет: сообщение «нет данных о загрузке в базу», фильтр по изменённым не применяется', async () => {
@@ -214,6 +219,28 @@ suite('#189 фильтр дерева «изменённые и захвачен
       'Фильтр: не загруженные в базу и захваченные (0); нет данных о загрузке в базу: ТорговыйУчет'
     );
     assert.deepStrictEqual(labels(treeProvider), []);
+  });
+
+  test('начальный кэш проекта не заменяет данные о загрузке в базу', async () => {
+    harness = await createHarness({ binding: true });
+    const { ws, treeProvider, controller } = harness;
+    const detector = new ConfigurationChangeDetector(ws.workspaceRoot);
+    detector.ensureCaches(treeProvider.getEntries());
+    patchHashCacheEntries(ws.workspaceRoot, 'cf', ws.configRoot, '', {}, []);
+    edit(cfFile(harness, ...OBJECT_MODULE));
+    ws.service.setLocked(ws.target, ['Справочник.Банки'], true);
+
+    await controller.toggle();
+    assert.match(controller.getStatus().message ?? '', /нет данных о загрузке в базу/);
+    let catalogs = child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники');
+    assert.deepStrictEqual(labels(treeProvider, catalogs), ['Банки']);
+
+    saveBaseline(harness);
+    edit(cfFile(harness, ...OBJECT_MODULE));
+    await controller.rescan();
+    assert.doesNotMatch(controller.getStatus().message ?? '', /нет данных о загрузке в базу/);
+    catalogs = child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники');
+    assert.deepStrictEqual(labels(treeProvider, catalogs), ['Банки', 'ПричиныВозврата']);
   });
 
   test('пересечение с поиском, пересчёт после обновления кэша и выключение', async () => {
@@ -336,6 +363,20 @@ suite('#189 фильтр дерева «изменённые и захвачен
     controller.notifyFileChanged(modulePath);
     controller.flushFileChanges();
     assert.deepStrictEqual(labels(treeProvider), ['ТорговыйУчет', 'Расширения']);
+  });
+
+  test('свои захваты видны и при ошибке чтения файлов выгрузки', async () => {
+    harness = await createHarness({ binding: true });
+    const { ws, treeProvider, controller, logs } = harness;
+    saveBaseline(harness);
+    const loop = cfFile(harness, 'Петля.bsl');
+    fs.symlinkSync(loop, loop);
+    ws.service.setLocked(ws.target, ['Справочник.Банки'], true);
+
+    await controller.toggle();
+    assert.ok(logs.some((line) => line.includes('ELOOP')), logs.join('\n'));
+    const catalogs = child(treeProvider, child(treeProvider, undefined, 'ТорговыйУчет'), 'Справочники');
+    assert.deepStrictEqual(labels(treeProvider, catalogs), ['Банки']);
   });
 
   test('сбой подсчёта конфигурации пишется в лог, остальной фильтр работает', async () => {
