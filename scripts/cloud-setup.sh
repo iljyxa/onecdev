@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Прогрев проекта для Claude Code Cloud и любого headless-CI: npm ci + сборка.
+# Прогрев проекта для облачной разработки: npm ci и сборка.
 #
-# Не системные зависимости — только то, что относится к самому проекту, поэтому вызывается
-# через SessionStart-хук (.claude/settings.json), а не через поле Setup script в UI облака.
+# Скрипт готовит зависимости и сборку проекта. В Claude Code его вызывает
+# SessionStart-хук (.claude/settings.json).
 # Причина разделения: Setup script выполняется ДО запуска Claude Code, и на этом этапе нет
 # гарантированной привязки рабочей директории к клону репозитория — задокументирована только
 # переменная $CLAUDE_PROJECT_DIR, которую Claude Code выставляет для хуков. Установка xvfb и
@@ -12,15 +12,22 @@
 #
 # CLAUDE_CODE_REMOTE=true выставляется только в облачной VM — локально хук выходит сразу,
 # не мешая обычному npm run watch.
+# В Codex Cloud скрипт запускается явно из Setup script с аргументом --codex.
 
 set -euo pipefail
 
-if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
+if [ "${1:-}" != "--codex" ] && [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
 echo "==> Установка зависимостей (npm ci по package-lock.json)"
-npm ci
+if [ "${1:-}" = "--codex" ]; then
+  npm ci --ignore-scripts
+else
+  npm ci
+fi
 
 echo "==> Прогрев сборки: typecheck + vite + компиляция тестов"
 npm run typecheck
