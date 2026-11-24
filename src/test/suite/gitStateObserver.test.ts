@@ -18,6 +18,10 @@
  * сопоставление корня идёт через реальный `selectGitRepository`.
  */
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { execFileSync } from 'child_process';
 import * as vscode from 'vscode';
 import { GitStateObserver } from '../../ui/git/GitStateObserver';
 import type { GitApiLike, RepositoryLike } from '../../ui/git/gitExtensionApi';
@@ -42,6 +46,7 @@ function createFakeRepository(root: string): RepositoryLike {
 function createFakeGitApi(initialState: 'uninitialized' | 'initialized'): GitApiLike & {
   setState: (state: 'uninitialized' | 'initialized') => void;
   addRepository: (repo: RepositoryLike) => void;
+  closeRepository: (repo: RepositoryLike) => void;
   repositoriesList: RepositoryLike[];
   disposeEmitters: () => void;
 } {
@@ -49,6 +54,7 @@ function createFakeGitApi(initialState: 'uninitialized' | 'initialized'): GitApi
   const repositoriesList: RepositoryLike[] = [];
   const stateEmitter = new vscode.EventEmitter<'uninitialized' | 'initialized'>();
   const openRepositoryEmitter = new vscode.EventEmitter<RepositoryLike>();
+  const closeRepositoryEmitter = new vscode.EventEmitter<RepositoryLike>();
 
   return {
     get state() {
@@ -59,6 +65,7 @@ function createFakeGitApi(initialState: 'uninitialized' | 'initialized'): GitApi
     },
     onDidChangeState: stateEmitter.event,
     onDidOpenRepository: openRepositoryEmitter.event,
+    onDidCloseRepository: closeRepositoryEmitter.event,
     setState: (next: 'uninitialized' | 'initialized') => {
       state = next;
       stateEmitter.fire(next);
@@ -67,15 +74,99 @@ function createFakeGitApi(initialState: 'uninitialized' | 'initialized'): GitApi
       repositoriesList.push(repo);
       openRepositoryEmitter.fire(repo);
     },
+    closeRepository: (repo: RepositoryLike) => {
+      repositoriesList.splice(repositoriesList.indexOf(repo), 1);
+      closeRepositoryEmitter.fire(repo);
+    },
     repositoriesList,
     disposeEmitters: () => {
       stateEmitter.dispose();
       openRepositoryEmitter.dispose();
+      closeRepositoryEmitter.dispose();
     },
   };
 }
 
 type FakeRepository = RepositoryLike & { _fireStateChange: () => void; _dispose: () => void };
+
+suite('GitStateObserver — наличие репозитория рабочей папки', () => {
+  let folder: string;
+
+  setup(() => {
+    folder = fs.mkdtempSync(path.join(os.tmpdir(), 'onec-git-root-'));
+  });
+
+  teardown(() => {
+    fs.rmSync(folder, { recursive: true, force: true });
+  });
+
+  test('без Git API проверяет рабочую папку один раз и находит родительский репозиторий', () => {
+    const workspace = fs.mkdtempSync(path.join(folder, 'workspace-'));
+    const roots: (string | null)[] = [];
+    const recordRoot = (root: string | null) => roots.push(root);
+    const onChange = () => assert.fail('События статуса доступны только через Git API');
+    const beforeInit = new GitStateObserver(undefined, workspace, onChange, recordRoot);
+    beforeInit.start();
+    assert.deepStrictEqual(roots, [null]);
+
+    execFileSync('git', ['init', '--quiet', folder]);
+    beforeInit.recheckRepository();
+    assert.deepStrictEqual(roots, [null], 'без Git API корень определяется только на старте');
+
+    const afterInit = new GitStateObserver(undefined, workspace, onChange, recordRoot);
+    afterInit.start();
+    assert.deepStrictEqual(roots, [null, fs.realpathSync(folder)]);
+    beforeInit.dispose();
+    afterInit.dispose();
+  });
+
+  test('git init, закрытие VS Code, удаление .git и повторный git init', () => {
+    const api = createFakeGitApi('initialized');
+    const repo = createFakeRepository(folder) as FakeRepository;
+    const reopened = createFakeRepository(folder) as FakeRepository;
+    const roots: (string | null)[] = [];
+    let changes = 0;
+    const observer = new GitStateObserver(api, folder, () => { changes += 1; }, (root) => roots.push(root));
+    try {
+      observer.start();
+      assert.deepStrictEqual(roots, [null]);
+
+      execFileSync('git', ['init', '--quiet', folder]);
+      api.addRepository(repo);
+      assert.deepStrictEqual(roots, [null, fs.realpathSync(folder)]);
+      repo._fireStateChange();
+      assert.strictEqual(changes, 1);
+
+      api.closeRepository(repo);
+      assert.deepStrictEqual(roots, [null, fs.realpathSync(folder)], 'закрытие в SCM сохраняет существующий корень');
+      repo._fireStateChange();
+      assert.strictEqual(changes, 1);
+      api.addRepository(repo);
+
+      fs.rmSync(path.join(folder, '.git'), { recursive: true });
+      api.closeRepository(repo);
+      assert.deepStrictEqual(roots, [null, fs.realpathSync(folder), null]);
+
+      execFileSync('git', ['init', '--quiet', folder]);
+      api.addRepository(reopened);
+      repo._fireStateChange();
+      reopened._fireStateChange();
+      assert.deepStrictEqual(roots, [null, fs.realpathSync(folder), null, fs.realpathSync(folder)]);
+      assert.strictEqual(changes, 2);
+
+      fs.rmSync(path.join(folder, '.git'), { recursive: true });
+      observer.recheckRepository();
+      assert.deepStrictEqual(roots, [null, fs.realpathSync(folder), null, fs.realpathSync(folder), null]);
+      reopened._fireStateChange();
+      assert.strictEqual(changes, 2, 'при пропущенном onDidCloseRepository подписка всё равно снимается');
+    } finally {
+      observer.dispose();
+      api.disposeEmitters();
+      repo._dispose();
+      reopened._dispose();
+    }
+  });
+});
 
 suite('GitStateObserver — подписка на события встроенного Git-расширения', () => {
   // `example/` не отслеживается git — без корпуса сьют пропускается, а не падает

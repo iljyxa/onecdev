@@ -53,7 +53,6 @@ import { RepositoryHistoryService } from './infra/repository/history/RepositoryH
 import { repositoryHistorySessionDepsFrom, resolveRepositoryHistorySession } from './infra/repository/history/RepositoryHistorySession';
 import { ensureEnvJson } from './infra/repository/envJsonTemplate';
 import { GitMetadataStatusService } from './infra/git/GitMetadataStatusService';
-import { resolveGitRoot } from './infra/git/GitStatusReader';
 import { MetadataChangesViewProvider } from './ui/views/changes/MetadataChangesViewProvider';
 import { OnecGitContentProvider, ONEC_GIT_SCHEME } from './ui/git/OnecGitContentProvider';
 import { AiSkillsInstaller } from './infra/skills/AiSkillsInstaller';
@@ -115,7 +114,7 @@ export class Container {
   readonly gitMetadataDecorationProvider: GitMetadataDecorationProvider;
   readonly metadataChangesViewProvider: MetadataChangesViewProvider;
   readonly onecGitContentProvider: OnecGitContentProvider;
-  readonly changesGitRoot: string;
+  private gitDecorationWatcher: vscode.Disposable | undefined;
   private changesConfigRoots: readonly ConfigEntry[] = [];
   readonly repositoryConnectionViewProvider: RepositoryConnectionViewProvider;
   readonly repositoryCommitViewProvider: RepositoryCommitViewProvider;
@@ -212,18 +211,16 @@ export class Container {
     this.bslAnalyzerConfigService = new BslAnalyzerConfigService(workspaceFolder.uri.fsPath, this.outputChannel);
     this.projectEnvironmentService = new ProjectEnvironmentService(workspaceFolder.uri.fsPath, this.projectSecretStorage);
     this.standaloneServerService = new StandaloneServerService(workspaceFolder.uri.fsPath, this.outputChannel);
-    this.gitMetadataStatusService = new GitMetadataStatusService(workspaceFolder.uri.fsPath);
+    this.gitMetadataStatusService = new GitMetadataStatusService(workspaceFolder.uri.fsPath, null);
     this.gitMetadataDecorationProvider = new GitMetadataDecorationProvider(this.gitMetadataStatusService);
 
-    // Представление «Изменения метаданных»: gitRoot — реальный toplevel
-    // репозитория (может быть выше workspace), корни выгрузки — как у навигатора.
-    this.changesGitRoot = resolveGitRoot(workspaceFolder.uri.fsPath) ?? workspaceFolder.uri.fsPath;
     this.changesConfigRoots = findConfigurations(workspaceFolder.uri.fsPath);
     this.onecGitContentProvider = new OnecGitContentProvider();
 
     context.subscriptions.push(
       vscode.window.registerFileDecorationProvider(this.gitMetadataDecorationProvider),
-      this.gitMetadataDecorationProvider
+      this.gitMetadataDecorationProvider,
+      { dispose: () => { this.gitDecorationWatcher?.dispose(); } }
     );
 
     this.treeProvider = new MetadataTreeProvider(
@@ -240,7 +237,7 @@ export class Container {
     // Панель «Изменения метаданных» повторяет навигаторную иерархию, поэтому
     // создаётся после treeProvider и получает его как источник дерева.
     this.metadataChangesViewProvider = new MetadataChangesViewProvider(context.extensionUri, {
-      gitRoot: this.changesGitRoot,
+      gitRoot: null,
       getConfigRoots: () => this.changesConfigRoots,
       treeProvider: this.treeProvider,
     });
@@ -412,9 +409,8 @@ export class Container {
     c.wireSupportWatcher();
     c.wireConfigurationWatcher();
     c.wireConfigurationSourceWatcher();
-    c.wireGitDecorationWatcher();
-    void c.wireGitStateWatcher();
     c.wireMetadataChangesView();
+    void c.wireGitStateWatcher();
     c.wireConfigurationOperationContext();
     c.wireCommands();
     c.wireReadonlyGuard();
@@ -783,12 +779,12 @@ export class Container {
     );
   }
 
-  private wireGitDecorationWatcher(): void {
-    // База — реальный git toplevel (`changesGitRoot`), а не корень рабочей папки:
+  private wireGitDecorationWatcher(gitRoot: string): vscode.Disposable {
+    // База — реальный git toplevel, а не корень рабочей папки:
     // выгрузка 1С может лежать в подкаталоге репозитория, тогда `.git` находится
     // выше `workspaceFolder`. `.git/logs/HEAD` ловит commit/reset/checkout,
     // которые не всегда трогают `HEAD`/`index` наблюдаемым fs-событием.
-    const gitBase = vscode.Uri.file(this.changesGitRoot);
+    const gitBase = vscode.Uri.file(gitRoot);
     const watchers = [
       new vscode.RelativePattern(gitBase, '.git/HEAD'),
       new vscode.RelativePattern(gitBase, '.git/index'),
@@ -798,11 +794,11 @@ export class Container {
     ].map((pattern) => vscode.workspace.createFileSystemWatcher(pattern, false, false, false));
 
     for (const watcher of watchers) {
-      watcher.onDidCreate(() => this.scheduleDecorationRefresh(), null, this.context.subscriptions);
-      watcher.onDidDelete(() => this.scheduleDecorationRefresh(), null, this.context.subscriptions);
-      watcher.onDidChange(() => this.scheduleDecorationRefresh(), null, this.context.subscriptions);
-      this.context.subscriptions.push(watcher);
+      watcher.onDidCreate(() => this.scheduleDecorationRefresh());
+      watcher.onDidDelete(() => this.scheduleDecorationRefresh());
+      watcher.onDidChange(() => this.scheduleDecorationRefresh());
     }
+    return vscode.Disposable.from(...watchers);
   }
 
   /**
@@ -819,17 +815,53 @@ export class Container {
         if (!ext.isActive) {
           await ext.activate();
         }
-        api = ext.exports.getAPI(1);
+        if (ext.exports.enabled) {
+          api = ext.exports.getAPI(1);
+        }
       }
     } catch (error) {
-      // Старое/отсутствующее расширение либо несовместимый API — остаёмся на
-      // fs-вотчере, наблюдатель станет no-op при api === undefined.
+      // Если встроенный Git недоступен, корень проверяется один раз.
       this.outputChannel.appendLine(`[git-state] Git Extension API недоступен: ${String(error)}`);
-      api = undefined;
     }
-    const observer = new GitStateObserver(api, this.changesGitRoot, () => this.scheduleDecorationRefresh());
-    observer.start();
+    const workspaceRoot = this.workspaceFolder.uri.fsPath;
+    let parentMarkerWatcher: vscode.Disposable | undefined;
+    let watchedParent: string | undefined;
+    const observer = new GitStateObserver(
+      api,
+      workspaceRoot,
+      () => this.scheduleDecorationRefresh(),
+      (gitRoot) => {
+        this.gitMetadataStatusService.setGitRoot(gitRoot);
+        this.metadataChangesViewProvider.setGitRoot(gitRoot);
+        this.gitDecorationWatcher?.dispose();
+        this.gitDecorationWatcher = gitRoot ? this.wireGitDecorationWatcher(gitRoot) : undefined;
+        if (api && gitRoot && gitRoot !== workspaceRoot && gitRoot !== watchedParent) {
+          parentMarkerWatcher?.dispose();
+          parentMarkerWatcher = this.wireGitMarkerWatcher(gitRoot, recheckRepository);
+          watchedParent = gitRoot;
+        }
+        void vscode.commands.executeCommand('setContext', 'onecdev.hasGitRepository', gitRoot !== null);
+        this.scheduleDecorationRefresh();
+      }
+    );
+    const recheckRepository = () => observer.recheckRepository();
+    if (api) {
+      this.context.subscriptions.push(this.wireGitMarkerWatcher(workspaceRoot, recheckRepository), {
+        dispose: () => { parentMarkerWatcher?.dispose(); },
+      });
+    }
     this.context.subscriptions.push(observer);
+    observer.start();
+  }
+
+  private wireGitMarkerWatcher(root: string, recheck: () => void): vscode.Disposable {
+    // VS Code может оставить репозиторий открытым в SCM после удаления .git.
+    // HEAD появляется в конце git init, а в worktree маркером служит файл .git.
+    const pattern = new vscode.RelativePattern(vscode.Uri.file(root), '{.git,.git/HEAD}');
+    const watcher = vscode.workspace.createFileSystemWatcher(pattern, false, true, false);
+    watcher.onDidCreate(recheck);
+    watcher.onDidDelete(recheck);
+    return watcher;
   }
 
   private ensureHashCaches(entries: ConfigEntry[]): void {

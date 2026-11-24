@@ -380,6 +380,29 @@ suite('GitMetadataStatusService — дополнительное покрыти�
     }
   });
 
+  test('смена git-корня включает и очищает декорации', () => {
+    const repo = tmpRepo('onecdev-status-cov-root-change-');
+    try {
+      const file = path.join(repo, 'notes.txt');
+      fs.writeFileSync(file, 'изменение');
+      const service = new GitMetadataStatusService(repo, null);
+      const status = () => service.getStatus({
+        kind: 'paths', ownerXmlPath: file, childKind: 'Attribute', paths: [file],
+      });
+      assert.strictEqual(status(), undefined);
+
+      git(repo, ['init', '--quiet']);
+      assert.strictEqual(status(), undefined);
+      service.setGitRoot(repo);
+      assert.strictEqual(status(), 'added');
+
+      service.setGitRoot(null);
+      assert.strictEqual(status(), undefined);
+    } finally {
+      fs.rmSync(repo, { recursive: true, force: true });
+    }
+  });
+
   test('getDirectoryStatus: чистый репозиторий (statusByPath пуст) — undefined', () => {
     const { repo, catalogsDir } = buildBaselineRepo();
     try {

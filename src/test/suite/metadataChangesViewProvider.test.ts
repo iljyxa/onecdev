@@ -275,16 +275,43 @@ suite('MetadataChangesViewProvider — webview-презентация предс
     removeFixtureRepo(fixture);
   });
 
-  function resolve(): vscode.WebviewView {
+  function resolve(onDidDispose = new vscode.EventEmitter<void>().event): vscode.WebviewView {
     const fakeWebviewView = {
       webview: fakeWebview.webview,
       visible: true,
       onDidChangeVisibility: new vscode.EventEmitter<void>().event,
-      onDidDispose: new vscode.EventEmitter<void>().event,
+      onDidDispose,
     } as unknown as vscode.WebviewView;
     provider.resolveWebviewView(fakeWebviewView);
     return fakeWebviewView;
   }
+
+  test('при смене корня сбрасывает состояние панели и блокирует операции без репозитория', async () => {
+    appendLine(fixture.objectModuleBsl, '// изменение модуля');
+    const disposal = new vscode.EventEmitter<void>();
+    const view = resolve(disposal.event);
+    assert.ok(view.badge);
+    await fakeWebview.receiveMessage({ type: 'command', command: 'loadHistory' });
+
+    provider.setGitRoot(null);
+    const emptyHtml = view.webview.html;
+    provider.refresh();
+    assert.strictEqual(view.badge, undefined);
+    await fakeWebview.receiveMessage({ type: 'command', command: 'stageAll' });
+    assert.strictEqual(git(fixture.gitRoot, ['diff', '--cached', '--name-only']).trim(), '');
+
+    provider.setGitRoot(fixture.gitRoot);
+    assert.notStrictEqual(view.webview.html, emptyHtml);
+    assert.ok(view.badge);
+    await fakeWebview.receiveMessage({ type: 'command', command: 'stageAll' });
+    assert.notStrictEqual(git(fixture.gitRoot, ['diff', '--cached', '--name-only']).trim(), '');
+
+    const repoHtml = view.webview.html;
+    disposal.fire();
+    disposal.dispose();
+    provider.setGitRoot(null);
+    assert.strictEqual(view.webview.html, repoHtml);
+  });
 
   test('бейдж контейнера считает изменённые файлы (объекты + «Прочие») и снимается на чистом репозитории', () => {
     const clean = resolve();
@@ -509,6 +536,23 @@ suite('MetadataChangesViewProvider — webview-презентация предс
 
     assert.strictEqual(fs.readFileSync(fixture.objectModuleBsl, 'utf-8'), modified, 'без подтверждения правка должна остаться нетронутой');
     assert.notStrictEqual(modified, baseline);
+  });
+
+  test('подтверждение discard относится к репозиторию, открытому до показа диалога', async () => {
+    appendLine(fixture.objectModuleBsl, '// локальная правка');
+    const modified = fs.readFileSync(fixture.objectModuleBsl, 'utf-8');
+    resolve();
+    const node = findNode(lastState(fakeWebview.postedMessages), (n) => n.label === 'МодульОбъекта');
+    assert.ok(node);
+
+    windowRef.showWarningMessage = (_message: string, ...args: unknown[]) => {
+      provider.setGitRoot(null);
+      provider.setGitRoot(fixture.gitRoot);
+      return Promise.resolve(args.find((arg): arg is string => typeof arg === 'string'));
+    };
+
+    await fakeWebview.receiveMessage({ type: 'command', command: 'discard', payload: { nodeId: node.id } });
+    assert.strictEqual(fs.readFileSync(fixture.objectModuleBsl, 'utf-8'), modified);
   });
 
   test('команда commit коммитит застейдженное с сообщением из payload, без showInputBox', async () => {

@@ -76,6 +76,7 @@
         {
           "id": "onecdevChanges",
           "name": "Изменения метаданных",
+          "when": "onecdev.hasGitRepository",
           "type": "webview"
         }
       ],

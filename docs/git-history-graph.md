@@ -129,9 +129,8 @@ Git Graph/gitk.
 `HistoryGraphViewProvider` (`pageSize`, `selectedHash`, `selectedModel`, `loaded`). Инкапсулирует именно
 ленивость и пагинацию — `MetadataChangesViewProvider` благодаря этому helper'у остаётся тонким.
 
-Конструктор принимает `{ gitRoot, getConfigRoots }` — те же зависимости, что и у блока «Изменения»
-(единый источник, `Container` передаёт одни и те же `changesGitRoot`/`changesConfigRoots` в оба места,
-дублирования нет). Методы:
+Провайдер создаёт `ChangesHistorySection` с тем же `{ gitRoot, getConfigRoots }`, который использует
+блок «Изменения». При смене Git-корня провайдер сбрасывает выбранный коммит и пагинацию. Методы:
 
 - `isLoaded()` — загружалась ли история хотя бы раз.
 - `load(nowSec)` — первичная загрузка: помечает `loaded = true`, читает граф текущим `pageSize`.
