@@ -16,7 +16,6 @@ const entries = {
   'repository-history': 'src-ui/apps/repository-history/main.ts',
   subsystem: 'src-ui/apps/subsystem/main.ts',
   universal: 'src-ui/apps/universal/main.ts',
-  'dynamic-panel': 'src-ui/apps/dynamic-panel/main.ts',
   properties: 'src-ui/apps/properties/main.ts',
 };
 

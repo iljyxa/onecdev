@@ -18,7 +18,7 @@
 - **Новая декорация узла:** класс в `ui/tree/decorations/` (реализует `vscode.FileDecorationProvider`) → регистрация в `Container.wireTreeView` → суффикс `contextValue` — только в `TreeNode`.
 - **Новый view/webview:** класс в `ui/views/<Имя>ViewProvider.ts` (без XML/FS) → данные готовит отдельный сервис → создание и команда открытия через `Container`.
 - **Новый сервис инфры:** класс в `infra/<подпапка>/<Имя>Service.ts` без `vscode`, `Logger` через конструктор → создать в `Container.bootstrap` → тест на пример из `example/`.
-- **Новая возможность LSP:** встроенных провайдеров нет; completion/hover/diagnostics добавляются в `bsl-analyzer`, здесь проверяется только интеграция `LspManager`.
+- **Новая возможность LSP:** completion/hover/diagnostics добавляются в `bsl-analyzer`, здесь проверяется интеграция `LspManager`. Резервные символы для Outline предоставляет `lsp/BslDocumentSymbolProvider`.
 - **Новая настройка:** `package.json → contributes.configuration.properties` с префиксом `onecdev.<область>.<ключ>`, `description` на русском → читать только через `vscode.workspace.getConfiguration('onecdev')` в UI/Container → при рантайм-влиянии подписка на `onDidChangeConfiguration`.
 - **Новый фильтр видимого дерева** (рядом с текстовым поиском и «изменённые и захваченные», #189): обход и
   копирование узлов — `ui/tree/TreeNodeFilters.ts`, включение — поле фильтра в `MetadataTreeProvider`

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Container } from './Container';
+import { registerBslDocumentSymbols } from './lsp/BslDocumentSymbolProvider';
 import { registerBslSurroundCommands } from './ui/commands/snippets/BslSurroundCommands';
 
 /**
@@ -19,6 +20,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi | undef
 
   const folders = vscode.workspace.workspaceFolders;
   if (!folders || folders.length === 0) {
+    context.subscriptions.push(registerBslDocumentSymbols());
     return undefined;
   }
   container = Container.bootstrap(context, folders[0]);
