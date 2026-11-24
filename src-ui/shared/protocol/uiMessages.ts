@@ -10,5 +10,5 @@ export type UiToHostMessage =
   | ProjectEnvironmentUiMessage
   | StandaloneServerUiMessage
   | RepositoryHistoryUiMessage
-  | { readonly type: 'command'; readonly command: string; readonly payload?: unknown }
+  | { readonly type: 'command'; readonly command: string; readonly viewVersion?: number; readonly payload?: unknown }
   | { readonly type: 'request'; readonly requestId: string; readonly name: string; readonly payload?: unknown };

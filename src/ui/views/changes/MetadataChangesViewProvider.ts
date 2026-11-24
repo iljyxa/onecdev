@@ -7,7 +7,8 @@ import {
   type ChangesModel,
   type ObjectChangeGroup,
 } from '../../../infra/git/MetadataChangeAggregator';
-import { readPorcelainEntries } from '../../../infra/git/GitStatusReader';
+import { normalizeGitPath } from '../../../infra/git/GitRepositorySelector';
+import { readPorcelainEntries, resolveGitRoot } from '../../../infra/git/GitStatusReader';
 import { commit, discard, pull, push, stage, unstage, type DiscardEntry } from '../../../infra/git/GitWriteService';
 import { buildOnecGitUri } from '../../git/OnecGitContentProvider';
 import { getIconUris } from '../../tree/presentation/icon';
@@ -57,6 +58,7 @@ type CommitMode = 'commit' | 'push' | 'sync';
 interface ChangesCommandMessage {
   readonly type: string;
   readonly command: string;
+  readonly viewVersion?: number;
   readonly payload?: {
     readonly nodeId?: string;
     readonly message?: string;
@@ -85,6 +87,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   private model: ChangesModel | undefined;
   private commitMessage = '';
   private repository: ChangesRepository | undefined;
+  private viewVersion = 0;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -95,6 +98,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   }
 
   setGitRoot(gitRoot: string | null): void {
+    this.viewVersion += 1;
     this.repository = gitRoot === null ? undefined : {
       gitRoot,
       history: new ChangesHistorySection({ gitRoot, getConfigRoots: this.services.getConfigRoots }),
@@ -110,6 +114,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
+    this.viewVersion += 1;
     this.view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
@@ -131,6 +136,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     });
     webviewView.onDidDispose(() => {
       this.view = undefined;
+      this.viewVersion += 1;
     });
     this.postState();
   }
@@ -166,6 +172,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     /* c8 ignore next */
     const model = this.model ?? (this.model = this.computeModel());
     return {
+      viewVersion: this.viewVersion,
       staged: this.buildNavigatorSection('staged', model.staged),
       unstaged: this.buildNavigatorSection('unstaged', model.unstaged),
       unresolved: buildOtherSection(model.unresolved),
@@ -348,10 +355,13 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
 
   private async handleMessage(message: ChangesCommandMessage): Promise<void> {
     const repository = this.repository;
-    if (message.type !== 'command' || !repository) {
+    if (message.type !== 'command' || message.viewVersion !== this.viewVersion || !repository) {
       return;
     }
     const { gitRoot, history } = repository;
+    if (!isCurrentGitRoot(gitRoot)) {
+      return;
+    }
     switch (message.command) {
       case 'stage':
         this.applyStage(gitRoot, message.payload?.nodeId);
@@ -366,7 +376,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
         this.applyUnstage(gitRoot, message.payload?.nodeId);
         return;
       case 'discard':
-        await this.applyDiscard(repository, message.payload?.nodeId);
+        await this.applyDiscard(gitRoot, message.viewVersion, message.payload?.nodeId);
         return;
       case 'commit':
         this.applyCommit(gitRoot, message.payload?.message, message.payload?.mode ?? 'commit');
@@ -500,7 +510,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     this.refresh();
   }
 
-  private async applyDiscard(repository: ChangesRepository, nodeId: string | undefined): Promise<void> {
+  private async applyDiscard(gitRoot: string, viewVersion: number, nodeId: string | undefined): Promise<void> {
     const address = this.addressOf(nodeId);
     if (!address || address.discards.length === 0) {
       return;
@@ -510,10 +520,9 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
       { modal: true },
       DISCARD_CONFIRM_LABEL,
     );
-    if (confirmed !== DISCARD_CONFIRM_LABEL || this.repository !== repository) {
+    if (confirmed !== DISCARD_CONFIRM_LABEL || viewVersion !== this.viewVersion || !isCurrentGitRoot(gitRoot)) {
       return;
     }
-    const { gitRoot } = repository;
     const entries: DiscardEntry[] = address.discards.map((entry) => ({
       absPath: path.resolve(gitRoot, entry.relPath),
       status: entry.status,
@@ -588,6 +597,11 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   private absFiles(gitRoot: string, address: ChangeAddress): string[] {
     return address.relFiles.map((rel) => path.resolve(gitRoot, rel));
   }
+}
+
+function isCurrentGitRoot(gitRoot: string): boolean {
+  const resolved = resolveGitRoot(gitRoot);
+  return resolved !== null && normalizeGitPath(resolved) === normalizeGitPath(gitRoot);
 }
 
 /** Текущее время в секундах Unix (для относительных дат графа истории). */

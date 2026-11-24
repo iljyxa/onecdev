@@ -52,7 +52,8 @@ const EXTENSION_ROOT = path.resolve(__dirname, '../../../');
 function createFakeWebview(): {
   webview: vscode.Webview;
   postedMessages: unknown[];
-  receiveMessage: (message: unknown) => Promise<void>;
+  receiveMessage: (message: object) => Promise<void>;
+  sender: () => (message: object) => Promise<void>;
 } {
   const postedMessages: unknown[] = [];
   const messageEmitter = new vscode.EventEmitter<unknown>();
@@ -69,15 +70,23 @@ function createFakeWebview(): {
     asWebviewUri: (uri: vscode.Uri) => uri,
   };
 
-  return {
-    webview,
-    postedMessages,
-    receiveMessage: async (message: unknown) => {
-      messageEmitter.fire(message);
+  function sender() {
+    const initialState = /id="onecdev-initial-state">([^<]+)<\/script>/.exec(webview.html);
+    assert.ok(initialState);
+    const { state } = JSON.parse(initialState[1]) as { state: { viewVersion?: number } };
+    return async (message: object) => {
+      messageEmitter.fire({ viewVersion: state.viewVersion, ...message });
       // Обработчик у провайдера асинхронный (git-мутации/перепостройка модели) —
       // дожидаемся конца микротаска, чтобы handleMessage успел завершиться.
       await new Promise((resolve) => setTimeout(resolve, 0));
-    },
+    };
+  }
+
+  return {
+    webview,
+    postedMessages,
+    sender,
+    receiveMessage: (message) => sender()(message),
   };
 }
 
@@ -311,6 +320,36 @@ suite('MetadataChangesViewProvider — webview-презентация предс
     disposal.dispose();
     provider.setGitRoot(null);
     assert.strictEqual(view.webview.html, repoHtml);
+  });
+
+  test('прежняя панель не может закоммитить и отправить изменения родительского репозитория', async () => {
+    const workspace = fs.mkdtempSync(path.join(fixture.gitRoot, 'nested-'));
+    git(workspace, ['init', '--quiet']);
+    const remote = attachBareRemote(fixture.gitRoot);
+    try {
+      appendLine(fixture.objectModuleBsl, '// изменение родительского репозитория');
+      git(fixture.gitRoot, ['add', '--', fixture.objectModuleBsl]);
+      const head = git(fixture.gitRoot, ['rev-parse', 'HEAD']);
+      provider.setGitRoot(workspace);
+      resolve();
+      const commit = { type: 'command', command: 'commit', payload: { mode: 'push', message: 'фиксация' } };
+      const sendOld = fakeWebview.sender();
+
+      fs.rmSync(path.join(workspace, '.git'), { recursive: true });
+      await sendOld(commit);
+      assert.strictEqual(git(fixture.gitRoot, ['rev-parse', 'HEAD']), head, 'до переопределения корня');
+
+      provider.setGitRoot(fixture.gitRoot);
+      await sendOld(commit);
+      assert.strictEqual(git(fixture.gitRoot, ['rev-parse', 'HEAD']), head, 'после переопределения корня');
+      assert.strictEqual(git(fixture.gitRoot, ['rev-parse', '@{u}']), head);
+
+      await fakeWebview.receiveMessage(commit);
+      assert.notStrictEqual(git(fixture.gitRoot, ['rev-parse', 'HEAD']), head);
+      assert.strictEqual(git(fixture.gitRoot, ['rev-parse', '@{u}']), git(fixture.gitRoot, ['rev-parse', 'HEAD']));
+    } finally {
+      fs.rmSync(remote, { recursive: true, force: true });
+    }
   });
 
   test('бейдж контейнера считает изменённые файлы (объекты + «Прочие») и снимается на чистом репозитории', () => {
@@ -548,6 +587,22 @@ suite('MetadataChangesViewProvider — webview-презентация предс
     windowRef.showWarningMessage = (_message: string, ...args: unknown[]) => {
       provider.setGitRoot(null);
       provider.setGitRoot(fixture.gitRoot);
+      return Promise.resolve(args.find((arg): arg is string => typeof arg === 'string'));
+    };
+
+    await fakeWebview.receiveMessage({ type: 'command', command: 'discard', payload: { nodeId: node.id } });
+    assert.strictEqual(fs.readFileSync(fixture.objectModuleBsl, 'utf-8'), modified);
+  });
+
+  test('удаление .git до подтверждения discard сохраняет локальные файлы', async () => {
+    appendLine(fixture.objectModuleBsl, '// локальная правка');
+    const modified = fs.readFileSync(fixture.objectModuleBsl, 'utf-8');
+    resolve();
+    const node = findNode(lastState(fakeWebview.postedMessages), (entry) => entry.label === 'МодульОбъекта');
+    assert.ok(node);
+
+    windowRef.showWarningMessage = (_message: string, ...args: unknown[]) => {
+      fs.rmSync(path.join(fixture.gitRoot, '.git'), { recursive: true });
       return Promise.resolve(args.find((arg): arg is string => typeof arg === 'string'));
     };
 

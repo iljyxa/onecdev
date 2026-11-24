@@ -824,8 +824,6 @@ export class Container {
       this.outputChannel.appendLine(`[git-state] Git Extension API недоступен: ${String(error)}`);
     }
     const workspaceRoot = this.workspaceFolder.uri.fsPath;
-    let parentMarkerWatcher: vscode.Disposable | undefined;
-    let watchedParent: string | undefined;
     const observer = new GitStateObserver(
       api,
       workspaceRoot,
@@ -835,33 +833,12 @@ export class Container {
         this.metadataChangesViewProvider.setGitRoot(gitRoot);
         this.gitDecorationWatcher?.dispose();
         this.gitDecorationWatcher = gitRoot ? this.wireGitDecorationWatcher(gitRoot) : undefined;
-        if (api && gitRoot && gitRoot !== workspaceRoot && gitRoot !== watchedParent) {
-          parentMarkerWatcher?.dispose();
-          parentMarkerWatcher = this.wireGitMarkerWatcher(gitRoot, recheckRepository);
-          watchedParent = gitRoot;
-        }
         void vscode.commands.executeCommand('setContext', 'onecdev.hasGitRepository', gitRoot !== null);
         this.scheduleDecorationRefresh();
       }
     );
-    const recheckRepository = () => observer.recheckRepository();
-    if (api) {
-      this.context.subscriptions.push(this.wireGitMarkerWatcher(workspaceRoot, recheckRepository), {
-        dispose: () => { parentMarkerWatcher?.dispose(); },
-      });
-    }
     this.context.subscriptions.push(observer);
     observer.start();
-  }
-
-  private wireGitMarkerWatcher(root: string, recheck: () => void): vscode.Disposable {
-    // VS Code может оставить репозиторий открытым в SCM после удаления .git.
-    // HEAD появляется в конце git init, а в worktree маркером служит файл .git.
-    const pattern = new vscode.RelativePattern(vscode.Uri.file(root), '{.git,.git/HEAD}');
-    const watcher = vscode.workspace.createFileSystemWatcher(pattern, false, true, false);
-    watcher.onDidCreate(recheck);
-    watcher.onDidDelete(recheck);
-    return watcher;
   }
 
   private ensureHashCaches(entries: ConfigEntry[]): void {

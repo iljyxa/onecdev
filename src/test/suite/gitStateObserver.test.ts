@@ -166,6 +166,55 @@ suite('GitStateObserver — наличие репозитория рабочей
       reopened._dispose();
     }
   });
+
+  test('обнаруживает создание и удаление родительского репозитория без событий SCM', async function () {
+    this.timeout(9000);
+    const workspace = fs.mkdtempSync(path.join(folder, 'workspace-'));
+    const api = createFakeGitApi('initialized');
+    let root: string | null | undefined;
+    let notify: ((value: string | null) => void) | undefined;
+    const observer = new GitStateObserver(api, workspace, () => assert.fail('Нет репозитория в SCM'), (value) => {
+      root = value;
+      notify?.(value);
+    });
+    try {
+      observer.start();
+      await new Promise((resolve) => setTimeout(resolve, 850));
+      assert.strictEqual(root, null);
+
+      execFileSync('git', ['init', '--quiet', folder]);
+      const objects = path.join(folder, '.git', 'objects');
+      const pendingObjects = path.join(folder, 'pending-objects');
+      fs.renameSync(objects, pendingObjects);
+      await new Promise((resolve) => setTimeout(resolve, 850));
+      assert.strictEqual(root, null, 'HEAD уже есть, но Git ещё не распознаёт репозиторий');
+
+      const created = new Promise<string | null>((resolve) => { notify = resolve; });
+      fs.renameSync(pendingObjects, objects);
+      assert.strictEqual(await created, fs.realpathSync(folder));
+      assert.deepStrictEqual(api.repositories, []);
+
+      const removed = new Promise<string | null>((resolve) => { notify = resolve; });
+      fs.rmSync(path.join(folder, '.git'), { recursive: true });
+      assert.strictEqual(await removed, null);
+    } finally {
+      observer.dispose();
+      api.disposeEmitters();
+    }
+  });
+
+  test('наблюдение запускается, если рабочая папка исчезла до активации Git API', () => {
+    const api = createFakeGitApi('initialized');
+    const roots: (string | null)[] = [];
+    const observer = new GitStateObserver(api, path.join(folder, 'absent'), () => assert.fail(), (root) => roots.push(root));
+    try {
+      observer.start();
+      assert.deepStrictEqual(roots, [null]);
+    } finally {
+      observer.dispose();
+      api.disposeEmitters();
+    }
+  });
 });
 
 suite('GitStateObserver — подписка на события встроенного Git-расширения', () => {

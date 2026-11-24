@@ -208,9 +208,10 @@ commit-ish. Эта панель по-прежнему передаёт толь�
    `repository.state.onDidChange` репозитория с точным совпадением корня через `selectGitRepository`.
 2. **Файловые наблюдатели.** Для найденного корня `Container.wireGitDecorationWatcher()` следит за
    `.git/HEAD`, `.git/index`, `.git/packed-refs`, `.git/refs/**` и `.git/logs/HEAD`. При смене корня
-   подписки устанавливаются заново. При доступном Git API создание или удаление `.git` и `.git/HEAD`
-   в рабочей папке и найденном родительском репозитории также запускают проверку Git-корня.
-   Это учитывает удаление `.git`, при котором VS Code может пропустить `onDidCloseRepository`.
+   подписки устанавливаются заново. При доступном Git API `GitRepositoryMarkerWatcher` каждые 750 мс
+   проверяет наличие `.git`, `.git/HEAD`, `.git/objects` и `.git/refs` в рабочей папке и всех её предках.
+   По изменению маркеров наблюдатель заново определяет Git-корень даже при
+   `git.openRepositoryInParentFolders: never`.
    Когда встроенный Git недоступен, корень проверяется один раз при активации, а файловые
    наблюдатели обновляют статус найденного репозитория.
 
@@ -302,10 +303,15 @@ Diff открывается только для узла с ЕДИНСТВЕНН
 
 | Направление | Форма | Когда |
 |---|---|---|
-| ui → host | `{ type: 'command', command: 'stage'\|'unstage'\|'discard'\|'openDiff', payload: { nodeId } }` | клик по действию узла/меню |
-| ui → host | `{ type: 'command', command: 'commit', payload: { message, mode } }` | split-кнопка «Фиксация» (`mode` ∈ `'commit'\|'push'\|'sync'` — обычная / +push / +pull+push) |
-| ui → host | `{ type: 'command', command: 'refresh' }` | кнопка «Обновить» |
+| ui → host | `{ type: 'command', viewVersion, command: 'stage'\|'unstage'\|'discard'\|'openDiff', payload: { nodeId } }` | клик по действию узла/меню |
+| ui → host | `{ type: 'command', viewVersion, command: 'commit', payload: { message, mode } }` | split-кнопка «Фиксация» (`mode` ∈ `'commit'\|'push'\|'sync'` — обычная / +push / +pull+push) |
+| ui → host | `{ type: 'command', viewVersion, command: 'refresh' }` | кнопка «Обновить» |
 | host → ui | `{ type: 'state', state: ChangesViewState }` | после `resolveWebviewView`, после любой мутации, после `refresh()`/`updateConfigRoots()` |
+
+Все команды панели, включая историю, передают `viewVersion` из начального состояния документа.
+Провайдер меняет версию при смене Git-корня и отклоняет команды устаревшего документа. Перед
+выполнением он также проверяет, что Git всё ещё разрешает тот же корень. `GitWriteService` передаёт
+`.git` целевого репозитория явно, чтобы команда записи не перешла в родительский репозиторий.
 
 `nodeId` — тот же `id`, что и в `TreeNodeDto` (`<side>#<groupIndex>[.<partIndex>]` либо
 `other#<rawIndex>`); `resolveChangeAddress` — единственное место, где `id` расшифровывается обратно в

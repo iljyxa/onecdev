@@ -1,4 +1,5 @@
 import type * as vscode from 'vscode';
+import { watchGitRepositoryMarkers } from '../../infra/git/GitRepositoryMarkerWatcher';
 import { selectGitRepository } from '../../infra/git/GitRepositorySelector';
 import { resolveGitRoot } from '../../infra/git/GitStatusReader';
 import type { GitApiLike, RepositoryLike } from './gitExtensionApi';
@@ -22,6 +23,7 @@ export class GitStateObserver implements vscode.Disposable {
     if (api) {
       const update = () => this.recheckRepository();
       this.disposables.push(
+        watchGitRepositoryMarkers(this.workspaceRoot, update),
         api.onDidOpenRepository(update),
         api.onDidCloseRepository(update),
         api.onDidChangeState((state) => {

@@ -22,6 +22,7 @@ export interface ChangesSectionDto {
 
 /** Полное состояние панели изменений. */
 export interface ChangesViewState {
+  readonly viewVersion: number;
   readonly staged: ChangesSectionDto;
   readonly unstaged: ChangesSectionDto;
   readonly unresolved: ChangesSectionDto;

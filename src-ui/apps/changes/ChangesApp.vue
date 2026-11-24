@@ -15,6 +15,9 @@ const props = defineProps<{
   messageBus: MessageBus;
 }>();
 
+// Только новый документ может получить право отправлять команды для нового репозитория.
+const viewVersion = props.initialState?.viewVersion;
+
 const EMPTY_SECTION = (kind: ChangesSectionDto['kind'], label: string): ChangesSectionDto => ({
   kind,
   label,
@@ -23,6 +26,7 @@ const EMPTY_SECTION = (kind: ChangesSectionDto['kind'], label: string): ChangesS
 
 const state = ref<ChangesViewState>(
   props.initialState ?? {
+    viewVersion: 0,
     staged: EMPTY_SECTION('staged', 'Проиндексировано'),
     unstaged: EMPTY_SECTION('unstaged', 'Не проиндексировано'),
     unresolved: EMPTY_SECTION('other', 'Прочие'),
@@ -109,7 +113,7 @@ const contextMenu = reactive<{ visible: boolean; x: number; y: number; items: Co
 );
 
 function sendCommand(command: string, payload?: Record<string, unknown>): void {
-  props.messageBus.send({ type: 'command', command, payload });
+  props.messageBus.send({ type: 'command', command, viewVersion, payload });
 }
 
 function onToggle(nodeId: string, open: boolean): void {
@@ -255,7 +259,7 @@ const commitRow = computed(() => {
 });
 
 function handleState(message: HostToUiMessage<ChangesViewState>): void {
-  if (message.type === 'state') {
+  if (message.type === 'state' && message.state.viewVersion === viewVersion) {
     state.value = message.state;
     expandAll();
   }
