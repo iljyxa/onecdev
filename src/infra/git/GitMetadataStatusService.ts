@@ -12,6 +12,7 @@ import {
 } from '../xml/XmlUtils';
 import { readBlobAtHead } from './GitBlobReader';
 import { parsePorcelain } from './GitPorcelainReader';
+import { resolveGitRoot } from './GitStatusReader';
 import { slashPathKey } from '../fs/PathKey';
 
 export type MetadataGitDecorationStatus = 'added' | 'modified' | 'deleted';
@@ -61,11 +62,15 @@ interface GitRootState {
  * для совпадения, а `realpathSync` капризен к forward-slash формату на Windows.
  */
 export class GitMetadataStatusService {
-  private gitRoot: string | null | undefined;
   private readonly objectCache = new Map<string, ObjectGitSnapshot>();
   private readonly statusMapByRoot = new Map<string, GitRootState>();
 
-  constructor(private readonly workspaceRoot: string) {}
+  constructor(private readonly workspaceRoot: string, private gitRoot?: string | null) {}
+
+  setGitRoot(gitRoot: string | null): void {
+    this.gitRoot = gitRoot;
+    this.clear();
+  }
 
   /**
    * Полный сброс кэша. Использовать для смены HEAD (checkout, pull) — для точечной
@@ -331,19 +336,9 @@ export class GitMetadataStatusService {
   }
 
   private getGitRoot(): string | null {
-    if (this.gitRoot !== undefined) {
-      return this.gitRoot;
+    if (this.gitRoot === undefined) {
+      this.gitRoot = resolveGitRoot(this.workspaceRoot);
     }
-
-    try {
-      this.gitRoot = execFileSync('git', ['-C', this.workspaceRoot, 'rev-parse', '--show-toplevel'], {
-        encoding: 'utf-8',
-        stdio: ['ignore', 'pipe', 'ignore'],
-      }).trim();
-    } catch {
-      this.gitRoot = null;
-    }
-
     return this.gitRoot;
   }
 

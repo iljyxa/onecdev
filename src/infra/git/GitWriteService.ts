@@ -81,7 +81,8 @@ export function pull(gitRoot: string): void {
 }
 
 function runGit(gitRoot: string, args: readonly string[]): void {
-  execFileSync('git', ['-C', gitRoot, ...args], {
+  // Явный git-dir запрещает поиск родительского репозитория, даже если .git исчез между вызовами.
+  execFileSync('git', ['-C', gitRoot, '--git-dir=.git', '--work-tree=.', ...args], {
     stdio: ['ignore', 'ignore', 'pipe'],
     maxBuffer: 64 * 1024 * 1024,
   });

@@ -178,6 +178,24 @@ suite('GitWriteService — мутации git над набором файлов
     }
   });
 
+  test('коммит привязан к worktree и при удалении git-файла не попадает в родительский репозиторий', () => {
+    const worktree = path.join(repo, 'linked');
+    git(repo, ['worktree', 'add', '-q', '-b', 'linked', worktree]);
+    const head = git(repo, ['rev-parse', 'HEAD']);
+    const file = path.join(worktree, 'tracked.txt');
+    fs.writeFileSync(file, 'правка worktree\n', 'utf-8');
+    stage(worktree, [file]);
+    commit(worktree, 'коммит в worktree');
+    assert.notStrictEqual(git(worktree, ['rev-parse', 'HEAD']), head);
+
+    fs.rmSync(path.join(worktree, '.git'));
+    const parentFile = path.join(repo, 'tracked.txt');
+    fs.writeFileSync(parentFile, 'правка в родительском репозитории\n', 'utf-8');
+    stage(repo, [parentFile]);
+    assert.throws(() => commit(worktree, 'устаревшая команда'));
+    assert.strictEqual(git(repo, ['rev-parse', 'HEAD']), head);
+  });
+
   test('push() отправляет локальные коммиты в привязанный remote (upstream догоняет HEAD)', () => {
     const remote = attachBareRemote(repo);
     try {

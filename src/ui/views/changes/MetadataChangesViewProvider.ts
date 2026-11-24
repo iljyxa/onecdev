@@ -7,7 +7,8 @@ import {
   type ChangesModel,
   type ObjectChangeGroup,
 } from '../../../infra/git/MetadataChangeAggregator';
-import { readPorcelainEntries } from '../../../infra/git/GitStatusReader';
+import { normalizeGitPath } from '../../../infra/git/GitRepositorySelector';
+import { readPorcelainEntries, resolveGitRoot } from '../../../infra/git/GitStatusReader';
 import { commit, discard, pull, push, stage, unstage, type DiscardEntry } from '../../../infra/git/GitWriteService';
 import { buildOnecGitUri } from '../../git/OnecGitContentProvider';
 import { getIconUris } from '../../tree/presentation/icon';
@@ -36,10 +37,15 @@ import type { HistoryGraphState } from '../history/historyGraphDtoBuilder';
 
 /** Внешние зависимости провайдера: корень git, корни выгрузки и навигаторное дерево. */
 export interface MetadataChangesViewServices {
-  readonly gitRoot: string;
+  readonly gitRoot: string | null;
   readonly getConfigRoots: () => readonly ConfigEntry[];
   /** Источник навигаторной иерархии, которую повторяет дерево панели изменений. */
   readonly treeProvider: MetadataTreeProvider;
+}
+
+interface ChangesRepository {
+  readonly gitRoot: string;
+  readonly history: ChangesHistorySection;
 }
 
 /**
@@ -52,6 +58,7 @@ type CommitMode = 'commit' | 'push' | 'sync';
 interface ChangesCommandMessage {
   readonly type: string;
   readonly command: string;
+  readonly viewVersion?: number;
   readonly payload?: {
     readonly nodeId?: string;
     readonly message?: string;
@@ -79,21 +86,35 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   private readonly htmlFactory: WebviewHtmlFactory;
   private model: ChangesModel | undefined;
   private commitMessage = '';
-  /** Граф истории git (абсорбированная панель «История») — читается лениво. */
-  private readonly history: ChangesHistorySection;
+  private repository: ChangesRepository | undefined;
+  private viewVersion = 0;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly services: MetadataChangesViewServices,
   ) {
     this.htmlFactory = new WebviewHtmlFactory(extensionUri);
-    this.history = new ChangesHistorySection({
-      gitRoot: services.gitRoot,
-      getConfigRoots: services.getConfigRoots,
-    });
+    this.setGitRoot(services.gitRoot);
+  }
+
+  setGitRoot(gitRoot: string | null): void {
+    this.viewVersion += 1;
+    this.repository = gitRoot === null ? undefined : {
+      gitRoot,
+      history: new ChangesHistorySection({ gitRoot, getConfigRoots: this.services.getConfigRoots }),
+    };
+    this.model = undefined;
+    this.commitMessage = '';
+    if (this.view) {
+      // Сбрасываем также выбранный коммит и дерево истории в самом webview.
+      this.model = this.computeModel();
+      this.view.webview.html = this.buildHtml(this.view.webview);
+      this.updateBadge();
+    }
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
+    this.viewVersion += 1;
     this.view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
@@ -113,6 +134,10 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
         this.updateBadge();
       }
     });
+    webviewView.onDidDispose(() => {
+      this.view = undefined;
+      this.viewVersion += 1;
+    });
     this.postState();
   }
 
@@ -120,7 +145,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   refresh(): void {
     this.model = this.computeModel();
     this.postState();
-    this.maybePostHistory();
+    this.postHistory(this.repository?.history.refresh(nowSec()));
   }
 
   /** Смена состава корней выгрузки — пересчёт с новой моделью. */
@@ -129,9 +154,13 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   }
 
   private computeModel(): ChangesModel {
+    const gitRoot = this.repository?.gitRoot;
+    if (!gitRoot) {
+      return { staged: [], unstaged: [], unresolved: [] };
+    }
     return aggregateMetadataChanges(
-      readPorcelainEntries(this.services.gitRoot),
-      this.services.gitRoot,
+      readPorcelainEntries(gitRoot),
+      gitRoot,
       this.services.getConfigRoots(),
     );
   }
@@ -143,6 +172,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     /* c8 ignore next */
     const model = this.model ?? (this.model = this.computeModel());
     return {
+      viewVersion: this.viewVersion,
       staged: this.buildNavigatorSection('staged', model.staged),
       unstaged: this.buildNavigatorSection('unstaged', model.unstaged),
       unresolved: buildOtherSection(model.unresolved),
@@ -324,81 +354,81 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async handleMessage(message: ChangesCommandMessage): Promise<void> {
-    if (message.type !== 'command') {
+    const repository = this.repository;
+    if (message.type !== 'command' || message.viewVersion !== this.viewVersion || !repository) {
+      return;
+    }
+    const { gitRoot, history } = repository;
+    if (!isCurrentGitRoot(gitRoot)) {
       return;
     }
     switch (message.command) {
       case 'stage':
-        this.applyStage(message.payload?.nodeId);
+        this.applyStage(gitRoot, message.payload?.nodeId);
         return;
       case 'stageAll':
-        this.applyStageAll();
+        this.applyStageAll(gitRoot);
         return;
       case 'unstageAll':
-        this.applyUnstageAll();
+        this.applyUnstageAll(gitRoot);
         return;
       case 'unstage':
-        this.applyUnstage(message.payload?.nodeId);
+        this.applyUnstage(gitRoot, message.payload?.nodeId);
         return;
       case 'discard':
-        await this.applyDiscard(message.payload?.nodeId);
+        await this.applyDiscard(gitRoot, message.viewVersion, message.payload?.nodeId);
         return;
       case 'commit':
-        this.applyCommit(message.payload?.message, message.payload?.mode ?? 'commit');
+        this.applyCommit(gitRoot, message.payload?.message, message.payload?.mode ?? 'commit');
         return;
       case 'openDiff':
-        await this.openDiff(message.payload?.nodeId);
+        await this.openDiff(gitRoot, message.payload?.nodeId);
         return;
       case 'refresh':
         this.refresh();
         return;
       case 'loadHistory':
-        this.postHistory(this.history.load(nowSec()));
+        this.postHistory(history.load(nowSec()));
         return;
       case 'historyLoadMore':
-        this.postHistory(this.history.loadMore(nowSec()));
+        this.postHistory(history.loadMore(nowSec()));
         return;
       case 'historyRefresh':
         // Явная команда пользователя из панели истории: в отличие от ленивого
-        // watcher-refresh ({@link maybePostHistory}) всегда (пере)читает граф.
-        this.postHistory(this.history.load(nowSec()));
+        // watcher-refresh ({@link refresh}) всегда (пере)читает граф.
+        this.postHistory(history.load(nowSec()));
         return;
       case 'selectCommit':
-        this.selectCommit(message.payload?.hash);
+        this.selectCommit(history, message.payload?.hash);
         return;
       case 'openCommitDiff':
-        await this.openCommitDiff(message.payload?.nodeId);
+        await this.openCommitDiff(repository, message.payload?.nodeId);
         return;
       default:
         return;
     }
   }
 
-  private selectCommit(hash: string | undefined): void {
+  private selectCommit(history: ChangesHistorySection, hash: string | undefined): void {
     if (!hash) {
       return;
     }
-    const { section } = this.history.selectCommit(hash, (kind) => this.buildIcon(kind));
+    const { section } = history.selectCommit(hash, (kind) => this.buildIcon(kind));
     void this.view?.webview.postMessage({ type: 'commitChanges', hash, section });
   }
 
-  private async openCommitDiff(nodeId: string | undefined): Promise<void> {
+  private async openCommitDiff({ gitRoot, history }: ChangesRepository, nodeId: string | undefined): Promise<void> {
     if (!nodeId) {
       return;
     }
-    const diff = this.history.resolveDiff(nodeId);
+    const diff = history.resolveDiff(nodeId);
     if (!diff) {
       return;
     }
-    const abs = path.resolve(this.services.gitRoot, diff.relFile);
-    const left = buildOnecGitUri(this.services.gitRoot, abs, diff.leftRef);
-    const right = buildOnecGitUri(this.services.gitRoot, abs, diff.rightRef);
+    const abs = path.resolve(gitRoot, diff.relFile);
+    const left = buildOnecGitUri(gitRoot, abs, diff.leftRef);
+    const right = buildOnecGitUri(gitRoot, abs, diff.rightRef);
     await vscode.commands.executeCommand('vscode.diff', left, right, diff.title);
-  }
-
-  /** Пере-излучает граф истории при уже загруженной истории; иначе тихо ничего (ленивость). */
-  private maybePostHistory(): void {
-    this.postHistory(this.history.refresh(nowSec()));
   }
 
   private postHistory(state: HistoryGraphState | undefined): void {
@@ -407,12 +437,12 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private applyStage(nodeId: string | undefined): void {
+  private applyStage(gitRoot: string, nodeId: string | undefined): void {
     const address = this.addressOf(nodeId);
     if (!address) {
       return;
     }
-    stage(this.services.gitRoot, this.absFiles(address));
+    stage(gitRoot, this.absFiles(gitRoot, address));
     this.refresh();
   }
 
@@ -422,12 +452,12 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
    * id узлов — верхнеуровневые узлы секции навигаторные (`unstaged#nav#…`) и не
    * резолвятся через {@link resolveChangeAddress}.
    */
-  private applyStageAll(): void {
-    const files = this.collectSideFiles((model) => model.unstaged);
+  private applyStageAll(gitRoot: string): void {
+    const files = this.collectSideFiles(gitRoot, (model) => model.unstaged);
     if (files.length === 0) {
       return;
     }
-    stage(this.services.gitRoot, files);
+    stage(gitRoot, files);
     this.refresh();
   }
 
@@ -436,12 +466,12 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
    * застейдженных изменений (объектные части стороны staged + «Прочие»).
    * Симметрична {@link applyStageAll}.
    */
-  private applyUnstageAll(): void {
-    const files = this.collectSideFiles((model) => model.staged);
+  private applyUnstageAll(gitRoot: string): void {
+    const files = this.collectSideFiles(gitRoot, (model) => model.staged);
     if (files.length === 0) {
       return;
     }
-    unstage(this.services.gitRoot, files);
+    unstage(gitRoot, files);
     this.refresh();
   }
 
@@ -450,7 +480,7 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
    * дедуплицированные. `git add`/`git reset` идемпотентны, поэтому включение
    * «Прочих» безопасно для обеих операций.
    */
-  private collectSideFiles(pick: (model: ChangesModel) => readonly ObjectChangeGroup[]): string[] {
+  private collectSideFiles(gitRoot: string, pick: (model: ChangesModel) => readonly ObjectChangeGroup[]): string[] {
     // handleMessage подключается в resolveWebviewView ПОСЛЕ присваивания
     // this.model — защитный guard недостижим обычным потоком (как в buildState).
     /* c8 ignore next 3 */
@@ -468,19 +498,19 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     for (const raw of this.model.unresolved) {
       relFiles.add(raw.relPath);
     }
-    return [...relFiles].map((rel) => path.resolve(this.services.gitRoot, rel));
+    return [...relFiles].map((rel) => path.resolve(gitRoot, rel));
   }
 
-  private applyUnstage(nodeId: string | undefined): void {
+  private applyUnstage(gitRoot: string, nodeId: string | undefined): void {
     const address = this.addressOf(nodeId);
     if (!address) {
       return;
     }
-    unstage(this.services.gitRoot, this.absFiles(address));
+    unstage(gitRoot, this.absFiles(gitRoot, address));
     this.refresh();
   }
 
-  private async applyDiscard(nodeId: string | undefined): Promise<void> {
+  private async applyDiscard(gitRoot: string, viewVersion: number, nodeId: string | undefined): Promise<void> {
     const address = this.addressOf(nodeId);
     if (!address || address.discards.length === 0) {
       return;
@@ -490,14 +520,14 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
       { modal: true },
       DISCARD_CONFIRM_LABEL,
     );
-    if (confirmed !== DISCARD_CONFIRM_LABEL) {
+    if (confirmed !== DISCARD_CONFIRM_LABEL || viewVersion !== this.viewVersion || !isCurrentGitRoot(gitRoot)) {
       return;
     }
     const entries: DiscardEntry[] = address.discards.map((entry) => ({
-      absPath: path.resolve(this.services.gitRoot, entry.relPath),
+      absPath: path.resolve(gitRoot, entry.relPath),
       status: entry.status,
     }));
-    discard(this.services.gitRoot, entries);
+    discard(gitRoot, entries);
     this.refresh();
   }
 
@@ -508,12 +538,12 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
    * remote локальный коммит уже сделан и не теряется, а ошибка показывается
    * пользователю (как в штатном SCM). Для `sync` сперва {@link pull}, затем push.
    */
-  private applyCommit(message: string | undefined, mode: CommitMode): void {
+  private applyCommit(gitRoot: string, message: string | undefined, mode: CommitMode): void {
     const text = (message ?? '').trim();
     if (text.length === 0) {
       return;
     }
-    commit(this.services.gitRoot, text);
+    commit(gitRoot, text);
     this.commitMessage = '';
     this.refresh();
     if (mode === 'commit') {
@@ -521,9 +551,9 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     }
     try {
       if (mode === 'sync') {
-        pull(this.services.gitRoot);
+        pull(gitRoot);
       }
-      push(this.services.gitRoot);
+      push(gitRoot);
       // Обмен с remote мог изменить рабочее дерево (pull) — пере-читаем панель.
       this.refresh();
     } catch (error) {
@@ -535,22 +565,22 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async openDiff(nodeId: string | undefined): Promise<void> {
+  private async openDiff(gitRoot: string, nodeId: string | undefined): Promise<void> {
     const address = this.addressOf(nodeId);
     if (!address?.single) {
       return;
     }
-    const absFilePath = path.resolve(this.services.gitRoot, address.relFiles[0]);
+    const absFilePath = path.resolve(gitRoot, address.relFiles[0]);
     const name = path.basename(absFilePath);
     const { left, right, title } =
       address.side === 'staged'
         ? {
-            left: buildOnecGitUri(this.services.gitRoot, absFilePath, 'HEAD'),
-            right: buildOnecGitUri(this.services.gitRoot, absFilePath, 'index'),
+            left: buildOnecGitUri(gitRoot, absFilePath, 'HEAD'),
+            right: buildOnecGitUri(gitRoot, absFilePath, 'index'),
             title: `${name} (HEAD ↔ индекс)`,
           }
         : {
-            left: buildOnecGitUri(this.services.gitRoot, absFilePath, 'index'),
+            left: buildOnecGitUri(gitRoot, absFilePath, 'index'),
             right: vscode.Uri.file(absFilePath),
             title: `${name} (индекс ↔ рабочее дерево)`,
           };
@@ -564,9 +594,14 @@ export class MetadataChangesViewProvider implements vscode.WebviewViewProvider {
     return resolveChangeAddress(this.model, nodeId);
   }
 
-  private absFiles(address: ChangeAddress): string[] {
-    return address.relFiles.map((rel) => path.resolve(this.services.gitRoot, rel));
+  private absFiles(gitRoot: string, address: ChangeAddress): string[] {
+    return address.relFiles.map((rel) => path.resolve(gitRoot, rel));
   }
+}
+
+function isCurrentGitRoot(gitRoot: string): boolean {
+  const resolved = resolveGitRoot(gitRoot);
+  return resolved !== null && normalizeGitPath(resolved) === normalizeGitPath(gitRoot);
 }
 
 /** Текущее время в секундах Unix (для относительных дат графа истории). */

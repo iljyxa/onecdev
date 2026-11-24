@@ -63,6 +63,7 @@ export interface ChangesSectionDto {
 
 /** Полное состояние webview-панели «Изменения метаданных». */
 export interface ChangesViewState {
+  readonly viewVersion: number;
   readonly staged: ChangesSectionDto;
   readonly unstaged: ChangesSectionDto;
   readonly unresolved: ChangesSectionDto;
