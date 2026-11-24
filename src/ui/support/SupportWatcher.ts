@@ -60,10 +60,10 @@ export function createParentConfigurationsHandlers(
     clearTimeout(timers.get(configRoot));
     timers.set(configRoot, setTimeout(() => {
       timers.delete(configRoot);
-      supportService.invalidate(configRoot);
       // При замене каталога событие удаления может прийти уже после появления нового файла.
-      supportService.loadConfig(configRoot);
-      onTreeRefresh();
+      if (supportService.loadConfig(configRoot, { invalidateCache: true })) {
+        onTreeRefresh();
+      }
     }, SUPPORT_WATCHER_DEBOUNCE_MS));
   };
 

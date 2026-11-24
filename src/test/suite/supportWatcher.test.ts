@@ -7,7 +7,7 @@
  * платформенного watcher'а и дала бы недетерминированный тест.
  */
 import * as assert from 'assert';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as path from 'path';
 import { mock } from 'node:test';
 import * as vscode from 'vscode';
@@ -19,7 +19,7 @@ import {
   createParentConfigurationsHandlers,
   registerSupportWatcher,
 } from '../../ui/support/SupportWatcher';
-import { buildSupportFixtureRoot, CHANGES_FORBIDDEN_BIN_PATH } from './support/realConfigFixtures';
+import { buildSupportFixtureRoot, CHANGES_FORBIDDEN_BIN_PATH, EXAMPLE_CF_ROOTS } from './support/realConfigFixtures';
 
 class TestLogger implements Logger {
   readonly lines: string[] = [];
@@ -151,6 +151,77 @@ suite('SupportWatcher: реакция на ParentConfigurations.bin', () => {
       assert.strictEqual(supportService.hasConfigData(fixture.kontragentyXmlPath), false);
       assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), false);
       assert.strictEqual(refreshes, 1);
+    } finally {
+      fixture.dispose();
+    }
+  });
+
+  test('ошибка чтения сохраняет запрет до следующей успешной загрузки', () => {
+    const fixture = buildSupportFixtureRoot('forbidden');
+    try {
+      const logger = new TestLogger();
+      const supportService = new SupportInfoService(logger);
+      supportService.loadConfig(fixture.configRoot);
+      let refreshes = 0;
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
+      const binPath = binPathOf(fixture.configRoot);
+      const uri = vscode.Uri.file(binPath);
+
+      fs.rmSync(binPath);
+      fs.mkdirSync(binPath);
+      handlers.onChange(uri);
+      assert.doesNotThrow(() => tick(250));
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
+      assert.strictEqual(refreshes, 0);
+      assert.ok(logger.lines.some(line => line.includes('не удалось прочитать')));
+
+      fs.rmdirSync(binPath);
+      fs.copyFileSync(binPathOf(EXAMPLE_CF_ROOTS['2.21']), binPath);
+      handlers.onChange(uri);
+      tick(250);
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), false);
+      assert.strictEqual(refreshes, 1);
+    } finally {
+      fixture.dispose();
+    }
+  });
+
+  test('временное исчезновение корня при подмене сохраняет данные поддержки', () => {
+    const fixture = buildSupportFixtureRoot('forbidden');
+    try {
+      const supportService = new SupportInfoService(new TestLogger());
+      supportService.loadConfig(fixture.configRoot);
+      let refreshes = 0;
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
+
+      fs.renameSync(fixture.configRoot, path.join(fixture.tempDir, 'backup'));
+      handlers.onDelete(vscode.Uri.file(binPathOf(fixture.configRoot)));
+      tick(250);
+
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
+      assert.strictEqual(refreshes, 0);
+    } finally {
+      fixture.dispose();
+    }
+  });
+
+  test('ENOENT при чтении уже возвращённого на место файла сохраняет данные поддержки', () => {
+    const fixture = buildSupportFixtureRoot('forbidden');
+    try {
+      const supportService = new SupportInfoService(new TestLogger());
+      supportService.loadConfig(fixture.configRoot);
+      let refreshes = 0;
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
+
+      // Остальные проверки идут по реальной выгрузке. Подменяется только сбой чтения в момент rename.
+      mock.method(fs, 'readFileSync', () => {
+        throw Object.assign(new Error('Файл временно отсутствовал'), { code: 'ENOENT' });
+      }, { times: 1 });
+      handlers.onDelete(vscode.Uri.file(binPathOf(fixture.configRoot)));
+      assert.doesNotThrow(() => tick(250));
+
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
+      assert.strictEqual(refreshes, 0);
     } finally {
       fixture.dispose();
     }
