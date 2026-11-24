@@ -86,21 +86,34 @@ export class SupportInfoService {
     this.log = logger;
   }
 
-  loadConfig(configRoot: string): void {
+  /** Возвращает false, если состояние файла пока нельзя подтвердить и сохранён прежний кэш. */
+  loadConfig(configRoot: string, { invalidateCache = false } = {}): boolean {
     const binPath = path.join(configRoot, 'Ext', 'ParentConfigurations.bin');
-    if (!fs.existsSync(binPath)) {
-      this.cache.delete(configRoot);
-      this.log.appendLine(`[support] ${path.basename(configRoot)}: ParentConfigurations.bin не найден — поддержка отсутствует`);
-      return;
+    const configName = path.basename(configRoot);
+    let content: Buffer;
+    try {
+      content = fs.readFileSync(binPath);
+    } catch (error) {
+      // При подмене выгрузки весь корень может исчезнуть, а файл — уже вернуться после ENOENT.
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT' && fs.existsSync(configRoot) && !fs.existsSync(binPath)) {
+        if (this.cache.has(configRoot)) {
+          this.invalidate(configRoot);
+        }
+        this.log.appendLine(`[support] ${configName}: ParentConfigurations.bin не найден — поддержка отсутствует`);
+        return true;
+      }
+      this.log.appendLine(`[support] ${configName}: не удалось прочитать ParentConfigurations.bin: ${String(error)}`);
+      return false;
     }
 
-    const content = fs.readFileSync(binPath);
+    if (invalidateCache) {
+      this.invalidate(configRoot);
+    }
     const fileHash = this.computeHash(content);
-    const configName = path.basename(configRoot);
     const cached = this.cache.get(configRoot);
     if (cached?.fileHash === fileHash) {
       this.log.appendLine(`[support] ${configName}: кэш актуален (hash=${fileHash.slice(0, 8)}…)`);
-      return;
+      return true;
     }
 
     const normalizedRoot = normPath(configRoot);
@@ -114,7 +127,7 @@ export class SupportInfoService {
         `[support] ${configName}: ParentConfigurations.bin не распознан (${parsed.reason})` +
         ' — режимы поддержки не определяются'
       );
-      return;
+      return true;
     }
 
     const { info } = parsed;
@@ -129,6 +142,7 @@ export class SupportInfoService {
       originalRoot: configRoot,
       uuidToMode,
     });
+    return true;
   }
 
   invalidate(configRoot: string): void {

@@ -7,20 +7,25 @@
  * платформенного watcher'а и дала бы недетерминированный тест.
  */
 import * as assert from 'assert';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as path from 'path';
+import { mock } from 'node:test';
 import * as vscode from 'vscode';
+import { syncDirectorySnapshot } from '../../infra/agent/DirectorySnapshot';
+import { buildSnapshotBackupDirName } from '../../infra/fs/WorkspaceTempDir';
 import { SupportInfoService } from '../../infra/support/SupportInfoService';
 import type { Logger } from '../../infra/support/Logger';
 import {
   createParentConfigurationsHandlers,
   registerSupportWatcher,
 } from '../../ui/support/SupportWatcher';
-import { buildSupportFixtureRoot, CHANGES_FORBIDDEN_BIN_PATH } from './support/realConfigFixtures';
+import { buildSupportFixtureRoot, CHANGES_FORBIDDEN_BIN_PATH, EXAMPLE_CF_ROOTS } from './support/realConfigFixtures';
 
 class TestLogger implements Logger {
-  appendLine(): void {
-    // Лог сервиса поддержки тесту не нужен.
+  readonly lines: string[] = [];
+
+  appendLine(line: string): void {
+    this.lines.push(line);
   }
 }
 
@@ -28,22 +33,79 @@ function binPathOf(configRoot: string): string {
   return path.join(configRoot, 'Ext', 'ParentConfigurations.bin');
 }
 
+function installTestClock(): (elapsedMs: number) => void {
+  const timers = new Map<number, { due: number; run: () => void }>();
+  let now = 0;
+  let nextTimerId = 0;
+
+  // MockTimers недоступен в extension host минимальной поддерживаемой версии VS Code.
+  mock.method(globalThis, 'setTimeout', (run: () => void, delay: number) => {
+    const id = --nextTimerId;
+    timers.set(id, { due: now + delay, run });
+    return id;
+  });
+  const realClearTimeout = clearTimeout;
+  mock.method(globalThis, 'clearTimeout', (timer: Parameters<typeof clearTimeout>[0]) => {
+    if (typeof timer === 'number' && timer < 0) {
+      timers.delete(timer);
+    } else {
+      realClearTimeout(timer);
+    }
+  });
+
+  return (elapsedMs) => {
+    now += elapsedMs;
+    for (const [id, { due, run }] of timers) {
+      if (due <= now) {
+        timers.delete(id);
+        run();
+      }
+    }
+  };
+}
+
 suite('SupportWatcher: реакция на ParentConfigurations.bin', () => {
-  test('onChange перечитывает изменённый .bin и перерисовывает дерево', () => {
+  let tick: (elapsedMs: number) => void;
+  setup(() => { tick = installTestClock(); });
+  teardown(() => mock.reset());
+
+  test('подмена выгрузки сбрасывает кэш и обновляет дерево один раз после последнего события', () => {
     const fixture = buildSupportFixtureRoot('normal');
+    const snapshot = buildSupportFixtureRoot('forbidden');
     try {
-      const supportService = new SupportInfoService(new TestLogger());
+      const logger = new TestLogger();
+      const supportService = new SupportInfoService(logger);
       supportService.loadConfig(fixture.configRoot);
+      logger.lines.length = 0;
       let refreshes = 0;
-      const handlers = createParentConfigurationsHandlers(supportService, () => { refreshes++; });
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
       assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), false);
 
-      fs.copyFileSync(CHANGES_FORBIDDEN_BIN_PATH, binPathOf(fixture.configRoot));
-      handlers.onChange(vscode.Uri.file(binPathOf(fixture.configRoot)));
+      const uri = vscode.Uri.file(binPathOf(fixture.configRoot));
+      syncDirectorySnapshot(snapshot.configRoot, fixture.configRoot);
+      handlers.onDelete(uri);
+      tick(100);
+      handlers.onChange(uri); // create
+      tick(100);
+      handlers.onChange(uri);
+      // Запоздавшее удаление относится к старому каталогу.
+      handlers.onDelete(uri);
+      const backupName = buildSnapshotBackupDirName('cf', process.pid, Date.now());
+      handlers.onDelete(vscode.Uri.file(binPathOf(path.join(fixture.tempDir, backupName))));
+      handlers.onChange(vscode.Uri.file(binPathOf(path.join(fixture.tempDir, '.onecdev', 'import-temp', 'cf'))));
+      tick(249);
 
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), false);
+      assert.strictEqual(refreshes, 0);
+      assert.strictEqual(logger.lines.length, 0);
+
+      tick(1);
       assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
       assert.strictEqual(refreshes, 1);
+      assert.strictEqual(logger.lines.filter(line => line.endsWith('кэш сброшен')).length, 1);
+      assert.strictEqual(logger.lines.filter(line => line.includes('загружено')).length, 1);
     } finally {
+      snapshot.dispose();
       fixture.dispose();
     }
   });
@@ -57,11 +119,12 @@ suite('SupportWatcher: реакция на ParentConfigurations.bin', () => {
       const supportService = new SupportInfoService(new TestLogger());
       supportService.loadConfig(fixture.configRoot);
       let refreshes = 0;
-      const handlers = createParentConfigurationsHandlers(supportService, () => { refreshes++; });
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
       assert.strictEqual(supportService.hasConfigData(fixture.kontragentyXmlPath), false);
 
       fs.writeFileSync(binPath, binContent);
       handlers.onChange(vscode.Uri.file(binPath));
+      tick(250);
 
       assert.strictEqual(supportService.hasConfigData(fixture.kontragentyXmlPath), true);
       assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
@@ -71,17 +134,19 @@ suite('SupportWatcher: реакция на ParentConfigurations.bin', () => {
     }
   });
 
-  test('onDelete сбрасывает данные поддержки корня и перерисовывает дерево', () => {
+  test('удаление .bin сбрасывает данные поддержки даже при последнем событии change', () => {
     const fixture = buildSupportFixtureRoot('forbidden');
     try {
       const supportService = new SupportInfoService(new TestLogger());
       supportService.loadConfig(fixture.configRoot);
       let refreshes = 0;
-      const handlers = createParentConfigurationsHandlers(supportService, () => { refreshes++; });
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
       assert.strictEqual(supportService.hasConfigData(fixture.kontragentyXmlPath), true);
 
       fs.rmSync(binPathOf(fixture.configRoot));
       handlers.onDelete(vscode.Uri.file(binPathOf(fixture.configRoot)));
+      handlers.onChange(vscode.Uri.file(binPathOf(fixture.configRoot)));
+      tick(250);
 
       assert.strictEqual(supportService.hasConfigData(fixture.kontragentyXmlPath), false);
       assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), false);
@@ -89,6 +154,123 @@ suite('SupportWatcher: реакция на ParentConfigurations.bin', () => {
     } finally {
       fixture.dispose();
     }
+  });
+
+  test('ошибка чтения сохраняет запрет до следующей успешной загрузки', () => {
+    const fixture = buildSupportFixtureRoot('forbidden');
+    try {
+      const logger = new TestLogger();
+      const supportService = new SupportInfoService(logger);
+      supportService.loadConfig(fixture.configRoot);
+      let refreshes = 0;
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
+      const binPath = binPathOf(fixture.configRoot);
+      const uri = vscode.Uri.file(binPath);
+
+      fs.rmSync(binPath);
+      fs.mkdirSync(binPath);
+      handlers.onChange(uri);
+      assert.doesNotThrow(() => tick(250));
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
+      assert.strictEqual(refreshes, 0);
+      assert.ok(logger.lines.some(line => line.includes('не удалось прочитать')));
+
+      fs.rmdirSync(binPath);
+      fs.copyFileSync(binPathOf(EXAMPLE_CF_ROOTS['2.21']), binPath);
+      handlers.onChange(uri);
+      tick(250);
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), false);
+      assert.strictEqual(refreshes, 1);
+    } finally {
+      fixture.dispose();
+    }
+  });
+
+  test('временное исчезновение корня при подмене сохраняет данные поддержки', () => {
+    const fixture = buildSupportFixtureRoot('forbidden');
+    try {
+      const supportService = new SupportInfoService(new TestLogger());
+      supportService.loadConfig(fixture.configRoot);
+      let refreshes = 0;
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
+
+      fs.renameSync(fixture.configRoot, path.join(fixture.tempDir, 'backup'));
+      handlers.onDelete(vscode.Uri.file(binPathOf(fixture.configRoot)));
+      tick(250);
+
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
+      assert.strictEqual(refreshes, 0);
+    } finally {
+      fixture.dispose();
+    }
+  });
+
+  test('ENOENT при чтении уже возвращённого на место файла сохраняет данные поддержки', () => {
+    const fixture = buildSupportFixtureRoot('forbidden');
+    try {
+      const supportService = new SupportInfoService(new TestLogger());
+      supportService.loadConfig(fixture.configRoot);
+      let refreshes = 0;
+      const handlers = createParentConfigurationsHandlers(fixture.tempDir, supportService, () => { refreshes++; });
+
+      // Остальные проверки идут по реальной выгрузке. Подменяется только сбой чтения в момент rename.
+      mock.method(fs, 'readFileSync', () => {
+        throw Object.assign(new Error('Файл временно отсутствовал'), { code: 'ENOENT' });
+      }, { times: 1 });
+      handlers.onDelete(vscode.Uri.file(binPathOf(fixture.configRoot)));
+      assert.doesNotThrow(() => tick(250));
+
+      assert.strictEqual(supportService.hasChangesForbidden(fixture.kontragentyXmlPath), true);
+      assert.strictEqual(refreshes, 0);
+    } finally {
+      fixture.dispose();
+    }
+  });
+
+  test('события соседнего корня не сдвигают срок обновления', () => {
+    const first = buildSupportFixtureRoot('forbidden');
+    const second = buildSupportFixtureRoot('forbidden');
+    try {
+      const supportService = new SupportInfoService(new TestLogger());
+      supportService.loadConfig(first.configRoot);
+      supportService.loadConfig(second.configRoot);
+      let refreshes = 0;
+      const handlers = createParentConfigurationsHandlers(
+        path.dirname(first.tempDir), supportService, () => { refreshes++; }
+      );
+
+      fs.rmSync(binPathOf(first.configRoot));
+      fs.rmSync(binPathOf(second.configRoot));
+      handlers.onDelete(vscode.Uri.file(binPathOf(first.configRoot)));
+      tick(100);
+      handlers.onDelete(vscode.Uri.file(binPathOf(second.configRoot)));
+      tick(150);
+
+      assert.strictEqual(supportService.hasConfigData(first.kontragentyXmlPath), false);
+      assert.strictEqual(supportService.hasConfigData(second.kontragentyXmlPath), true);
+      assert.strictEqual(refreshes, 1);
+
+      tick(100);
+      assert.strictEqual(supportService.hasConfigData(second.kontragentyXmlPath), false);
+      assert.strictEqual(refreshes, 2);
+    } finally {
+      second.dispose();
+      first.dispose();
+    }
+  });
+
+  test('dispose отменяет ожидающее обновление поддержки', () => {
+    const supportService = new SupportInfoService(new TestLogger());
+    let refreshes = 0;
+    const handlers = createParentConfigurationsHandlers(
+      path.dirname(CHANGES_FORBIDDEN_BIN_PATH), supportService, () => { refreshes++; }
+    );
+
+    handlers.onChange(vscode.Uri.file(CHANGES_FORBIDDEN_BIN_PATH));
+    handlers.dispose();
+    tick(250);
+
+    assert.strictEqual(refreshes, 0);
   });
 
   test('registerSupportWatcher отдаёт watcher и подписки на его события в context.subscriptions', () => {
@@ -105,8 +287,8 @@ suite('SupportWatcher: реакция на ParentConfigurations.bin', () => {
 
       registerSupportWatcher(workspaceFolder, context, new SupportInfoService(new TestLogger()), () => undefined);
 
-      // Три подписки (создание, изменение, удаление) и сам watcher: всё освобождается при деактивации.
-      assert.strictEqual(subscriptions.length, 4);
+      // При деактивации также отменяются таймеры обработчиков.
+      assert.strictEqual(subscriptions.length, 5);
       for (const subscription of subscriptions) {
         assert.strictEqual(typeof subscription.dispose, 'function');
       }
