@@ -38,8 +38,7 @@ import {
   getCachedAgentOperationService,
 } from '../../ui/commands/ext/ExtensionCommandRunner';
 import { removeMetadata } from '../../ui/commands/metadata/RemoveMetadataCommand';
-import { DynamicPanelController } from '../../ui/views/dynamic-panel/DynamicPanelController';
-import type { PropertiesViewController } from '../../ui/views/properties/PropertiesViewController';
+import { PropertiesViewSession } from '../../ui/views/properties/PropertiesViewSession';
 import { MetadataNode } from '../../ui/tree/TreeNode';
 import { EXAMPLE_GENERATIONS, skipWithoutCorpus } from './support/corpus';
 
@@ -357,7 +356,7 @@ suite('RemoveMetadataCommand — пересборка кэша записи по
       treeProvider: { getEntries: () => entries, refresh: () => undefined },
       suppressConfigurationReloadForFiles: () => undefined,
       markChangedConfigurationByFiles: () => undefined,
-      dynamicPanelController: { handleMetadataRemoved: () => undefined },
+      propertiesViewProvider: { handleMetadataRemoved: () => undefined },
       subsystemEditorViewProvider: { handleMetadataRemoved: () => undefined },
       refreshActionsView: () => undefined,
     } as unknown as CommandServices;
@@ -433,28 +432,12 @@ suite('ExtensionCommandRunner — ключ кэша сервиса агента 
   });
 });
 
-suite('DynamicPanelController — сброс свойств удалённого объекта по pathKey (#123)', () => {
+suite('PropertiesViewSession — сброс свойств удалённого объекта по pathKey (#123)', () => {
   const configRoot = EXAMPLE_GENERATIONS.cf21;
-  let controller: DynamicPanelController | undefined;
-  let clearedProperties: number;
+  let session: PropertiesViewSession;
 
   setup(() => {
-    clearedProperties = 0;
-    // Проверка вложенности пути не обращается к свойствам; от контроллера свойств нужен
-    // только сброс активного узла — по нему и видно, что панель очищена.
-    const propertiesController = {
-      setActiveNode: () => undefined,
-      clearActiveNode: () => {
-        clearedProperties++;
-      },
-      getViewState: () => undefined,
-    } as unknown as PropertiesViewController;
-    controller = new DynamicPanelController(propertiesController);
-  });
-
-  teardown(() => {
-    controller?.dispose();
-    controller = undefined;
+    session = new PropertiesViewSession(() => null);
   });
 
   function formNode(objectDirName: string): MetadataNode {
@@ -470,24 +453,20 @@ suite('DynamicPanelController — сброс свойств удалённого
   );
 
   test('форма внутри каталога удалённого справочника — свойства сбрасываются', () => {
-    assert.ok(controller);
-    controller.replaceActiveNode(formNode('Контрагенты'));
+    void session.selectNode(formNode('Контрагенты'));
 
-    controller.handleMetadataRemoved(removedCatalog());
+    void session.handleMetadataRemoved(removedCatalog());
 
-    assert.strictEqual(controller.getActiveNode(), undefined);
-    assert.strictEqual(clearedProperties, 1);
+    assert.strictEqual(session.getActiveNode(), undefined);
   });
 
   test('каталог, отличающийся регистром, на регистрозависимой ФС — другой объект: свойства остаются', function () {
     skipOnCaseInsensitiveFs(this);
-    assert.ok(controller);
     const foreign = formNode('КОНТРАГЕНТЫ');
-    controller.replaceActiveNode(foreign);
+    void session.selectNode(foreign);
 
-    controller.handleMetadataRemoved(removedCatalog());
+    void session.handleMetadataRemoved(removedCatalog());
 
-    assert.strictEqual(controller.getActiveNode(), foreign);
-    assert.strictEqual(clearedProperties, 0);
+    assert.strictEqual(session.getActiveNode(), foreign);
   });
 });

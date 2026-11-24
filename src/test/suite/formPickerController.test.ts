@@ -33,7 +33,8 @@ interface FormPickerPrivateApi {
 
 type QuickPickItemWithOption = vscode.QuickPickItem & { option?: { reference: string } };
 
-let quickPickSelector: (items: readonly QuickPickItemWithOption[]) => QuickPickItemWithOption | undefined;
+type QuickPickSelection = QuickPickItemWithOption | readonly QuickPickItemWithOption[] | undefined;
+let quickPickSelector: (items: readonly QuickPickItemWithOption[]) => QuickPickSelection | Promise<QuickPickSelection>;
 let quickPickCalls: QuickPickItemWithOption[][] = [];
 let infoMessages: string[] = [];
 let warningMessages: string[] = [];
@@ -221,6 +222,167 @@ suite('Пикер формы — путь от сообщения webview до �
 
     assert.strictEqual(quickPickCalls.length, 1, 'список показать были обязаны');
     assert.strictEqual(fs.readFileSync(dump.reportXmlPath, 'utf-8'), before, 'после отмены XML не меняется');
+  });
+
+  test('выбор формы и отложенная правка не записываются в узел, выбранный позже (#205)', async () => {
+    const first = createDump(['ФормаПервого']);
+    const second = createDump(['ФормаВторого']);
+    const controller = createController();
+    try {
+      const secondNode = makeNode('Report', 'ОтчётПикер', second.reportXmlPath);
+      controller.setActiveNode(secondNode);
+      quickPickSelector = (items) => items[0];
+      await controller.handleWebviewMessage({ type: 'openFormPicker', key: 'DefaultVariantForm' });
+      const firstXml = fs.readFileSync(first.reportXmlPath, 'utf-8');
+      const secondXml = fs.readFileSync(second.reportXmlPath, 'utf-8');
+
+      controller.setActiveNode(makeNode('Report', 'ОтчётПикер', first.reportXmlPath));
+      let openPicker!: (complete: () => void) => void;
+      const pickerOpen = new Promise<() => void>((resolve) => { openPicker = resolve; });
+      quickPickSelector = (items) => new Promise((resolve) => {
+        openPicker(() => { resolve(items[0]); });
+      });
+
+      const pendingPick = controller.handleWebviewMessage({ type: 'openFormPicker', key: 'DefaultForm' });
+      const completePicker = await pickerOpen;
+      const queuedEdit = controller.handleWebviewMessage({ type: 'clearFormProperty', key: 'DefaultVariantForm' });
+      controller.setActiveNode(secondNode);
+      completePicker();
+      await Promise.all([pendingPick, queuedEdit]);
+
+      assert.strictEqual(fs.readFileSync(first.reportXmlPath, 'utf-8'), firstXml);
+      const secondAfter = fs.readFileSync(second.reportXmlPath, 'utf-8');
+      assert.ok(!secondAfter.includes('CommonForm.ФормаПервого'), 'выбор формы первого отчёта попал во второй');
+      assert.ok(secondAfter.includes('<DefaultVariantForm>CommonForm.ФормаВторого</DefaultVariantForm>'),
+        'ожидавшая в очереди правка попала во второй отчёт');
+      assert.strictEqual(secondAfter, secondXml);
+    } finally {
+      fs.rmSync(first.configRoot, { recursive: true, force: true });
+      fs.rmSync(second.configRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('выбор типа применяется к исходному реквизиту и отменяется при смене узла (#205)', async () => {
+    const { configRoot } = createDump([]);
+    const creator = new MetadataXmlCreator();
+    const catalogXml = path.join(configRoot, 'Catalogs', 'СправочникПикер.xml');
+    const attribute = (label: string) => new MetadataNode({
+      label, nodeKind: 'Attribute', xmlPath: catalogXml,
+      metaContext: { rootMetaKind: 'Catalog', ownerObjectXmlPath: catalogXml },
+    }, vscode.TreeItemCollapsibleState.None);
+    try {
+      assert.ok(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'СправочникПикер' }).success);
+      assert.ok(creator.addChildElement({ ownerObjectXmlPath: catalogXml, childTag: 'Attribute', name: 'Первый' }).success);
+      assert.ok(creator.addChildElement({ ownerObjectXmlPath: catalogXml, childTag: 'Attribute', name: 'Второй' }).success);
+      const controller = createController();
+      const first = attribute('Первый');
+      const second = attribute('Второй');
+      controller.setActiveNode(first);
+      assert.ok(controller.getViewState()?.sections.flatMap((section) => section.controls).some((item) => item.id === 'Type'));
+      await controller.handleWebviewMessage({ type: 'openTypePicker' });
+      quickPickSelector = () => [];
+      await controller.handleWebviewMessage({ type: 'openTypePicker' });
+      quickPickSelector = (items) => {
+        const choice = items.find((item) => item.description === 'Boolean');
+        assert.ok(choice);
+        return [choice];
+      };
+      await controller.handleWebviewMessage({ type: 'openTypePicker' });
+      const updated = fs.readFileSync(catalogXml, 'utf-8');
+      assert.ok(updated.includes('xs:boolean'));
+      quickPickSelector = (items) => {
+        const choice = items.find((item) => item.description === 'Date');
+        assert.ok(choice);
+        controller.setActiveNode(second);
+        assert.ok(controller.getViewState());
+        return [choice];
+      };
+      await controller.handleWebviewMessage({ type: 'openTypePicker' });
+      assert.strictEqual(fs.readFileSync(catalogXml, 'utf-8'), updated);
+    } finally {
+      fs.rmSync(configRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('ссылка выбора не добавляется в справочник, выбранный позднее (#205)', async () => {
+    const { configRoot } = createDump([]);
+    const creator = new MetadataXmlCreator();
+    const firstXml = path.join(configRoot, 'Catalogs', 'Первый.xml');
+    const secondXml = path.join(configRoot, 'Catalogs', 'Второй.xml');
+    try {
+      assert.ok(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Первый' }).success);
+      assert.ok(creator.addRootObject({ configRoot, kind: 'Catalog', name: 'Второй' }).success);
+      assert.ok(creator.addRootObject({ configRoot, kind: 'Document', name: 'Заказ' }).success);
+      const controller = createController();
+      const first = makeNode('Catalog', 'Первый', firstXml);
+      const second = makeNode('Catalog', 'Второй', secondXml);
+      controller.setActiveNode(first);
+      assert.ok(controller.getViewState());
+      await controller.handleWebviewMessage({ type: 'openMetadataReferencePicker', key: 'BasedOn' });
+      const untouched = fs.readFileSync(secondXml, 'utf-8');
+      quickPickSelector = (items) => {
+        const choice = items.find((item) => item.description === 'Document.Заказ');
+        assert.ok(choice);
+        controller.setActiveNode(second);
+        assert.ok(controller.getViewState());
+        return choice;
+      };
+      await controller.handleWebviewMessage({ type: 'openMetadataReferencePicker', key: 'BasedOn' });
+      assert.strictEqual(fs.readFileSync(secondXml, 'utf-8'), untouched);
+      assert.strictEqual(quickPickCalls.length, 2);
+    } finally {
+      fs.rmSync(configRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('выбор подсистемы отменяется при смене отчёта (#205)', async () => {
+    const { configRoot, reportXmlPath } = createDump([]);
+    const creator = new MetadataXmlCreator();
+    try {
+      assert.ok(creator.addRootObject({ configRoot, kind: 'Subsystem', name: 'ГруппаОтчётов' }).success);
+      assert.ok(creator.addRootObject({ configRoot, kind: 'Subsystem', name: 'ОбщиеОтчёты' }).success);
+      assert.ok(creator.addRootObject({ configRoot, kind: 'Report', name: 'ДругойОтчёт' }).success);
+      const subsystemXml = path.join(configRoot, 'Subsystems', 'ГруппаОтчётов.xml');
+      const otherSubsystemXml = path.join(configRoot, 'Subsystems', 'ОбщиеОтчёты.xml');
+      const otherReportXml = path.join(configRoot, 'Reports', 'ДругойОтчёт.xml');
+      const controller = createController();
+      const first = makeNode('Report', 'ОтчётПикер', reportXmlPath);
+      const second = makeNode('Report', 'ДругойОтчёт', otherReportXml);
+      controller.setActiveNode(first);
+      await controller.handleWebviewMessage({ type: 'openSubsystemMembershipPicker' });
+      quickPickSelector = (items) => items.find((item) => item.description === 'ГруппаОтчётов');
+      await controller.handleWebviewMessage({ type: 'openSubsystemMembershipPicker' });
+      const updated = fs.readFileSync(subsystemXml, 'utf-8');
+      assert.ok(updated.includes('Report.ОтчётПикер'));
+      const untouched = fs.readFileSync(otherSubsystemXml, 'utf-8');
+      quickPickSelector = (items) => {
+        const choice = items.find((item) => item.description === 'ОбщиеОтчёты');
+        assert.ok(choice);
+        controller.setActiveNode(second);
+        return choice;
+      };
+      await controller.handleWebviewMessage({ type: 'openSubsystemMembershipPicker' });
+      assert.strictEqual(fs.readFileSync(subsystemXml, 'utf-8'), updated);
+      assert.strictEqual(fs.readFileSync(otherSubsystemXml, 'utf-8'), untouched);
+      assert.strictEqual(quickPickCalls.length, 3);
+    } finally {
+      fs.rmSync(configRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('переименование сохраняет выделение нового узла (#205)', async () => {
+    const { configRoot, reportXmlPath } = createDump([]);
+    try {
+      const controller = createController();
+      controller.setActiveNode(makeNode('Report', 'ОтчётПикер', reportXmlPath));
+      assert.ok(controller.getViewState());
+      await controller.handleWebviewMessage({ type: 'propertyChanged', key: 'Name', value: 'ОтчётПослеПравки' });
+      const renamedXml = path.join(configRoot, 'Reports', 'ОтчётПослеПравки.xml');
+      assert.ok(fs.existsSync(renamedXml));
+      assert.strictEqual(controller.getActiveNode()?.xmlPath, renamedXml);
+    } finally {
+      fs.rmSync(configRoot, { recursive: true, force: true });
+    }
   });
 
   test('clearFormProperty очищает значение свойства формы', async () => {

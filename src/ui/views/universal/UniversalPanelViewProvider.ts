@@ -84,6 +84,7 @@ interface UniversalPanelServices {
   readonly gitMetadataStatusService: GitMetadataStatusService;
   readonly refreshActionsView: () => void;
   readonly workingSetFilter: Pick<WorkingSetFilterController, 'getStatus' | 'toggle'>;
+  readonly selectPropertiesNode: (node: MetadataNode | undefined) => void;
   readonly log?: (message: string) => void;
 }
 
@@ -146,6 +147,7 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
   private viewDisposables: vscode.Disposable[] = [];
   /** Кэш зарегистрированных команд для guard'а webview (S2); команды расширения стабильны после активации. */
   private registeredCommandsCache: readonly string[] | undefined;
+  private restorePropertiesSelection = true;
   private selectedNodeKey: string | undefined;
   private cachedRootNodes: TreeNodeDto[] = [];
   private currentOpenNodeIds = new Set<string>();
@@ -450,6 +452,9 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
     }
     if (selected) {
       this.currentSelectedNodeId = id;
+      if (this.restorePropertiesSelection) {
+        this.selectPropertiesNode(node);
+      }
     }
 
     // Дети загружаем сразу, если узел открыт (как в старом коде).
@@ -651,15 +656,8 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
 
     const node = this.nodeById.get(nodeId);
     if (!node) {return;}
-    // Сначала показываем свойства — DynamicPanelController ставит окно приоритета,
-    // и последующие программные события активного редактора не перебьют state.
-    if (node.xmlPath && !node.hidePropertiesCommand) {
-      await this.executeCommand('onecdev.showProperties', node);
-    }
+    this.selectPropertiesNode(node);
     if (node.command) {
-      // Связанный документ (модуль/XML) открываем без перехвата фокуса:
-      // курсор остаётся в боковой панели, свойства видны, а при клике в редактор
-      // пользователем — динамическая панель переключится на структуру модуля.
       await this.executeCommand(node.command.command, node, { preserveFocus: true });
     }
   }
@@ -674,7 +672,12 @@ export class UniversalPanelViewProvider implements vscode.WebviewViewProvider, v
       await this.executeCommand('onecdev.openSubsystemEditor', node);
       return;
     }
-    await this.executeCommand('onecdev.showProperties', node);
+    this.selectPropertiesNode(node);
+  }
+
+  private selectPropertiesNode(node: MetadataNode): void {
+    this.restorePropertiesSelection = false;
+    this.services.selectPropertiesNode(node.xmlPath && !node.hidePropertiesCommand ? node : undefined);
   }
 
   private async executeCommand(command: string, node?: MetadataNode, options?: Record<string, unknown>): Promise<void> {

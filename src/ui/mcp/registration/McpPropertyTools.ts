@@ -210,7 +210,7 @@ export function registerPropertyTools(server: McpServer, deps: McpRegistrationDe
           });
       if (result.success) {
         gate.afterMutationIfSucceeded(result.changedFiles, result.success);
-        services.dynamicPanelController.handleMetadataRemoved(node);
+        services.propertiesViewProvider.handleMetadataRemoved(node);
         services.subsystemEditorViewProvider.handleMetadataRemoved();
       }
       return result;

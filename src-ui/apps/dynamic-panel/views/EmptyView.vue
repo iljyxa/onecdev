@@ -7,7 +7,7 @@ defineProps<{
 <template>
   <div class="empty-view">
     <p class="empty-view__hint">
-      {{ message ?? 'Откройте модуль или выберите объект конфигурации.' }}
+      {{ message ?? 'Откройте модуль.' }}
     </p>
   </div>
 </template>

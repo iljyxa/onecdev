@@ -570,7 +570,7 @@ XML при первом вводе, а платформа файл с чужим
   (`propertyKeyOrder.ts`) по `isFormPropertyKey`; заголовок и порядок секции — константа
   `FORM_PROPERTY_SECTION` (`{ title: 'Формы', order: 80 }`). Это контракт расширение ↔ webview: веб-часть
   включает контрол выбора формы, сравнивая `card.section.title === 'Формы'` в
-  `src-ui/apps/dynamic-panel/views/properties/PropertiesView.vue`. До правки литерал был размножен в 17
+  `src-ui/apps/properties/views/PropertiesView.vue`. До правки литерал был размножен в 17
   местах, и секцию проставляли только справочник с документом — у остальных видов (включая обработки)
   пикера формы не было. Страж — `formSectionContract.test.ts`: читает `.vue`, сверяет с константой и не
   даёт литералу вернуться в `propertyKeyOrder.ts` (кроме объявления) и `PropertiesViewController.ts`.

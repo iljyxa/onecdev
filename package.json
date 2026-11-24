@@ -46,10 +46,22 @@
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
+      "secondarySidebar": [
+        {
+          "id": "onecdevPropertiesContainer",
+          "title": "Свойства",
+          "icon": "src/icons/activity-bar.svg"
+        }
+      ],
       "activitybar": [
         {
           "id": "onecdev",
           "title": "Редактор конфигураций",
+          "icon": "src/icons/activity-bar.svg"
+        },
+        {
+          "id": "onecdevPropertiesContainer",
+          "title": "Свойства",
           "icon": "src/icons/activity-bar.svg"
         },
         {
@@ -70,6 +82,20 @@
           "id": "onecdevUniversal",
           "name": "Редактор конфигураций",
           "type": "webview"
+        },
+        {
+          "id": "onecdevPropertiesInNavigator",
+          "name": "Свойства",
+          "type": "webview",
+          "when": "onecdev.propertiesPlacement == navigator"
+        }
+      ],
+      "onecdevPropertiesContainer": [
+        {
+          "id": "onecdevProperties",
+          "name": "Свойства",
+          "type": "webview",
+          "when": "onecdev.propertiesPlacement == secondarySidebar"
         }
       ],
       "onecdevChangesContainer": [
@@ -381,8 +407,8 @@
         "title": "Открыть модуль"
       },
       {
-        "command": "onecdev.showProperties",
-        "title": "Свойства",
+        "command": "onecdev.openPropertiesView",
+        "title": "Свойства: Открыть панель",
         "icon": "$(list-unordered)"
       },
       {

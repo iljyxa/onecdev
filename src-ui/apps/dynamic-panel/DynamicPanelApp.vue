@@ -5,7 +5,6 @@ import type { HostToUiMessage } from '@ui-shared/protocol/hostMessages';
 import type { DynamicPanelState, RangeDto } from '@ui-shared/types/dynamicPanel';
 import EmptyView from './views/EmptyView.vue';
 import ModuleStructureView from './views/ModuleStructureView.vue';
-import PropertiesView from './views/properties/PropertiesView.vue';
 
 const props = defineProps<{
   initialState: DynamicPanelState | null;
@@ -51,11 +50,6 @@ onUnmounted(() => {
       :symbols="state.symbols"
       :loading="state.loading"
       @reveal="onRevealSymbol"
-    />
-    <PropertiesView
-      v-else-if="state.kind === 'properties'"
-      :state="state.view"
-      @command="(name, payload) => sendCommand(name, payload)"
     />
   </div>
 </template>

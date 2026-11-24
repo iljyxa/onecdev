@@ -82,7 +82,7 @@ suite('PropertiesViewController — B2.3: floating rejection в handlePropertyCh
       },
     ]);
 
-    // Публичный вызываемый путь (DynamicPanelController): изменение свойства из Vue-панели.
+    // Публичный вызываемый путь (PropertiesViewProvider): изменение свойства из Vue-панели.
     controller.handlePropertyChange('Comment', 'новое значение — вызывает EISDIR при чтении');
 
     // Даём event loop прокрутиться, чтобы reject дошёл до глобального обработчика

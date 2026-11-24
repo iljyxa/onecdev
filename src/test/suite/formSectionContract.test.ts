@@ -21,7 +21,7 @@ import { FORM_PROPERTY_SECTION } from '../../ui/views/properties/propertyKeyOrde
 
 const PROPERTIES_VIEW_VUE = path.resolve(
   __dirname,
-  '../../../src-ui/apps/dynamic-panel/views/properties/PropertiesView.vue'
+  '../../../src-ui/apps/properties/views/PropertiesView.vue'
 );
 
 const PROPERTY_KEY_ORDER_TS = path.resolve(__dirname, '../../../src/ui/views/properties/propertyKeyOrder.ts');

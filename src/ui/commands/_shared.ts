@@ -30,7 +30,7 @@ import type {
 import type { BslAnalyzerConfigService } from '../../infra/environment';
 import type { MetadataTreeProvider } from '../tree/MetadataTreeProvider';
 import type { MetadataNode } from '../tree/TreeNode';
-import type { DynamicPanelController } from '../views/dynamic-panel/DynamicPanelController';
+import type { PropertiesViewProvider } from '../views/properties/PropertiesViewProvider';
 import type { RepositoryCommitViewProvider } from '../views/RepositoryCommitViewProvider';
 import type { RepositoryConnectionViewProvider } from '../views/RepositoryConnectionViewProvider';
 import type { RepositoryHistoryViewProvider } from '../views/repositoryHistory/RepositoryHistoryViewProvider';
@@ -64,7 +64,7 @@ export interface CommandServices {
   cfePatchMethodService: CfePatchMethodService;
   roleRightsService: RoleRightsService;
   reloadEntries: () => void | Promise<void>;
-  dynamicPanelController: DynamicPanelController;
+  propertiesViewProvider: PropertiesViewProvider;
   subsystemEditorViewProvider: SubsystemEditorViewProvider;
   outputChannel: vscode.OutputChannel;
   supportService?: SupportInfoService;
