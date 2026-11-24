@@ -1,6 +1,9 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { isWorkspaceServicePath } from '../../infra/fs/WorkspaceTempDir';
 import type { SupportInfoService } from '../../infra/support/SupportInfoService';
+
+const SUPPORT_WATCHER_DEBOUNCE_MS = 250;
 
 /**
  * Настраивает watcher за файлом `Ext/ParentConfigurations.bin`: при его
@@ -23,15 +26,15 @@ export function registerSupportWatcher(
     false
   );
 
-  const handlers = createParentConfigurationsHandlers(supportService, onTreeRefresh);
+  const handlers = createParentConfigurationsHandlers(workspaceFolder.uri.fsPath, supportService, onTreeRefresh);
 
   watcher.onDidCreate(handlers.onChange, null, context.subscriptions);
   watcher.onDidChange(handlers.onChange, null, context.subscriptions);
   watcher.onDidDelete(handlers.onDelete, null, context.subscriptions);
-  context.subscriptions.push(watcher);
+  context.subscriptions.push(watcher, handlers);
 }
 
-export interface ParentConfigurationsHandlers {
+export interface ParentConfigurationsHandlers extends vscode.Disposable {
   readonly onChange: (uri: vscode.Uri) => void;
   readonly onDelete: (uri: vscode.Uri) => void;
 }
@@ -42,19 +45,36 @@ export interface ParentConfigurationsHandlers {
  * событий файловой системы.
  */
 export function createParentConfigurationsHandlers(
+  workspaceRoot: string,
   supportService: SupportInfoService,
   onTreeRefresh: () => void
 ): ParentConfigurationsHandlers {
-  return {
-    onChange: (uri) => {
-      const configRoot = configRootOfBin(uri);
+  const timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  const scheduleRefresh = (uri: vscode.Uri): void => {
+    if (isWorkspaceServicePath(workspaceRoot, uri.fsPath)) {
+      return;
+    }
+
+    const configRoot = configRootOfBin(uri);
+    clearTimeout(timers.get(configRoot));
+    timers.set(configRoot, setTimeout(() => {
+      timers.delete(configRoot);
       supportService.invalidate(configRoot);
+      // При замене каталога событие удаления может прийти уже после появления нового файла.
       supportService.loadConfig(configRoot);
       onTreeRefresh();
-    },
-    onDelete: (uri) => {
-      supportService.invalidate(configRootOfBin(uri));
-      onTreeRefresh();
+    }, SUPPORT_WATCHER_DEBOUNCE_MS));
+  };
+
+  return {
+    onChange: scheduleRefresh,
+    onDelete: scheduleRefresh,
+    dispose: () => {
+      for (const timer of timers.values()) {
+        clearTimeout(timer);
+      }
+      timers.clear();
     },
   };
 }
