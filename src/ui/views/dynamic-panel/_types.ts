@@ -1,5 +1,3 @@
-import type { PropertiesViewState } from '../properties/_types';
-
 export interface ModuleSymbolDto {
   readonly name: string;
   readonly detail?: string;
@@ -42,8 +40,4 @@ export type DynamicPanelState =
       readonly document: ActiveDocumentInfo;
       readonly symbols: ModuleSymbolDto[];
       readonly loading?: boolean;
-    }
-  | {
-      readonly kind: 'properties';
-      readonly view: PropertiesViewState;
     };

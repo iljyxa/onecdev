@@ -97,6 +97,7 @@ const DEFAULT_PROPERTY_SECTION_ORDER = Number.MIN_SAFE_INTEGER;
 /** Управляет чтением и изменением свойств активного объекта. */
 export class PropertiesViewController {
   private activeNode: MetadataNode | undefined;
+  private selectionRevision = 0;
   private activeProperties: ObjectPropertiesCollection = [];
   private propertyUpdateQueue: Promise<void> = Promise.resolve();
   private readonly pendingBasedOnPreloads = new Set<string>();
@@ -115,13 +116,16 @@ export class PropertiesViewController {
     private readonly outputChannel?: vscode.OutputChannel
   ) {}
 
-  setActiveNode(node: MetadataNode): void {
-    this.activeNode = node;
+  setActiveNode(node: MetadataNode | undefined): void {
+    if (this.activeNode !== node) {
+      this.activeNode = node;
+      this.activeProperties = [];
+      this.selectionRevision++;
+    }
   }
 
   clearActiveNode(): void {
-    this.activeNode = undefined;
-    this.activeProperties = [];
+    this.setActiveNode(undefined);
   }
 
   getActiveNode(): MetadataNode | undefined {
@@ -193,7 +197,7 @@ export class PropertiesViewController {
     options: PropertiesViewStateOptions = {}
   ): PropertiesRenderContext {
     const enrichedProperties = this.enrichBasedOnProperties(node, properties);
-    this.activeNode = node;
+    this.setActiveNode(node);
     this.activeProperties = enrichedProperties;
     const includeAuxiliaryBlocks = options.includeAuxiliaryBlocks ?? true;
     const subsystemSnapshot = includeAuxiliaryBlocks ? this.resolveSubsystemMembershipSnapshot(node) : null;
@@ -391,8 +395,11 @@ export class PropertiesViewController {
    * Выполняет изменения свойств последовательно, чтобы не допускать конкурентной записи XML.
    */
   private async enqueuePropertyOperation(operation: () => void | Promise<void>): Promise<void> {
+    const revision = this.selectionRevision;
     const run = this.propertyUpdateQueue.then(async () => {
-      await operation();
+      if (this.selectionRevision === revision) {
+        await operation();
+      }
     });
     this.propertyUpdateQueue = run.catch(() => undefined);
     await run;
@@ -420,12 +427,13 @@ export class PropertiesViewController {
         });
       }
     }
+    const revision = this.selectionRevision;
     const selected = await vscode.window.showQuickPick(items, {
       title: 'Выбор типа',
       canPickMany: true,
       matchOnDescription: true,
     });
-    if (!selected || selected.length === 0) {
+    if (this.selectionRevision !== revision || !selected || selected.length === 0) {
       return;
     }
     const nextItems = selected
@@ -473,11 +481,12 @@ export class PropertiesViewController {
       void vscode.window.showInformationMessage(getEmptyReferencePickerMessage(key));
       return;
     }
+    const revision = this.selectionRevision;
     const picked = await vscode.window.showQuickPick(options, {
       title: getReferencePickerTitle(key),
       matchOnDescription: true,
     });
-    if (!picked?.canonical) {
+    if (this.selectionRevision !== revision || !picked?.canonical) {
       return;
     }
     this.setMetadataReferenceList(key, [...current.items.map((item) => item.canonical), picked.canonical]);
@@ -527,11 +536,12 @@ export class PropertiesViewController {
     }
     // `picked` учитывается только при canPickMany, здесь предвыбор не нужен:
     // текущее значение видно в самом поле свойства.
+    const revision = this.selectionRevision;
     const picked = await vscode.window.showQuickPick(
       options.map((option) => ({ label: option.label, description: option.reference, option })),
       { title: 'Выбор формы', matchOnDescription: true }
     );
-    if (!picked) {
+    if (this.selectionRevision !== revision || !picked) {
       return;
     }
     this.setFormProperty(key, picked.option.reference);
@@ -790,11 +800,12 @@ export class PropertiesViewController {
       void vscode.window.showInformationMessage('Объект уже включен во все доступные подсистемы.');
       return;
     }
+    const revision = this.selectionRevision;
     const picked = await vscode.window.showQuickPick(options, {
       title: 'Добавить подсистему',
       matchOnDescription: true,
     });
-    if (!picked?.xmlPath) {
+    if (this.selectionRevision !== revision || !picked?.xmlPath) {
       return;
     }
     this.applySubsystemMembershipChange([...snapshot.selectedXmlPaths, picked.xmlPath]);
@@ -1098,7 +1109,7 @@ export class PropertiesViewController {
     }
 
     const oldXmlPath = target.xmlPath;
-    this.activeNode = new MetadataNode({
+    const renamedNode = new MetadataNode({
       label: trimmed,
       nodeKind: this.activeNode.nodeKind,
       xmlPath: renamedPath,
@@ -1107,8 +1118,8 @@ export class PropertiesViewController {
       hidePropertiesCommand: this.activeNode.hidePropertiesCommand,
       metaContext: this.activeNode.metaContext,
     }, this.activeNode.collapsibleState ?? vscode.TreeItemCollapsibleState.None);
-    this.activeProperties = [];
-    this.host.replaceActiveNode(this.activeNode);
+    this.setActiveNode(renamedNode);
+    this.host.replaceActiveNode(renamedNode);
     this.host.refreshActiveView();
     void vscode.window.showInformationMessage('Объект успешно переименован.');
 

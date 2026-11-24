@@ -195,6 +195,7 @@ suite('UniversalPanelViewProvider — пункты меню CF-файла в к�
       // ровно так же ведёт себя настоящий навигатор вне git-репозитория.
       gitMetadataStatusService: new GitMetadataStatusService(EXTENSION_ROOT),
       refreshActionsView: () => undefined,
+      selectPropertiesNode: () => undefined,
       workingSetFilter: new WorkingSetFilterController({
         scanner: new UnloadedChangesScanner(EXTENSION_ROOT),
         treeProvider,

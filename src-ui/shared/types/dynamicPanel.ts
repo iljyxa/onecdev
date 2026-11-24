@@ -1,5 +1,3 @@
-import type { PropertiesViewState } from './property';
-
 /** Символ модуля (зеркало vscode.DocumentSymbol, сериализуемый). */
 export interface ModuleSymbolDto {
   readonly name: string;
@@ -45,8 +43,4 @@ export type DynamicPanelState =
       readonly document: ActiveDocumentInfo;
       readonly symbols: ModuleSymbolDto[];
       readonly loading?: boolean;
-    }
-  | {
-      readonly kind: 'properties';
-      readonly view: PropertiesViewState;
     };

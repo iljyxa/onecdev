@@ -19,6 +19,7 @@ import * as vscode from 'vscode';
 import type { ConfigEntry } from '../../../infra/fs/ConfigLocator';
 import { GitMetadataStatusService } from '../../../infra/git/GitMetadataStatusService';
 import { MetadataTreeProvider } from '../../../ui/tree/MetadataTreeProvider';
+import type { MetadataNode } from '../../../ui/tree/TreeNode';
 import { UniversalPanelViewProvider } from '../../../ui/views/universal/UniversalPanelViewProvider';
 import { UnloadedChangesScanner } from '../../../infra/cache/UnloadedChangesScanner';
 import { WorkingSetFilterController } from '../../../ui/tree/WorkingSetFilterController';
@@ -91,7 +92,7 @@ async function waitFor<T>(probe: () => T | undefined, failureMessage: string, ti
   }
 }
 
-function createFakeMemento(): vscode.Memento {
+export function createFakeMemento(): vscode.Memento {
   const store = new Map<string, unknown>();
   return {
     get: <T>(key: string, defaultValue?: T): T => (store.has(key) ? (store.get(key) as T) : (defaultValue as T)),
@@ -108,7 +109,10 @@ function extractInitialState(html: string): InitialStateLike {
   return JSON.parse(match[1]) as InitialStateLike;
 }
 
-export function createUniversalPanelFixture(): UniversalPanelFixture {
+export function createUniversalPanelFixture(
+  state = createFakeMemento(),
+  selectPropertiesNode: (node: MetadataNode | undefined) => void = () => undefined
+): UniversalPanelFixture {
   const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-universal-panel-')));
   const entries: ConfigEntry[] = [
     { kind: 'cf', rootPath: CF_ROOT },
@@ -139,7 +143,7 @@ export function createUniversalPanelFixture(): UniversalPanelFixture {
     onDidChangeStatus: () => providerRef.current?.refresh(),
   });
   const provider = new UniversalPanelViewProvider(vscode.Uri.file(EXTENSION_ROOT), {
-    state: createFakeMemento(),
+    state,
     treeProvider,
     setTreeMessage: () => undefined,
     isProjectInitialized: () => true,
@@ -148,6 +152,7 @@ export function createUniversalPanelFixture(): UniversalPanelFixture {
     getProcessingState: () => ({ active: false }),
     gitMetadataStatusService: new GitMetadataStatusService(EXTENSION_ROOT),
     refreshActionsView: () => undefined,
+    selectPropertiesNode,
     workingSetFilter,
   });
   providerRef.current = provider;

@@ -102,7 +102,7 @@ function finishRemove(
   rebuildCacheForNode(node, services);
   services.treeProvider.refresh();
   services.markChangedConfigurationByFiles(changedFiles);
-  services.dynamicPanelController.handleMetadataRemoved(node);
+  services.propertiesViewProvider.handleMetadataRemoved(node);
   services.subsystemEditorViewProvider.handleMetadataRemoved();
   services.refreshActionsView();
   void vscode.window.showInformationMessage(`Метаданные "${node.textLabel}" удалены.`);

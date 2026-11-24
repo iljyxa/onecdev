@@ -138,7 +138,7 @@ function createBaselineServices(overrides: Partial<CommandServices> = {}): Comma
     cfePatchMethodService: notImplemented('cfePatchMethodService') as never,
     roleRightsService: new RoleRightsService(),
     reloadEntries: () => undefined,
-    dynamicPanelController: { handleMetadataRemoved: () => undefined } as never,
+    propertiesViewProvider: { handleMetadataRemoved: () => undefined } as never,
     subsystemEditorViewProvider: { handleMetadataRemoved: () => undefined } as never,
     outputChannel: { appendLine: () => undefined } as unknown as vscode.OutputChannel,
     supportService: undefined,

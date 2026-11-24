@@ -11,7 +11,7 @@ import { getFormPropertyKeys, isFormPropertyKey } from '../../../infra/xml/Prope
  * Заголовок и порядок секции выбора форм — единые для всех видов метаданных.
  *
  * Экспортируется не ради удобства: тот же литерал заголовка стоит в webview
- * (`src-ui/apps/dynamic-panel/views/properties/PropertiesView.vue`), и именно
+ * (`src-ui/apps/properties/views/PropertiesView.vue`), и именно
  * по нему панель включает контрол выбора формы. Связка неявная и через границу
  * сборки, поэтому её стережёт тест `formSectionContract.test.ts`.
  */

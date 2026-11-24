@@ -1,50 +1,21 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import { getObjectLocationFromXml } from '../../../infra/fs/ObjectLocation';
-import type { MetadataNode } from '../../tree/TreeNode';
-import type {
-  PropertiesViewController,
-  PropertiesViewStateOptions,
-} from '../properties/PropertiesViewController';
 import { ModuleStructureContextHandler } from './contexts/ModuleStructureContextHandler';
 import type { ActiveDocumentInfo, DynamicPanelState, ModuleSymbolDto, RangeDto } from './_types';
-import { pathKey } from '../../../infra/fs/PathKey';
 
 export interface DynamicPanelHost {
   postState(state: DynamicPanelState): void;
 }
 
 const MODULE_SYMBOL_RETRY_DELAYS_MS: readonly number[] = [400, 1200, 3000, 7000];
-/**
- * После клика по узлу дерева мы вызываем `showProperties` и затем `node.command`
- * (например, открытие модуля). Программное открытие документа триггерит
- * `onDidChangeActiveTextEditor` — это не намерение пользователя смотреть структуру,
- * и в течение этого окна мы игнорируем такие события.
- */
-const PROPERTIES_PRIORITY_WINDOW_MS = 1500;
-
-/**
- * Маршрутизатор контекста для динамической панели.
- * Решает, что показывать — структуру модуля или свойства объекта, — и эмитит state хосту.
- *
- * Правила переключения:
- *  - Клик в дереве конфигурации → свойства выделенного объекта (приоритет 1).
- *  - Фокус в текстовом редакторе (.bsl/.os): клик, набор, переключение вкладок → структура модуля.
- *  - Активный редактор закрыт/нерелевантен → последнее состояние сохраняется.
- */
 export class DynamicPanelController implements vscode.Disposable {
   private host: DynamicPanelHost | undefined;
   private currentState: DynamicPanelState = { kind: 'empty' };
-  private activeNode: MetadataNode | undefined;
   private activeDocumentUri: string | undefined;
   private readonly moduleHandler: ModuleStructureContextHandler;
   private readonly disposables: vscode.Disposable[] = [];
   private retryHandles: NodeJS.Timeout[] = [];
-  private propertiesPriorityUntil = 0;
-  private propertiesDetailsHandle: NodeJS.Timeout | undefined;
-  private propertiesGeneration = 0;
 
-  constructor(private readonly propertiesController: PropertiesViewController) {
+  constructor() {
     this.moduleHandler = new ModuleStructureContextHandler(
       (info, symbols) => this.applyModuleSymbols(info, symbols),
       (info) => this.applyModuleLoading(info)
@@ -81,94 +52,15 @@ export class DynamicPanelController implements vscode.Disposable {
     return this.currentState;
   }
 
-  /** Показать свойства выбранного узла. Перебивает структуру модуля. */
-  showProperties(node: MetadataNode): void {
-    this.cancelRetries();
-    this.cancelPropertiesDetails();
-    this.moduleHandler.cancel();
-    // Сбрасываем URI — даже если запрос символов уже отправлен, его поздний результат
-    // отвалится по проверке `activeDocumentUri !== info.uri` в applyModuleSymbols.
-    this.activeDocumentUri = undefined;
-    this.propertiesPriorityUntil = Date.now() + PROPERTIES_PRIORITY_WINDOW_MS;
-    this.activeNode = node;
-    this.propertiesController.setActiveNode(node);
-    const generation = ++this.propertiesGeneration;
-    this.refreshProperties({ includeAuxiliaryBlocks: false });
-    this.propertiesDetailsHandle = setTimeout(() => {
-      this.propertiesDetailsHandle = undefined;
-      if (this.propertiesGeneration !== generation || this.activeNode !== node) {
-        return;
-      }
-      this.refreshProperties({ includeAuxiliaryBlocks: true });
-    }, 0);
-  }
-
-  /** Обновить состояние свойств (после редактирования). */
-  refreshProperties(options?: PropertiesViewStateOptions): void {
-    const node = this.activeNode;
-    if (!node) {
-      return;
-    }
-    const view = this.propertiesController.getViewState(options);
-    if (!view) {
-      this.setState({ kind: 'empty', message: 'Для выбранного объекта свойства недоступны.' });
-      return;
-    }
-    this.setState({ kind: 'properties', view });
-  }
-
-  /** Применить переименование объекта. */
-  replaceActiveNode(node: MetadataNode): void {
-    this.activeNode = node;
-    if (this.currentState.kind === 'properties') {
-      this.refreshProperties();
-    }
-  }
-
-  /** Сбросить активный объект. */
-  clearActive(): void {
-    this.cancelPropertiesDetails();
-    this.activeNode = undefined;
-    this.activeDocumentUri = undefined;
-    this.propertiesController.clearActiveNode();
-    this.setState({ kind: 'empty' });
-  }
-
-  getActiveNode(): MetadataNode | undefined {
-    return this.activeNode;
-  }
-
-  /** Сбросить свойства, если сейчас показан удалённый узел или его дочерний элемент. */
-  handleMetadataRemoved(removedNode: MetadataNode): void {
-    const node = this.activeNode;
-    if (!node) {
-      return;
-    }
-    if (isRemovedNode(node, removedNode)) {
-      this.clearActive();
-    }
-  }
-
   async handleWebviewCommand(command: string, payload: unknown): Promise<void> {
     if (command === 'revealSymbol') {
       await this.revealSymbol(payload as { range?: RangeDto } | undefined);
-      return;
     }
-    if (command === 'propertyChanged') {
-      const p = payload as { key?: string; controlId?: string; value: unknown };
-      this.propertiesController.handlePropertyChange(p.key ?? p.controlId ?? '', p.value);
-      return;
-    }
-    await this.propertiesController.handleWebviewMessage({
-      type: command,
-      ...(typeof payload === 'object' && payload !== null ? payload : {}),
-    });
   }
 
   dispose(): void {
     this.host = undefined;
     this.cancelRetries();
-    this.cancelPropertiesDetails();
     for (const d of this.disposables) {
       d.dispose();
     }
@@ -192,9 +84,6 @@ export class DynamicPanelController implements vscode.Disposable {
     if (!editor || !ModuleStructureContextHandler.isSupported(editor.document)) {
       return;
     }
-    if (this.isPropertiesPriorityActive()) {
-      return;
-    }
     this.switchToModule(editor.document, true);
   }
 
@@ -207,8 +96,6 @@ export class DynamicPanelController implements vscode.Disposable {
     if (event.kind === undefined || event.kind === vscode.TextEditorSelectionChangeKind.Command) {
       return;
     }
-    // Реальный пользовательский ввод снимает приоритет свойств.
-    this.propertiesPriorityUntil = 0;
     const editor = event.textEditor;
     if (!ModuleStructureContextHandler.isSupported(editor.document)) {
       return;
@@ -220,15 +107,9 @@ export class DynamicPanelController implements vscode.Disposable {
     this.switchToModule(editor.document, false);
   }
 
-  private isPropertiesPriorityActive(): boolean {
-    return Date.now() < this.propertiesPriorityUntil;
-  }
-
   private switchToModule(document: vscode.TextDocument, immediate: boolean): void {
     this.cancelRetries();
-    this.cancelPropertiesDetails();
     this.activeDocumentUri = document.uri.toString();
-    this.activeNode = undefined;
     this.moduleHandler.schedule(document, immediate);
   }
 
@@ -285,14 +166,6 @@ export class DynamicPanelController implements vscode.Disposable {
     this.retryHandles = [];
   }
 
-  private cancelPropertiesDetails(): void {
-    this.propertiesGeneration++;
-    if (this.propertiesDetailsHandle) {
-      clearTimeout(this.propertiesDetailsHandle);
-      this.propertiesDetailsHandle = undefined;
-    }
-  }
-
   private async revealSymbol(payload: { range?: RangeDto } | undefined): Promise<void> {
     if (!payload?.range || !this.activeDocumentUri) {
       return;
@@ -333,52 +206,4 @@ export class DynamicPanelController implements vscode.Disposable {
     this.currentState = next;
     this.host?.postState(next);
   }
-}
-
-function isRemovedNode(activeNode: MetadataNode, removedNode: MetadataNode): boolean {
-  if (activeNode === removedNode) {
-    return true;
-  }
-
-  if (isSameTreeNode(activeNode, removedNode)) {
-    return true;
-  }
-
-  if (removedNode.metaContext) {
-    return isSameRemovedChild(activeNode, removedNode);
-  }
-
-  const removedXmlPath = removedNode.xmlPath;
-  if (!removedXmlPath) {
-    return false;
-  }
-
-  const activeXmlPath = activeNode.metaContext?.ownerObjectXmlPath ?? activeNode.xmlPath;
-  if (!activeXmlPath) {
-    return false;
-  }
-
-  const removedObjectDir = getObjectLocationFromXml(removedXmlPath).objectDir;
-  return isInsidePath(activeXmlPath, removedObjectDir);
-}
-
-function isSameTreeNode(left: MetadataNode, right: MetadataNode): boolean {
-  return left.nodeKind === right.nodeKind
-    && left.textLabel === right.textLabel
-    && left.xmlPath === right.xmlPath
-    && left.metaContext?.ownerObjectXmlPath === right.metaContext?.ownerObjectXmlPath
-    && left.metaContext?.tabularSectionName === right.metaContext?.tabularSectionName;
-}
-
-function isSameRemovedChild(activeNode: MetadataNode, removedNode: MetadataNode): boolean {
-  return activeNode.nodeKind === removedNode.nodeKind
-    && activeNode.textLabel === removedNode.textLabel
-    && activeNode.metaContext?.ownerObjectXmlPath === removedNode.metaContext?.ownerObjectXmlPath
-    && activeNode.metaContext?.tabularSectionName === removedNode.metaContext?.tabularSectionName;
-}
-
-function isInsidePath(childPath: string, parentPath: string): boolean {
-  const child = pathKey(childPath);
-  const parent = pathKey(parentPath);
-  return child === parent || child.startsWith(`${parent}${path.sep}`);
 }

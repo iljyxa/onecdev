@@ -291,7 +291,7 @@ resolveOwnerXml` (поиск владельца для режима поддер
 [xml-format-rulesets.md](./xml-format-rulesets.md#свойства-выбора-форм-по-виду-метаданных). Секцию
 проставляет `applyFormPropertySection` по `isFormPropertyKey`; заголовок — константа
 `FORM_PROPERTY_SECTION` (`propertyKeyOrder.ts`), с которой webview сравнивает
-`card.section.title` (`src-ui/apps/dynamic-panel/views/properties/PropertiesView.vue`). Литерал `'Формы'`
+`card.section.title` (`src-ui/apps/properties/views/PropertiesView.vue`). Литерал `'Формы'`
 в расширении не дублируется — его стережёт `formSectionContract.test.ts`.
 
 ## Отдельно: панель «Изменения метаданных»

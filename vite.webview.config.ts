@@ -17,6 +17,7 @@ const entries = {
   subsystem: 'src-ui/apps/subsystem/main.ts',
   universal: 'src-ui/apps/universal/main.ts',
   'dynamic-panel': 'src-ui/apps/dynamic-panel/main.ts',
+  properties: 'src-ui/apps/properties/main.ts',
 };
 
 function webviewManifestPlugin(): Plugin {

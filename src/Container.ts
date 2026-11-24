@@ -20,6 +20,9 @@ import { UnloadedChangesScanner } from './infra/cache/UnloadedChangesScanner';
 import { registerCommands } from './ui/commands/CommandRegistry';
 import type { CommandServices } from './ui/commands/_shared';
 import { PropertiesViewController } from './ui/views/properties/PropertiesViewController';
+import { PropertiesViewProvider } from './ui/views/properties/PropertiesViewProvider';
+import { PropertiesViewSession } from './ui/views/properties/PropertiesViewSession';
+import { selectPropertiesViewId } from './ui/views/properties/propertiesViewPlacement';
 import { DynamicPanelViewProvider } from './ui/views/dynamic-panel/DynamicPanelViewProvider';
 import { DynamicPanelController } from './ui/views/dynamic-panel/DynamicPanelController';
 import { SubsystemEditorViewProvider } from './ui/views/subsystem/SubsystemEditorViewProvider';
@@ -150,7 +153,7 @@ export class Container {
   readonly roleRightsService: RoleRightsService;
   readonly treeSearchViewProvider: TreeSearchViewProvider;
   readonly universalPanelViewProvider: UniversalPanelViewProvider;
-  readonly dynamicPanelController: DynamicPanelController;
+  readonly propertiesViewProvider: PropertiesViewProvider;
   readonly dynamicPanelViewProvider: DynamicPanelViewProvider;
   readonly mcpServer: V8McpServer;
   readonly bslAnalyzerMcpService: BslAnalyzerMcpService;
@@ -252,10 +255,12 @@ export class Container {
     this.cfePatchMethodService = new CfePatchMethodService();
     this.roleRightsService = new RoleRightsService();
 
-    // Mutable ref: DynamicPanelController зависит от контроллера свойств,
-    // а колбэки контроллера свойств — от динамической панели.
-    const dynamicRef: { current: DynamicPanelController | undefined } = { current: undefined };
-
+    const logPropertiesError = (error: unknown) => {
+      this.outputChannel.appendLine(`[properties] ${String(error)}`);
+    };
+    const refreshProperties = () => {
+      void propertiesSession.refresh().catch(logPropertiesError);
+    };
     const propertiesController = new PropertiesViewController(
       this.subsystemXmlService,
       this.exchangePlanContentService,
@@ -263,11 +268,9 @@ export class Container {
       this.configurationXmlEditor,
       this.basedOnXmlService,
       {
-        refreshActiveView: () => {
-          dynamicRef.current?.refreshProperties();
-        },
+        refreshActiveView: refreshProperties,
         replaceActiveNode: (node) => {
-          dynamicRef.current?.replaceActiveNode(node);
+          void propertiesSession.selectNode(node).catch(logPropertiesError);
         },
       },
       this.supportService,
@@ -277,13 +280,22 @@ export class Container {
       this.outputChannel
     );
 
+    const propertiesSession = new PropertiesViewSession(() => propertiesController.getViewState());
+    this.propertiesViewProvider = new PropertiesViewProvider(
+      context,
+      selectPropertiesViewId(vscode.version, vscode.env.appName),
+      propertiesSession,
+      propertiesController,
+      logPropertiesError
+    );
+
     this.subsystemEditorViewProvider = new SubsystemEditorViewProvider(
       this.subsystemXmlService,
       this.supportService,
       this.repositoryService,
       context.extensionUri,
       this.outputChannel,
-      (changedFiles) => this.afterSubsystemContentMutation([...changedFiles], dynamicRef)
+      (changedFiles) => this.afterSubsystemContentMutation([...changedFiles], refreshProperties)
     );
     this.repositoryConnectionViewProvider = new RepositoryConnectionViewProvider(context.extensionUri);
     this.repositoryCommitViewProvider = new RepositoryCommitViewProvider(context.extensionUri);
@@ -346,17 +358,17 @@ export class Container {
       gitMetadataStatusService: this.gitMetadataStatusService,
       refreshActionsView: () => this.refreshActionsView(),
       workingSetFilter: this.workingSetFilterController,
+      selectPropertiesNode: (node) => this.propertiesViewProvider.selectNode(node),
       log: (message) => this.outputChannel.appendLine(message),
     });
     context.subscriptions.push(this.universalPanelViewProvider);
 
-    this.dynamicPanelController = new DynamicPanelController(propertiesController);
-    dynamicRef.current = this.dynamicPanelController;
+    const dynamicPanelController = new DynamicPanelController();
     this.dynamicPanelViewProvider = new DynamicPanelViewProvider(
       context.extensionUri,
-      this.dynamicPanelController
+      dynamicPanelController
     );
-    context.subscriptions.push(this.dynamicPanelController, this.dynamicPanelViewProvider);
+    context.subscriptions.push(dynamicPanelController, this.dynamicPanelViewProvider);
     this.changeDetector = new ConfigurationChangeDetector(workspaceFolder.uri.fsPath, undefined, {
       report: (timing) => this.outputChannel.appendLine(formatChangeDetectorTiming(timing)),
     });
@@ -475,6 +487,11 @@ export class Container {
     void this.workingSetFilterController.rescan();
     const hasCfe = entries.some((e) => e.kind === 'cfe');
     void vscode.commands.executeCommand('setContext', 'onecdev.hasCfeEntries', hasCfe);
+    if (entries.length > 0) {
+      void this.propertiesViewProvider.openByDefault().catch((error: unknown) => {
+        this.outputChannel.appendLine(`[properties] ${String(error)}`);
+      });
+    }
     this.outputChannel.appendLine(`[init] Найдено конфигураций: ${String(entries.length)}`);
     this.outputChannel.appendLine(formatPerfLine('перечитывание конфигураций, итого', performance.now() - startedAt));
   }
@@ -518,6 +535,7 @@ export class Container {
   }
 
   private wireUniversalPanelView(): void {
+    this.propertiesViewProvider.register();
     this.context.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
         UniversalPanelViewProvider.viewType,
@@ -605,7 +623,7 @@ export class Container {
       cfePatchMethodService: this.cfePatchMethodService,
       roleRightsService: this.roleRightsService,
       reloadEntries: () => this.reloadEntries(),
-      dynamicPanelController: this.dynamicPanelController,
+      propertiesViewProvider: this.propertiesViewProvider,
       subsystemEditorViewProvider: this.subsystemEditorViewProvider,
       outputChannel: this.outputChannel,
       supportService: this.supportService,
@@ -671,7 +689,7 @@ export class Container {
 
   private afterSubsystemContentMutation(
     changedFiles: string[],
-    dynamicRef: { current: DynamicPanelController | undefined }
+    refreshProperties: () => void
   ): void {
     if (changedFiles.length === 0) {
       return;
@@ -682,7 +700,7 @@ export class Container {
     if (!refreshed) {
       this.treeProvider.refresh();
     }
-    dynamicRef.current?.refreshProperties();
+    refreshProperties();
     this.refreshActionsView();
   }
 
