@@ -8,6 +8,8 @@ import {
 } from 'vscode-languageclient/node';
 import { BslAnalyzerService, type BslAnalyzerBinary } from './analyzer/BslAnalyzerService';
 import { BslAnalyzerStatusBar } from './analyzer/BslAnalyzerStatusBar';
+import { registerBslDocumentSymbols } from './BslDocumentSymbolProvider';
+import { FallbackDocumentSymbols } from './FallbackDocumentSymbols';
 
 export type LspMode = 'bsl-analyzer' | 'off';
 
@@ -47,6 +49,7 @@ export class LspManager implements vscode.Disposable {
   private readonly analyzerService: BslAnalyzerService;
   private readonly statusBar: BslAnalyzerStatusBar;
   private readonly traceChannel: vscode.OutputChannel;
+  private readonly fallbackDocumentSymbols = new FallbackDocumentSymbols(registerBslDocumentSymbols);
   private lifecycleQueue: Promise<void> = Promise.resolve();
 
   constructor(
@@ -93,6 +96,7 @@ export class LspManager implements vscode.Disposable {
       await this.stopClient();
     }
 
+    this.fallbackDocumentSymbols.setAnalyzerRunning(false);
     if (m === 'off') {
       this.statusBar.setState('stopped', 'Отключен в настройках');
       return;
@@ -115,6 +119,7 @@ export class LspManager implements vscode.Disposable {
     } else if (client) {
       this.outputChannel.appendLine('[lsp] Клиент не был запущен, остановка не требуется');
     }
+    this.fallbackDocumentSymbols.setAnalyzerRunning(false);
     this.statusBar.setState('stopped');
   }
 
@@ -147,7 +152,7 @@ export class LspManager implements vscode.Disposable {
       vscode.commands.registerCommand('onecdev.bslAnalyzer.showOutput', () => this.outputChannel.show()),
       vscode.commands.registerCommand('onecdev.bslAnalyzer.update', () => this.checkForUpdate()),
       vscode.commands.registerCommand('onecdev.bslAnalyzer.showMenu', () => this.showMenu()),
-      { dispose: () => { void this.stopClient(); } },
+      this,
     );
 
     context.subscriptions.push(
@@ -170,7 +175,8 @@ export class LspManager implements vscode.Disposable {
   }
 
   dispose(): void {
-    void this.stopClient();
+    this.fallbackDocumentSymbols.dispose();
+    void this.stop();
   }
 
   async formatRange(
@@ -336,11 +342,17 @@ export class LspManager implements vscode.Disposable {
       },
     };
 
-    this.client = new LanguageClient('bsl-analyzer', 'BSL Analyzer', serverOptions, clientOptions);
+    const client = new LanguageClient('bsl-analyzer', 'BSL Analyzer', serverOptions, clientOptions);
+    this.client = client;
+    client.onDidChangeState(({ newState }) => {
+      if (isCurrent()) {
+        this.fallbackDocumentSymbols.setAnalyzerRunning(newState === State.Running);
+      }
+    });
 
     try {
-      await this.client.setTrace(Trace.Verbose);
-      await this.client.start();
+      await client.setTrace(Trace.Verbose);
+      await client.start();
       crashCount = 0;
       this.statusBar.setState('running');
       const version = this.analyzerService.installedVersion;

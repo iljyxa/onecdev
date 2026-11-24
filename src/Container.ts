@@ -23,8 +23,6 @@ import { PropertiesViewController } from './ui/views/properties/PropertiesViewCo
 import { PropertiesViewProvider } from './ui/views/properties/PropertiesViewProvider';
 import { PropertiesViewSession } from './ui/views/properties/PropertiesViewSession';
 import { selectPropertiesViewId } from './ui/views/properties/propertiesViewPlacement';
-import { DynamicPanelViewProvider } from './ui/views/dynamic-panel/DynamicPanelViewProvider';
-import { DynamicPanelController } from './ui/views/dynamic-panel/DynamicPanelController';
 import { SubsystemEditorViewProvider } from './ui/views/subsystem/SubsystemEditorViewProvider';
 import { TreeSearchViewProvider } from './ui/views/search/TreeSearchViewProvider';
 import { SupportInfoService } from './infra/support/SupportInfoService';
@@ -154,7 +152,6 @@ export class Container {
   readonly treeSearchViewProvider: TreeSearchViewProvider;
   readonly universalPanelViewProvider: UniversalPanelViewProvider;
   readonly propertiesViewProvider: PropertiesViewProvider;
-  readonly dynamicPanelViewProvider: DynamicPanelViewProvider;
   readonly mcpServer: V8McpServer;
   readonly bslAnalyzerMcpService: BslAnalyzerMcpService;
   readonly aiMcpViewProvider: AiMcpViewProvider;
@@ -363,12 +360,6 @@ export class Container {
     });
     context.subscriptions.push(this.universalPanelViewProvider);
 
-    const dynamicPanelController = new DynamicPanelController();
-    this.dynamicPanelViewProvider = new DynamicPanelViewProvider(
-      context.extensionUri,
-      dynamicPanelController
-    );
-    context.subscriptions.push(dynamicPanelController, this.dynamicPanelViewProvider);
     this.changeDetector = new ConfigurationChangeDetector(workspaceFolder.uri.fsPath, undefined, {
       report: (timing) => this.outputChannel.appendLine(formatChangeDetectorTiming(timing)),
     });
@@ -540,11 +531,6 @@ export class Container {
       vscode.window.registerWebviewViewProvider(
         UniversalPanelViewProvider.viewType,
         this.universalPanelViewProvider,
-        { webviewOptions: { retainContextWhenHidden: true } }
-      ),
-      vscode.window.registerWebviewViewProvider(
-        DynamicPanelViewProvider.viewType,
-        this.dynamicPanelViewProvider,
         { webviewOptions: { retainContextWhenHidden: true } }
       )
     );

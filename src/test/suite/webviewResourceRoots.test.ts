@@ -39,7 +39,7 @@ suite('webviewResourceRoots', () => {
     assert.ok(!paths.includes(extensionUri.fsPath));
   });
 
-  test('панель без иконок (dynamic-panel) получает только [dist/ui], без корня расширения целиком', () => {
+  test('панель без иконок получает только [dist/ui], без корня расширения целиком', () => {
     const roots = resolveWebviewLocalResourceRoots(extensionUri, { includeIcons: false });
     const paths = roots.map((uri: vscode.Uri) => uri.fsPath);
 

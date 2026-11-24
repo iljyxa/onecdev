@@ -65,11 +65,6 @@
           "icon": "src/icons/activity-bar.svg"
         },
         {
-          "id": "onecdevDynamicPanelContainer",
-          "title": "Дин. панель",
-          "icon": "src/icons/dynamic-panel.svg"
-        },
-        {
           "id": "onecdevChangesContainer",
           "title": "Изменения метаданных",
           "icon": "src/icons/changes.svg"
@@ -103,13 +98,6 @@
           "id": "onecdevChanges",
           "name": "Изменения метаданных",
           "when": "onecdev.hasGitRepository",
-          "type": "webview"
-        }
-      ],
-      "onecdevDynamicPanelContainer": [
-        {
-          "id": "onecdevDynamicPanel",
-          "name": "Дин. панель",
           "type": "webview"
         }
       ]

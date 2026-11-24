@@ -67,8 +67,10 @@ process.stdin.on('data', (chunk) => {
 suite('LspManager — запуск клиента bsl-analyzer (issue #104)', () => {
   let tempRoot: string;
   let manager: LspManager | undefined;
+  let subscriptions: vscode.Disposable[];
 
   setup(function () {
+    subscriptions = [];
     // Подменный сервер запускается shell-обёрткой; на Windows её не исполнить.
     if (process.platform === 'win32') {
       this.skip();
@@ -78,7 +80,13 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
 
   teardown(async () => {
     await manager?.stop();
+    if (subscriptions.length === 0) {
+      manager?.dispose();
+    }
     manager = undefined;
+    for (const subscription of subscriptions.reverse()) {
+      subscription.dispose();
+    }
     await vscode.workspace
       .getConfiguration('onecdev.bslAnalyzer')
       .update('path', undefined, vscode.ConfigurationTarget.Global);
@@ -115,7 +123,7 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
 
     const outputChannel = { appendLine: (line: string) => lines.push(line) } as unknown as vscode.OutputChannel;
     const context = {
-      subscriptions: [],
+      subscriptions,
       globalStorageUri: vscode.Uri.file(path.join(tempRoot, 'global-storage')),
     } as unknown as vscode.ExtensionContext;
     manager = new LspManager(context, outputChannel, options.prepareStart);
@@ -131,8 +139,9 @@ suite('LspManager — запуск клиента bsl-analyzer (issue #104)', ()
     assert.ok(lines.includes('[lsp] bsl-analyzer запущен (custom)'), lines.join('\n'));
     assert.strictEqual(fs.readFileSync(journal, 'utf8').split('\n')[0], 'initialize');
 
-    await manager?.stop();
-    manager = undefined;
+    assert.ok(manager);
+    manager.registerCommands();
+    await manager.stop();
     assert.ok(fs.readFileSync(journal, 'utf8').split('\n').includes('shutdown'));
   });
 

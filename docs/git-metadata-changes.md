@@ -166,8 +166,8 @@ commit-ish. Эта панель по-прежнему передаёт толь�
 Переиспользование двухуровневое:
 
 1. **Компонент.** `UniversalTree.vue`/`UniversalTreeNode.vue`/`UniversalTreeRow.vue` вынесены (`git mv`)
-   в `src-ui/shared/components/tree/` и используются одновременно навигатором (`universal`, `subsystem`,
-   `dynamic-panel`) и панелью изменений — это ОБЩИЙ компонент, а не форк под новую задачу. Поле
+   в `src-ui/shared/components/tree/` и используются одновременно навигатором (`universal`, `subsystem`)
+   и панелью изменений. Поле
    `TreeNodeDto.gitStatus` (`added|modified|deleted`) уже существовало в общем протоколе (декорации
    навигатора красят те же узлы тем же полем) — панели изменений не потребовалось расширять контракт
    дерева, только заполнить существующее поле в `changesDtoBuilder`.
