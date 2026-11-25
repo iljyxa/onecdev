@@ -4,9 +4,8 @@
 // у формы это дескриптор `Forms/Имя.xml` со своим `<Form uuid>`, а не тело `Ext/Form.xml` и не владелец.
 import * as path from 'path';
 import { readMetadataRootUuidFile } from '../../xml/MetadataRootUuidReader';
-import { ONE_C_TYPE_NAMES } from '../RepositoryObjectNames';
 import { resolveUnitXmlRel } from '../RepositoryObjectScope';
-import { isSubordinateUnitNode, type RepositoryNodeRef, type RepositoryService } from '../RepositoryService';
+import { isRepositoryUnitNode, type RepositoryNodeRef, type RepositoryService } from '../RepositoryService';
 import type { RepositoryHistoryObjectFilter } from './RepositoryHistoryModel';
 import type { RepositoryHistoryScope } from './RepositoryHistoryService';
 
@@ -24,13 +23,7 @@ const ROOT_KINDS: ReadonlySet<string> = new Set(['configuration', 'extension']);
  * макет объекта (самостоятельные единицы). Реквизиты, ТЧ, команды хранятся внутри владельца, группы
  * дерева — не объекты. Без I/O: вызывается при построении меню.
  */
-export function canShowRepositoryHistory(node: Pick<RepositoryNodeRef, 'nodeKind' | 'metaContext'>): boolean {
-  const kind = node.nodeKind;
-  if (kind === undefined) {
-    return false;
-  }
-  return ROOT_KINDS.has(kind) || isSubordinateUnitNode(node) || Object.prototype.hasOwnProperty.call(ONE_C_TYPE_NAMES, kind);
-}
+export const canShowRepositoryHistory = isRepositoryUnitNode;
 
 /**
  * Область истории по узлу. Заголовок фильтра — полное имя единицы (`Справочник.X.Форма.Y`); сервис

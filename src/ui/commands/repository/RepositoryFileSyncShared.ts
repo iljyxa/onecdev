@@ -90,7 +90,7 @@ export interface RepositoryFileSyncDeps {
     request: ConfigurationDumpRequest,
     services: RepositoryFileSyncServices
   ) => Promise<RepositoryDumpToTempResult>;
-  chooseConflictResolution: (summary: ConflictSummary) => Promise<MergeChoice>;
+  chooseConflictResolution: (summary: ConflictSummary) => Promise<MergeChoice | 'skip'>;
   confirmRollback: (summary: RollbackSummary) => Promise<boolean>;
   /** `log` — журнал синхронизации для исходов переключения readonly файла проекта. */
   openDiffs: (pairs: MergeDiffPair[], log: (message: string) => void) => void | Promise<void>;
@@ -98,6 +98,8 @@ export interface RepositoryFileSyncDeps {
   notifyInfo: (message: string, actions?: readonly NotificationAction[]) => void;
   notifyWarning: (message: string) => void;
   notifyError: (message: string) => void;
+  onChangedFiles?: (files: readonly string[]) => void;
+  onAffectedUnits?: (units: readonly string[]) => void;
   isFileSyncEnabled: () => boolean;
   /** Абсолютные пути файлов с несохранёнными изменениями в редакторах. */
   getDirtyFilePaths: () => readonly string[];
@@ -395,25 +397,23 @@ export function planMergeSources(
   }));
 }
 
-/** Ровно один модальный диалог на операцию и только при конфликтах. */
+/** UI спрашивает один раз, MCP может остановить синхронизацию целиком. */
 export async function resolveConflictChoice(
   deps: RepositoryFileSyncDeps,
   planned: readonly PlannedMergeSource[],
   operationLabel: string,
   objectLabel: string
-): Promise<MergeChoice> {
+): Promise<MergeChoice | 'skip'> {
   const conflicts = planned.flatMap((source) => source.plan.conflicts);
   if (conflicts.length === 0) {
     return 'replace';
   }
-  const choice = await deps.chooseConflictResolution({
+  return deps.chooseConflictResolution({
     operationLabel,
     objectLabel,
     conflictCount: conflicts.length,
     files: conflicts.map((entry) => entry.rel),
   });
-  // Закрытие диалога без выбора трактуется как отказ от перезаписи.
-  return choice === 'compare' || choice === 'replace' ? choice : 'keep-local';
 }
 
 export interface MergeApplicationRequest {
@@ -425,6 +425,7 @@ export interface MergeApplicationRequest {
   childObjects?: { added: readonly string[]; removed: readonly string[] };
   /** Новый ConfigDumpInfo.xml: заменяет проектный после применения всех владельцев. */
   configDumpInfoSource?: string;
+  onChangedFiles?: RepositoryFileSyncDeps['onChangedFiles'];
 }
 
 export interface MergeApplicationResult {
@@ -491,6 +492,7 @@ export async function applyMergeWithPostMutation(
     });
     merge.writtenFiles.push(...result.writtenFiles);
     merge.deletedFiles.push(...result.deletedFiles);
+    request.onChangedFiles?.([...result.writtenFiles, ...result.deletedFiles]);
     merge.keptLocalFiles.push(...result.keptLocalFiles);
     merge.backups.push(...result.backups);
     merge.repositoryCopies.push(...result.repositoryCopies);
@@ -498,10 +500,12 @@ export async function applyMergeWithPostMutation(
   const changedFiles = [...merge.writtenFiles, ...merge.deletedFiles];
   const childObjectsChanged = syncChildObjectsAfterMerge(services, target, request.childObjects);
   changedFiles.push(...childObjectsChanged);
+  request.onChangedFiles?.(childObjectsChanged);
   if (request.configDumpInfoSource && fs.existsSync(request.configDumpInfoSource)) {
     const projectDumpInfo = path.join(target.configRoot, path.basename(request.configDumpInfoSource));
     services.suppressConfigurationReloadForFiles([projectDumpInfo]);
     fs.copyFileSync(request.configDumpInfoSource, projectDumpInfo);
+    request.onChangedFiles?.([projectDumpInfo]);
   }
   await finishPostMutation(services, {
     changedFiles,

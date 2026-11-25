@@ -98,6 +98,7 @@ interface LeaseResult {
   acquisition?: DumpAcquisition;
   /** Частичный захват (issue #87): код 1, но сервер выдал часть единиц. */
   partial?: RepositoryLockOutputSummary;
+  affectedUnits?: readonly string[];
 }
 
 type RepositoryFetchOperation = 'lock' | 'update';
@@ -165,7 +166,7 @@ async function runFetchFlow(
         }
       }
       if (!syncEnabled) {
-        return { cli, subject, partial };
+        return { cli, subject, partial, affectedUnits: lockedMembers(subject.members) };
       }
       const acquisition = await acquireRepositoryDump(subject, baseHashes, services, deps);
       if (operation === 'lock' && acquisition.status === 'acquired' && acquisition.dump.extraMembers.length > 0) {
@@ -173,7 +174,10 @@ async function runFetchFlow(
         // Выгрузка уже принадлежит потоку: если запись состояния упадёт, её никто не освободит.
         disposeOnError(dump, () => applySubjectLock(services, subject, lockedMembers([...subject.members, ...dump.extraMembers]), refused));
       }
-      return { cli, subject, acquisition, partial };
+      const members = acquisition.status === 'acquired'
+        ? [...subject.members, ...acquisition.dump.extraMembers]
+        : subject.members;
+      return { cli, subject, acquisition, partial, affectedUnits: lockedMembers(members) };
     });
   } catch (error) {
     return reportFlowError(services, deps, label, error);
@@ -181,7 +185,7 @@ async function runFetchFlow(
   if (!leased.acquired) {
     return 'busy';
   }
-  const { cli, subject, acquisition, partial } = leased.value;
+  const { cli, subject, acquisition, partial, affectedUnits } = leased.value;
   if (cli.status !== 'done' && !partial) {
     // Отказ захвата — единственный след чужого захвата в пакетном режиме: отмечаем его до
     // сообщения об ошибке, чтобы дерево уже показывало держателя.
@@ -192,6 +196,9 @@ async function runFetchFlow(
     return reportCliOutcome(cli, label, deps);
   }
   const refusedList = (partial?.refused ?? []).map((item) => `${item.fullName} (${item.user})`).join(', ');
+  if (affectedUnits) {
+    deps.onAffectedUnits?.(affectedUnits);
+  }
   if (refusedList) {
     services.outputChannel.appendLine(`[repository][locks] частичный захват «${objectLabel}», объекты захвачены другими пользователями: ${refusedList}`);
   }
@@ -556,6 +563,9 @@ async function completeFetchSync(
   try {
     const planned = planMergeSources(services, deps, target, dump.sources);
     const choice = await resolveConflictChoice(deps, planned, operation === 'lock' ? 'Захват' : 'Получение', objectLabel);
+    if (choice === 'skip') {
+      return;
+    }
     const backupDir = buildOperationBackupDir(services, deps, target, operation);
     let snapshotFailures: SnapshotStepFailure[] = [];
     // Файлы проекта уже могут быть перезаписаны: при сбое пользователь должен узнать, где прежние версии.
@@ -567,6 +577,7 @@ async function completeFetchSync(
         backupDir,
         childObjects: { added: dump.added, removed: dump.removed },
         configDumpInfoSource: dump.configDumpInfoSource,
+        onChangedFiles: deps.onChangedFiles,
       });
       // Снимок — после слияния, но его сбой не должен скрыть окна сравнения и резервные копии.
       snapshotFailures = captureFetchSnapshots(operation, subject, dump, planned, applied, services);

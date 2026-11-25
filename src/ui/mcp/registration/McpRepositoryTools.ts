@@ -1,5 +1,6 @@
 /**
- * MCP-инструменты хранилища конфигурации (read-only), issue #117.
+ * MCP-инструменты хранилища конфигурации. Операции захвата и получения
+ * регистрируются рядом с историей, в McpRepositoryOperations.
  *
  * Домен «repository»: repository_history. История идёт тем же кодом, что у панели «История хранилища»
  * (`resolveRepositoryHistoryTarget` → `RepositoryHistoryService.query`), но без состояния панели.
@@ -15,6 +16,7 @@ import {
   type RepositoryHistoryTargetResolution,
 } from '../../../infra/repository/history/RepositoryHistoryTarget';
 import type { McpRegistrationDeps } from './McpRegistrationDeps';
+import { registerRepositoryOperations } from './McpRepositoryOperations';
 
 /** Меньше страницы панели: ответ инструмента целиком уходит в контекст агента. */
 const DEFAULT_LIMIT = 20;
@@ -56,6 +58,7 @@ export function registerRepositoryTools(server: McpServer, deps: McpRegistration
       return toToolOutput(scope, historyOf(result), maxChangesPerVersion ?? DEFAULT_MAX_CHANGES_PER_VERSION);
     }),
   );
+  registerRepositoryOperations(server, deps);
 }
 
 function scopeOf(resolution: RepositoryHistoryTargetResolution, canonical: string): RepositoryHistoryScope {

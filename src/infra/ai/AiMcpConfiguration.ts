@@ -341,6 +341,30 @@ export const EXTENSION_MCP_TOOLS: readonly AiMcpToolInfo[] = [
   },
   {
     profile: 'extension',
+    name: 'onecdev_repository_lock',
+    description: 'Захватить единицу хранилища перед редактированием. Запуск Конфигуратора подтверждает пользователь в редакторе.',
+    requirement: 'Подключённое хранилище, канонический path, опционально recursive',
+  },
+  {
+    profile: 'extension',
+    name: 'onecdev_repository_unlock',
+    description: 'Освободить захват. force отменяет правки в базе, rollbackFiles — правки в файлах проекта. По умолчанию оба отключены.',
+    requirement: 'Подключённое хранилище, канонический path, опционально recursive',
+  },
+  {
+    profile: 'extension',
+    name: 'onecdev_repository_status',
+    description: 'Прочитать статусы захвата, при refresh: true обновить их из хранилища.',
+    requirement: 'Подключённое хранилище, канонический path или массив путей',
+  },
+  {
+    profile: 'extension',
+    name: 'onecdev_repository_update',
+    description: 'Получить версию из хранилища. Пользователь подтверждает операцию в редакторе.',
+    requirement: 'Подключённое хранилище, канонический path, опционально recursive и номер версии version',
+  },
+  {
+    profile: 'extension',
     name: 'onecdev_get_properties',
     description: 'ВСЕ свойства объекта по каноническому пути, включая readonly, со всеми допустимыми enum/multiEnum-значениями; для metadataType-свойств в notes указано, каким tool менять значение.',
     requirement: 'Канонический путь (path)',
