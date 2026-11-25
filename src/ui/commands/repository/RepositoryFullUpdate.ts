@@ -2,15 +2,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { collectSnapshotProjectFiles, syncDirectorySnapshot } from '../../../infra/agent/DirectorySnapshot';
-import { UnloadedChangesScanner } from '../../../infra/cache/UnloadedChangesScanner';
+import { buildHashSnapshot, buildScopeKey, saveHashCache } from '../../../infra/cache/HashCache';
+import { saveMetadataCacheForEntry } from '../../../infra/cache/MetadataCache';
 import { describeFsError } from '../../../infra/fs/PathRemoval';
 import { resolveXmlPathByFullName } from '../../../infra/repository/RepositoryDumpPlan';
 import { expandSubordinateUnits } from '../../../infra/repository/RepositoryDumpRounds';
-import { hashScopeFiles } from '../../../infra/repository/RepositoryLockSnapshotStore';
-import { resolveLockUnitByRelativePath, resolveObjectScope } from '../../../infra/repository/RepositoryObjectScope';
+import { inspectRepositoryReplacement } from '../../../infra/repository/RepositoryReplacement';
+import { resolveObjectScope } from '../../../infra/repository/RepositoryObjectScope';
 import type { RepositoryTarget } from '../../../infra/repository/RepositoryService';
 import type { CommandServices } from '../_shared';
-import { refreshConfigurationHashCache } from '../ext/ExtensionCommandRunner';
 import { buildRepositoryUpdateRequest } from './RepositoryCommandRunner';
 import {
   ensureRepositoryGuardFree,
@@ -30,22 +30,20 @@ import {
 } from './RepositorySnapshotSteps';
 
 const REPOSITORY_FULL_UPDATE_TITLE = 'Обновить конфигурацию из хранилища';
-export type RepositoryFullUpdateServices = RepositoryFileSyncServices & Pick<CommandServices, 'markConfigurationsClean'>;
+export type RepositoryFullUpdateServices = RepositoryFileSyncServices & Pick<CommandServices, 'markConfigurationsClean' | 'scanUnloadedChanges'>;
 
 export interface RepositoryFullUpdateDeps {
   confirm(message: string): Promise<boolean>;
-  refreshHashCache(target: RepositoryTarget, services: RepositoryFullUpdateServices): Promise<boolean>;
+  saveHashCache: typeof saveHashCache;
 }
 
-/* c8 ignore start -- адаптеры модального окна и процесса CLI */
+/* c8 ignore start -- адаптер модального окна */
 const DEFAULT_FULL_UPDATE_DEPS: RepositoryFullUpdateDeps = {
   confirm: async (message) => {
     const replace = 'Заменить файлы';
     return await vscode.window.showWarningMessage(REPOSITORY_FULL_UPDATE_TITLE, { modal: true, detail: message }, replace) === replace;
   },
-  refreshHashCache: (target, services) => refreshConfigurationHashCache(
-    target.configKind, target.extensionName ?? '', target.configRoot, services.workspaceFolder, services.outputChannel
-  ),
+  saveHashCache,
 };
 /* c8 ignore stop */
 
@@ -60,8 +58,10 @@ export async function runRepositoryFullUpdate(
     return;
   }
   try {
-    const detail = await describeReplacement(target, services, deps);
-    if (!await fullUpdateDeps.confirm(detail)) {
+    const changes = await inspectRepositoryReplacement(
+      target, services.workspaceFolder.uri.fsPath, services.repositoryService, services.scanUnloadedChanges, deps.getDirtyFilePaths()
+    );
+    if (!await fullUpdateDeps.confirm(describeReplacement(changes))) {
       return;
     }
     const leased = await runRepositoryExclusive(services, deps, label, async () => {
@@ -111,60 +111,21 @@ async function acquireFullDump(
   }
 }
 
-async function describeReplacement(
-  target: RepositoryTarget,
-  services: RepositoryFullUpdateServices,
-  deps: RepositoryFileSyncDeps
-): Promise<string> {
-  const projectRoot = services.workspaceFolder.uri.fsPath;
-  const repository = services.repositoryService;
-  const relativeRoot = path.relative(projectRoot, target.configRoot);
-  const unloaded = await new UnloadedChangesScanner(projectRoot).scan({ kind: target.configKind, rootPath: target.configRoot });
-  const dirtyFiles = new Set(deps.getDirtyFilePaths()
-    .map((file) => path.relative(target.configRoot, file))
-    .filter((relative) => relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative)));
-  const modifiedUnits = new Set<string>();
-  for (const relative of [...unloaded.changed, ...unloaded.deleted, ...dirtyFiles]) {
-    const owner = resolveLockUnitByRelativePath(relative, target);
-    if (owner && repository.isLocked(target, owner)) {
-      modifiedUnits.add(owner);
-    }
-  }
-  if (repository.lockState.isRootRecursiveLocked(target)) {
-    for (const owner of repository.snapshots.diffRootManifest(target).owners) {
-      if (repository.isLocked(target, owner)) {
-        modifiedUnits.add(owner);
-      }
-    }
-  }
-  for (const unit of repository.listOwnLockedFullNames(target)) {
-    if (modifiedUnits.has(unit)) {
-      continue;
-    }
-    const baseline = repository.snapshots.readSnapshotHashes(target, unit);
-    if (!baseline) {
-      continue;
-    }
-    const scope = resolveObjectScope(target.configRoot, unit, target, 'unit');
-    const current = scope ? hashScopeFiles(target.configRoot, scope) : {};
-    if (Object.keys(current).length !== Object.keys(baseline).length
-      || Object.keys(current).some((relative) => current[relative] !== baseline[relative])) {
-      modifiedUnits.add(unit);
-    }
-  }
+function describeReplacement(
+  { relativeRoot, unloadedCount, modifiedUnits, dirtyFiles }: Awaited<ReturnType<typeof inspectRepositoryReplacement>>
+): string {
   const details = [
     `Файлы «${relativeRoot}» будут полностью заменены выгрузкой из базы после получения из хранилища.`,
     'Изменения в файлах, не помещённые в хранилище, будут потеряны.',
   ];
-  const unloadedCount = unloaded.changed.size + unloaded.deleted.size;
   if (unloadedCount > 0) {
     details.push(`Не загружено в базу файлов: ${String(unloadedCount)}.`);
   }
-  if (modifiedUnits.size > 0) {
-    details.push(`Захваченные объекты с локальными правками: ${String(modifiedUnits.size)}.`);
+  if (modifiedUnits > 0) {
+    details.push(`Захваченные объекты с локальными правками: ${String(modifiedUnits)}.`);
   }
-  if (dirtyFiles.size > 0) {
-    details.push(`Файлы с несохранёнными правками в редакторах: ${String(dirtyFiles.size)}.`);
+  if (dirtyFiles > 0) {
+    details.push(`Файлы с несохранёнными правками в редакторах: ${String(dirtyFiles)}.`);
   }
   return details.join('\n');
 }
@@ -176,18 +137,21 @@ async function applyFullDump(
   deps: RepositoryFileSyncDeps,
   fullUpdateDeps: RepositoryFullUpdateDeps
 ): Promise<void> {
+  const projectRoot = services.workspaceFolder.uri.fsPath;
+  const scopeKey = buildScopeKey(target.configKind, target.configRoot, target.extensionName);
+  // Снимок должен описывать выгрузку из базы, даже если пользователь сохранит файл сразу после замены каталога.
+  const baseline = buildHashSnapshot(scopeKey, dumpDir);
   const changedFiles = collectSnapshotProjectFiles(dumpDir, target.configRoot);
   services.suppressConfigurationReloadForFiles(changedFiles);
   syncDirectorySnapshot(dumpDir, target.configRoot);
   const snapshotFailures = refreshLockSnapshots(target, services);
-  const refreshed = await fullUpdateDeps.refreshHashCache(target, services).catch((error: unknown) => {
-    services.outputChannel.appendLine(`[repository][file-sync][warn] ${describeFsError(error)}`);
-    return false;
-  });
-  if (refreshed) {
+  try {
+    fullUpdateDeps.saveHashCache(projectRoot, baseline);
     services.markConfigurationsClean([target.configRoot]);
-  } else {
-    deps.notifyWarning(`«${target.displayName}»: файлы проекта заменены, не удалось обновить хеш-кэш. Подробности в журнале.`);
+    saveMetadataCacheForEntry(projectRoot, scopeKey, { kind: target.configKind, rootPath: target.configRoot });
+  } catch (error) {
+    services.outputChannel.appendLine(`[repository][file-sync][warn] ${describeFsError(error)}`);
+    deps.notifyWarning(`«${target.displayName}»: файлы проекта заменены, не удалось обновить кэши. Подробности в журнале.`);
   }
   services.supportService?.loadConfig(target.configRoot, { invalidateCache: true });
   await finishPostMutation(services, { changedFiles, keptDivergentFiles: [], structural: true });

@@ -14,8 +14,7 @@ import { RepositoryService, type RepositoryNodeRef, type RepositoryTarget } from
 import { ProjectSecretStorage } from '../../infra/environment/ProjectSecretStorage';
 import { buildHashSnapshot, buildScopeKey, computeFileHash, saveHashCache, loadHashCache } from '../../infra/cache/HashCache';
 import { runRepositoryFullUpdate } from '../../ui/commands/repository/RepositoryFullUpdate';
-import { parseArgs } from '../../cli/core/args';
-import { refreshHashCache } from '../../cli/commands/refreshHashCache';
+import { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
 import { SupportInfoService } from '../../infra/support/SupportInfoService';
 import { resolveObjectScope } from '../../infra/repository/RepositoryObjectScope';
 import { buildRootDumpListName, dumpInfoOwnerToRepositoryFullName, getRootLockName, subordinateUnitFullName } from '../../infra/repository/RepositoryObjectNames';
@@ -1804,7 +1803,7 @@ suite('RepositoryLockSync — частичный отказ захвата (issu
 suite('Полное обновление из хранилища (#192)', () => {
   const unit = 'Справочник.Валюты';
   const xml = 'Catalogs/Валюты.xml';
-  for (const scenario of ['success', 'recursive', 'cancel', 'update-failed', 'interrupted', 'dump-failed', 'dump-error', 'empty-dump', 'cache-failed', 'cache-error', 'busy', 'uploaded', 'clean', 'update-error', 'busy-after-confirm'] as const) {
+  for (const scenario of ['success', 'recursive', 'cancel', 'update-failed', 'interrupted', 'dump-failed', 'dump-error', 'empty-dump', 'cache-error', 'concurrent-edit', 'busy', 'uploaded', 'clean', 'update-error', 'busy-after-confirm'] as const) {
     test(scenario, async () => {
       const h = createHarness();
       try {
@@ -1832,6 +1831,7 @@ suite('Полное обновление из хранилища (#192)', () => 
         const dump = path.join(h.workspaceRoot, 'dump');
         fs.cpSync(EXAMPLE_CF, dump, { recursive: true });
         fs.appendFileSync(path.join(dump, xml), '\n<!-- Версия хранилища -->');
+        const dumpHash = computeFileHash(path.join(dump, xml));
         if (scenario === 'uploaded' || scenario === 'recursive') {
           fs.appendFileSync(localXml, '\n<!-- Локальная правка -->');
         }
@@ -1844,9 +1844,11 @@ suite('Полное обновление из хранилища (#192)', () => 
         const errors: string[] = [];
         const infos: string[] = [];
         const supportService = new SupportInfoService(h.services.outputChannel);
+        const scanner = new UnloadedChangesScanner(h.workspaceRoot);
         let overlappingLease: ReturnType<ConfigurationOperationGuard['tryAcquire']>;
         const run = () => runRepositoryFullUpdate(target, {
           ...h.services,
+          scanUnloadedChanges: (entry) => scanner.scan(entry),
           supportService: scenario === 'clean' ? undefined : supportService,
           markConfigurationsClean: (roots) => {
             assert.deepStrictEqual(roots, [h.configRoot]);
@@ -1908,20 +1910,18 @@ suite('Полное обновление из хранилища (#192)', () => 
             }
             return Promise.resolve(scenario !== 'cancel');
           },
-          refreshHashCache: () => {
+          saveHashCache: (projectRoot, baseline) => {
             assert.strictEqual(h.guard.heldBy, undefined);
             assert.ok(!fs.existsSync(localOnly));
             assert.match(fs.readFileSync(localXml, 'utf8'), /Версия хранилища/);
             calls.push('cache');
             if (scenario === 'cache-error') {
-              return Promise.reject(new Error('Сбой хеш-кэша'));
+              throw new Error('Сбой записи кэша');
             }
-            if (scenario === 'cache-failed') {
-              return Promise.resolve(false);
+            if (scenario === 'concurrent-edit') {
+              fs.appendFileSync(localXml, '\n<!-- Правка после замены -->');
             }
-            return Promise.resolve(refreshHashCache(parseArgs([
-              '-ProjectRoot', h.workspaceRoot, '-ConfigDir', h.configRoot,
-            ], new Set())) === 0);
+            saveHashCache(projectRoot, baseline);
           },
         });
 
@@ -1934,13 +1934,18 @@ suite('Полное обновление из хранилища (#192)', () => 
           overlappingLease?.release();
         }
         assert.strictEqual(fs.readFileSync(stateFile, 'utf8'), state);
-        const cacheFailed = scenario === 'cache-failed' || scenario === 'cache-error';
-        if (['success', 'recursive', 'uploaded', 'clean'].includes(scenario) || cacheFailed) {
-          const hash = computeFileHash(localXml);
+        const cacheFailed = scenario === 'cache-error';
+        if (['success', 'recursive', 'uploaded', 'clean', 'concurrent-edit'].includes(scenario) || cacheFailed) {
+          if (scenario === 'concurrent-edit') {
+            const changed = await scanner.scan({ kind: 'cf', rootPath: h.configRoot });
+            assert.deepStrictEqual([...changed.changed], [xml]);
+          } else {
+            assert.strictEqual(computeFileHash(localXml), dumpHash);
+          }
           assert.deepStrictEqual(calls, [
             'confirm', 'update', 'dump', 'cache', ...(cacheFailed ? [] : ['clean']), 'dispose',
           ]);
-          assert.strictEqual(snapshot.readSnapshotHashes(target, unit)?.[xml], hash);
+          assert.strictEqual(snapshot.readSnapshotHashes(target, unit)?.[xml], dumpHash);
           if (scenario === 'recursive') {
             assert.deepStrictEqual(snapshot.diffRootManifest(target), { owners: [], hasManifest: true });
           } else {
@@ -1950,10 +1955,10 @@ suite('Полное обновление из хранилища (#192)', () => 
           assert.strictEqual(h.actionsViewCalls, 1);
           assert.strictEqual(h.outputLines.some((line) => line.startsWith('[support] cf:')), scenario !== 'clean');
           if (cacheFailed) {
-            assert.match(errors.join('\n'), /хеш-кэш/);
+            assert.match(errors.join('\n'), /не удалось обновить кэши/);
           } else {
             assert.deepStrictEqual(errors, []);
-            assert.strictEqual(loadHashCache(h.workspaceRoot, cacheKey).files[xml], hash);
+            assert.strictEqual(loadHashCache(h.workspaceRoot, cacheKey).files[xml], dumpHash);
             assert.match(infos.join('\n'), /обновлена из хранилища, файлы проекта заменены/);
           }
         } else {

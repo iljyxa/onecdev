@@ -133,6 +133,7 @@ function createServices(overrides: Partial<CommandServices>): CommandServices {
     refreshChangedConfigurationState: () => undefined,
     markChangedConfigurationByFiles: () => undefined,
     getChangedConfigurations: () => [],
+    scanUnloadedChanges: () => { throw new Error('Сканирование изменений не используется в этом наборе тестов'); },
     markConfigurationsClean: () => undefined,
     suppressConfigurationReloadForFiles: () => undefined,
     revealTreeNode: () => Promise.resolve(false),

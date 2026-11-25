@@ -39,6 +39,7 @@
  * зарегистрированные на `servicesBox`/`depsProxy` команды.
  */
 import * as assert from 'assert';
+import { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -973,13 +974,20 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
       configRoot: EXAMPLE_CFE_EVOLC, configKind: 'cfe', displayName: CFE_NAME, extensionName: CFE_NAME,
     };
     const repositoryService = {
-      resolveTargetByXmlPath: () => target,
+      resolveTargetByXmlPath: (xmlPath: string) => {
+        assert.strictEqual(xmlPath, CFE_NODE.xmlPath);
+        return target;
+      },
       hasBinding: () => true,
       isConnected: () => true,
       listOwnLockedFullNames: () => [],
       lockState: { isRootRecursiveLocked: () => false },
     } as unknown as RepositoryService;
-    servicesBox.current = createServices({ configurationOperationGuard: guard, repositoryService });
+    const scanner = new UnloadedChangesScanner(EXAMPLE_CF);
+    servicesBox.current = createServices({
+      configurationOperationGuard: guard, repositoryService,
+      scanUnloadedChanges: (entry) => scanner.scan(entry),
+    });
     repositoryDepsBox.current = {
       ...DEFAULT_REPOSITORY_FILE_SYNC_DEPS,
       runRepositoryCli: notCalled('repository.fullUpdate: CLI'),

@@ -1,4 +1,5 @@
 import type * as vscode from 'vscode';
+import type { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
 import type { ChangedConfiguration } from '../../infra/fs/ConfigurationChangeDetector';
 import type { CfeBorrowService } from '../../infra/cfe/CfeBorrowService';
 import type { CfeDiffService } from '../../infra/cfe/CfeDiffService';
@@ -83,6 +84,7 @@ export interface CommandServices {
   refreshChangedConfigurationState: () => void;
   markChangedConfigurationByFiles: (filePaths: string[]) => void;
   getChangedConfigurations: () => ChangedConfiguration[];
+  scanUnloadedChanges: UnloadedChangesScanner['scan'];
   markConfigurationsClean: (rootPaths: string[]) => void;
   suppressConfigurationReloadForFiles: (filePaths: string[]) => void;
   revealTreeNode: (predicate: (node: MetadataNode) => boolean, rootPath?: string) => Promise<boolean>;

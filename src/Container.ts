@@ -157,6 +157,7 @@ export class Container {
   readonly aiMcpViewProvider: AiMcpViewProvider;
   readonly lspManager: LspManager;
   readonly changeDetector: ConfigurationChangeDetector;
+  private readonly unloadedChangesScanner: UnloadedChangesScanner;
   readonly workingSetFilterController: WorkingSetFilterController;
 
   private changeStateTimer: NodeJS.Timeout | undefined;
@@ -335,8 +336,9 @@ export class Container {
       isProjectInitialized: () => this.isProjectInitialized(),
       getStandaloneServerStatus: () => this.standaloneServerService.getStatus(),
     });
+    this.unloadedChangesScanner = new UnloadedChangesScanner(workspaceFolder.uri.fsPath);
     this.workingSetFilterController = new WorkingSetFilterController({
-      scanner: new UnloadedChangesScanner(workspaceFolder.uri.fsPath),
+      scanner: this.unloadedChangesScanner,
       treeProvider: this.treeProvider,
       repositoryService: this.repositoryService,
       onDidChangeStatus: () => this.universalPanelViewProvider.refresh(),
@@ -629,6 +631,7 @@ export class Container {
       refreshChangedConfigurationState: () => this.refreshChangedConfigurationState(),
       markChangedConfigurationByFiles: (filePaths) => this.markChangedConfigurationByFiles(filePaths),
       getChangedConfigurations: () => this.getChangedConfigurations(),
+      scanUnloadedChanges: (entry) => this.unloadedChangesScanner.scan(entry),
       markConfigurationsClean: (rootPaths) => this.markConfigurationsClean(rootPaths),
       suppressConfigurationReloadForFiles: (filePaths) => this.suppressConfigurationReloadForFiles(filePaths),
       revealTreeNode: () => this.revealTreeNode(),

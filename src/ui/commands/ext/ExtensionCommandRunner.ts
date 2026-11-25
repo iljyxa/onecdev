@@ -1727,14 +1727,14 @@ function isDiagnosticNoise(line: string, exitCode: number): boolean {
   return /^(\[INFO\]|\[WARN\]|Getting |Git changes detected|Hash changes detected|Files for loading|Executing |Created output directory:|Выгрузка исходников|Загрузка исходников|Применение изменений)$/i.test(normalized);
 }
 
-export async function refreshConfigurationHashCache(
+async function refreshConfigurationHashCache(
   target: 'cf' | 'cfe',
   extensionName: string,
   configRoot: string,
   workspaceFolder: vscode.WorkspaceFolder,
   outputChannel: vscode.OutputChannel,
   onProgressMessage?: (message: string) => void
-): Promise<boolean> {
+): Promise<void> {
   const isExtension = target === 'cfe';
   const name = isExtension ? extensionName : 'основная конфигурация';
   const refreshed = await runInternalCliCommand(
@@ -1762,9 +1762,8 @@ export async function refreshConfigurationHashCache(
     outputChannel
   );
   if (!refreshed) {
-    outputChannel.appendLine(`[refresh-hash-cache] Не удалось обновить кэш выгрузки: ${name}.`);
+    outputChannel.appendLine(`[refresh-hash-cache] Не удалось обновить кэш после импорта: ${name}.`);
   }
-  return refreshed;
 }
 
 function yieldToUi(): Promise<void> {

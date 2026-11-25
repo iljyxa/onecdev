@@ -3,10 +3,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { buildScopeKey, computeFileHash, loadHashCache } from '../../infra/cache/HashCache';
 import {
   buildExportToTempCliArgs,
-  refreshConfigurationHashCache,
   runDecompileExtension,
   runDecompileMainConfiguration,
 } from '../../ui/commands/ext/ExtensionCommandRunner';
@@ -184,26 +182,6 @@ suite('Полная выгрузка из базы — общий CLI импор
       assert.ok(start.includes(`-Target ${kind} -ConfigDir `), start);
       assert.match(start, kind === 'cf' ? /-Mode Full (?!-Extension)/ : /-Mode Full -Extension EVOLC /);
       assert.ok(!start.includes('-Objects'), start);
-    });
-  }
-
-  for (const writable of [true, false]) {
-    test(`актуализация кэша возвращает ${String(writable)} по результату CLI`, async () => {
-      const configRoot = path.join(root, 'src', 'cf');
-      const example = path.resolve(__dirname, '../../../example/2.21/src/cf');
-      fs.cpSync(example, configRoot, { recursive: true });
-      if (!writable) {
-        fs.mkdirSync(path.join(root, '.onecdev'));
-        fs.writeFileSync(path.join(root, '.onecdev', 'cache'), '');
-      }
-
-      assert.strictEqual(await refreshConfigurationHashCache('cf', '', configRoot, workspace, output), writable);
-      if (writable) {
-        const cache = loadHashCache(root, buildScopeKey('cf', configRoot));
-        assert.strictEqual(cache.files['Configuration.xml'], computeFileHash(path.join(configRoot, 'Configuration.xml')));
-      } else {
-        assert.match(lines.join('\n'), /Не удалось обновить кэш выгрузки/);
-      }
     });
   }
 });
