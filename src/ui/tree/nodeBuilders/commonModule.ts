@@ -4,12 +4,13 @@ import * as vscode from 'vscode';
 import { buildNode } from '../nodes/_base';
 import { getNodeDescriptor } from '../nodes/index';
 import { getMetaFolder } from '../../../domain/MetaTypes';
-import { extractSimpleTag, extractTagInnerXml, parseLocalizedStringSection } from '../../../infra/xml';
+import { extractSimpleTag, extractTagInnerXml, extractTopLevelPropertiesChildren, parseLocalizedStringSection } from '../../../infra/xml';
 import type {
   EnumPropertyOption,
   HandlerContext,
   LocalizedStringValue,
   ObjectHandler,
+  ObjectPropertiesCollection,
 } from './_types';
 
 // ---------------------------------------------------------------------------
@@ -72,7 +73,7 @@ export const commonModuleHandler: ObjectHandler = {
 
     const xml = fs.readFileSync(node.xmlPath, 'utf-8');
 
-    return [
+    const properties: ObjectPropertiesCollection = [
       {
         key: 'Name',
         title: 'Имя',
@@ -140,6 +141,8 @@ export const commonModuleHandler: ObjectHandler = {
         value: buildReturnValuesReuseValue(xml),
       },
     ];
+    const xmlTags = new Set(extractTopLevelPropertiesChildren(xml).map(({ tag }) => tag));
+    return properties.map((property) => ({ ...property, presentInXml: xmlTags.has(property.key) }));
   },
 };
 

@@ -206,7 +206,7 @@ export function buildEventSubscriptionProperties(
     });
   }
 
-  return result;
+  return result.map((property) => ({ ...property, presentInXml: childrenByTag.has(property.key) }));
 }
 
 export function getEventOptionsForSource(sourceValue: MetadataTypeValue, sourceXmlPath: string | undefined): EnumPropertyOption[] {

@@ -51,7 +51,7 @@ suite('PropertiesViewProvider (#205)', () => {
       new BasedOnXmlService(),
       {
         refreshActiveView: () => { void session.refresh(); },
-        replaceActiveNode: (node) => { void session.selectNode(node); },
+        replaceActiveNode: (node) => { void session.replaceSelectedNode(node); },
       }
     );
     session = new PropertiesViewSession((node) => {
@@ -109,6 +109,9 @@ suite('PropertiesViewProvider (#205)', () => {
     try {
       provider.resolveWebviewView(view as unknown as vscode.WebviewView);
       assert.match(view.webview.html, /"viewKind":"properties"/);
+      const readSessionId = () => /"sessionId":"([^"]+)"/.exec(view.webview.html)?.[1];
+      const sessionId = readSessionId();
+      assert.ok(sessionId);
       provider.selectNode(first);
       messages.fire({ type: 'ready' });
       await setImmediate();
@@ -171,6 +174,12 @@ suite('PropertiesViewProvider (#205)', () => {
       provider.selectNode(undefined);
       await setImmediate();
       assert.equal(reads.length, readsBeforeClose);
+
+      provider.resolveWebviewView(view as unknown as vscode.WebviewView);
+      assert.equal(readSessionId(), sessionId);
+      createProvider(PROPERTIES_VIEW_ID).resolveWebviewView(view as unknown as vscode.WebviewView);
+      assert.ok(readSessionId());
+      assert.notEqual(readSessionId(), sessionId);
     } finally {
       fs.rmSync(configRoot, { recursive: true, force: true });
     }

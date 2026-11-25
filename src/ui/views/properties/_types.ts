@@ -48,6 +48,8 @@ export interface PropertyControl {
   value: unknown;
   readonly: boolean;
   inherited: boolean;
+  hint?: string;
+  formPicker?: true;
   /** Варианты для enum и multiEnum */
   options?: { value: string; label: string }[];
   /** Выбранные значения для multiEnum */
@@ -75,6 +77,7 @@ export interface PropertiesViewState {
   readonly: boolean;
   readonlyReason?: 'support' | 'supportChangesForbidden' | 'repository';
   sections: PropertySection[];
+  alphabeticalControls: PropertyControl[];
   subsystemSnapshot?: SubsystemMembershipSnapshot | null;
   exchangePlanContentSnapshot?: ExchangePlanContentSnapshot | null;
 }

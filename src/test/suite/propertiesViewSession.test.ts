@@ -2,10 +2,42 @@ import * as assert from 'node:assert/strict';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { selectPropertiesViewId } from '../../ui/views/properties/propertiesViewPlacement';
-import { PropertiesViewSession } from '../../ui/views/properties/PropertiesViewSession';
+import { type PropertiesPanelState, PropertiesViewSession } from '../../ui/views/properties/PropertiesViewSession';
 import type { PropertiesViewState } from '../../ui/views/properties/_types';
 import { MetadataNode } from '../../ui/tree/TreeNode';
 import { createFakeMemento, createUniversalPanelFixture } from './support/universalPanelHarness';
+
+suite('Состояние выбора для поиска свойств (#207)', () => {
+  test('сохраняет выбор при обновлении, скрытии и переименовании, меняет его при выборе другого узла', async () => {
+    const makeNode = (label: string) =>
+      new MetadataNode({ label, nodeKind: 'Catalog' }, vscode.TreeItemCollapsibleState.None);
+    const selections: number[] = [];
+    const generations: number[] = [];
+    const session = new PropertiesViewSession((node) => ({
+      title: node.textLabel, readonly: false, sections: [], alphabeticalControls: [],
+    }));
+    const post = (state: PropertiesPanelState) => {
+      if (state.kind === 'properties') {
+        selections.push(state.selection);
+        generations.push(state.generation);
+      }
+    };
+
+    await session.setHost(post);
+    await session.selectNode(makeNode('Первый'));
+    await session.refresh();
+    await session.setHost(undefined);
+    await session.setHost(post);
+    await session.replaceSelectedNode(makeNode('НовоеИмя'));
+    await session.selectNode(makeNode('Второй'));
+
+    assert.equal(selections.length, 5);
+    assert.equal(new Set(selections.slice(0, 4)).size, 1);
+    assert.notEqual(selections[4], selections[0]);
+    assert.notEqual(generations[3], generations[2]);
+    assert.equal(session.isCurrent(generations[2]), false);
+  });
+});
 
 suite('Отдельная панель свойств (#205)', () => {
   const node = (label: string) => new MetadataNode({ label, nodeKind: 'Catalog' }, vscode.TreeItemCollapsibleState.None);
@@ -132,7 +164,7 @@ suite('Отдельная панель свойств (#205)', () => {
     await new Promise<void>((resolve) => setImmediate(resolve));
     const newRead = session.selectNode(second);
     await new Promise<void>((resolve) => setImmediate(resolve));
-    pending[1]({ title: second.textLabel, readonly: false, sections: [] });
+    pending[1]({ title: second.textLabel, readonly: false, sections: [], alphabeticalControls: [] });
     await newRead;
     pending[0](null);
     await oldRead;

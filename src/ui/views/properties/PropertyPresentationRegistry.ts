@@ -1,3 +1,4 @@
+import type { ObjectPropertyItem } from './_types';
 import { META_TYPES } from '../../../domain/MetaTypes';
 import { getStandardAttributePresentation } from '../../../domain/StandardAttribute';
 import {
@@ -241,6 +242,37 @@ const referencePresentationByXmlType = buildReferencePresentationMap();
 const referenceXmlTypeByPresentation = new Map(
   Array.from(referencePresentationByXmlType.values()).map((item) => [item.ruType, item.xmlType])
 );
+
+const PROPERTY_DESCRIPTIONS = new Map([
+  ['Name', 'Имя объекта в метаданных и встроенном языке.'],
+  ['Synonym', 'Пользовательское название объекта.'],
+  ['Comment', 'Комментарий для разработчиков конфигурации.'],
+  ['BasedOn', 'Список объектов, на основании которых можно создать этот объект.'],
+  ['BasedFor', 'Список объектов, которые можно создать на основании этого объекта.'],
+  ['Source', 'Типы объектов, события которых обрабатывает подписка.'],
+  ['Event', 'Событие, при котором вызывается обработчик подписки.'],
+  ['Handler', 'Процедура общего модуля, которую вызывает подписка.'],
+  ['ProcedureName', 'Процедура общего модуля, которую вызывает подписка.'],
+]);
+
+export function getPropertyHint(property: ObjectPropertyItem, isBorrowedNode: boolean): string {
+  const parts: string[] = [];
+  const description = PROPERTY_DESCRIPTIONS.get(property.key);
+  if (description) {
+    parts.push(description);
+  }
+  if (property.inherited) {
+    parts.push('Унаследовано из основной конфигурации.');
+  } else if (isBorrowedNode && property.presentInXml) {
+    parts.push('Собственное значение расширения.');
+  }
+  if (property.presentInXml === false) {
+    parts.push('Используется значение по умолчанию.');
+  } else if (property.presentInXml === true && !isBorrowedNode) {
+    parts.push('Значение записано в XML.');
+  }
+  return parts.join(' ');
+}
 
 /** Возвращает русское имя свойства. Для неизвестного ключа строит имя из PascalCase-токенов. */
 export function getPropertyTitle(key: string, titles: Readonly<Record<string, string>>): string {

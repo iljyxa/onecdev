@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import type { MetadataNode } from '../../tree/TreeNode';
 import { WebviewHtmlFactory } from '../webview/WebviewHtmlFactory';
@@ -12,6 +13,7 @@ type WebviewMessage =
 
 export class PropertiesViewProvider implements vscode.WebviewViewProvider {
   private readonly htmlFactory: WebviewHtmlFactory;
+  private readonly sessionId = randomUUID();
   private placementReady: Thenable<unknown> | undefined;
   private openingByDefault = false;
   private static readonly openedByDefaultKey = 'onecdev.propertiesOpenedByDefault';
@@ -104,7 +106,7 @@ export class PropertiesViewProvider implements vscode.WebviewViewProvider {
       title: 'Свойства',
       entry: 'properties',
       viewKind: 'properties',
-      initialState: null,
+      initialState: { sessionId: this.sessionId },
       csp: { allowStyles: true, allowImages: true },
     });
   }

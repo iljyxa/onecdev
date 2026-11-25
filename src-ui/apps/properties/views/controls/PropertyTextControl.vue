@@ -10,14 +10,20 @@ const props = defineProps<{
 const emit = defineEmits<{
   change: [value: string];
   invalidName: [];
+  commit: [];
 }>();
 
 const localValue = ref(String(props.control.value ?? ''));
 const lastSubmittedValue = ref(localValue.value);
 
 watch(() => props.control.value, (newVal) => {
-  localValue.value = String(newVal ?? '');
-  lastSubmittedValue.value = localValue.value;
+  const savedValue = String(newVal ?? '');
+  // После Enter пользователь может продолжить ввод до подтверждения записи.
+  // Новый черновик остаётся в поле, а следующее сохранение сравнивается с XML.
+  if (localValue.value === lastSubmittedValue.value) {
+    localValue.value = savedValue;
+  }
+  lastSubmittedValue.value = savedValue;
 });
 
 const namePattern = /^[\p{L}][\p{L}\p{Nd}_]*$/u;
@@ -50,7 +56,7 @@ function onKeydown(event: KeyboardEvent): void {
   }
   event.preventDefault();
   submit();
-  (event.target as HTMLElement).blur();
+  emit('commit');
 }
 </script>
 

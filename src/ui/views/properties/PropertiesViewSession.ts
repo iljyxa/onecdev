@@ -4,7 +4,7 @@ import type { PropertiesViewState } from './_types';
 import { isRemovedNode } from './isRemovedNode';
 
 export type PropertiesPanelState =
-  | { readonly generation: number; readonly kind: 'properties'; readonly view: PropertiesViewState }
+  | { readonly generation: number; readonly kind: 'properties'; readonly selection: number; readonly view: PropertiesViewState }
   | { readonly generation: number; readonly kind: 'empty'; readonly message?: string };
 
 type PostState = (state: PropertiesPanelState) => void;
@@ -13,6 +13,7 @@ export class PropertiesViewSession {
   private activeNode: MetadataNode | undefined;
   private host: PostState | undefined;
   private generation = 0;
+  private selection = 0;
   private request = 0;
   private publishedGeneration: number | undefined;
 
@@ -28,9 +29,16 @@ export class PropertiesViewSession {
 
   selectNode(node: MetadataNode | undefined): Promise<void> {
     if (node !== this.activeNode) {
-      this.activeNode = node;
-      this.generation++;
+      this.selection++;
+      return this.replaceSelectedNode(node);
     }
+    return this.refresh();
+  }
+
+  /** Переименование меняет цель команд, но сохраняет показанное выделение. */
+  replaceSelectedNode(node: MetadataNode | undefined): Promise<void> {
+    this.activeNode = node;
+    this.generation++;
     return this.refresh();
   }
 
@@ -49,7 +57,7 @@ export class PropertiesViewSession {
   }
 
   async refresh(): Promise<void> {
-    const { host, activeNode, generation } = this;
+    const { host, activeNode, generation, selection } = this;
     if (!host) {
       return;
     }
@@ -66,7 +74,7 @@ export class PropertiesViewSession {
     if (request === this.request && generation === this.generation) {
       this.publishedGeneration = view ? generation : undefined;
       host(view
-        ? { generation, kind: 'properties', view }
+        ? { generation, selection, kind: 'properties', view }
         : { generation, kind: 'empty', message: activeNode ? 'Для выбранного объекта свойства недоступны.' : undefined });
     }
   }
