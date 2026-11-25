@@ -76,8 +76,16 @@ suite('Поиск и пояснения в панели свойств (#207)', 
       fs.mkdirSync(path.join(base, 'Catalogs'), { recursive: true });
       fs.mkdirSync(path.dirname(xmlPath), { recursive: true });
       fs.writeFileSync(path.join(base, 'Configuration.xml'), '<Configuration/>');
-      fs.writeFileSync(path.join(base, 'Catalogs', label + '.xml'),
-        `<MetaDataObject><Catalog><Properties><Name>${label}</Name><Hierarchical>true</Hierarchical></Properties></Catalog></MetaDataObject>`);
+      const baseReference = 'Document.ЗаказПокупателя';
+      const basedOnTag = (reference: string) => `<BasedOn><xr:Item xsi:type="xr:MDObjectRef">${reference}</xr:Item></BasedOn>`;
+      fs.writeFileSync(path.join(base, 'Catalogs', label + '.xml'), [
+        '<MetaDataObject xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">',
+        `<Catalog><Properties><Name>${label}</Name><Hierarchical>true</Hierarchical>`,
+        basedOnTag(baseReference),
+        '</Properties></Catalog></MetaDataObject>',
+      ].join(''));
+      fs.writeFileSync(path.join(extension, 'Configuration.xml'),
+        `<MetaDataObject><Configuration><ChildObjects><Catalog>${label}</Catalog></ChildObjects></Configuration></MetaDataObject>`);
       fs.copyFileSync(fixture, xmlPath);
 
       const node = new MetadataNode({ label, nodeKind: 'Catalog', xmlPath, ownershipTag: 'BORROWED' },
@@ -87,6 +95,21 @@ suite('Поиск и пояснения в панели свойств (#207)', 
       assert.match(alphabeticalControls.find(({ id }) => id === 'DefaultFolderForm')?.hint ?? '', /значение по умолчанию/);
       assert.match(alphabeticalControls.find(({ id }) => id === 'ObjectBelonging')?.hint ?? '', /Собственное значение расширения/);
       assert.match(alphabeticalControls.find(({ id }) => id === 'BasedFor')?.hint ?? '', /Список объектов/);
+
+      const original = fs.readFileSync(fixture, 'utf8');
+      const localReference = 'Document.АвансовыйОтчет';
+      for (const [localTag, result, hint] of [
+        ['', [baseReference], /Унаследовано из основной конфигурации/],
+        [basedOnTag(baseReference), [baseReference], /Унаследовано из основной конфигурации/],
+        [basedOnTag(localReference), [localReference], /Собственное значение расширения/],
+        ['<BasedOn/>', [], /Собственное значение расширения/],
+      ] as const) {
+        fs.writeFileSync(xmlPath, original.replace('</Properties>', localTag + '</Properties>'));
+        const basedOn = getState(node).alphabeticalControls.find(({ id }) => id === 'BasedOn');
+        assert.ok(basedOn);
+        assert.deepEqual(basedOn.referenceItems?.map(({ canonical }) => canonical), result);
+        assert.match(basedOn.hint ?? '', hint);
+      }
     } finally {
       fs.rmSync(temp, { recursive: true, force: true });
     }

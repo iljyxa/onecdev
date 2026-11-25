@@ -238,7 +238,7 @@ export class PropertiesViewController {
       key: 'BasedOn',
       title: 'Вводится на основании',
       kind: 'metadataReferenceList',
-      value: { items: snapshot.basedOn.map(toMetadataReferenceListItem) },
+      value: basedOn?.inherited ? basedOn.value : { items: snapshot.basedOn.map(toMetadataReferenceListItem) },
       section: baseSection,
       sectionOrder: baseSectionOrder,
       readonly: basedOn?.readonly === true,

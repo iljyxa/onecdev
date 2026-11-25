@@ -735,6 +735,12 @@ function arePropertyItemsEquivalent(left: ObjectPropertyItem, right: ObjectPrope
       return areLocalizedValuesEquivalent(left.value as LocalizedStringValue, right.value as LocalizedStringValue);
     case 'metadataType':
       return areMetadataTypesEquivalent(left.value as MetadataTypeValue, right.value as MetadataTypeValue);
+    case 'metadataReferenceList': {
+      const leftItems = (left.value as MetadataReferenceListValue).items;
+      const rightItems = (right.value as MetadataReferenceListValue).items;
+      return leftItems.length === rightItems.length &&
+        leftItems.every((item, index) => item.canonical === rightItems[index].canonical);
+    }
     case 'string':
     default:
       return normalizeScalarValue(left.value as string) === normalizeScalarValue(right.value as string);
