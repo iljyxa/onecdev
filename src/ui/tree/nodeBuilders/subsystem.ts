@@ -10,12 +10,15 @@ import {
   extractSimpleTag,
   extractSynonym,
   extractTagInnerXml,
+  extractTopLevelPropertiesChildren,
+  findDirectElementEntries,
   parseLocalizedStringSection,
 } from '../../../infra/xml';
 import type {
   HandlerContext,
   LocalizedStringValue,
   ObjectHandler,
+  ObjectPropertiesCollection,
 } from './_types';
 
 const FOLDER_NAME = 'Subsystems';
@@ -118,7 +121,9 @@ export const subsystemHandler: ObjectHandler = {
 
     const xml = fs.readFileSync(node.xmlPath, 'utf-8');
 
-    return [
+    const picture = extractTagInnerXml(xml, 'Picture') ?? '';
+    const pictureTags = new Set(findDirectElementEntries(picture).map(({ tag }) => tag));
+    const properties: ObjectPropertiesCollection = [
       {
         key: 'Name',
         title: 'Имя',
@@ -165,15 +170,19 @@ export const subsystemHandler: ObjectHandler = {
         key: 'PictureRef',
         title: 'Картинка (ссылка)',
         kind: 'string',
-        value: extractPictureRef(xml),
+        value: (extractSimpleTag(picture, 'xr:Ref') ?? '').trim(),
+        presentInXml: pictureTags.has('xr:Ref'),
       },
       {
         key: 'PictureLoadTransparent',
         title: 'Картинка: загружать прозрачный фон',
         kind: 'boolean',
-        value: extractPictureLoadTransparent(xml),
+        value: (extractSimpleTag(picture, 'xr:LoadTransparent') ?? '').trim().toLowerCase() === 'true',
+        presentInXml: pictureTags.has('xr:LoadTransparent'),
       },
     ];
+    const xmlTags = new Set(extractTopLevelPropertiesChildren(xml).map(({ tag }) => tag));
+    return properties.map((property) => ({ ...property, presentInXml: property.presentInXml ?? xmlTags.has(property.key) }));
   },
 };
 
@@ -258,18 +267,6 @@ function extractLocalizedString(xml: string, tagName: string): LocalizedStringVa
     return { presentation: '', values: [] };
   }
   return parseLocalizedStringSection(inner);
-}
-
-/** Возвращает ссылку на картинку подсистемы из Picture/xr:Ref */
-function extractPictureRef(xml: string): string {
-  const pictureSection = extractTagInnerXml(xml, 'Picture');
-  return pictureSection ? (extractSimpleTag(pictureSection, 'xr:Ref') ?? '').trim() : '';
-}
-
-/** Возвращает признак загрузки прозрачного фона из Picture/xr:LoadTransparent */
-function extractPictureLoadTransparent(xml: string): boolean {
-  const pictureSection = extractTagInnerXml(xml, 'Picture');
-  return pictureSection ? (extractSimpleTag(pictureSection, 'xr:LoadTransparent') ?? '').trim().toLowerCase() === 'true' : false;
 }
 
 /** Удаляет дубликаты строк с сохранением порядка */

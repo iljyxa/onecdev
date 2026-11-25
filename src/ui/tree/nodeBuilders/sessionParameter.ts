@@ -147,7 +147,7 @@ export const sessionParameterHandler: ObjectHandler = {
       });
     }
 
-    return props;
+    return props.map((property) => ({ ...property, presentInXml: byKey.has(property.key) }));
   },
 };
 

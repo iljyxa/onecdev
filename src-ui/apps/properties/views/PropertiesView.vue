@@ -5,21 +5,19 @@ import type {
   PropertyControl,
   PropertySectionDto,
 } from '@ui-shared/types/property';
-import PropertyTextControl from './controls/PropertyTextControl.vue';
-import PropertyBooleanControl from './controls/PropertyBooleanControl.vue';
-import PropertyEnumControl from './controls/PropertyEnumControl.vue';
-import PropertyTypeControl from './controls/PropertyTypeControl.vue';
-import PropertyReferenceListControl from './controls/PropertyReferenceListControl.vue';
+import PropertyRow from './controls/PropertyRow.vue';
 import PropertyFormsSection from './controls/PropertyFormsSection.vue';
 import SubsystemMembershipCard from './controls/SubsystemMembershipCard.vue';
 import ExchangePlanContentCard from './controls/ExchangePlanContentCard.vue';
 
 const props = defineProps<{
   state: PropertiesViewState;
+  alphabetical: boolean;
 }>();
 
 const emit = defineEmits<{
   command: [name: string, payload?: Record<string, unknown>];
+  'update:alphabetical': [value: boolean];
 }>();
 
 type PropertyCard =
@@ -27,19 +25,16 @@ type PropertyCard =
   | { readonly kind: 'subsystems'; readonly key: string; readonly order: number }
   | { readonly kind: 'exchangePlanContent'; readonly key: string; readonly order: number };
 
-const cards = computed<PropertyCard[]>(() => {
-  // Сортируем только секции свойств по их order.
-  // Ключ строим по индексу секции, а не по её title: заголовки 1С не
-  // гарантированно уникальны и могут совпадать, что ломает реюз DOM Vue.
-  const sectionCards: PropertyCard[] = props.state.sections
-    .map((section, index) => ({
-      kind: 'section' as const,
-      key: `section:${index}`,
-      order: section.order,
-      section,
-    }))
-    .sort((a, b) => a.order - b.order);
+const sectionCards = computed(() => {
+  return props.state.sections.map((section) => ({
+    kind: 'section' as const,
+    key: `section:${section.title}`,
+    order: section.order,
+    section,
+  })).sort((a, b) => a.order - b.order);
+});
 
+const extraCards = computed(() => {
   // Подсистемы и обмен данными — служебные блоки, всегда в конце списка,
   // независимо от order секций (у некоторых объектов секции без явного order).
   const extraCards: PropertyCard[] = [];
@@ -50,10 +45,40 @@ const cards = computed<PropertyCard[]>(() => {
     extraCards.push({ kind: 'exchangePlanContent', key: 'extra:exchangePlanContent', order: 0 });
   }
 
-  return [...sectionCards, ...extraCards];
+  return extraCards;
 });
 
-const hasContent = computed(() => cards.value.length > 0);
+const cards = computed(() => [...sectionCards.value, ...extraCards.value]);
+const query = ref('');
+const selectedId = ref<string>();
+const normalizedQuery = computed(() => query.value.trim().toLocaleLowerCase('ru'));
+
+function filterControls(controls: PropertyControl[]): PropertyControl[] {
+  const text = normalizedQuery.value;
+  return text ? controls.filter(({ id, label }) =>
+    id.toLowerCase().includes(text) || label.toLocaleLowerCase('ru').includes(text)
+  ) : controls;
+}
+
+const visibleCards = computed<PropertyCard[]>(() => {
+  const extras = normalizedQuery.value ? [] : extraCards.value;
+  if (props.alphabetical) {
+    const controls = filterControls(props.state.alphabeticalControls);
+    return controls.length
+      ? [{ kind: 'section', key: 'alphabetical', order: 0, section: { title: '', order: 0, controls } }, ...extras]
+      : extras;
+  }
+
+  const sections = sectionCards.value.map((card) => ({
+    ...card,
+    section: { ...card.section, controls: filterControls(card.section.controls) },
+  })).filter(({ section }) => section.controls.length > 0);
+  return [...sections, ...extras];
+});
+
+const selectedControl = computed(() => visibleCards.value
+  .flatMap((card) => card.kind === 'section' ? card.section.controls : [])
+  .find(({ id }) => id === selectedId.value));
 
 const MAIN_SECTION_TITLES = new Set(['Основное', 'Основные']);
 
@@ -95,7 +120,7 @@ function syncCollapsedCards(previousKeys: Set<string>): void {
   collapsed.value = next;
 }
 
-watch(() => props.state.title, () => resetCollapsed(), { immediate: true });
+resetCollapsed();
 watch(
   () => cards.value.map((card) => card.key).join('\n'),
   (_current, previous) => {
@@ -103,8 +128,11 @@ watch(
   }
 );
 
-function isCollapsed(key: string): boolean {
-  return collapsed.value.has(key);
+function isCollapsed(card: PropertyCard): boolean {
+  if (card.kind === 'section' && (props.alphabetical || normalizedQuery.value)) {
+    return false;
+  }
+  return collapsed.value.has(card.key);
 }
 
 function toggleSection(key: string): void {
@@ -115,14 +143,6 @@ function toggleSection(key: string): void {
     next.add(key);
   }
   collapsed.value = next;
-}
-
-function isTextControl(control: PropertyControl): boolean {
-  return control.kind === 'string' || control.kind === 'localizedString';
-}
-
-function isEnumControl(control: PropertyControl): boolean {
-  return control.kind === 'enum' || control.kind === 'multiEnum';
 }
 
 function readonlyText(): string {
@@ -141,19 +161,32 @@ function readonlyText(): string {
 function send(name: string, payload?: Record<string, unknown>): void {
   emit('command', name, payload);
 }
-
-function onControlChanged(control: PropertyControl, value: unknown): void {
-  if (props.state.readonly) return;
-  send('propertyChanged', { key: control.id, value });
-}
 </script>
 
 <template>
   <div class="properties-view">
     <header class="properties-header">
-      <h2 class="properties-title">{{ state.title }}</h2>
+      <h2 class="properties-title" :title="state.title">{{ state.title }}</h2>
       <span v-if="state.readonly" class="readonly-badge">{{ readonlyText() }}</span>
     </header>
+
+    <div class="properties-toolbar">
+      <input
+        v-model="query"
+        type="search"
+        class="prop-field properties-search"
+        aria-label="Поиск по свойствам"
+        placeholder="Поиск по свойствам"
+      />
+      <button
+        type="button"
+        class="properties-order"
+        aria-label="Сортировать по алфавиту"
+        :aria-pressed="alphabetical"
+        :title="alphabetical ? 'Показать по группам' : 'Показать по алфавиту'"
+        @click="emit('update:alphabetical', !alphabetical)"
+      >А-Я</button>
+    </div>
 
     <div v-if="state.diagnostics?.length" class="diagnostics-section">
       <div
@@ -169,65 +202,54 @@ function onControlChanged(control: PropertyControl, value: unknown): void {
       </div>
     </div>
 
-    <div v-if="hasContent" class="sections-list">
-      <template v-for="card in cards" :key="card.key">
+    <div v-if="visibleCards.length" class="sections-list">
+      <template v-for="card in visibleCards" :key="card.key">
         <section
           v-if="card.kind === 'section'"
           class="property-section"
-          :class="{ 'is-expanded': !isCollapsed(card.key) }"
+          :class="{ 'is-expanded': !isCollapsed(card) }"
         >
-          <button type="button" class="section-header" @click="toggleSection(card.key)">
+          <button
+            v-if="!alphabetical"
+            type="button"
+            class="section-header"
+            :aria-expanded="!isCollapsed(card)"
+            :disabled="Boolean(normalizedQuery)"
+            @click="toggleSection(card.key)"
+          >
             <span
               class="section-chevron codicon"
-              :class="isCollapsed(card.key) ? 'codicon-chevron-right' : 'codicon-chevron-down'"
+              :class="isCollapsed(card) ? 'codicon-chevron-right' : 'codicon-chevron-down'"
               aria-hidden="true"
             ></span>
             <span class="section-title">{{ card.section.title }}</span>
           </button>
-          <div v-show="!isCollapsed(card.key)" class="section-body">
+          <div v-show="!isCollapsed(card)" :class="{ 'section-body': !alphabetical }">
             <PropertyFormsSection
-              v-if="card.section.title === 'Формы'"
+              v-if="!normalizedQuery && card.section.title === 'Формы'"
+              v-slot="{ controls }"
               :controls="card.section.controls"
-              :readonly="state.readonly"
-              @pick="send('openFormPicker', { key: $event })"
-              @clear="send('clearFormProperty', { key: $event })"
-            />
+            >
+              <PropertyRow
+                v-for="control in controls"
+                :key="control.id"
+                :control="control"
+                :readonly="state.readonly"
+                :selected="selectedId === control.id"
+                @select="selectedId = control.id"
+                @command="send"
+              />
+            </PropertyFormsSection>
             <div v-else class="section-controls">
-              <template v-for="control in card.section.controls" :key="control.id">
-                <PropertyTextControl
-                  v-if="isTextControl(control)"
-                  :control="control"
-                  :readonly="state.readonly"
-                  @change="onControlChanged(control, $event)"
-                  @invalid-name="send('invalidName')"
-                />
-                <PropertyBooleanControl
-                  v-else-if="control.kind === 'boolean'"
-                  :control="control"
-                  :readonly="state.readonly"
-                  @change="onControlChanged(control, $event)"
-                />
-                <PropertyEnumControl
-                  v-else-if="isEnumControl(control)"
-                  :control="control"
-                  :readonly="state.readonly"
-                  @change="onControlChanged(control, $event)"
-                />
-                <PropertyTypeControl
-                  v-else-if="control.kind === 'metadataType'"
-                  :control="control"
-                  :readonly="state.readonly"
-                  @open-picker="send('openTypePicker', $event)"
-                  @update-qualifiers="send('updateTypeQualifiers', $event)"
-                />
-                <PropertyReferenceListControl
-                  v-else-if="control.kind === 'metadataReferenceList'"
-                  :control="control"
-                  :readonly="state.readonly"
-                  @add="send('openMetadataReferencePicker', { key: $event })"
-                  @remove="send('removeMetadataReference', $event)"
-                />
-              </template>
+              <PropertyRow
+                v-for="control in card.section.controls"
+                :key="control.id"
+                :control="control"
+                :readonly="state.readonly"
+                :selected="selectedId === control.id"
+                @select="selectedId = control.id"
+                @command="send"
+              />
             </div>
           </div>
         </section>
@@ -235,17 +257,17 @@ function onControlChanged(control: PropertyControl, value: unknown): void {
         <section
           v-else-if="card.kind === 'subsystems' && state.subsystemSnapshot"
           class="property-section"
-          :class="{ 'is-expanded': !isCollapsed(card.key) }"
+          :class="{ 'is-expanded': !isCollapsed(card) }"
         >
           <button type="button" class="section-header" @click="toggleSection(card.key)">
             <span
               class="section-chevron codicon"
-              :class="isCollapsed(card.key) ? 'codicon-chevron-right' : 'codicon-chevron-down'"
+              :class="isCollapsed(card) ? 'codicon-chevron-right' : 'codicon-chevron-down'"
               aria-hidden="true"
             ></span>
             <span class="section-title">Подсистемы</span>
           </button>
-          <div v-show="!isCollapsed(card.key)" class="section-body">
+          <div v-show="!isCollapsed(card)" class="section-body">
             <SubsystemMembershipCard
               :snapshot="state.subsystemSnapshot"
               :readonly="state.readonly"
@@ -258,17 +280,17 @@ function onControlChanged(control: PropertyControl, value: unknown): void {
         <section
           v-else-if="card.kind === 'exchangePlanContent' && state.exchangePlanContentSnapshot"
           class="property-section"
-          :class="{ 'is-expanded': !isCollapsed(card.key) }"
+          :class="{ 'is-expanded': !isCollapsed(card) }"
         >
           <button type="button" class="section-header" @click="toggleSection(card.key)">
             <span
               class="section-chevron codicon"
-              :class="isCollapsed(card.key) ? 'codicon-chevron-right' : 'codicon-chevron-down'"
+              :class="isCollapsed(card) ? 'codicon-chevron-right' : 'codicon-chevron-down'"
               aria-hidden="true"
             ></span>
             <span class="section-title">Обмен данными</span>
           </button>
-          <div v-show="!isCollapsed(card.key)" class="section-body">
+          <div v-show="!isCollapsed(card)" class="section-body">
             <ExchangePlanContentCard :snapshot="state.exchangePlanContentSnapshot" />
           </div>
         </section>
@@ -276,8 +298,14 @@ function onControlChanged(control: PropertyControl, value: unknown): void {
     </div>
 
     <div v-else class="empty-state">
-      <p>Для выбранного объекта свойства не отображаются.</p>
+      <p>{{ normalizedQuery ? 'Свойства не найдены.' : 'Для выбранного объекта свойства не отображаются.' }}</p>
     </div>
+
+    <footer v-if="selectedControl" class="property-details" aria-live="polite">
+      <strong>{{ selectedControl.label }}</strong>
+      <code>{{ selectedControl.id }}</code>
+      <p v-if="selectedControl.hint">{{ selectedControl.hint }}</p>
+    </footer>
   </div>
 </template>
 
@@ -315,6 +343,56 @@ function onControlChanged(control: PropertyControl, value: unknown): void {
   background: var(--vscode-badge-background);
   color: var(--vscode-badge-foreground);
   border-radius: 2px;
+}
+
+.properties-toolbar {
+  display: flex;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.properties-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.properties-order {
+  flex: none;
+  padding: 0 8px;
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 5px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-input-background);
+  font: inherit;
+  cursor: pointer;
+}
+
+.properties-order[aria-pressed='true'] {
+  color: var(--vscode-inputOption-activeForeground);
+  background: var(--vscode-inputOption-activeBackground);
+  border-color: var(--vscode-inputOption-activeBorder, var(--vscode-focusBorder));
+}
+
+.property-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  max-height: 30%;
+  padding: 6px 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  border-top: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+}
+
+.property-details strong {
+  color: var(--vscode-foreground);
+}
+
+.property-details p {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 .diagnostics-section {
@@ -387,6 +465,10 @@ function onControlChanged(control: PropertyControl, value: unknown): void {
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.section-header:disabled {
+  cursor: default;
 }
 
 .section-chevron {

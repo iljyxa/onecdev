@@ -296,7 +296,7 @@ export function buildPropertyItemsForKeys(
     items.push(scalarString);
   }
 
-  return items;
+  return items.map((item) => ({ ...item, presentInXml: childrenByTag.has(item.key) }));
 }
 
 /**
@@ -345,9 +345,8 @@ export function buildEffectivePropertyItemsForKeys(
 
   // showMissingKeys достраивает отсутствующие ключи умолчаниями; у заимствованного
   // элемента такое умолчание не локальное значение и не должно перекрывать базу (#146).
-  const localTags = topLevelPropertyTags(localXmlOrPropertiesInner);
   const localByKey = new Map(
-    localItems.filter((item) => localTags.has(item.key)).map((item) => [item.key, item])
+    localItems.filter((item) => item.presentInXml).map((item) => [item.key, item])
   );
   const inheritedByKey = new Map(inheritedItems.map((item) => [item.key, item]));
   const result: ObjectPropertyItem[] = [];
@@ -369,11 +368,6 @@ export function buildEffectivePropertyItemsForKeys(
   }
 
   return result;
-}
-
-function topLevelPropertyTags(xmlOrPropertiesInner: string): Set<string> {
-  const propsInner = extractPropertiesInnerFromElement(xmlOrPropertiesInner) ?? xmlOrPropertiesInner;
-  return new Set(extractTopLevelPropertiesChildren(`<Properties>${propsInner}</Properties>`).map((child) => child.tag));
 }
 
 /** Свойства корневого объекта метаданных по его полному XML */
@@ -528,7 +522,7 @@ export function buildConfigurationProperties(fullConfigXml: string): ObjectPrope
 
   // Формы уровня приложения тоже попадают в секцию «Формы»: панель включает
   // контрол выбора формы по заголовку секции, а не по виду объекта.
-  return applyFormPropertySection(result);
+  return applyFormPropertySection(result.map((item) => ({ ...item, presentInXml: true })));
 }
 
 /** Свойства типового реквизита / измерения / ресурса / колонки */
@@ -741,6 +735,12 @@ function arePropertyItemsEquivalent(left: ObjectPropertyItem, right: ObjectPrope
       return areLocalizedValuesEquivalent(left.value as LocalizedStringValue, right.value as LocalizedStringValue);
     case 'metadataType':
       return areMetadataTypesEquivalent(left.value as MetadataTypeValue, right.value as MetadataTypeValue);
+    case 'metadataReferenceList': {
+      const leftItems = (left.value as MetadataReferenceListValue).items;
+      const rightItems = (right.value as MetadataReferenceListValue).items;
+      return leftItems.length === rightItems.length &&
+        leftItems.every((item, index) => item.canonical === rightItems[index].canonical);
+    }
     case 'string':
     default:
       return normalizeScalarValue(left.value as string) === normalizeScalarValue(right.value as string);

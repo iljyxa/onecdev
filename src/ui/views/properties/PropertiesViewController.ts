@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MetadataNode } from '../../tree/TreeNode';
+import { getNodeKindLabel, MetadataNode } from '../../tree/TreeNode';
 import type {
   EnumPropertyValue,
   LocalizedStringValue,
@@ -18,7 +18,7 @@ import {
   ensureDefaultQualifiers,
 } from './MetadataTypeService';
 import { buildEventSourceInnerXml } from './EventSubscriptionPropertyService';
-import { toCanonicalPropertyInput } from './PropertyPresentationRegistry';
+import { getPropertyHint, toCanonicalPropertyInput } from './PropertyPresentationRegistry';
 import {
   type BasedOnMetaKind,
   parseConfigXml,
@@ -93,6 +93,7 @@ export interface PropertiesViewStateOptions {
 
 const DEFAULT_PROPERTY_SECTION_TITLE = 'Основное';
 const DEFAULT_PROPERTY_SECTION_ORDER = Number.MIN_SAFE_INTEGER;
+const PROPERTY_LABEL_ORDER = new Intl.Collator('ru');
 
 /** Управляет чтением и изменением свойств активного объекта. */
 export class PropertiesViewController {
@@ -156,7 +157,8 @@ export class PropertiesViewController {
       return null;
     }
 
-    const controls = visibleProperties.map((prop) => this.toControl(prop, context.isEditLocked));
+    const isBorrowedNode = node.ownershipTag === 'BORROWED' || visibleProperties.some((property) => property.inherited);
+    const controls = visibleProperties.map((prop) => this.toControl(prop, context.isEditLocked, isBorrowedNode));
     const sections = this.groupIntoSections(controls, visibleProperties);
 
     let readonlyReason: PropertiesViewState['readonlyReason'];
@@ -167,10 +169,11 @@ export class PropertiesViewController {
     }
 
     return {
-      title: `${node.textLabel} — Свойства`,
+      title: `${node.textLabel} — ${getNodeKindLabel(node.nodeKind)}`,
       readonly: context.isEditLocked,
       readonlyReason,
       sections,
+      alphabeticalControls: [...controls].sort((a, b) => PROPERTY_LABEL_ORDER.compare(a.label, b.label)),
       subsystemSnapshot: context.subsystemSnapshot,
       exchangePlanContentSnapshot: context.exchangePlanContentSnapshot,
     };
@@ -235,12 +238,13 @@ export class PropertiesViewController {
       key: 'BasedOn',
       title: 'Вводится на основании',
       kind: 'metadataReferenceList',
-      value: { items: snapshot.basedOn.map(toMetadataReferenceListItem) },
+      value: basedOn?.inherited ? basedOn.value : { items: snapshot.basedOn.map(toMetadataReferenceListItem) },
       section: baseSection,
       sectionOrder: baseSectionOrder,
       readonly: basedOn?.readonly === true,
       inherited: basedOn?.inherited,
       source: basedOn?.source,
+      presentInXml: basedOn?.presentInXml,
     };
     const basedFor: ObjectPropertyItem = {
       key: 'BasedFor',
@@ -1148,7 +1152,7 @@ export class PropertiesViewController {
   }
 
   /** Преобразует ObjectPropertyItem в PropertyControl для Vue. */
-  private toControl(property: ObjectPropertyItem, isEditLocked: boolean): PropertyControl {
+  private toControl(property: ObjectPropertyItem, isEditLocked: boolean, isBorrowedNode: boolean): PropertyControl {
     const readonly = isEditLocked || property.readonly === true;
     const base: PropertyControl = {
       id: property.key,
@@ -1161,6 +1165,8 @@ export class PropertiesViewController {
         : '',
       readonly,
       inherited: property.inherited ?? false,
+      hint: getPropertyHint(property, isBorrowedNode),
+      formPicker: property.section === FORM_PROPERTY_SECTION.title ? true : undefined,
     };
 
     switch (property.kind) {

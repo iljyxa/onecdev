@@ -268,7 +268,7 @@ export class Container {
       {
         refreshActiveView: refreshProperties,
         replaceActiveNode: (node) => {
-          void propertiesSession.selectNode(node).catch(logPropertiesError);
+          void propertiesSession.replaceSelectedNode(node).catch(logPropertiesError);
         },
       },
       this.supportService,

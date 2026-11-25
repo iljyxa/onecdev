@@ -409,17 +409,17 @@ suite('PropertyBuilder — характеризация перед декомп�
       const props = buildRootMetaObjectProperties(xml, 'Enum');
 
       assert.deepStrictEqual(props, [
-        { key: 'Name', title: 'Имя', kind: 'string', value: 'PushУведомления', readonly: false, source: 'local' },
+        { key: 'Name', title: 'Имя', kind: 'string', value: 'PushУведомления', readonly: false, source: 'local', presentInXml: true },
         {
           key: 'Synonym', title: 'Синоним', kind: 'localizedString',
           value: { presentation: 'Push уведомления', values: [{ lang: 'ru', content: 'Push уведомления' }] },
-          source: 'local',
+          source: 'local', presentInXml: true,
         },
-        { key: 'Comment', title: 'Комментарий', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local' },
-        { key: 'ObjectBelonging', title: 'Владение объектом', kind: 'string', value: '', readonly: true, source: 'local' },
-        { key: 'ExtendedConfigurationObject', title: 'Расширенный объект конфигурации', kind: 'string', value: '', readonly: true, source: 'local' },
-        { key: 'UseStandardCommands', title: 'Использовать стандартные команды', kind: 'boolean', value: false, source: 'local' },
-        { key: 'QuickChoice', title: 'Быстрый выбор', kind: 'boolean', value: true, source: 'local' },
+        { key: 'Comment', title: 'Комментарий', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local', presentInXml: true },
+        { key: 'ObjectBelonging', title: 'Владение объектом', kind: 'string', value: '', readonly: true, source: 'local', presentInXml: false },
+        { key: 'ExtendedConfigurationObject', title: 'Расширенный объект конфигурации', kind: 'string', value: '', readonly: true, source: 'local', presentInXml: false },
+        { key: 'UseStandardCommands', title: 'Использовать стандартные команды', kind: 'boolean', value: false, source: 'local', presentInXml: true },
+        { key: 'QuickChoice', title: 'Быстрый выбор', kind: 'boolean', value: true, source: 'local', presentInXml: true },
         {
           key: 'ChoiceMode', title: 'Режим выбора', kind: 'enum',
           value: {
@@ -430,17 +430,17 @@ suite('PropertyBuilder — характеризация перед декомп�
               { value: 'BothWays', label: 'Обоими способами' },
             ],
           },
-          source: 'local',
+          source: 'local', presentInXml: true,
         },
         // section/sectionOrder — секция «Формы» (80) у свойств выбора форм ЛЮБОГО
         // вида: именно по этому заголовку панель рендерит контрол выбора формы.
-        { key: 'DefaultListForm', title: 'Основная форма списка', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
-        { key: 'DefaultChoiceForm', title: 'Основная форма выбора', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
-        { key: 'AuxiliaryListForm', title: 'Дополнительная форма списка', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
-        { key: 'AuxiliaryChoiceForm', title: 'Дополнительная форма выбора', kind: 'string', value: '', readonly: false, source: 'local', section: 'Формы', sectionOrder: 80 },
-        { key: 'ListPresentation', title: 'Представление списка', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local' },
-        { key: 'ExtendedListPresentation', title: 'Расширенное представление списка', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local' },
-        { key: 'Explanation', title: 'Пояснение', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local' },
+        { key: 'DefaultListForm', title: 'Основная форма списка', kind: 'string', value: '', readonly: false, source: 'local', presentInXml: true, section: 'Формы', sectionOrder: 80 },
+        { key: 'DefaultChoiceForm', title: 'Основная форма выбора', kind: 'string', value: '', readonly: false, source: 'local', presentInXml: true, section: 'Формы', sectionOrder: 80 },
+        { key: 'AuxiliaryListForm', title: 'Дополнительная форма списка', kind: 'string', value: '', readonly: false, source: 'local', presentInXml: true, section: 'Формы', sectionOrder: 80 },
+        { key: 'AuxiliaryChoiceForm', title: 'Дополнительная форма выбора', kind: 'string', value: '', readonly: false, source: 'local', presentInXml: true, section: 'Формы', sectionOrder: 80 },
+        { key: 'ListPresentation', title: 'Представление списка', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local', presentInXml: true },
+        { key: 'ExtendedListPresentation', title: 'Расширенное представление списка', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local', presentInXml: true },
+        { key: 'Explanation', title: 'Пояснение', kind: 'localizedString', value: { presentation: '', values: [] }, source: 'local', presentInXml: true },
         {
           key: 'ChoiceHistoryOnInput', title: 'История выбора при вводе', kind: 'enum',
           value: {
@@ -450,9 +450,9 @@ suite('PropertyBuilder — характеризация перед декомп�
               { value: 'DontUse', label: 'Не использовать' },
             ],
           },
-          source: 'local',
+          source: 'local', presentInXml: true,
         },
-        { key: 'Characteristics', title: 'Характеристики', kind: 'string', value: '', readonly: false, source: 'local' },
+        { key: 'Characteristics', title: 'Характеристики', kind: 'string', value: '', readonly: false, source: 'local', presentInXml: true },
       ]);
     });
 

@@ -75,6 +75,8 @@ export interface PropertyControl {
   readonly value: unknown;
   readonly readonly: boolean;
   readonly inherited: boolean;
+  readonly hint?: string;
+  readonly formPicker?: true;
   readonly options?: PropertyEnumOption[];
   readonly selected?: string[];
   readonly typePresentation?: string;
@@ -103,6 +105,7 @@ export interface PropertiesViewState {
   readonly title: string;
   readonly icon?: IconDto;
   readonly sections: PropertySectionDto[];
+  readonly alphabeticalControls: PropertyControl[];
   readonly readonly: boolean;
   readonly readonlyReason?: 'support' | 'supportChangesForbidden' | 'repository';
   readonly diagnostics?: PropertyValidationMessage[];

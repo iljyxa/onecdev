@@ -1,16 +1,27 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { getVscodeApi } from '@ui-shared/api/vscodeApi';
 import type { MessageBus } from '@ui-shared/api/messageBus';
 import type { HostToUiMessage } from '@ui-shared/protocol/hostMessages';
 import type { PropertiesViewState } from '@ui-shared/types/property';
 import PropertiesView from './views/PropertiesView.vue';
 
 type PropertiesPanelState =
-  | { readonly generation: number; readonly kind: 'properties'; readonly view: PropertiesViewState }
+  | { readonly generation: number; readonly kind: 'properties'; readonly selection: number; readonly view: PropertiesViewState }
   | { readonly generation: number; readonly kind: 'empty'; readonly message?: string };
 
-const props = defineProps<{ messageBus: MessageBus }>();
+const props = defineProps<{ messageBus: MessageBus; sessionId?: string }>();
 const state = ref<PropertiesPanelState | null>(null);
+const vscode = getVscodeApi();
+const savedState = vscode.getState() as { sessionId?: string; alphabetical?: boolean } | undefined;
+// VS Code может восстановить состояние webview при открытии новой сессии.
+const alphabetical = ref(props.sessionId !== undefined &&
+  savedState?.sessionId === props.sessionId && savedState.alphabetical === true);
+
+function changeOrder(value: boolean): void {
+  alphabetical.value = value;
+  vscode.setState({ sessionId: props.sessionId, alphabetical: value });
+}
 
 function handleHostMessage(message: HostToUiMessage): void {
   if (message.type === 'state') {
@@ -32,8 +43,10 @@ onUnmounted(() => props.messageBus.off('state', handleHostMessage));
   <main class="properties-panel">
     <PropertiesView
       v-if="state?.kind === 'properties'"
-      :key="state.generation"
+      :key="state.selection"
       :state="state.view"
+      :alphabetical="alphabetical"
+      @update:alphabetical="changeOrder"
       @command="sendCommand"
     />
     <p v-else class="properties-panel__hint">

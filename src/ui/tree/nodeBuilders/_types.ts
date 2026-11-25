@@ -131,6 +131,8 @@ export interface ObjectPropertyItem {
   readonly?: boolean;
   /** Технический источник значения для панели свойств */
   source?: 'local' | 'inherited';
+  /** Наличие тега в XML, из которого получено значение. */
+  presentInXml?: boolean;
 }
 
 /** Коллекция свойств объекта метаданных */

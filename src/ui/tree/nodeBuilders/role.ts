@@ -3,7 +3,13 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { buildNode } from '../nodes/_base';
 import { getNodeDescriptor } from '../nodes/index';
-import { extractSimpleTag, extractTagInnerXml, parseLocalizedStringSection } from '../../../infra/xml';
+import {
+  extractSimpleTag,
+  extractTagInnerXml,
+  extractTopLevelPropertiesChildren,
+  findDirectElementEntries,
+  parseLocalizedStringSection,
+} from '../../../infra/xml';
 import type {
   HandlerContext,
   LocalizedStringValue,
@@ -82,46 +88,55 @@ export const roleHandler: ObjectHandler = {
 
     const xml = fs.readFileSync(node.xmlPath, 'utf-8');
     const props: ObjectPropertiesCollection = [];
+    const metadataTags = new Set(extractTopLevelPropertiesChildren(xml).map(({ tag }) => tag));
 
     props.push({
       key: 'Name',
       title: ROLE_FIELD_TITLES.Name,
       kind: 'string',
       value: extractSimpleTag(xml, 'Name') ?? node.textLabel,
+      presentInXml: metadataTags.has('Name'),
     });
     props.push({
       key: 'Synonym',
       title: ROLE_FIELD_TITLES.Synonym,
       kind: 'localizedString',
       value: extractLocalizedString(xml, 'Synonym'),
+      presentInXml: metadataTags.has('Synonym'),
     });
     props.push({
       key: 'Comment',
       title: ROLE_FIELD_TITLES.Comment,
       kind: 'string',
       value: extractSimpleTag(xml, 'Comment') ?? '',
+      presentInXml: metadataTags.has('Comment'),
     });
 
     const rightsPath = resolveRoleRightsXml(node.xmlPath, node.textLabel);
     if (rightsPath && fs.existsSync(rightsPath)) {
       const rightsXml = fs.readFileSync(rightsPath, 'utf-8');
+      const rights = extractTagInnerXml(rightsXml, 'Rights') ?? '';
+      const rightsTags = new Set(findDirectElementEntries(rights).map(({ tag }) => tag));
       props.push({
         key: 'setForNewObjects',
         title: ROLE_FIELD_TITLES.setForNewObjects,
         kind: 'boolean',
         value: extractBooleanFromSimpleTag(rightsXml, 'setForNewObjects'),
+        presentInXml: rightsTags.has('setForNewObjects'),
       });
       props.push({
         key: 'setForAttributesByDefault',
         title: ROLE_FIELD_TITLES.setForAttributesByDefault,
         kind: 'boolean',
         value: extractBooleanFromSimpleTag(rightsXml, 'setForAttributesByDefault'),
+        presentInXml: rightsTags.has('setForAttributesByDefault'),
       });
       props.push({
         key: 'independentRightsOfChildObjects',
         title: ROLE_FIELD_TITLES.independentRightsOfChildObjects,
         kind: 'boolean',
         value: extractBooleanFromSimpleTag(rightsXml, 'independentRightsOfChildObjects'),
+        presentInXml: rightsTags.has('independentRightsOfChildObjects'),
       });
     }
 
