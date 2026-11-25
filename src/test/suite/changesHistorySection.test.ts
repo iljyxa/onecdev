@@ -69,15 +69,19 @@ suite('ChangesHistorySection — состояние графа истории п
   // ─── load/refresh/loadMore — ленивость и пересчёт состояния графа ──────
   suite('load/refresh/loadMore — на реальном ветвлении+merge (buildHistoryRepo, configRoots не нужны)', () => {
     let fixture: HistoryFixture;
-    let getConfigRoots: () => readonly ConfigEntry[];
+    let disposeFixture: (() => void) | undefined;
+    const getConfigRoots = (): readonly ConfigEntry[] => [];
 
-    setup(() => {
+    suiteSetup(function () {
+      // Тесты только читают историю, поэтому один репозиторий можно разделить на весь сьют.
+      // Построение истории запускает больше 20 процессов git и на CI уже превышало 2 секунды.
+      this.timeout(10_000);
       fixture = buildHistoryRepo();
-      getConfigRoots = () => [];
+      disposeFixture = () => removeHistoryRepo(fixture);
     });
 
-    teardown(() => {
-      removeHistoryRepo(fixture);
+    suiteTeardown(() => {
+      disposeFixture?.();
     });
 
     test('isLoaded() до вызова load() — false', () => {
