@@ -39,6 +39,7 @@
  * зарегистрированные на `servicesBox`/`depsProxy` команды.
  */
 import * as assert from 'assert';
+import { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -965,6 +966,54 @@ suite('ConfigurationOperationGuard — интеграция ExtensionCommands/Re
     assert.strictEqual(guard.isBusy, true);
     assert.strictEqual(guard.heldBy, 'Хранилище: синхронизация');
     lease?.release();
+  });
+
+  test('repository.fullUpdate (#192): у подключённого расширения запрашивает подтверждение до аренды', async () => {
+    const guard = new ConfigurationOperationGuard();
+    const target: RepositoryTarget = {
+      configRoot: EXAMPLE_CFE_EVOLC, configKind: 'cfe', displayName: CFE_NAME, extensionName: CFE_NAME,
+    };
+    const repositoryService = {
+      resolveTargetByXmlPath: (xmlPath: string) => {
+        assert.strictEqual(xmlPath, CFE_NODE.xmlPath);
+        return target;
+      },
+      hasBinding: () => true,
+      isConnected: () => true,
+      listOwnLockedFullNames: () => [],
+      lockState: { isRootRecursiveLocked: () => false },
+    } as unknown as RepositoryService;
+    const scanner = new UnloadedChangesScanner(EXAMPLE_CF);
+    servicesBox.current = createServices({
+      configurationOperationGuard: guard, repositoryService,
+      scanUnloadedChanges: (entry) => scanner.scan(entry),
+    });
+    repositoryDepsBox.current = {
+      ...DEFAULT_REPOSITORY_FILE_SYNC_DEPS,
+      runRepositoryCli: notCalled('repository.fullUpdate: CLI'),
+    };
+    bridgeWarningMessageResolver = () => {
+      assert.strictEqual(guard.isBusy, false);
+      return Promise.resolve(undefined);
+    };
+
+    try {
+      await vscode.commands.executeCommand('onecdev.repository.fullUpdate', CFE_NODE);
+      assert.deepStrictEqual(bridgeWarningMessages, ['Обновить конфигурацию из хранилища']);
+      assert.deepStrictEqual(bridgeErrorMessages, []);
+    } finally {
+      repositoryDepsBox.current = DEFAULT_REPOSITORY_FILE_SYNC_DEPS;
+    }
+  });
+
+  test('repository.fullUpdate (#192): команда отклоняет узел объекта', async () => {
+    await vscode.commands.executeCommand('onecdev.repository.fullUpdate', {
+      ...CF_NODE, nodeKind: 'Catalog',
+    });
+
+    assert.deepStrictEqual(bridgeWarningMessages, [
+      'Команда хранилища доступна только для корня основной конфигурации или расширения.',
+    ]);
   });
 
   /**

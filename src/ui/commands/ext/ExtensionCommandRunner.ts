@@ -11,6 +11,7 @@ import {
   ProcessDesignerAgentTransportFactory,
   buildDesignerAgentModeArgs,
   waitForTcpPort,
+  type ConfigurationDumpRequest,
   type DesignerAgentInfoBaseConnection,
   type DesignerAgentConnectionOptions,
 } from '../../../infra/agent';
@@ -458,6 +459,33 @@ export async function runUpdateMainConfiguration(
   );
 }
 
+/** Значение `-Mode` внутреннего CLI `export-configuration` для каждого вида выгрузки. */
+const EXPORT_CLI_MODE: Readonly<Record<ConfigurationDumpRequest['mode'], string>> = {
+  partial: 'Partial',
+  'update-info': 'UpdateInfo',
+  full: 'Full',
+};
+
+/** Аргументы `export-configuration` для выгрузки во временный каталог (пакетный режим). */
+export function buildExportToTempCliArgs(
+  target: { kind: 'cf' | 'cfe'; extensionName?: string },
+  request: ConfigurationDumpRequest,
+  tempDir: string,
+  projectRoot: string,
+  connectionArgs: readonly string[]
+): string[] {
+  return [
+    'export-configuration',
+    '-ProjectRoot', projectRoot,
+    '-Target', target.kind,
+    '-ConfigDir', tempDir,
+    '-Mode', EXPORT_CLI_MODE[request.mode],
+    ...(request.mode === 'partial' ? ['-Objects', request.fullNames.join(',')] : []),
+    ...(target.kind === 'cfe' && target.extensionName ? ['-Extension', target.extensionName] : []),
+    ...connectionArgs,
+  ];
+}
+
 async function runBatchDecompileExtension(
   extensionName: string,
   extensionRoot: string,
@@ -470,20 +498,9 @@ async function runBatchDecompileExtension(
   const tempRoot = createWorkspaceTempDir(workspaceFolder.uri.fsPath, 'import-ext-');
   const tempConfigDir = path.join(tempRoot, 'cfe', extensionName);
   fs.mkdirSync(tempConfigDir, { recursive: true });
-  const cliArgs = [
-    'export-configuration',
-    '-ProjectRoot',
-    workspaceFolder.uri.fsPath,
-    '-Target',
-    'cfe',
-    '-ConfigDir',
-    tempConfigDir,
-    '-Mode',
-    'Full',
-    '-Extension',
-    extensionName,
-    ...buildConnectionCliArgs(connection),
-  ];
+  const cliArgs = buildExportToTempCliArgs(
+    { kind: 'cfe', extensionName }, { mode: 'full' }, tempConfigDir, workspaceFolder.uri.fsPath, buildConnectionCliArgs(connection)
+  );
   try {
     return await runInternalCliCommand(
       {
@@ -581,18 +598,9 @@ async function runBatchDecompileMainConfiguration(
   const tempRoot = createWorkspaceTempDir(workspaceFolder.uri.fsPath, 'import-cf-');
   const tempConfigDir = path.join(tempRoot, 'cf');
   fs.mkdirSync(tempConfigDir, { recursive: true });
-  const cliArgs = [
-    'export-configuration',
-    '-ProjectRoot',
-    workspaceFolder.uri.fsPath,
-    '-Target',
-    'cf',
-    '-ConfigDir',
-    tempConfigDir,
-    '-Mode',
-    'Full',
-    ...buildConnectionCliArgs(connection),
-  ];
+  const cliArgs = buildExportToTempCliArgs(
+    { kind: 'cf' }, { mode: 'full' }, tempConfigDir, workspaceFolder.uri.fsPath, buildConnectionCliArgs(connection)
+  );
   try {
     return await runInternalCliCommand(
       {

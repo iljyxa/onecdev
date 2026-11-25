@@ -86,7 +86,7 @@ suite('Контекстное меню узла — группы и подмен
     assert.deepStrictEqual(withSeparators(submenu(menu, 'База')), ['importConfigurationFromDb', 'updateConfigurationInDb']);
     assert.deepStrictEqual(withSeparators(submenu(menu, 'Файлы')), ['dumpConfigurationToCf', 'loadConfigurationFromCf']);
     assert.deepStrictEqual(withSeparators(submenu(menu, 'Хранилище')), [
-      'repository.lock', 'repository.commit', 'repository.update', 'repository.updateToVersion',
+      'repository.lock', 'repository.commit', 'repository.update', 'repository.updateToVersion', 'repository.fullUpdate',
       'repository.refreshLocks', 'repository.history',
       '|', 'repository.setLabel', 'repository.report', 'repository.dump',
       '|', 'repository.addUser', 'repository.copyUsers',

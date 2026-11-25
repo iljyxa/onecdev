@@ -12,7 +12,11 @@ import {
 import { ConfigurationOperationGuard } from '../../infra/process/ConfigurationOperationGuard';
 import { RepositoryService, type RepositoryNodeRef, type RepositoryTarget } from '../../infra/repository/RepositoryService';
 import { ProjectSecretStorage } from '../../infra/environment/ProjectSecretStorage';
-import { buildScopeKey, computeFileHash, saveHashCache, loadHashCache } from '../../infra/cache/HashCache';
+import { buildHashSnapshot, buildScopeKey, computeFileHash, saveHashCache, loadHashCache } from '../../infra/cache/HashCache';
+import { runRepositoryFullUpdate } from '../../ui/commands/repository/RepositoryFullUpdate';
+import { UnloadedChangesScanner } from '../../infra/cache/UnloadedChangesScanner';
+import { SupportInfoService } from '../../infra/support/SupportInfoService';
+import { resolveObjectScope } from '../../infra/repository/RepositoryObjectScope';
 import { buildRootDumpListName, dumpInfoOwnerToRepositoryFullName, getRootLockName, subordinateUnitFullName } from '../../infra/repository/RepositoryObjectNames';
 import { diffConfigDumpInfo, extractDumpInfoUnit } from '../../infra/repository/ConfigDumpInfoDiff';
 import { parseConfigDumpInfo } from '../../infra/xml/ConfigDumpInfoReader';
@@ -23,7 +27,7 @@ import type { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import type { MergeDiffPair } from '../../ui/commands/repository/RepositoryFileSyncDialogs';
 import { getRepositoryMergeRoot, getRepositoryObjectsDir } from '../../infra/repository/RepositoryTempCleanup';
 import { toLocalTimestamp } from '../../infra/repository/RepositoryLockState';
-import { decodeLogFile } from '../../ui/commands/repository/RepositoryCommandRunner';
+import { buildCommandDesignerArgs, decodeLogFile } from '../../ui/commands/repository/RepositoryCommandRunner';
 import { lockFixturePath, PARTIAL_LOCKS_ROOT, PARTIAL_ROOT_ROOT, scenarioFixturePath } from './support/repositoryLockFixtures';
 import { createPartialDumpFixture, type PartialDumpFixture } from './support/partialDumpFixture';
 import {
@@ -1794,4 +1798,197 @@ suite('RepositoryLockSync — частичный отказ захвата (issu
       fixture.disposeAll();
     }
   });
+});
+
+suite('Полное обновление из хранилища (#192)', () => {
+  const unit = 'Справочник.Валюты';
+  const xml = 'Catalogs/Валюты.xml';
+  for (const scenario of ['success', 'recursive', 'cancel', 'update-failed', 'interrupted', 'dump-failed', 'dump-error', 'empty-dump', 'cache-error', 'concurrent-edit', 'busy', 'uploaded', 'clean', 'update-error', 'busy-after-confirm'] as const) {
+    test(scenario, async () => {
+      const h = createHarness();
+      try {
+        const { target } = h;
+        const snapshot = h.repositoryService.snapshots;
+        const root = getRootLockName(target);
+        h.repositoryService.lockState.applyLock(target, scenario === 'recursive'
+          ? { anchor: root, members: [root, unit], mode: 'recursive', recursiveRoot: true }
+          : { anchor: unit, members: [unit, 'Справочник.Удалённый'], mode: 'object' });
+        const scope = resolveObjectScope(h.configRoot, unit, target, 'unit');
+        assert.ok(scope);
+        snapshot.captureFromProject(target, unit, scope);
+        if (scenario === 'clean') {
+          snapshot.captureEmpty(target, 'Справочник.Удалённый');
+        }
+        if (scenario === 'recursive') {
+          snapshot.captureRootManifest(target);
+        }
+        const stateFile = path.join(h.workspaceRoot, '.onecdev', 'repository', 'state.json');
+        const state = fs.readFileSync(stateFile, 'utf8');
+        const cacheKey = buildScopeKey('cf', h.configRoot);
+        const localXml = path.join(h.configRoot, xml);
+        const unrelatedDirty = path.join(h.workspaceRoot, 'outside.bsl');
+        const localOnly = path.join(h.configRoot, 'local-only.txt');
+        const dump = path.join(h.workspaceRoot, 'dump');
+        fs.cpSync(EXAMPLE_CF, dump, { recursive: true });
+        fs.appendFileSync(path.join(dump, xml), '\n<!-- Версия хранилища -->');
+        const dumpHash = computeFileHash(path.join(dump, xml));
+        if (scenario === 'uploaded' || scenario === 'recursive') {
+          fs.appendFileSync(localXml, '\n<!-- Локальная правка -->');
+        }
+        saveHashCache(h.workspaceRoot, buildHashSnapshot(cacheKey, h.configRoot));
+        if (scenario !== 'uploaded' && scenario !== 'recursive' && scenario !== 'clean') {
+          fs.appendFileSync(localXml, '\n<!-- Локальная правка -->');
+        }
+        fs.writeFileSync(localOnly, 'Локальный файл');
+        const calls: string[] = [];
+        const errors: string[] = [];
+        const infos: string[] = [];
+        const supportService = new SupportInfoService(h.services.outputChannel);
+        const scanner = new UnloadedChangesScanner(h.workspaceRoot);
+        let overlappingLease: ReturnType<ConfigurationOperationGuard['tryAcquire']>;
+        const run = () => runRepositoryFullUpdate(target, {
+          ...h.services,
+          scanUnloadedChanges: (entry) => scanner.scan(entry),
+          supportService: scenario === 'clean' ? undefined : supportService,
+          markConfigurationsClean: (roots) => {
+            assert.deepStrictEqual(roots, [h.configRoot]);
+            calls.push('clean');
+          },
+        }, baseDeps({
+          getDirtyFilePaths: () => ['uploaded', 'recursive', 'clean'].includes(scenario) ? [] : [localXml, unrelatedDirty],
+          notifyBusy: () => { calls.push('busy'); },
+          notifyWarning: (message) => { errors.push(message); },
+          notifyError: (message) => { errors.push(message); },
+          notifyInfo: (message) => { infos.push(message); },
+          runRepositoryCli: (request) => {
+            const lease = h.guard.heldBy;
+            assert.ok(lease);
+            assert.strictEqual(request.target, target);
+            assert.deepStrictEqual(buildCommandDesignerArgs(request.command, request.extraArgs), [
+              '/ConfigurationRepositoryUpdateCfg', '-force',
+            ]);
+            calls.push('update');
+            if (scenario === 'update-error') {
+              throw new Error('Сбой получения');
+            }
+            if (scenario === 'update-failed' || scenario === 'interrupted') {
+              return Promise.resolve({ status: scenario === 'interrupted' ? 'interrupted' : 'failed', message: 'Сбой получения' });
+            }
+            return Promise.resolve({ status: 'done' });
+          },
+          dumpToTemp: (_target, request) => {
+            assert.ok(h.guard.heldBy);
+            assert.deepStrictEqual(request, { mode: 'full' });
+            assert.ok(fs.existsSync(localOnly));
+            calls.push('dump');
+            if (scenario === 'dump-failed') {
+              return Promise.resolve({ ok: false, reason: 'Сбой выгрузки' });
+            }
+            if (scenario === 'dump-error') {
+              throw new Error('Сбой выгрузки');
+            }
+            if (scenario === 'empty-dump') {
+              fs.unlinkSync(path.join(dump, 'Configuration.xml'));
+            }
+            return Promise.resolve({ ok: true, dir: dump, dispose: () => {
+              assert.strictEqual(h.guard.heldBy, undefined);
+              calls.push('dispose');
+              fs.rmSync(dump, { recursive: true, force: true });
+            } });
+          },
+        }), {
+          confirm: (message) => {
+            assert.strictEqual(h.guard.heldBy, undefined);
+            assert.ok(message.includes(path.join('src', 'cf')), message);
+            const hasUnloadedChanges = !['uploaded', 'recursive', 'clean'].includes(scenario);
+            assert.strictEqual(message.includes('Не загружено в базу файлов: 1'), hasUnloadedChanges, message);
+            assert.strictEqual(message.includes('Захваченные объекты с локальными правками: 1'), scenario !== 'clean', message);
+            assert.strictEqual(message.includes('несохранёнными правками в редакторах: 1'), hasUnloadedChanges, message);
+            calls.push('confirm');
+            if (scenario === 'busy-after-confirm') {
+              overlappingLease = h.guard.tryAcquire('Загрузка');
+            }
+            return Promise.resolve(scenario !== 'cancel');
+          },
+          saveHashCache: (projectRoot, baseline) => {
+            assert.strictEqual(h.guard.heldBy, undefined);
+            assert.ok(!fs.existsSync(localOnly));
+            assert.match(fs.readFileSync(localXml, 'utf8'), /Версия хранилища/);
+            calls.push('cache');
+            if (scenario === 'cache-error') {
+              throw new Error('Сбой записи кэша');
+            }
+            if (scenario === 'concurrent-edit') {
+              fs.appendFileSync(localXml, '\n<!-- Правка после замены -->');
+            }
+            saveHashCache(projectRoot, baseline);
+          },
+        });
+
+        if (scenario === 'busy') {
+          await h.guard.runExclusive('Загрузка', async () => {
+            await run();
+          });
+        } else {
+          await run();
+          overlappingLease?.release();
+        }
+        assert.strictEqual(fs.readFileSync(stateFile, 'utf8'), state);
+        const cacheFailed = scenario === 'cache-error';
+        if (['success', 'recursive', 'uploaded', 'clean', 'concurrent-edit'].includes(scenario) || cacheFailed) {
+          if (scenario === 'concurrent-edit') {
+            const changed = await scanner.scan({ kind: 'cf', rootPath: h.configRoot });
+            assert.deepStrictEqual([...changed.changed], [xml]);
+          } else {
+            assert.strictEqual(computeFileHash(localXml), dumpHash);
+          }
+          assert.deepStrictEqual(calls, [
+            'confirm', 'update', 'dump', 'cache', ...(cacheFailed ? [] : ['clean']), 'dispose',
+          ]);
+          assert.strictEqual(snapshot.readSnapshotHashes(target, unit)?.[xml], dumpHash);
+          if (scenario === 'recursive') {
+            assert.deepStrictEqual(snapshot.diffRootManifest(target), { owners: [], hasManifest: true });
+          } else {
+            assert.deepStrictEqual(snapshot.readSnapshotHashes(target, 'Справочник.Удалённый'), {});
+          }
+          assert.strictEqual(h.reloadCalls, 1);
+          assert.strictEqual(h.actionsViewCalls, 1);
+          assert.strictEqual(h.outputLines.some((line) => line.startsWith('[support] cf:')), scenario !== 'clean');
+          if (cacheFailed) {
+            assert.match(errors.join('\n'), /не удалось обновить кэши/);
+          } else {
+            assert.deepStrictEqual(errors, []);
+            assert.strictEqual(loadHashCache(h.workspaceRoot, cacheKey).files[xml], dumpHash);
+            assert.match(infos.join('\n'), /обновлена из хранилища, файлы проекта заменены/);
+          }
+        } else {
+          assert.match(fs.readFileSync(localXml, 'utf8'), /Локальная правка/);
+          assert.ok(fs.existsSync(localOnly));
+          assert.strictEqual(h.reloadCalls, 0);
+          switch (scenario) {
+            case 'busy':
+              assert.deepStrictEqual(calls, ['busy']);
+              break;
+            case 'busy-after-confirm':
+              assert.deepStrictEqual(calls, ['confirm', 'busy']);
+              break;
+            case 'cancel':
+              assert.deepStrictEqual(calls, ['confirm']);
+              break;
+            case 'update-failed':
+            case 'interrupted':
+            case 'update-error':
+              assert.deepStrictEqual(calls, ['confirm', 'update']);
+              assert.match(errors.join('\n'), /Сбой получения/);
+              break;
+            default:
+              assert.deepStrictEqual(calls, ['confirm', 'update', 'dump', ...(scenario === 'empty-dump' ? ['dispose'] : [])]);
+              assert.match(errors.join('\n'), /база уже обновлена.*Импортировать из базы/);
+          }
+        }
+      } finally {
+        fs.rmSync(h.workspaceRoot, { recursive: true, force: true });
+      }
+    });
+  }
 });

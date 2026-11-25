@@ -157,6 +157,7 @@ function createBaselineServices(overrides: Partial<CommandServices> = {}): Comma
     refreshChangedConfigurationState: () => undefined,
     markChangedConfigurationByFiles: () => undefined,
     getChangedConfigurations: () => [],
+    scanUnloadedChanges: () => { throw new Error('Сканирование изменений не используется в этом наборе тестов'); },
     markConfigurationsClean: () => undefined,
     suppressConfigurationReloadForFiles: () => undefined,
     revealTreeNode: () => Promise.resolve(false),

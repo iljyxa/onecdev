@@ -19,6 +19,7 @@ import {
   ensureRepositoryGuardFree,
   type RepositoryFileSyncDeps,
 } from './RepositoryFileSyncShared';
+import { runRepositoryFullUpdate } from './RepositoryFullUpdate';
 import { runRepositoryLockFlow, runRepositoryUpdateFlow } from './RepositoryLockSync';
 import { runRepositoryCommitFlow, runRepositoryUnlockFlow } from './RepositoryUnlockSync';
 
@@ -185,6 +186,13 @@ export function registerRepositoryCommands(
     vscode.commands.registerCommand('onecdev.repository.updateToVersion', (node: NodeArg) =>
       runRepositoryUpdateCommand(services, deps, node, true)
     ),
+
+    vscode.commands.registerCommand('onecdev.repository.fullUpdate', (node: NodeArg) => {
+      const target = requireRootTarget(services, node);
+      if (target && ensureConnected(services.repositoryService, target)) {
+        return runRepositoryFullUpdate(target, services, deps);
+      }
+    }),
 
     vscode.commands.registerCommand('onecdev.repository.addUser', async (node: NodeArg) => {
       const resolved = requireFreeRootTarget(services, deps, node, 'Пользователь хранилища', true);
