@@ -227,6 +227,7 @@ function addRepositoryActions(node: MetadataNode, ctxValue: string, isRoot: bool
   }
   if (!isRoot) {return;}
   if (connected) {
+    add('repo.work', 'onecdev.repository.fullUpdate', 'Обновить конфигурацию из хранилища', codicon('sync'));
     add('repo.work', 'onecdev.repository.refreshLocks', 'Обновить статусы захватов', codicon('refresh'));
     add('repo.work', 'onecdev.repository.history', 'История', codicon('history'));
     add('repo.admin', 'onecdev.repository.setLabel', 'Установить метку версии', codicon('tag'));

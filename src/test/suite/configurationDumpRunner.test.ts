@@ -1,5 +1,16 @@
 import * as assert from 'assert';
-import { buildExportToTempCliArgs } from '../../ui/commands/ext/ConfigurationDumpRunner';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { buildScopeKey, computeFileHash, loadHashCache } from '../../infra/cache/HashCache';
+import {
+  buildExportToTempCliArgs,
+  refreshConfigurationHashCache,
+  runDecompileExtension,
+  runDecompileMainConfiguration,
+} from '../../ui/commands/ext/ExtensionCommandRunner';
+import { cliPath } from './support/cfeBatchFixtures';
 
 /**
  * `buildExportToTempCliArgs` — чистая сборка аргументов для уже существующего
@@ -133,4 +144,66 @@ suite('ConfigurationDumpRunner — buildExportToTempCliArgs', () => {
       '-Mode', 'Full',
     ]);
   });
+});
+
+suite('Полная выгрузка из базы — общий CLI импорта и обновления из хранилища (#192)', () => {
+  let root: string;
+  let workspace: vscode.WorkspaceFolder;
+  let output: vscode.OutputChannel;
+  let lines: string[];
+
+  setup(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'onecdev-full-export-'));
+    workspace = { uri: vscode.Uri.file(root), name: 'Тест', index: 0 };
+    lines = [];
+    output = { appendLine: (line: string) => { lines.push(line); } } as vscode.OutputChannel;
+    const cliDir = path.join(root, 'dist', 'cli');
+    fs.mkdirSync(cliDir, { recursive: true });
+    fs.copyFileSync(cliPath(), path.join(cliDir, 'onec-tools.js'));
+  });
+
+  teardown(() => {
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  for (const kind of ['cf', 'cfe'] as const) {
+    test(`импорт ${kind}: экспортирует весь объект во временный каталог`, async () => {
+      const extension = 'EVOLC';
+      const configRoot = kind === 'cf' ? path.join(root, 'src', 'cf') : path.join(root, 'src', 'cfe', extension);
+      fs.mkdirSync(configRoot, { recursive: true });
+      fs.writeFileSync(path.join(root, 'env.json'), JSON.stringify({
+        default: { '--ibconnection': '/Ffake', '--path': path.join(root, 'missing', '1cv8') },
+      }));
+      const ok = kind === 'cf'
+        ? await runDecompileMainConfiguration('ТорговыйУчет', configRoot, workspace, output)
+        : await runDecompileExtension(extension, configRoot, workspace, output);
+
+      assert.strictEqual(ok, false);
+      const start = lines.find((line) => line.includes(' export-configuration '));
+      assert.ok(start, lines.join('\n'));
+      assert.ok(start.includes(`-Target ${kind} -ConfigDir `), start);
+      assert.match(start, kind === 'cf' ? /-Mode Full (?!-Extension)/ : /-Mode Full -Extension EVOLC /);
+      assert.ok(!start.includes('-Objects'), start);
+    });
+  }
+
+  for (const writable of [true, false]) {
+    test(`актуализация кэша возвращает ${String(writable)} по результату CLI`, async () => {
+      const configRoot = path.join(root, 'src', 'cf');
+      const example = path.resolve(__dirname, '../../../example/2.21/src/cf');
+      fs.cpSync(example, configRoot, { recursive: true });
+      if (!writable) {
+        fs.mkdirSync(path.join(root, '.onecdev'));
+        fs.writeFileSync(path.join(root, '.onecdev', 'cache'), '');
+      }
+
+      assert.strictEqual(await refreshConfigurationHashCache('cf', '', configRoot, workspace, output), writable);
+      if (writable) {
+        const cache = loadHashCache(root, buildScopeKey('cf', configRoot));
+        assert.strictEqual(cache.files['Configuration.xml'], computeFileHash(path.join(configRoot, 'Configuration.xml')));
+      } else {
+        assert.match(lines.join('\n'), /Не удалось обновить кэш выгрузки/);
+      }
+    });
+  }
 });

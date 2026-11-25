@@ -465,6 +465,8 @@ export class Container {
     // Состав корней конфигураций мог измениться (новая cfe / переименование),
     // поэтому кэш `findConfigRoot` нужно сбросить до перестроения дерева.
     this.repositoryService.invalidateConfigRootCache();
+    // При полной замене выгрузки события XML могут быть подавлены самой операцией.
+    this.gitMetadataDecorationProvider.refresh();
     this.measurePhase('дерево метаданных', () => this.treeProvider.updateEntries(entries));
     // Состав корней выгрузки мог измениться — синхронизируем представление
     // изменений (заодно пересчитывается его модель git-статуса).

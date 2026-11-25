@@ -493,6 +493,11 @@
         "icon": "$(history)"
       },
       {
+        "command": "onecdev.repository.fullUpdate",
+        "title": "Обновить конфигурацию из хранилища",
+        "icon": "$(sync)"
+      },
+      {
         "command": "onecdev.repository.addUser",
         "title": "Добавить пользователя хранилища",
         "icon": "$(person-add)"

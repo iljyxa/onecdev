@@ -3,7 +3,7 @@ import * as path from 'path';
 import type * as vscode from 'vscode';
 import type { ConfigurationDumpHandle, ConfigurationDumpRequest } from '../../../infra/agent';
 import { collectAllRelativeFiles } from '../../../infra/agent/DirectorySnapshot';
-import { configurationProcessPort, isAgentConfigurationOperationMode } from './ExtensionCommandRunner';
+import { buildExportToTempCliArgs, configurationProcessPort, isAgentConfigurationOperationMode } from './ExtensionCommandRunner';
 
 export interface ConfigurationDumpTarget {
   readonly kind: 'cf' | 'cfe';
@@ -15,33 +15,6 @@ export interface ConfigurationDumpTarget {
 export type ConfigurationDumpResult =
   | { ok: true; handle: ConfigurationDumpHandle }
   | { ok: false; reason: string };
-
-/** Значение `-Mode` внутреннего CLI `export-configuration` для каждого вида выгрузки. */
-const EXPORT_CLI_MODE: Readonly<Record<ConfigurationDumpRequest['mode'], string>> = {
-  partial: 'Partial',
-  'update-info': 'UpdateInfo',
-  full: 'Full',
-};
-
-/** Аргументы `export-configuration` для выгрузки во временный каталог (пакетный режим). */
-export function buildExportToTempCliArgs(
-  target: ConfigurationDumpTarget,
-  request: ConfigurationDumpRequest,
-  tempDir: string,
-  projectRoot: string,
-  connectionArgs: readonly string[]
-): string[] {
-  return [
-    'export-configuration',
-    '-ProjectRoot', projectRoot,
-    '-Target', target.kind,
-    '-ConfigDir', tempDir,
-    '-Mode', EXPORT_CLI_MODE[request.mode],
-    ...(request.mode === 'partial' ? ['-Objects', request.fullNames.join(',')] : []),
-    ...(target.kind === 'cfe' && target.extensionName ? ['-Extension', target.extensionName] : []),
-    ...connectionArgs,
-  ];
-}
 
 /**
  * Выгружает конфигурацию/расширение из базы во временный каталог, не трогая проект.

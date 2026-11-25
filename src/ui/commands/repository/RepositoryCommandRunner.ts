@@ -355,7 +355,7 @@ export function buildRepositoryUnlockRequest(
 
 export function buildRepositoryUpdateRequest(
   target: RepositoryTarget,
-  objectsFile: string,
+  objectsFile: string | undefined,
   label: string,
   options: { force: boolean; version?: string }
 ): RepositoryCliRequest {
@@ -363,7 +363,7 @@ export function buildRepositoryUpdateRequest(
     command: 'repository-update',
     target,
     extraArgs: [
-      '-ObjectsFile', objectsFile,
+      ...(objectsFile ? ['-ObjectsFile', objectsFile] : []),
       ...(options.version ? ['-Version', options.version] : []),
       ...(options.force ? ['-Force'] : []),
     ],
