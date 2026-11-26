@@ -5,7 +5,8 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as vscode from 'vscode';
 import { buildScopeKey, computeFileHash, saveHashCache } from '../../infra/cache/HashCache';
 import { ConfigurationOperationGuard } from '../../infra/process/ConfigurationOperationGuard';
-import type { RepositoryCliResult } from '../../ui/commands/repository/RepositoryCommandRunner';
+import { decodeLogFile, type RepositoryCliResult } from '../../ui/commands/repository/RepositoryCommandRunner';
+import type { MergeDiffPair, NotificationAction } from '../../ui/commands/repository/RepositoryFileSyncDialogs';
 import { DEFAULT_REPOSITORY_FILE_SYNC_DEPS } from '../../ui/commands/repository/RepositoryFileSyncShared';
 import { McpMetadataPathService } from '../../ui/mcp/McpMetadataPathService';
 import { McpMutationGate } from '../../ui/mcp/registration/McpMutationGate';
@@ -13,7 +14,7 @@ import type { McpCommandServices, McpRegistrationDeps } from '../../ui/mcp/regis
 import { registerRepositoryOperations } from '../../ui/mcp/registration/McpRepositoryOperations';
 import { MetadataTreeProvider } from '../../ui/tree/MetadataTreeProvider';
 import { createPartialDumpFixture } from './support/partialDumpFixture';
-import { createLockWorkspace, EXAMPLE_CF_221, lockFixturePath } from './support/repositoryLockFixtures';
+import { createLockWorkspace, EXAMPLE_CF_221, lockFixturePath, PARTIAL_LOCKS_ROOT, scenarioFixturePath } from './support/repositoryLockFixtures';
 
 const CATALOG = 'Справочники.Контрагенты';
 const FORM = `${CATALOG}.Форма.ФормаЭлемента`;
@@ -44,6 +45,8 @@ suite('MCP-операции хранилища (#191)', () => {
   let dump: ReturnType<typeof createPartialDumpFixture>;
   let calls: { command: string; flags: string[]; objects: string }[];
   let prompts: string[];
+  let notificationActions: NotificationAction[];
+  let openedDiffs: MergeDiffPair[];
   let handlers: Map<string, (args: Record<string, unknown>, extra: { signal: AbortSignal }) => Promise<CallToolResult>>;
 
   setup(async () => {
@@ -68,6 +71,8 @@ suite('MCP-операции хранилища (#191)', () => {
     handlers = new Map();
     calls = [];
     prompts = [];
+    notificationActions = [];
+    openedDiffs = [];
     sync = false;
     confirm = undefined;
     request = new AbortController();
@@ -91,6 +96,14 @@ suite('MCP-операции хранилища (#191)', () => {
           return Promise.resolve(cliResult);
         },
         dumpToTemp: (target, request, services) => dump.dumpToTemp(target, request, services),
+        notifyInfo: (_message, actions) => {
+          assert.strictEqual(guard.isBusy, false);
+          notificationActions.push(...actions ?? []);
+        },
+        openDiffs: (pairs) => {
+          openedDiffs.push(...pairs);
+          return Promise.resolve();
+        },
         getDirtyFilePaths: () => [],
         isFileSyncEnabled: () => sync,
       },
@@ -153,6 +166,8 @@ suite('MCP-операции хранилища (#191)', () => {
       assert.strictEqual(locked.recursive, false);
       assert.deepStrictEqual(locked.units, [unit]);
       assert.ok(calls[0].flags.includes('-Revised'));
+      assert.deepStrictEqual(dump.calls, []);
+      assert.deepStrictEqual(notificationActions, []);
       if (canonical === CATALOG) {
         gate.assertMetadataEditable(xml);
       }
@@ -306,9 +321,67 @@ suite('MCP-операции хранилища (#191)', () => {
       assert.ok(dump.calls.length > 0);
       assert.deepStrictEqual(result.conflicts, conflict ? [OWNER_XML] : []);
       assert.deepStrictEqual(result.changedFiles, conflict ? [] : [file]);
+      assert.deepStrictEqual(notificationActions, []);
       assert.strictEqual(fs.readFileSync(file, 'utf-8'), conflict ? original + '\n' : original);
     });
   }
+
+  test('после захвата сравнивает конфликтующий файл с выгрузкой и синхронизирует чистые файлы', async () => {
+    sync = true;
+    const file = path.join(workspace.configRoot, OWNER_XML);
+    const moduleRel = 'Catalogs/Контрагенты/Ext/ObjectModule.bsl';
+    const moduleFile = path.join(workspace.configRoot, moduleRel);
+    const receivedXml = fs.readFileSync(file);
+    const receivedModule = fs.readFileSync(moduleFile);
+    const localXml = fs.readFileSync(file, 'utf-8') + '\n';
+    fs.writeFileSync(file, localXml);
+    fs.appendFileSync(moduleFile, '\n');
+    saveHashCache(workspace.workspaceRoot, {
+      schemaVersion: 1, scopeKey: buildScopeKey('cf', workspace.configRoot, ''), generatedAt: '',
+      files: { [OWNER_XML]: 'хеш предыдущей версии', [moduleRel]: computeFileHash(moduleFile) },
+    });
+
+    const result = await ok('lock', { path: CATALOG });
+
+    assert.strictEqual(result.outcome, 'done');
+    assert.deepStrictEqual(result.units, ['Справочник.Контрагенты']);
+    assert.deepStrictEqual(result.conflicts, [OWNER_XML]);
+    assert.deepStrictEqual(result.changedFiles, [moduleFile]);
+    assert.deepStrictEqual(fs.readFileSync(moduleFile), receivedModule);
+    assert.match(result.warnings.join('\n'), /получены в базу/);
+    assert.match(result.warnings.join('\n'), /Сравнить.*в уведомлении редактора/);
+    assert.deepStrictEqual(notificationActions.map(({ label }) => label), ['Сравнить']);
+    assert.strictEqual(openedDiffs.length, 0);
+    notificationActions[0].run();
+    assert.strictEqual(openedDiffs.length, 1);
+    const [pair] = openedDiffs;
+    assert.strictEqual(pair.local, file);
+    assert.strictEqual(pair.projectSide, 'local');
+    assert.deepStrictEqual(fs.readFileSync(pair.repository), receivedXml);
+    assert.strictEqual(fs.readFileSync(file, 'utf-8'), localXml);
+    assert.strictEqual(calls.length, 1);
+  });
+
+  test('при частичном рекурсивном захвате сравнение исключает отказанную форму', async () => {
+    sync = true;
+    const ownerRel = 'Catalogs/ПричиныВозврата.xml';
+    const formRel = 'Catalogs/ПричиныВозврата/Forms/ФормаЭлемента/Ext/Form/Module.bsl';
+    for (const rel of [ownerRel, formRel]) {
+      fs.appendFileSync(path.join(workspace.configRoot, rel), '\n');
+    }
+    const log = scenarioFixturePath(PARTIAL_LOCKS_ROOT, '8.5.1', 'lock-recursive-subordinate-refused.out.txt');
+    cliResult = { status: 'failed', message: 'Ошибка захвата объектов в хранилище', output: decodeLogFile(fs.readFileSync(log)) };
+
+    const result = await ok('lock', { path: 'Справочники.ПричиныВозврата', recursive: true });
+
+    assert.strictEqual(result.outcome, 'done');
+    assert.deepStrictEqual(result.units, ['Справочник.ПричиныВозврата']);
+    assert.deepStrictEqual(result.conflicts, [ownerRel]);
+    assert.match(result.warnings.join('\n'), /захвачены частично/);
+    assert.deepStrictEqual(notificationActions.map(({ label }) => label), ['Сравнить']);
+    notificationActions[0].run();
+    assert.deepStrictEqual(openedDiffs.map(({ local }) => local), [path.join(workspace.configRoot, ownerRel)]);
+  });
 
   for (const rollbackFiles of [undefined, true]) {
     test(`захват сохраняет конфликтующую правку, откат при освобождении: ${String(rollbackFiles)}`, async () => {
@@ -324,9 +397,13 @@ suite('MCP-операции хранилища (#191)', () => {
       const locked = await ok('lock', { path: CATALOG });
       assert.deepStrictEqual(locked.conflicts, [OWNER_XML]);
       assert.strictEqual(fs.readFileSync(file, 'utf-8'), original + '\n');
+      const [compare] = notificationActions;
+      assert.strictEqual(compare.label, 'Сравнить');
       const unlocked = await ok('unlock', { path: CATALOG, rollbackFiles });
       assert.deepStrictEqual(unlocked.changedFiles, rollbackFiles ? [file] : []);
       assert.strictEqual(fs.readFileSync(file, 'utf-8'), rollbackFiles ? original : original + '\n');
+      compare.run();
+      assert.deepStrictEqual(openedDiffs.map(({ writable }) => writable), [false]);
     });
   }
 
