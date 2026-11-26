@@ -639,7 +639,14 @@ export async function reportMergeOutcome(
     deps.notifyInfo(
       `«${objectLabel}»: локальные файлы оставлены без изменений (${String(merge.keptLocalFiles.length)}), ` +
         `версия хранилища сохранена рядом с резервными копиями.${hint}`,
-      pairs.length > 0 ? [{ label: 'Сравнить', run: () => { void deps.openDiffs(pairs, log); } }] : []
+      pairs.length > 0 ? [{
+        label: 'Сравнить',
+        run: () => {
+          // К моменту нажатия пользователь мог уже освободить захват.
+          const currentPairs = pairs.map((pair) => ({ ...pair, writable: isProjectFileWritable(services, pair.local) }));
+          void deps.openDiffs(currentPairs, log);
+        },
+      }] : []
     );
   }
 }

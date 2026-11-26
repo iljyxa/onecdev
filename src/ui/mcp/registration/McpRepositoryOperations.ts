@@ -145,18 +145,23 @@ async function runOperation(
   const flow: RepositoryFileSyncDeps = {
     ...repositoryDeps.flow,
     notifyBusy: (message) => { messages.push(message); },
-    notifyInfo: (message) => { messages.push(message); },
+    notifyInfo: (message, actions) => {
+      messages.push(message);
+      if (operation === 'lock' && actions?.length) {
+        warnings.push('Откройте «Сравнить» в уведомлении редактора, чтобы увидеть полученную версию.');
+        repositoryDeps.flow.notifyInfo(message, actions);
+      }
+    },
     notifyWarning: (message) => { warnings.push(message); },
     notifyError: (message) => { warnings.push(message); },
     chooseConflictResolution: ({ files }) => {
       files.forEach((file) => conflicts.add(file));
       warnings.push(operation === 'update'
         ? 'Появились конфликты с файлами проекта. Версия получена в базу, синхронизация файлов проекта остановлена.'
-        : 'Конфликтующие файлы проекта сохранены.');
+        : 'Захваченные единицы получены в базу. Конфликтующие файлы проекта сохранены.');
       return Promise.resolve(operation === 'update' ? 'skip' : 'keep-local');
     },
     confirmRollback: () => Promise.resolve(input.rollbackFiles === true),
-    openDiffs: () => undefined,
     onChangedFiles: (files) => { files.forEach((file) => changedFiles.add(file)); },
     onAffectedUnits: (affected) => { affected.forEach((unit) => units.add(isRootLockName(unit) ? path : unit)); },
   };
