@@ -168,10 +168,26 @@
 | `WindowOpeningMode` | `LockOwnerWindow` | `LockOwner` | `managedFormPropertyValueAliases` |
 | `UseInInterfaceCompatibilityMode` в дескрипторе формы и общей формы | нет | `Any` после `</UsePurposes>` | `includeFormUseInInterfaceCompatibilityMode` |
 
-Исключённые отличия — `Group` `Vertical`/`DontBlock`, `AutoEditMode`,
-`RowSelectionMode`/`VerticalLinesBWA`/`UseAlternationRowColorBWA`, `Representation` `WeakSeparation`:
-они зависят от режима совместимости конфигурации, а не от версии формата (контрпример — `crs`, issue
-#140), поэтому в ruleset не выносятся.
+Сравнение файлов из `example/2.21/src/cf` и `example/crs/config` выявило различия в
+`WindowOpeningMode`, корневом `Group`, `AutoEditMode`, табличных `RowSelectionMode`,
+`VerticalLinesBWA`, `UseAlternationRowColorBWA` и `Representation` группы. Контрольный
+эксперимент проверил влияние `CompatibilityMode` на эти свойства.
+[#140](https://github.com/iljyxa/onecdev/issues/140)
+
+На платформе 8.5.1.1529 из каждой выгрузки подготовили по две временные файловые базы,
+меняя только `CompatibilityMode` в `Configuration.xml` между `Version8_3_27` и `Version8_5_1`.
+Для копий `example/2.21/src/cf` предварительно удалили данные поддержки
+(`Ext/ParentConfigurations.bin` и `Ext/ParentConfigurations/`), чтобы открыть справочник
+для редактирования. В мастере форм справочника «Контрагенты» оставили стандартный состав
+полей и сняли флажок назначения формы основной. После выгрузки сравнили `Ext/Form.xml` побайтно.
+
+| Проверка | Результат в обоих режимах |
+|---|---|
+| Новая форма элемента из `example/2.21/src/cf`, включая таблицу «КонтактныеЛица» | Один и тот же XML 2.21. У формы `WindowOpeningMode=LockOwner`, у полей `EditMode=EnterOnInput`. Корневой `Group`, `AutoEditMode` и три табличных свойства отсутствуют. |
+| Новая форма элемента с добавленной обычной группой и новая форма списка из `example/crs/config` | Каждая пара XML 2.21 совпала побайтно. В форме списка группа пользовательских настроек имеет `Representation=WeakSeparation` в обоих режимах. |
+| Импорт исходной формы элемента из каждого корпуса, применение конфигурации и повторная выгрузка через `ibcmd` | Каждая форма сохранилась побайтно. Платформа приняла оба варианта состава свойств в обоих режимах. |
+
+Конфигуратор записал одинаковые свойства в XML 2.21 для всех проверенных пар форм.
 
 Открытые хвосты: заимствование форм в расширение (CFE) формат не учитывает — #141; дескриптор формы
 строят два построителя (`auxiliaryFileBuilders.ts` и `FormAddService`) — #142. Новое отличие оси формы —
