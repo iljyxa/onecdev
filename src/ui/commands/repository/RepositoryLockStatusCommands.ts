@@ -7,8 +7,7 @@ import { refreshRepositoryUi } from './RepositoryDatabaseSync';
 
 /**
  * «Обновить статусы захватов» (issue #6): опрос сервера хранилища или файла 1CD и запись
- * чужих/своих захватов в state.json. Меняется только локальный кэш — конфигурация и база
- * не трогаются, поэтому MCP-инструмента нет (как у прочих команд хранилища без записи XML).
+ * чужих/своих захватов в state.json. UI и MCP обновляют один и тот же кэш.
  */
 
 export interface RepositoryLockStatusNotifier {
@@ -120,7 +119,7 @@ function listConnectedTargets(services: RepositoryLockStatusServices): Repositor
  * Опрос целей по очереди: исход — в лог и в `report`; дерево обновляется один раз и только
  * если состояние изменилось.
  */
-async function syncTargets(
+export async function syncTargets(
   targets: readonly RepositoryTarget[],
   services: RepositoryLockStatusServices,
   report: (level: 'info' | 'warning' | 'error', message: string) => void

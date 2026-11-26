@@ -104,6 +104,7 @@ export async function runRepositoryUnlockFlow(
   }
   let snapshotFailures: SnapshotStepFailure[] = [];
   if (subject && released) {
+    deps.onAffectedUnits?.(released);
     try {
       if (etalons) {
         await completeUnlockSync(subject, etalons, objectLabel, services, deps);
@@ -348,6 +349,7 @@ async function rollbackToEtalons(
           services.suppressConfigurationReloadForFiles(toAbsolute([...item.changed, ...item.missing, ...item.extra]));
           const restored = services.repositoryService.snapshots.restoreToProject(target, item.fullName, item.scope, backupDir);
           changedFiles.push(...restored.restored, ...restored.deleted);
+          deps.onChangedFiles?.([...restored.restored, ...restored.deleted]);
           structural ||= restored.deleted.length > 0 || item.missing.length > 0;
           if (restored.backups.length > 0) {
             services.outputChannel.appendLine(

@@ -205,8 +205,10 @@ suite('McpRepositoryTools — onecdev_repository_history (#117)', () => {
     return target.displayName;
   }
 
-  test('регистрация: один инструмент, схема path/configuration/limit/beforeVersion/maxChangesPerVersion, есть в EXTENSION_MCP_TOOLS', () => {
-    assert.deepStrictEqual(registered.map((t) => t.name), [TOOL]);
+  test('регистрируются история и четыре операции хранилища, схема истории сохраняется', () => {
+    assert.deepStrictEqual(registered.map((t) => t.name), [
+      TOOL, 'onecdev_repository_lock', 'onecdev_repository_unlock', 'onecdev_repository_status', 'onecdev_repository_update',
+    ]);
     const shape = (registered[0].inputSchema as { shape: Record<string, { def?: { type?: string } }> }).shape;
     assert.deepStrictEqual(
       Object.fromEntries(Object.entries(shape).map(([key, field]) => [key, field.def?.type === 'optional'])),

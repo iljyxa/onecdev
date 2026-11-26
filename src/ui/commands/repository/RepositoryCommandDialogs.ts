@@ -69,6 +69,12 @@ export function validateRepositoryVersion(input: string): string | undefined {
   return /^[1-9]\d*$/.test(input.trim()) ? undefined : REPOSITORY_VERSION_ERROR;
 }
 
+/* c8 ignore start -- модальный диалог VS Code, решение подставляется в тестах потока MCP */
+export async function confirmRepositoryOperation(message: string, button: string): Promise<boolean> {
+  return await vscode.window.showWarningMessage(message, { modal: true }, button) === button;
+}
+/* c8 ignore stop */
+
 async function pickRepositoryChoice<T>(
   title: string,
   placeHolder: string,

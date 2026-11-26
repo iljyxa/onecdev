@@ -132,6 +132,16 @@ export function isSubordinateUnitNode(node: Pick<RepositoryNodeRef, 'nodeKind' |
     && Boolean(node.metaContext?.ownerObjectXmlPath);
 }
 
+/** Корень или самостоятельная единица хранилища. Проверку можно делать при построении меню. */
+export function isRepositoryUnitNode(node: Pick<RepositoryNodeRef, 'nodeKind' | 'metaContext'>): boolean {
+  const kind = node.nodeKind;
+  if (kind === undefined) {
+    return false;
+  }
+  return kind === 'configuration' || kind === 'extension'
+    || isSubordinateUnitNode(node) || Object.prototype.hasOwnProperty.call(ONE_C_TYPE_NAMES, kind);
+}
+
 export interface RepositoryServiceOptions {
   /** Примитив удаления для снимков захвата; по умолчанию — удаление с повторами. */
   removeTree?: RemoveTree;
