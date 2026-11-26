@@ -116,15 +116,14 @@ suite('Генератор форм против корпуса обеих ген
     assert.strictEqual(buildManagedFormXml('2.20', resolveFormatRuleset('2.20')), expected);
   });
 
-  test('buildManagedFormXml(2.21) = корень 2.21 + тело 2.20; WindowOpeningMode/Group в 2.21 — режим совместимости, не версия', () => {
+  test('buildManagedFormXml(2.21) = корень 2.21 + тело 2.20', () => {
     const alko20 = readNormalized(path.join(EXAMPLE_GENERATIONS.cf20, ALKO_FORM)).split('\n');
     const alko21 = readNormalized(path.join(EXAMPLE_GENERATIONS.cf21, ALKO_FORM));
     const expected = [alko20[0], secondLine(alko21), ...alko20.slice(2)].join('\n');
     assert.strictEqual(buildManagedFormXml('2.21'), expected);
 
-    // Контрпример: АЛКО 2.21 выгружена в режиме совместимости 8.3.27 и несёт
-    // WindowOpeningMode/Group, родная форма 8.5.1 (crs) — нет. Значит, это не
-    // правило версии формата, и генератор их не пишет.
+    // В корпусе 2.21 встречаются оба варианта состава свойств. При создании
+    // одинаковых форм смена режима совместимости состава не меняет (#140).
     const crs = readNormalized(CRS_FORM);
     assert.ok(alko21.includes('\n\t<WindowOpeningMode>'));
     assert.ok(alko21.includes('\n\t<Group>'));
